@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <style>
   :root{
     --bg:#EEF0F4;
@@ -387,6 +388,9 @@
   .au-avatar{width:38px; height:38px; border-radius:50%; background:var(--surface-alt); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--text-dim);}
   .au-name{font-size:13.5px; font-weight:600;}
   .au-email{font-size:11.5px; color:var(--text-faint); font-family:'IBM Plex Mono';}
+  .detail-field{display:flex; flex-direction:column; gap:2px; padding:6px 0; border-bottom:1px solid var(--border-faint, var(--border));}
+  .detail-k{font-size:10.5px; text-transform:uppercase; letter-spacing:.03em; color:var(--text-faint);}
+  .detail-v{font-size:13px; color:var(--text); word-break:break-word;}
   .btn{padding:8px 15px; border-radius:8px; font-size:12.5px; font-weight:600; border:none; cursor:pointer;}
   .btn.approve{background:var(--green); color:#fff;}
   .btn.reject{background:var(--surface-alt); color:var(--text-dim); margin-left:8px;}
@@ -575,10 +579,32 @@
     Sign in with Google
   </button>
 </div>
+<div id="authNickname" style="display:none; position:fixed; inset:0; z-index:999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
+  <div style="font-family:'Space Grotesk'; font-weight:700; font-size:20px; margin-bottom:6px; color:var(--text);">One last thing — set your nickname</div>
+  <div style="color:var(--text-dim); margin-bottom:20px; max-width:380px;">This is how you'll appear across Take Salam from Walton Lift R&amp;I. Format: <span class="mono" style="color:var(--text);">Name(ID)</span> — for example <span class="mono" style="color:var(--text);">Rusafi(44305)</span>.</div>
+  <input id="nicknameInput" type="text" placeholder="e.g. Rusafi(44305)" style="padding:11px 14px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-family:'IBM Plex Mono'; font-size:14px; width:260px; text-align:center; margin-bottom:10px;">
+  <div id="nicknameError" style="color:#e0665a; font-size:12.5px; min-height:16px; margin-bottom:10px;"></div>
+  <button onclick="saveNickname()" style="padding:11px 22px; border-radius:9px; border:none; background:var(--accent, #6d8bff); color:#0d0f14; font-weight:700; cursor:pointer;">Save and continue</button>
+</div>
 <div id="authPending" style="display:none; position:fixed; inset:0; z-index:999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
   <div style="font-family:'Space Grotesk'; font-weight:700; font-size:20px; margin-bottom:6px; color:var(--text);">Waiting for approval</div>
   <div style="color:var(--text-dim); margin-bottom:24px; max-width:360px;">You're signed in as <span id="pendingEmail" style="font-weight:600;"></span>. A Superadmin needs to approve your account before you can use Take Salam from Walton Lift R&amp;I. Check back soon.</div>
   <button onclick="signOutUser()" style="padding:10px 18px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text-dim); cursor:pointer;">Sign out</button>
+</div>
+
+<div id="editModal" style="display:none; position:fixed; inset:0; z-index:998; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:20px;">
+  <div class="panel" style="max-width:520px; width:100%; max-height:85vh; overflow-y:auto; padding:22px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <div class="panel-title" style="margin:0;">Edit entry</div>
+      <span style="cursor:pointer; color:var(--text-faint);" onclick="closeEditModal()">✕</span>
+    </div>
+    <div id="editModalFields"></div>
+    <div id="editHistoryToggleWrap" style="margin-top:10px;"></div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="queue-btn" onclick="closeEditModal()" style="flex:1;">Cancel</button>
+      <button class="submit-btn" style="margin-top:0; flex:1;" onclick="saveEditedTask()">Save changes</button>
+    </div>
+  </div>
 </div>
 
 <div id="appShell" style="display:none;">
@@ -737,26 +763,7 @@
         </div>
       </div>
       <div class="panel" style="padding:6px 20px;">
-        <div class="feed-item">
-          <span class="tag c-install">Installation</span>
-          <div class="feed-text"><b>Hakim (57913)</b> logged a rail &amp; bracket issue on <span class="feed-lift">311105</span> — resolved via site visit.<div class="feed-meta">Team CIDT · 2 hours ago</div></div>
-        </div>
-        <div class="feed-item">
-          <span class="tag c-postsales">Production</span>
-          <div class="feed-text"><b>Iftekhar (44154)</b> submitted final layout &amp; BOM for <span class="feed-lift">310863</span>.<div class="feed-meta">Neaz Mahmud · 5 hours ago</div></div>
-        </div>
-        <div class="feed-item">
-          <span class="tag c-postsales">Checklist</span>
-          <div class="feed-text"><b>Mim (50309)</b> completed pre-production checklist for <span class="feed-lift">311243</span>.<div class="feed-meta">Angon Tower · yesterday</div></div>
-        </div>
-        <div class="feed-item">
-          <span class="tag c-postsales">Survey Flag</span>
-          <div class="feed-text"><b>Golam Mustafa (61245)</b> flagged incomplete shaft data on <span class="feed-lift">311104</span>.<div class="feed-meta">Didar Tower · yesterday</div></div>
-        </div>
-        <div class="feed-item">
-          <span class="tag c-rni">R&amp;I Task</span>
-          <div class="feed-text"><b>Arun (66636)</b> logged a client training session — 90 min.<div class="feed-meta">Internal · 2 days ago</div></div>
-        </div>
+        <div id="homeFeed"><div class="placeholder-note">Loading…</div></div>
       </div>
     </section>
   </div>
@@ -842,19 +849,21 @@
       <button class="queue-btn" id="catLogAddBtn" onclick="logInThisCategory()">+ Log a task here</button>
     </div>
 
-    <div class="searchbar" id="catLogSearchWrap" style="max-width:420px; margin-bottom:10px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="catLogSearch" placeholder="Search this category by Lift ID..." oninput="filterCategoryLog()">
+    <div class="filter-row" style="flex-wrap:wrap;">
+      <div class="searchbar" id="catLogSearchWrap" style="max-width:340px; margin-bottom:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="catLogSearch" placeholder="Search this category by Lift ID..." oninput="filterCategoryLog()">
+      </div>
+      <input type="month" id="catFromMonth" class="fselect" style="cursor:pointer;">
+      <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
+      <input type="month" id="catToMonth" class="fselect" style="cursor:pointer;">
+      <button class="queue-btn" onclick="showCategoryLog(currentCatKey)">Apply range</button>
+      <button class="queue-btn" onclick="exportCategoryToExcel()">⬇ Export to Excel</button>
     </div>
     <div class="placeholder-note" id="catLogNoLiftNote" style="display:none; text-align:left; max-width:420px; margin-bottom:20px;">This category isn't tied to a Lift ID — entries are general activity.</div>
 
-    <div class="panel" style="padding:8px 20px; margin-top:18px;">
-      <table class="data" id="catLogTable">
-        <thead id="catLogThead"></thead>
-        <tbody id="catLogBody"></tbody>
-      </table>
-      <div class="placeholder-note" id="catLogEmpty" style="display:none;">No entries match that Lift ID</div>
-    </div>
+    <div id="catLogCards" style="margin-top:18px; display:flex; flex-direction:column; gap:10px;"></div>
+    <div class="placeholder-note" id="catLogEmpty" style="display:none;">No entries match this filter</div>
   </div>
 
   <!-- ============ MY TASKS ============ -->
@@ -901,28 +910,8 @@
 
       <!-- my submissions -->
       <div class="panel">
-        <div class="panel-title">Submitted by me — August 2026</div>
-        <div class="mytask-item">
-          <div class="mt-top"><span class="tag c-install">Installation</span><span class="t-date">22 Aug 2026</span></div>
-          <div class="mt-title">Rail &amp; bracket issue — Lift <span class="mono">311105</span></div>
-          <div class="mt-desc">Bracket spacing mismatch reported and resolved via phone consultation.</div>
-        </div>
-        <div class="mytask-item">
-          <div class="mt-top"><span class="tag c-postsales">Post-Sales</span><span class="t-date">20 Aug 2026</span></div>
-          <div class="mt-title">Revised layout &amp; BOM — Lift <span class="mono">310863</span></div>
-          <div class="mt-desc">Neaz Mahmud, 630kg, 7F — final packing list generated.</div>
-        </div>
-        <div class="mytask-item">
-          <div class="mt-top"><span class="tag c-rni">R&amp;I Task</span><span class="t-date">18 Aug 2026</span></div>
-          <div class="mt-title">Client training session</div>
-          <div class="mt-desc">90 min training on new BOM tool for sales team.</div>
-        </div>
-        <div class="mytask-item">
-          <div class="mt-top"><span class="tag c-commission">Commissioning</span><span class="t-date">15 Aug 2026</span></div>
-          <div class="mt-title">Door sensor calibration — Lift <span class="mono">309981</span></div>
-          <div class="mt-desc">Site visit; sensor realigned, documented in shared drive.</div>
-        </div>
-        <div class="placeholder-note">12 more entries this month — full history on your Profile page</div>
+        <div class="panel-title" id="myTasksTitle">Submitted by me</div>
+        <div id="myTasksList"><div class="placeholder-note">Loading…</div></div>
       </div>
     </div>
   </div>
@@ -930,46 +919,25 @@
   <!-- ============ PROFILE ============ -->
   <div class="view" id="view-profile">
     <div class="profile-head">
-      <div class="p-avatar">HK</div>
+      <div class="p-avatar" id="profileAvatar">--</div>
       <div>
-        <div class="p-name">Hakim (57913)</div>
-        <div class="p-role">R&amp;I Engineer — Installation &amp; Commissioning Support</div>
+        <div class="p-name" id="profileName">—</div>
+        <div class="p-role" id="profileRole">—</div>
       </div>
     </div>
 
     <div class="kpi-card">
       <div>
-        <div class="kpi-num">94.2</div>
-        <div class="kpi-lbl">KPI score — August 2026</div>
+        <div class="kpi-num" id="profileTaskCount">—</div>
+        <div class="kpi-lbl">Total tasks logged (all-time)</div>
       </div>
-      <div class="kpi-spark">
-        <div style="height:40%"></div><div style="height:55%"></div><div style="height:48%"></div>
-        <div style="height:70%"></div><div style="height:60%"></div><div style="height:85%"></div>
-        <div style="height:78%"></div><div style="height:95%"></div>
-      </div>
-    </div>
-
-    <div class="filter-row">
-      <div class="fselect">August 2026 ▾</div>
-      <div class="fselect">All categories ▾</div>
+      <div style="font-size:11.5px; color:var(--text-faint); max-width:180px; text-align:right;">Weighted KPI scoring is coming in a later update — this shows your raw activity count for now.</div>
     </div>
 
     <div class="split-grid">
       <div class="panel">
-        <div class="panel-title">Task breakdown this month</div>
-        <div class="bar-row"><div class="bar-label">Installation Support</div><div class="bar-track"><div class="bar-fill" style="width:78%"></div></div><div class="bar-val">19</div></div>
-        <div class="bar-row"><div class="bar-label">Commissioning Support</div><div class="bar-track"><div class="bar-fill" style="width:60%"></div></div><div class="bar-val">14</div></div>
-        <div class="bar-row"><div class="bar-label">Client Support</div><div class="bar-track"><div class="bar-fill" style="width:32%"></div></div><div class="bar-val">7</div></div>
-        <div class="bar-row"><div class="bar-label">Post-Sales Project</div><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div><div class="bar-val">5</div></div>
-        <div class="bar-row"><div class="bar-label">R&amp;I Task</div><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div><div class="bar-val">3</div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-title">Monthly KPI trend</div>
-        <svg viewBox="0 0 260 110" width="100%" height="110">
-          <polyline points="0,80 35,70 70,74 105,50 140,58 175,30 210,38 245,14" fill="none" stroke="#2F5FE0" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="245" cy="14" r="4" fill="#2F5FE0"/>
-        </svg>
-        <div style="font-size:11px; color:var(--text-faint); margin-top:6px;">Jan → Aug 2026</div>
+        <div class="panel-title">Task breakdown by category</div>
+        <div id="profileBreakdown"><div class="placeholder-note">Loading…</div></div>
       </div>
     </div>
   </div>
@@ -977,46 +945,34 @@
   <!-- ============ DASHBOARD ============ -->
   <div class="view" id="view-dashboard">
     <div class="block-head">
-      <div><div class="block-title">Team dashboard</div><div class="block-sub">Org-wide activity, filtered · <span id="dashAsOf" class="mono">as of —</span></div></div>
+      <div><div class="block-title">Team dashboard</div><div class="block-sub">Org-wide activity · <span id="dashAsOf" class="mono">as of —</span></div></div>
     </div>
     <div class="filter-row">
-      <div class="fselect">August 2026 ▾</div>
-      <div class="fselect">All engineers ▾</div>
-      <div class="fselect">All categories ▾</div>
+      <input type="month" id="dashFromMonth" class="fselect" style="cursor:pointer;">
+      <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
+      <input type="month" id="dashToMonth" class="fselect" style="cursor:pointer;">
+      <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
+      <button class="queue-btn" onclick="loadDashboard()">Apply</button>
     </div>
 
     <div class="stat-row">
-      <div class="stat-card"><div class="n">1,284</div><div class="l">Activities this month</div></div>
-      <div class="stat-card"><div class="n">14</div><div class="l">Delivered to production</div></div>
-      <div class="stat-card"><div class="n">92%</div><div class="l">Avg team KPI</div></div>
-      <div class="stat-card"><div class="n">11</div><div class="l">Open support tickets</div></div>
+      <div class="stat-card"><div class="n" id="dashStatActivities">—</div><div class="l">Activities in range</div></div>
+      <div class="stat-card"><div class="n" id="dashStatLifts">—</div><div class="l">Distinct Lift IDs touched</div></div>
+      <div class="stat-card"><div class="n" id="dashStatEngineers">—</div><div class="l">Engineers active in range</div></div>
+      <div class="stat-card"><div class="n" id="dashStatCategories">—</div><div class="l">Categories used</div></div>
     </div>
 
     <section class="block">
-      <div class="block-head"><div class="block-title">Monthly progress curve</div></div>
-      <div class="panel">
-        <svg viewBox="0 0 700 180" width="100%" height="180">
-          <polyline points="0,140 100,120 200,128 300,90 400,100 500,55 600,70 700,30" fill="none" stroke="#2F5FE0" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="0,140 100,120 200,128 300,90 400,100 500,55 600,70 700,30 700,180 0,180" fill="#EAF0FE" opacity="0.6" stroke="none"/>
-        </svg>
-        <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-faint); margin-top:4px;">
-          <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span>
-        </div>
-      </div>
+      <div class="block-head"><div class="block-title" id="breakdownTitle">Activity by category</div></div>
+      <div class="panel" id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
     </section>
 
     <section class="block">
-      <div class="block-head"><div class="block-title">Engineer leaderboard</div></div>
+      <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
       <div class="panel" style="padding:8px 20px;">
         <table class="data">
-          <thead><tr><th>Engineer</th><th>Category focus</th><th>Activities</th><th>KPI</th></tr></thead>
-          <tbody>
-            <tr><td><div class="rank-name">Hakim (57913)</div></td><td>Installation &amp; Commissioning</td><td>48</td><td><span class="kpi-pill">94.2</span></td></tr>
-            <tr><td><div class="rank-name">Iftekhar (44154)</div></td><td>Post-Sales Project</td><td>61</td><td><span class="kpi-pill">91.7</span></td></tr>
-            <tr><td><div class="rank-name">Mim (50309)</div></td><td>Checklist &amp; Layout</td><td>39</td><td><span class="kpi-pill">88.4</span></td></tr>
-            <tr><td><div class="rank-name">Rusafi (44305)</div></td><td>Pre-Sales Support</td><td>33</td><td><span class="kpi-pill">85.9</span></td></tr>
-            <tr><td><div class="rank-name">Arun (66636)</div></td><td>R&amp;I Task Lead</td><td>27</td><td><span class="kpi-pill">83.1</span></td></tr>
-          </tbody>
+          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th></th></tr></thead>
+          <tbody id="dashLeaderboardBody"><tr><td colspan="4" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -1256,8 +1212,15 @@
   }
   document.querySelectorAll('nav.tabs button[data-view]').forEach(t => t.addEventListener('click', () => {
     showView(t.dataset.view);
-    if(t.dataset.view === 'admin' && typeof loadAdminPanel === 'function') loadAdminPanel();
+    onViewShown(t.dataset.view);
   }));
+
+  function onViewShown(name){
+    if(name === 'admin' && typeof loadAdminPanel === 'function') loadAdminPanel();
+    if(name === 'mytasks' && typeof loadMyTasks === 'function') loadMyTasks();
+    if(name === 'profile' && typeof loadProfile === 'function') loadProfile();
+    if(name === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
+  }
 
   // ---- Mobile: left slide-in drawer (hamburger menu) ----
   function toggleDrawer(){
@@ -1266,6 +1229,7 @@
   }
   function selectDrawerItem(view){
     showView(view);
+    onViewShown(view);
     toggleDrawer();
   }
 
@@ -1638,6 +1602,7 @@
 
   let currentUser = null;   // Supabase auth user
   let currentProfile = null; // row from public.profiles
+  let myTasksRows = []; // cache for edit lookups from "My Tasks"
 
   function initials(name){
     if(!name) return '--';
@@ -1655,6 +1620,7 @@
   function showAuthScreen(which){
     document.getElementById('authLoading').style.display = which==='loading' ? 'flex' : 'none';
     document.getElementById('authLogin').style.display = which==='login' ? 'flex' : 'none';
+    document.getElementById('authNickname').style.display = which==='nickname' ? 'flex' : 'none';
     document.getElementById('authPending').style.display = which==='pending' ? 'flex' : 'none';
     document.getElementById('appShell').style.display = which==='app' ? 'block' : 'none';
   }
@@ -1674,23 +1640,62 @@
     }
     currentProfile = profile;
 
-    if(!profile || profile.status !== 'active'){
+    if(!profile){ showAuthScreen('login'); return; }
+
+    if(!profile.nickname){
+      showAuthScreen('nickname');
+      return;
+    }
+
+    if(profile.status !== 'active'){
       document.getElementById('pendingEmail').textContent = currentUser.email;
       showAuthScreen('pending');
       return;
     }
 
     applyRoleUI(profile.role);
-    document.getElementById('userAvatar').textContent = initials(profile.full_name || profile.email);
-    document.getElementById('userAvatar').title = `${profile.full_name || profile.email} · ${profile.role} (sign out)`;
+    document.getElementById('userAvatar').textContent = initials(profile.nickname);
+    document.getElementById('userAvatar').title = `${profile.full_name} (${profile.nickname}) · ${profile.role} (sign out)`;
     showAuthScreen('app');
+    loadHomeFeed();
 
     if(profile.role === 'superadmin'){ loadAdminPanel(); }
   }
 
+  const NICKNAME_RE = /^[A-Za-z][A-Za-z .'-]{0,30}\(\d{1,10}\)$/;
+
+  async function saveNickname(){
+    const input = document.getElementById('nicknameInput');
+    const errEl = document.getElementById('nicknameError');
+    const val = input.value.trim();
+    if(!NICKNAME_RE.test(val)){
+      errEl.textContent = "Format must be exactly Name(ID) — e.g. Rusafi(44305). No spaces around the parentheses.";
+      return;
+    }
+    const { error } = await sb.from('profiles').update({ nickname: val }).eq('id', currentUser.id);
+    if(error){
+      errEl.textContent = error.code === '23505'
+        ? 'That nickname is already taken — try adding a middle initial or a different short name.'
+        : ('Could not save: ' + error.message);
+      return;
+    }
+    currentProfile.nickname = val;
+    boot(); // re-run the gate now that nickname exists
+  }
+
+  function displayName(p){
+    // p = { full_name, nickname }. Admins/Superadmins see "Original Name (Nickname)"; everyone else just sees the nickname.
+    if(!p) return '—';
+    const isPrivileged = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin');
+    if(isPrivileged && p.full_name) return `${p.full_name} (${p.nickname || '—'})`;
+    return p.nickname || p.full_name || '—';
+  }
+
   function applyRoleUI(role){
+    // Admin tab: Superadmins get full account management. Admins get the tab too but see a
+    // read-only view inside it (no approve/decline/remove/role-assign) — see loadAdminPanel().
     const adminOnly = document.querySelectorAll('[data-view="admin"]');
-    adminOnly.forEach(el => el.style.display = role === 'superadmin' ? '' : 'none');
+    adminOnly.forEach(el => el.style.display = (role === 'superadmin' || role === 'admin') ? '' : 'none');
     const teamViews = document.querySelectorAll('[data-view="dashboard"], [data-view="gantt"]');
     teamViews.forEach(el => el.style.display = (role === 'admin' || role === 'superadmin') ? '' : 'none');
   }
@@ -1701,6 +1706,8 @@
   document.addEventListener('DOMContentLoaded', boot);
 
   // ============ REAL TASK LOGGING (overrides mockup versions) ============
+  let currentCatRows = []; // raw rows currently loaded for this category (used by export + search)
+
   async function showCategoryLog(key){
     currentCatKey = key;
     const meta = catMeta[key];
@@ -1716,36 +1723,204 @@
     document.getElementById('catLogSub').textContent = 'Loading…';
     showView('category');
 
-    const { data, error } = await sb.from('tasks')
-      .select('*, profiles(full_name)')
-      .eq('category', key)
-      .order('created_at', { ascending: false });
+    let query = sb.from('tasks').select('*, profiles(full_name, nickname)').eq('category', key).order('created_at', { ascending: false });
+    const fromVal = document.getElementById('catFromMonth').value;
+    const toVal = document.getElementById('catToMonth').value;
+    if(fromVal) query = query.gte('created_at', fromVal + '-01');
+    if(toVal){
+      const [y,m] = toVal.split('-').map(Number);
+      query = query.lt('created_at', new Date(y, m, 1).toISOString().slice(0,10));
+    }
 
-    const list = (data || []).map(row => ({
-      liftId: row.lift_id || '—',
-      subject: row.project_name || '(untitled)',
-      employee: row.profiles ? row.profiles.full_name : '—',
-      summary: row.notes || '',
-      date: new Date(row.created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})
-    }));
-    categoryEntries[key] = list; // keep search-by-lift-id filter working
+    const { data, error } = await query;
+    currentCatRows = data || [];
     document.getElementById('catLogSub').textContent = meta.hasLift
-      ? `${list.length} entries shown · search below to trace by Lift ID`
-      : `${list.length} entries shown · not tied to a Lift ID`;
-    renderCategoryRows(list, meta.hasLift);
+      ? `${currentCatRows.length} entries shown · search below to trace by Lift ID`
+      : `${currentCatRows.length} entries shown · not tied to a Lift ID`;
+    renderCategoryRows(currentCatRows, meta.hasLift);
   }
 
-  function renderCategoryRows(list, hasLift){
-    document.getElementById('catLogThead').innerHTML = hasLift
-      ? '<tr><th>Lift ID</th><th>Activity</th><th>Engineer</th><th>Date</th></tr>'
-      : '<tr><th>Activity</th><th>Engineer</th><th>Date</th></tr>';
-    document.getElementById('catLogBody').innerHTML = list.map(e => hasLift
-      ? `<tr><td class="mono" style="font-weight:600;">${e.liftId||'—'}</td><td>${e.subject}<div class="rank-sub">${e.summary||''}</div></td><td>${e.employee}</td><td class="mono" style="font-size:12px;">${e.date}</td></tr>`
-      : `<tr><td>${e.subject}<div class="rank-sub">${e.summary||''}</div></td><td>${e.employee}</td><td class="mono" style="font-size:12px;">${e.date}</td></tr>`
-    ).join('');
-    document.getElementById('catLogEmpty').style.display = list.length ? 'none' : 'block';
-    document.getElementById('catLogTable').style.display = list.length ? 'table' : 'none';
+  // Every field the engineer filled in is stored in `details` — show all of it, not just Lift ID
+  function renderCategoryRows(rows, hasLift){
+    const el = document.getElementById('catLogCards');
+    el.innerHTML = rows.map(row => {
+      const emp = row.profiles ? displayName(row.profiles) : '—';
+      const date = new Date(row.created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+      const details = row.details || {};
+      const fieldsHtml = Object.entries(details)
+        .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
+        .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${k}</span><span class="detail-v">${Array.isArray(v) ? v.join(', ') : v}</span></div>`)
+        .join('');
+      return `<div class="panel" style="padding:14px 20px;" data-lift="${(row.lift_id||'').toLowerCase()}">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+          <div>
+            ${hasLift ? `<div class="mono" style="font-weight:700; font-size:14px; margin-bottom:2px;">Lift ${row.lift_id || '—'}</div>` : ''}
+            <div style="font-weight:600;">${row.project_name || '(untitled)'}</div>
+          </div>
+          <div style="text-align:right; font-size:12px; color:var(--text-faint);">
+            <div>${emp}</div>
+            <div class="mono">${date}${row.edit_history && row.edit_history.length ? ' · edited' : ''}</div>
+            ${row.employee_id === currentUser?.id ? `<button class="btn" style="margin-top:6px; padding:3px 10px; font-size:11px;" onclick="openEditTask('${row.id}')">Edit</button>` : ''}
+          </div>
+        </div>
+        <div class="detail-grid" style="margin-top:10px; display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
+      </div>`;
+    }).join('');
+    document.getElementById('catLogEmpty').style.display = rows.length ? 'none' : 'block';
   }
+
+  function exportCategoryToExcel(){
+    if(!currentCatRows.length){ alert('No entries to export for this range.'); return; }
+    const meta = catMeta[currentCatKey];
+    const flat = currentCatRows.map(row => {
+      const base = {
+        'Employee': row.profiles ? displayName(row.profiles) : '',
+        'Date': new Date(row.created_at).toLocaleDateString('en-GB'),
+        'Project / Subject': row.project_name || '',
+      };
+      if(meta.hasLift) base['Lift ID'] = row.lift_id || '';
+      const details = row.details || {};
+      Object.entries(details).forEach(([k,v]) => { base[k] = Array.isArray(v) ? v.join(', ') : (v ?? ''); });
+      return base;
+    });
+    const ws = XLSX.utils.json_to_sheet(flat);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, meta.name.slice(0,31));
+    const fromVal = document.getElementById('catFromMonth').value || 'all';
+    const toVal = document.getElementById('catToMonth').value || 'all';
+    XLSX.writeFile(wb, `${meta.name.replace(/\s+/g,'_')}_${fromVal}_to_${toVal}.xlsx`);
+  }
+
+  // ============ EDIT TASK (own entries only, with history trail) ============
+  let editingTaskRow = null;
+
+  function findTaskById(id){
+    return currentCatRows.find(r => r.id === id) || myTasksRows.find(r => r.id === id) || null;
+  }
+
+  function openEditTask(id){
+    const row = findTaskById(id);
+    if(!row){ alert('Could not find that entry — try reopening the list.'); return; }
+    if(row.employee_id !== currentUser.id){ alert('You can only edit your own entries.'); return; }
+    editingTaskRow = row;
+
+    const meta = catMeta[row.category];
+    const fieldsHtml = [];
+    fieldsHtml.push(`<div style="margin-bottom:12px;"><div class="field-label">Project / Subject</div><input type="text" id="edit_project_name" value="${(row.project_name||'').replace(/"/g,'&quot;')}" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></div>`);
+    if(meta.hasLift){
+      fieldsHtml.push(`<div style="margin-bottom:12px;"><div class="field-label">Lift ID</div><input type="text" id="edit_lift_id" value="${(row.lift_id||'').replace(/"/g,'&quot;')}" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></div>`);
+    }
+    const details = row.details || {};
+    Object.entries(details).forEach(([k,v]) => {
+      const val = Array.isArray(v) ? v.join(', ') : (v ?? '');
+      fieldsHtml.push(`<div style="margin-bottom:12px;"><div class="field-label">${k}</div><input type="text" class="edit-detail-field" data-key="${k}" value="${String(val).replace(/"/g,'&quot;')}" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></div>`);
+    });
+    document.getElementById('editModalFields').innerHTML = fieldsHtml.join('');
+
+    const histWrap = document.getElementById('editHistoryToggleWrap');
+    const hist = row.edit_history || [];
+    histWrap.innerHTML = hist.length
+      ? `<details><summary style="cursor:pointer; color:var(--text-faint); font-size:12.5px;">${hist.length} previous version${hist.length>1?'s':''}</summary>
+          <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+            ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
+              <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')}</div>
+              <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+            </div>`).join('')}
+          </div>
+        </details>`
+      : `<div style="font-size:12px; color:var(--text-faint);">No previous edits.</div>`;
+
+    document.getElementById('editModal').style.display = 'flex';
+  }
+
+  function closeEditModal(){
+    document.getElementById('editModal').style.display = 'none';
+    editingTaskRow = null;
+  }
+
+  async function saveEditedTask(){
+    if(!editingTaskRow) return;
+    const newProjectName = document.getElementById('edit_project_name').value.trim();
+    const liftInput = document.getElementById('edit_lift_id');
+    const newLiftId = liftInput ? liftInput.value.trim() : editingTaskRow.lift_id;
+    const newDetails = { ...(editingTaskRow.details || {}) };
+    document.querySelectorAll('.edit-detail-field').forEach(inp => {
+      const key = inp.dataset.key;
+      const original = editingTaskRow.details ? editingTaskRow.details[key] : undefined;
+      newDetails[key] = Array.isArray(original) ? inp.value.split(',').map(s=>s.trim()).filter(Boolean) : inp.value;
+    });
+
+    const historyEntry = {
+      at: new Date().toISOString(),
+      by: currentProfile.nickname,
+      previous: { project_name: editingTaskRow.project_name, lift_id: editingTaskRow.lift_id, details: editingTaskRow.details }
+    };
+    const newHistory = [...(editingTaskRow.edit_history || []), historyEntry];
+
+    const { error } = await sb.from('tasks').update({
+      project_name: newProjectName,
+      lift_id: newLiftId,
+      details: newDetails,
+      edit_history: newHistory
+    }).eq('id', editingTaskRow.id);
+
+    if(error){ alert('Could not save changes: ' + error.message); return; }
+    closeEditModal();
+    // refresh whichever view we're looking at
+    if(currentCatKey) showCategoryLog(currentCatKey);
+    loadMyTasks();
+  }
+
+  function filterCategoryLog(){
+    const q = document.getElementById('catLogSearch').value.trim().toLowerCase();
+    const meta = catMeta[currentCatKey];
+    const filtered = q ? currentCatRows.filter(r => (r.lift_id||'').toLowerCase().includes(q)) : currentCatRows;
+    renderCategoryRows(filtered, meta.hasLift);
+  }
+
+  // ============ HOME: live "Recent activity" feed (everyone's inputs, real-time) ============
+  function timeAgo(dateStr){
+    const diffMs = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diffMs / 60000);
+    if(mins < 1) return 'just now';
+    if(mins < 60) return `${mins} min${mins>1?'s':''} ago`;
+    const hrs = Math.floor(mins/60);
+    if(hrs < 24) return `${hrs} hour${hrs>1?'s':''} ago`;
+    const days = Math.floor(hrs/24);
+    if(days === 1) return 'yesterday';
+    return `${days} days ago`;
+  }
+
+  function feedItemHtml(row){
+    const cat = catMeta[row.category]?.name || row.category;
+    return `<div class="feed-item">
+      <span class="tag c-${row.category}">${cat}</span>
+      <div class="feed-text">Someone logged a <b>${cat}</b> entry.
+        <div class="feed-meta">${timeAgo(row.created_at)}</div>
+      </div>
+    </div>`;
+  }
+
+  async function loadHomeFeed(){
+    const el = document.getElementById('homeFeed');
+    const { data, error } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(10);
+    if(error){ el.innerHTML = `<div class="placeholder-note">Could not load feed: ${error.message}</div>`; return; }
+    if(!data || !data.length){ el.innerHTML = '<div class="placeholder-note">No activity logged yet — be the first!</div>'; return; }
+    el.innerHTML = data.map(feedItemHtml).join('');
+  }
+
+  // Real-time: whenever ANYONE logs a task, everyone's home feed gets a generic "someone logged X" line — no names or details
+  sb.channel('public:activity-feed')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
+      const el = document.getElementById('homeFeed');
+      if(!el) return;
+      if(el.querySelector('.placeholder-note')) el.innerHTML = '';
+      el.insertAdjacentHTML('afterbegin', feedItemHtml(payload.new));
+      // keep only the 10 most recent visible
+      const items = el.querySelectorAll('.feed-item');
+      if(items.length > 10) items[items.length-1].remove();
+    })
+    .subscribe();
 
   // Collect every field the person filled in #dynamicForm into one details object
   function collectFormData(){
@@ -1842,28 +2017,35 @@
     document.getElementById('pendingCount').textContent = `${(pending||[]).length} pending`;
     document.getElementById('pendingPill').style.display = (pending||[]).length ? 'flex' : 'none';
 
+    const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
+
+    const pendSection = document.querySelector('#view-admin .panel')?.closest('.block, section, div');
     const pendWrap = document.querySelector('#view-admin .panel');
     if(pendWrap){
-      pendWrap.innerHTML = (pending||[]).length ? (pending||[]).map(p => `
-        <div class="approve-row">
-          <div class="au-left"><div class="au-avatar">${initials(p.full_name||p.email)}</div><div><div class="au-name">${p.full_name||'(no name)'}</div><div class="au-email">${p.email}</div></div></div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <select class="role-select" id="role-${p.id}"><option value="engineer">Engineer</option><option value="admin">Admin</option><option value="superadmin">Superadmin</option></select>
-            <button class="btn approve" onclick="approveUser('${p.id}')">Approve</button>
-            <button class="btn reject" onclick="declineUser('${p.id}')">Decline</button>
-          </div>
-        </div>`).join('') : '<div style="padding:16px; color:var(--text-faint);">No pending sign-ins.</div>';
+      if(!isSuperadmin){
+        // Account management (approving/declining sign-ins) is Superadmin-only.
+        pendWrap.innerHTML = '<div style="padding:16px; color:var(--text-faint);">Account management is limited to Superadmins. Ask a Superadmin to review pending sign-ins.</div>';
+      } else {
+        pendWrap.innerHTML = (pending||[]).length ? (pending||[]).map(p => `
+          <div class="approve-row">
+            <div class="au-left"><div class="au-avatar">${initials(p.nickname||p.full_name||p.email)}</div><div><div class="au-name">${p.full_name||'(no name)'}${p.nickname ? ' ('+p.nickname+')' : ''}</div><div class="au-email">${p.email}</div></div></div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <select class="role-select" id="role-${p.id}"><option value="engineer">Engineer</option><option value="admin">Admin</option><option value="superadmin">Superadmin</option></select>
+              <button class="btn approve" onclick="approveUser('${p.id}')">Approve</button>
+              <button class="btn reject" onclick="declineUser('${p.id}')">Decline</button>
+            </div>
+          </div>`).join('') : '<div style="padding:16px; color:var(--text-faint);">No pending sign-ins.</div>';
+      }
     }
 
     const tbody = document.querySelector('#view-admin table.data tbody');
     if(tbody){
       tbody.innerHTML = (approved||[]).map(p => `
-        <tr><td class="rank-name">${p.full_name||p.email}</td><td class="mono" style="font-size:12px;">${p.email}</td>
+        <tr><td class="rank-name">${p.full_name||p.email} ${p.nickname ? '('+p.nickname+')' : ''}</td><td class="mono" style="font-size:12px;">${p.email}</td>
         <td><span class="tag ${p.role==='superadmin'?'gold':p.role==='admin'?'blue':'gray'}">${p.role}</span></td>
         <td><span class="tag green">Active</span></td>
-        <td><button class="btn remove" onclick="removeUser('${p.id}', this)">Remove</button></td></tr>`).join('');
+        <td>${isSuperadmin ? `<button class="btn remove" onclick="removeUser('${p.id}', this)">Remove</button>` : '<span style="color:var(--text-faint); font-size:12px;">—</span>'}</td></tr>`).join('');
     }
-    const countEl = document.querySelector('#view-admin .block-sub');
   }
 
   async function approveUser(id){
@@ -1884,6 +2066,115 @@
     const { error } = await sb.from('profiles').update({ status: 'pending' }).eq('id', id);
     if(error){ alert('Could not remove: ' + error.message); return; }
     loadAdminPanel();
+  }
+
+  // ============ MY TASKS (real data) ============
+  async function loadMyTasks(){
+    const el = document.getElementById('myTasksList');
+    if(!currentUser){ return; }
+    const { data, error } = await sb.from('tasks').select('*').eq('employee_id', currentUser.id).order('created_at', { ascending: false }).limit(30);
+    if(error){ el.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
+    myTasksRows = data || [];
+    if(!myTasksRows.length){ el.innerHTML = '<div class="placeholder-note">No tasks logged yet — use the form on the left to log your first one.</div>'; return; }
+    el.innerHTML = myTasksRows.map(t => `
+      <div class="mytask-item">
+        <div class="mt-top"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span><span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${t.edit_history && t.edit_history.length ? ' · edited' : ''}</span></div>
+        <div class="mt-title">${t.project_name || '(untitled)'}${t.lift_id ? ' — Lift <span class="mono">'+t.lift_id+'</span>' : ''}</div>
+        <div class="mt-desc">${t.notes || ''}</div>
+        <button class="btn" style="margin-top:6px; padding:3px 10px; font-size:11px;" onclick="openEditTask('${t.id}')">Edit</button>
+      </div>`).join('');
+  }
+
+  // ============ PROFILE (real data) ============
+  async function loadProfile(){
+    if(!currentProfile) return;
+    document.getElementById('profileAvatar').textContent = initials(currentProfile.nickname);
+    document.getElementById('profileName').textContent = `${currentProfile.full_name} (${currentProfile.nickname})`;
+    document.getElementById('profileRole').textContent =
+      currentProfile.role === 'superadmin' ? 'Superadmin' : currentProfile.role === 'admin' ? 'Admin' : 'R&I Engineer';
+
+    const { data, error } = await sb.from('tasks').select('category').eq('employee_id', currentUser.id);
+    const rows = data || [];
+    document.getElementById('profileTaskCount').textContent = rows.length;
+
+    const counts = {};
+    rows.forEach(r => { counts[r.category] = (counts[r.category]||0) + 1; });
+    const max = Math.max(1, ...Object.values(counts));
+    const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+    const bEl = document.getElementById('profileBreakdown');
+    bEl.innerHTML = sorted.length ? sorted.map(([cat,count]) => `
+      <div class="bar-row"><div class="bar-label">${catMeta[cat]?.name || cat}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/max*100)}%"></div></div><div class="bar-val">${count}</div></div>
+    `).join('') : '<div class="placeholder-note">No tasks logged yet.</div>';
+  }
+
+  // ============ DASHBOARD (real data, Admin/Superadmin) ============
+  async function populateDashEngineerSelect(){
+    const sel = document.getElementById('dashEngineerSelect');
+    if(sel.dataset.loaded) return;
+    const { data } = await sb.from('profiles').select('id, full_name, nickname').eq('status', 'active').order('full_name');
+    (data||[]).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.full_name} (${p.nickname || '—'})`;
+      sel.appendChild(opt);
+    });
+    sel.dataset.loaded = '1';
+  }
+
+  async function loadDashboard(){
+    await populateDashEngineerSelect();
+    const fromVal = document.getElementById('dashFromMonth').value; // "2026-01"
+    const toVal = document.getElementById('dashToMonth').value;
+    const engineerId = document.getElementById('dashEngineerSelect').value;
+
+    let query = sb.from('tasks').select('*, profiles(full_name, nickname)');
+    if(fromVal) query = query.gte('created_at', fromVal + '-01');
+    if(toVal){
+      const [y,m] = toVal.split('-').map(Number);
+      const nextMonth = new Date(y, m, 1).toISOString().slice(0,10); // first day of month AFTER "to"
+      query = query.lt('created_at', nextMonth);
+    }
+    if(engineerId) query = query.eq('employee_id', engineerId);
+
+    const { data, error } = await query;
+    document.getElementById('dashAsOf').textContent = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    if(error){ document.getElementById('dashCategoryBreakdown').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
+
+    const rows = data || [];
+    const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
+    const engineerSet = new Set(rows.map(r=>r.employee_id));
+    const catCounts = {};
+    rows.forEach(r => { catCounts[r.category] = (catCounts[r.category]||0) + 1; });
+
+    document.getElementById('dashStatActivities').textContent = rows.length;
+    document.getElementById('dashStatLifts').textContent = liftSet.size;
+    document.getElementById('dashStatEngineers').textContent = engineerSet.size;
+    document.getElementById('dashStatCategories').textContent = Object.keys(catCounts).length;
+
+    const maxCat = Math.max(1, ...Object.values(catCounts));
+    const catSorted = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
+    document.getElementById('breakdownTitle').textContent = engineerId ? 'Activity by category — this engineer' : 'Activity by category — whole team';
+    document.getElementById('dashCategoryBreakdown').innerHTML = catSorted.length ? catSorted.map(([cat,count]) => `
+      <div class="bar-row"><div class="bar-label">${catMeta[cat]?.name || cat}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/maxCat*100)}%"></div></div><div class="bar-val">${count}</div></div>
+    `).join('') : '<div class="placeholder-note">No activity in this range.</div>';
+
+    // Leaderboard: per engineer totals + their top category, built from the same filtered rows
+    const byEngineer = {};
+    rows.forEach(r => {
+      const id = r.employee_id;
+      if(!byEngineer[id]) byEngineer[id] = { name: r.profiles ? displayName(r.profiles) : '—', total: 0, cats: {} };
+      byEngineer[id].total++;
+      byEngineer[id].cats[r.category] = (byEngineer[id].cats[r.category]||0) + 1;
+    });
+    const leaderboard = Object.entries(byEngineer).sort((a,b) => b[1].total - a[1].total);
+    const lbBody = document.getElementById('dashLeaderboardBody');
+    lbBody.innerHTML = leaderboard.length ? leaderboard.map(([id, e]) => {
+      const topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0];
+      return `<tr style="cursor:pointer;" onclick="document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">
+        <td><div class="rank-name">${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td>
+        <td><button class="btn" style="padding:4px 10px; font-size:11.5px;" onclick="event.stopPropagation(); document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">Inspect</button></td>
+      </tr>`;
+    }).join('') : '<tr><td colspan="4" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
   }
 </script>
 
