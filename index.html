@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trace — R&I Lift Ops</title>
+<title>Walton Lift R&I</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root{
     --bg:#EEF0F4;
@@ -562,6 +563,25 @@
 </head>
 <body>
 
+<!-- ============ AUTH GATE SCREENS ============ -->
+<div id="authLoading" style="position:fixed; inset:0; z-index:999; background:var(--bg); display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; color:var(--text-dim);">
+  Loading Walton Lift R&amp;I…
+</div>
+<div id="authLogin" style="display:none; position:fixed; inset:0; z-index:999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
+  <div style="font-family:'Space Grotesk'; font-weight:700; font-size:22px; margin-bottom:6px; color:var(--text);">Walton Lift R&amp;I</div>
+  <div style="color:var(--text-dim); margin-bottom:28px; max-width:360px;">Sign in with your Gmail account to log tasks and trace lift history. A Superadmin will need to approve new accounts.</div>
+  <button onclick="signInWithGoogle()" style="display:flex; align-items:center; gap:10px; padding:12px 22px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer;">
+    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.6l-6.6-5.6C29.6 34.6 27 35.5 24 35.5c-5.3 0-9.6-3.4-11.3-8.1l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 2.9-3.1 5.3-5.8 6.8l6.6 5.6C39.9 37.7 44 31.4 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+    Sign in with Google
+  </button>
+</div>
+<div id="authPending" style="display:none; position:fixed; inset:0; z-index:999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
+  <div style="font-family:'Space Grotesk'; font-weight:700; font-size:20px; margin-bottom:6px; color:var(--text);">Waiting for approval</div>
+  <div style="color:var(--text-dim); margin-bottom:24px; max-width:360px;">You're signed in as <span id="pendingEmail" style="font-weight:600;"></span>. A Superadmin needs to approve your account before you can use Walton Lift R&amp;I. Check back soon.</div>
+  <button onclick="signOutUser()" style="padding:10px 18px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text-dim); cursor:pointer;">Sign out</button>
+</div>
+
+<div id="appShell" style="display:none;">
 <header class="topnav">
   <div class="nav-left">
     <button class="hamburger" onclick="toggleDrawer()" aria-label="Open menu">
@@ -596,8 +616,8 @@
       <button class="theme-dot" style="background:#202329;" onclick="setTheme('dark', this)" title="Dark"></button>
       <button class="theme-dot" style="background:#05070D;" onclick="setTheme('midnight', this)" title="Midnight"></button>
     </div>
-    <div class="pending-pill">● <span>3 pending</span></div>
-    <div class="avatar" title="Arun (66636) · Superadmin">AR</div>
+    <div class="pending-pill" id="pendingPill" style="display:none;">● <span id="pendingCount">0 pending</span></div>
+    <div class="avatar" id="userAvatar" title="Sign out" onclick="signOutUser()" style="cursor:pointer;">--</div>
   </div>
 </header>
 
@@ -1166,7 +1186,7 @@
 
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
-    <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Trace has three roles — this page is only reachable by Superadmins</div></div></div>
+    <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles — this page is only reachable by Superadmins</div></div></div>
     <div class="role-grid" style="margin-bottom:32px;">
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
@@ -1181,7 +1201,7 @@
       <div class="role-card">
         <div class="role-icon" style="background:var(--red-dim); color:var(--red);">S</div>
         <div class="role-name">Superadmin</div>
-        <div class="role-desc">Full system access. Only Superadmins can approve pending sign-ins, assign roles, and remove people from Trace.</div>
+        <div class="role-desc">Full system access. Only Superadmins can approve pending sign-ins, assign roles, and remove people from Walton Lift R&amp;I.</div>
       </div>
     </div>
 
@@ -1225,6 +1245,7 @@
   </div>
 
 </main>
+</div><!-- /appShell -->
 
 <script>
   function showView(name){
@@ -1233,7 +1254,10 @@
     document.querySelectorAll('[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === name));
     window.scrollTo({top:0, behavior:'smooth'});
   }
-  document.querySelectorAll('nav.tabs button[data-view]').forEach(t => t.addEventListener('click', () => showView(t.dataset.view)));
+  document.querySelectorAll('nav.tabs button[data-view]').forEach(t => t.addEventListener('click', () => {
+    showView(t.dataset.view);
+    if(t.dataset.view === 'admin' && typeof loadAdminPanel === 'function') loadAdminPanel();
+  }));
 
   // ---- Mobile: left slide-in drawer (hamburger menu) ----
   function toggleDrawer(){
@@ -1545,7 +1569,7 @@
   // ---- Live date/time (nav pill + dashboard "as of") ----
   // ---- Admin: remove a user from the system ----
   function removeUser(name, btn){
-    if(confirm(`Remove ${name} from Trace? They will lose access immediately and will need to re-register and be re-approved.`)){
+    if(confirm(`Remove ${name} from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.`)){
       const row = btn.closest('tr');
       row.style.opacity = '0.4';
       row.querySelector('td:last-child').innerHTML = '<span class="tag red">Removed</span>';
@@ -1604,6 +1628,263 @@
       }, 45 + i*10);
     });
   });
+</script>
+
+<script>
+  // ============ SUPABASE SETUP ============
+  const SUPABASE_URL = 'https://hsqzrzmdxotorgwqrour.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzcXpyem1keG90b3Jnd3Fyb3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzUwMDksImV4cCI6MjEwMzMxMTAwOX0.TebAzaiasJnK2Qsg8A1SpH8TQ5iC0TZcgTxrnDS2Qgo';
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  let currentUser = null;   // Supabase auth user
+  let currentProfile = null; // row from public.profiles
+
+  function initials(name){
+    if(!name) return '--';
+    return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+  }
+
+  async function signInWithGoogle(){
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  }
+  async function signOutUser(){
+    await sb.auth.signOut();
+    window.location.reload();
+  }
+
+  function showAuthScreen(which){
+    document.getElementById('authLoading').style.display = which==='loading' ? 'flex' : 'none';
+    document.getElementById('authLogin').style.display = which==='login' ? 'flex' : 'none';
+    document.getElementById('authPending').style.display = which==='pending' ? 'flex' : 'none';
+    document.getElementById('appShell').style.display = which==='app' ? 'block' : 'none';
+  }
+
+  async function boot(){
+    showAuthScreen('loading');
+    const { data: { session } } = await sb.auth.getSession();
+    if(!session){ showAuthScreen('login'); return; }
+    currentUser = session.user;
+
+    // fetch (or wait for trigger to create) the profile row
+    let { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if(!profile){
+      // trigger may not have fired yet on a brand-new signup — try once more shortly
+      await new Promise(r => setTimeout(r, 1200));
+      ({ data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single());
+    }
+    currentProfile = profile;
+
+    if(!profile || profile.status !== 'active'){
+      document.getElementById('pendingEmail').textContent = currentUser.email;
+      showAuthScreen('pending');
+      return;
+    }
+
+    applyRoleUI(profile.role);
+    document.getElementById('userAvatar').textContent = initials(profile.full_name || profile.email);
+    document.getElementById('userAvatar').title = `${profile.full_name || profile.email} · ${profile.role} (sign out)`;
+    showAuthScreen('app');
+
+    if(profile.role === 'superadmin'){ loadAdminPanel(); }
+  }
+
+  function applyRoleUI(role){
+    const adminOnly = document.querySelectorAll('[data-view="admin"]');
+    adminOnly.forEach(el => el.style.display = role === 'superadmin' ? '' : 'none');
+    const teamViews = document.querySelectorAll('[data-view="dashboard"], [data-view="gantt"]');
+    teamViews.forEach(el => el.style.display = (role === 'admin' || role === 'superadmin') ? '' : 'none');
+  }
+
+  sb.auth.onAuthStateChange((event) => {
+    if(event === 'SIGNED_IN' || event === 'SIGNED_OUT') boot();
+  });
+  document.addEventListener('DOMContentLoaded', boot);
+
+  // ============ REAL TASK LOGGING (overrides mockup versions) ============
+  async function showCategoryLog(key){
+    currentCatKey = key;
+    const meta = catMeta[key];
+    const color = CAT_COLOR[key];
+    const titleEl = document.getElementById('catLogTitle');
+    titleEl.textContent = meta.name;
+    titleEl.style.color = color;
+    document.getElementById('catLogAddBtn').style.borderColor = color;
+    document.getElementById('catLogAddBtn').style.color = color;
+    document.getElementById('catLogSearchWrap').style.display = meta.hasLift ? 'flex' : 'none';
+    document.getElementById('catLogNoLiftNote').style.display = meta.hasLift ? 'none' : 'block';
+    document.getElementById('catLogSearch').value = '';
+    document.getElementById('catLogSub').textContent = 'Loading…';
+    showView('category');
+
+    const { data, error } = await sb.from('tasks')
+      .select('*, profiles(full_name)')
+      .eq('category', key)
+      .order('created_at', { ascending: false });
+
+    const list = (data || []).map(row => ({
+      liftId: row.lift_id || '—',
+      subject: row.project_name || '(untitled)',
+      employee: row.profiles ? row.profiles.full_name : '—',
+      summary: row.notes || '',
+      date: new Date(row.created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'})
+    }));
+    categoryEntries[key] = list; // keep search-by-lift-id filter working
+    document.getElementById('catLogSub').textContent = meta.hasLift
+      ? `${list.length} entries shown · search below to trace by Lift ID`
+      : `${list.length} entries shown · not tied to a Lift ID`;
+    renderCategoryRows(list, meta.hasLift);
+  }
+
+  function renderCategoryRows(list, hasLift){
+    document.getElementById('catLogThead').innerHTML = hasLift
+      ? '<tr><th>Lift ID</th><th>Activity</th><th>Engineer</th><th>Date</th></tr>'
+      : '<tr><th>Activity</th><th>Engineer</th><th>Date</th></tr>';
+    document.getElementById('catLogBody').innerHTML = list.map(e => hasLift
+      ? `<tr><td class="mono" style="font-weight:600;">${e.liftId||'—'}</td><td>${e.subject}<div class="rank-sub">${e.summary||''}</div></td><td>${e.employee}</td><td class="mono" style="font-size:12px;">${e.date}</td></tr>`
+      : `<tr><td>${e.subject}<div class="rank-sub">${e.summary||''}</div></td><td>${e.employee}</td><td class="mono" style="font-size:12px;">${e.date}</td></tr>`
+    ).join('');
+    document.getElementById('catLogEmpty').style.display = list.length ? 'none' : 'block';
+    document.getElementById('catLogTable').style.display = list.length ? 'table' : 'none';
+  }
+
+  // Collect every field the person filled in #dynamicForm into one details object
+  function collectFormData(){
+    const cat = document.getElementById('catSelect').value;
+    const fields = taskForms[cat] || [];
+    const details = {};
+    let liftId = null;
+    let projectName = null;
+
+    const textInputs = document.querySelectorAll('#dynamicForm .form-field');
+    let inputIndex = 0;
+    fields.forEach(f => {
+      if(f.t === 'text'){
+        const input = document.querySelectorAll('#dynamicForm input[type="text"]:not([disabled])')[inputIndex++];
+        const val = input ? input.value.trim() : '';
+        details[f.l] = val;
+        if(f.l === 'Lift ID') liftId = val || null;
+        if(!projectName && f.section === 'identity') projectName = val;
+      } else if(f.t === 'row2text'){
+        // row2text uses two inputs but they share the same querySelectorAll pool above only for type=text;
+      } else if(f.t === 'textarea'){
+        // handled below separately
+      }
+    });
+    // row2text + textarea values, matched by label via DOM order
+    document.querySelectorAll('#dynamicForm .form-row-2').forEach(row => {
+      const labels = row.querySelectorAll('.field-label');
+      const inputs = row.querySelectorAll('input[type="text"]');
+      labels.forEach((lab, i) => { if(inputs[i]) details[lab.textContent] = inputs[i].value.trim(); });
+    });
+    document.querySelectorAll('#dynamicForm textarea').forEach(ta => {
+      const label = ta.closest('.form-field').querySelector('.field-label').textContent.replace('*','');
+      details[label] = ta.value.trim();
+    });
+    document.querySelectorAll('#dynamicForm .chip-group').forEach(group => {
+      const label = group.closest('.form-field').querySelector('.field-label').textContent.replace('*','').split('(')[0].trim();
+      const picked = Array.from(group.querySelectorAll('.chip-opt.picked')).map(c => c.dataset.opt);
+      details[label] = picked;
+    });
+
+    return { category: cat, lift_id: liftId, project_name: projectName || '(untitled)', details };
+  }
+
+  function queueTask(){
+    const data = collectFormData();
+    const cat = document.getElementById('catSelect');
+    const label = cat.options[cat.selectedIndex].text;
+    queuedTasks.push({ label, preview: data.project_name, data });
+    renderQueue();
+    renderTaskForm();
+  }
+
+  function renderQueue(){
+    const el = document.getElementById('taskQueue');
+    el.innerHTML = queuedTasks.map((q,i)=>
+      `<div class="queued-item"><span><b>${q.label}</b> — ${q.preview}</span><span class="qi-remove" onclick="removeQueued(${i})">✕</span></div>`
+    ).join('');
+    document.getElementById('submitCount').textContent = queuedTasks.length ? `(${queuedTasks.length + 1})` : '';
+  }
+
+  async function submitTask(){
+    if(!currentUser || !currentProfile || currentProfile.status !== 'active'){
+      alert('You must be signed in and approved to submit tasks.');
+      return;
+    }
+    const rows = queuedTasks.map(q => q.data);
+    rows.push(collectFormData());
+
+    const payload = rows.map(r => ({
+      category: r.category,
+      lift_id: r.lift_id,
+      employee_id: currentUser.id,
+      project_name: r.project_name,
+      details: r.details,
+      notes: r.details['Notes'] || r.details['Remarks'] || r.details['Notes / Challenges / Achievements'] || null
+    }));
+
+    const { error } = await sb.from('tasks').insert(payload);
+    if(error){
+      alert('Could not save: ' + error.message);
+      return;
+    }
+    alert(`Saved ${payload.length} task${payload.length>1?'s':''} to Walton Lift R&I.`);
+    queuedTasks = [];
+    renderQueue();
+    renderTaskForm();
+  }
+
+  // ============ REAL ADMIN PANEL ============
+  async function loadAdminPanel(){
+    const { data: pending } = await sb.from('profiles').select('*').eq('status', 'pending');
+    const { data: approved } = await sb.from('profiles').select('*').eq('status', 'active');
+
+    document.getElementById('pendingCount').textContent = `${(pending||[]).length} pending`;
+    document.getElementById('pendingPill').style.display = (pending||[]).length ? 'flex' : 'none';
+
+    const pendWrap = document.querySelector('#view-admin .panel');
+    if(pendWrap){
+      pendWrap.innerHTML = (pending||[]).length ? (pending||[]).map(p => `
+        <div class="approve-row">
+          <div class="au-left"><div class="au-avatar">${initials(p.full_name||p.email)}</div><div><div class="au-name">${p.full_name||'(no name)'}</div><div class="au-email">${p.email}</div></div></div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <select class="role-select" id="role-${p.id}"><option value="engineer">Engineer</option><option value="admin">Admin</option><option value="superadmin">Superadmin</option></select>
+            <button class="btn approve" onclick="approveUser('${p.id}')">Approve</button>
+            <button class="btn reject" onclick="declineUser('${p.id}')">Decline</button>
+          </div>
+        </div>`).join('') : '<div style="padding:16px; color:var(--text-faint);">No pending sign-ins.</div>';
+    }
+
+    const tbody = document.querySelector('#view-admin table.data tbody');
+    if(tbody){
+      tbody.innerHTML = (approved||[]).map(p => `
+        <tr><td class="rank-name">${p.full_name||p.email}</td><td class="mono" style="font-size:12px;">${p.email}</td>
+        <td><span class="tag ${p.role==='superadmin'?'gold':p.role==='admin'?'blue':'gray'}">${p.role}</span></td>
+        <td><span class="tag green">Active</span></td>
+        <td><button class="btn remove" onclick="removeUser('${p.id}', this)">Remove</button></td></tr>`).join('');
+    }
+    const countEl = document.querySelector('#view-admin .block-sub');
+  }
+
+  async function approveUser(id){
+    const roleSel = document.getElementById('role-'+id);
+    const role = roleSel ? roleSel.value : 'engineer';
+    const { error } = await sb.from('profiles').update({ role, status: 'active' }).eq('id', id);
+    if(error){ alert('Could not approve: ' + error.message); return; }
+    loadAdminPanel();
+  }
+  async function declineUser(id){
+    if(!confirm('Decline this sign-in? They will need to register again.')) return;
+    const { error } = await sb.from('profiles').delete().eq('id', id);
+    if(error){ alert('Could not decline: ' + error.message); return; }
+    loadAdminPanel();
+  }
+  async function removeUser(id, btn){
+    if(!confirm('Remove this person from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.')) return;
+    const { error } = await sb.from('profiles').update({ status: 'pending' }).eq('id', id);
+    if(error){ alert('Could not remove: ' + error.message); return; }
+    loadAdminPanel();
+  }
 </script>
 
 </body>
