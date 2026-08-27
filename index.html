@@ -660,10 +660,10 @@
 
 <!-- ============ AUTH GATE SCREENS ============ -->
 <div id="authLoading" style="position:fixed; inset:0; z-index:999; background:var(--bg); display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; color:var(--text-dim);">
-  Loading Walton Lift R&I…
+  Loading Walton Lift R&amp;I…
 </div>
 <div id="authLogin" style="display:none; position:fixed; inset:0; z-index:999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
-  <div style="font-family:'Space Grotesk'; font-weight:700; font-size:22px; margin-bottom:6px; color:var(--text);">Walton Lift R&I</div>
+  <div style="font-family:'Space Grotesk'; font-weight:700; font-size:22px; margin-bottom:6px; color:var(--text);">Take Salam from Walton Lift R&amp;I</div>
   <div style="color:var(--text-dim); margin-bottom:28px; max-width:360px;">Sign in with your Gmail account to log tasks and trace lift history. A Superadmin will need to approve new accounts.</div>
   <button onclick="signInWithGoogle()" style="display:flex; align-items:center; gap:10px; padding:12px 22px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:14px; font-weight:600; cursor:pointer;">
     <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.5 29.6 4 24 4 16.3 4 9.6 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.5-2.1 14.3-5.6l-6.6-5.6C29.6 34.6 27 35.5 24 35.5c-5.3 0-9.6-3.4-11.3-8.1l-6.6 5.1C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1 2.9-3.1 5.3-5.8 6.8l6.6 5.6C39.9 37.7 44 31.4 44 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
@@ -672,14 +672,14 @@
 </div>
 <div id="authNickname" style="display:none; position:fixed; inset:0; z-index:999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
   <div style="font-family:'Space Grotesk'; font-weight:700; font-size:20px; margin-bottom:6px; color:var(--text);">One last thing — set your nickname</div>
-  <div style="color:var(--text-dim); margin-bottom:20px; max-width:380px;">Enter your Employee ID. This is how you'll appear across Walton Lift R&I.</div>
+  <div style="color:var(--text-dim); margin-bottom:20px; max-width:380px;">Enter your Employee ID. This is how you'll appear across Walton Lift R&amp;I.</div>
   <input id="nicknameInput" type="text" placeholder="e.g. 44305" style="padding:11px 14px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-family:'IBM Plex Mono'; font-size:14px; width:260px; text-align:center; margin-bottom:10px;">
   <div id="nicknameError" style="color:#e0665a; font-size:12.5px; min-height:16px; margin-bottom:10px;"></div>
   <button onclick="saveNickname()" style="padding:11px 22px; border-radius:9px; border:none; background:var(--accent, #6d8bff); color:#0d0f14; font-weight:700; cursor:pointer;">Save and continue</button>
 </div>
 <div id="authPending" style="display:none; position:fixed; inset:0; z-index:999; background:var(--bg); flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:24px;">
   <div style="font-family:'Space Grotesk'; font-weight:700; font-size:20px; margin-bottom:6px; color:var(--text);">Waiting for approval</div>
-  <div style="color:var(--text-dim); margin-bottom:24px; max-width:360px;">You're signed in as <span id="pendingEmail" style="font-weight:600;"></span>. A Superadmin needs to approve your account before you can use Walton Lift R&I. Check back soon.</div>
+  <div style="color:var(--text-dim); margin-bottom:24px; max-width:360px;">You're signed in as <span id="pendingEmail" style="font-weight:600;"></span>. A Superadmin needs to approve your account before you can use Walton Lift R&amp;I. Check back soon.</div>
   <button onclick="signOutUser()" style="padding:10px 18px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text-dim); cursor:pointer;">Sign out</button>
 </div>
 
@@ -1135,7 +1135,7 @@
 
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
-    <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&I has three roles</div></div></div>
+    <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
     <div class="role-grid" style="margin-bottom:32px;">
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
@@ -1150,7 +1150,7 @@
       <div class="role-card">
         <div class="role-icon" style="background:var(--red-dim); color:var(--red);">S</div>
         <div class="role-name">Superadmin</div>
-        <div class="role-desc">Full system access. Only Superadmins can approve pending sign-ins, assign roles, and remove people from Walton Lift R&I.</div>
+        <div class="role-desc">Full system access. Only Superadmins can approve pending sign-ins, assign roles, and remove people from Walton Lift R&amp;I.</div>
       </div>
     </div>
 
