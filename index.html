@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Take Salam from Walton Lift R&I</title>
+<title>Walton Lift R&I</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1395,7 +1395,7 @@
   // ---- Live date/time (nav pill + dashboard "as of") ----
   // ---- Admin: remove a user from the system ----
   function removeUser(name, btn){
-    if(confirm(`Remove ${name} from Take Salam from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.`)){
+    if(confirm(`Remove ${name} from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.`)){
       const row = btn.closest('tr');
       row.style.opacity = '0.4';
       row.querySelector('td:last-child').innerHTML = '<span class="tag red">Removed</span>';
@@ -1487,7 +1487,7 @@
   });
   function confirmSignOut(){
     toggleAccountMenu();
-    if(confirm('Log out of Take Salam from Walton Lift R&I?')) signOutUser();
+    if(confirm('Log out of Walton Lift R&I?')) signOutUser();
   }
   async function signOutUser(){
     await sb.auth.signOut();
@@ -1881,7 +1881,7 @@
       alert('Could not save: ' + error.message);
       return;
     }
-    alert(`Saved ${payload.length} task${payload.length>1?'s':''} to Take Salam from Walton Lift R&I.`);
+    alert(`Saved ${payload.length} task${payload.length>1?'s':''} to Walton Lift R&I.`);
     queuedTasks = [];
     renderQueue();
     renderTaskForm();
@@ -1944,7 +1944,7 @@
     loadAdminPanel();
   }
   async function removeUser(id, btn){
-    if(!confirm('Remove this person from Take Salam from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.')) return;
+    if(!confirm('Remove this person from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.')) return;
     const { error } = await sb.from('profiles').update({ status: 'pending' }).eq('id', id);
     if(error){ alert('Could not remove: ' + error.message); return; }
     loadAdminPanel();
