@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Walton Lift R&I</title>
+<title>Take Salam from Walton Lift R&I</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -563,6 +563,55 @@
     .nav-center{grid-area:center; width:100%;}
     .nav-center .clock-pill{width:auto; white-space:nowrap; margin:0 auto;}
   }
+
+  /* ============================================================
+     LIQUID GLASS UI LAYER — adds contrast + iOS-style translucency
+     on top of the existing design without touching layout/markup.
+  ============================================================ */
+  header.topnav{
+    background:linear-gradient(180deg, color-mix(in srgb, var(--surface) 78%, transparent), color-mix(in srgb, var(--surface) 60%, transparent));
+    backdrop-filter:blur(22px) saturate(180%);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);
+    border-bottom:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    box-shadow:0 8px 28px rgba(0,0,0,0.16), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .kpi-card, .form-card, .role-card, #accountMenu, #editModal .panel{
+    background:color-mix(in srgb, var(--surface) 72%, transparent) !important;
+    backdrop-filter:blur(18px) saturate(160%);
+    -webkit-backdrop-filter:blur(18px) saturate(160%);
+    border:1px solid color-mix(in srgb, var(--border) 65%, transparent) !important;
+    box-shadow:0 6px 20px rgba(0,0,0,0.10), inset 0 1px 0 rgba(255,255,255,0.05);
+    border-radius:18px !important;
+  }
+  .avatar{
+    background:linear-gradient(145deg, color-mix(in srgb, var(--accent) 85%, white 15%), var(--accent));
+    box-shadow:0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent), inset 0 1px 0 rgba(255,255,255,0.35);
+    border-radius:50%;
+  }
+  .queue-btn, .btn, .submit-btn, .fselect{
+    border-radius:999px !important;
+    backdrop-filter:blur(10px) saturate(160%);
+    -webkit-backdrop-filter:blur(10px) saturate(160%);
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .queue-btn:hover, .btn:hover, .submit-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 6px 16px rgba(0,0,0,0.18);
+  }
+  .submit-btn{
+    background:linear-gradient(145deg, color-mix(in srgb, var(--accent) 92%, white 8%), var(--accent)) !important;
+    box-shadow:0 6px 18px color-mix(in srgb, var(--accent) 40%, transparent);
+  }
+  nav.tabs button{border-radius:999px !important;}
+  nav.tabs button.active{
+    background:color-mix(in srgb, var(--accent) 18%, transparent) !important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .brand-mark{border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.4);}
+  input[type="text"], input[type="date"], input[type="month"], input[type="number"], textarea, select{
+    border-radius:12px !important;
+    backdrop-filter:blur(6px);
+  }
 </style>
 </head>
 <body>
@@ -643,7 +692,14 @@
       <button class="theme-dot" style="background:#05070D;" onclick="setTheme('midnight', this)" title="Midnight"></button>
     </div>
     <div class="pending-pill" id="pendingPill" style="display:none;">● <span id="pendingCount">0 pending</span></div>
-    <div class="avatar" id="userAvatar" title="Sign out" onclick="signOutUser()" style="cursor:pointer;">--</div>
+    <div style="position:relative;">
+      <div class="avatar" id="userAvatar" title="Account menu" onclick="toggleAccountMenu()" style="cursor:pointer;">--</div>
+      <div id="accountMenu" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:8px; min-width:190px; z-index:200; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
+        <div id="accountMenuName" style="font-size:12.5px; font-weight:600; padding:6px 10px 8px; border-bottom:1px solid var(--border); margin-bottom:4px;">—</div>
+        <div style="padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); showView('profile'); onViewShown('profile');">View profile</div>
+        <div style="padding:8px 10px; border-radius:8px; cursor:pointer; font-size:13px; color:#e0665a;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="confirmSignOut()">Log out</div>
+      </div>
+    </div>
   </div>
 </header>
 
@@ -772,70 +828,11 @@
   <div class="view" id="view-search">
     <div class="searchbar" style="max-width:100%; margin-bottom:26px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" value="310563" style="font-weight:600;">
-      <button>Trace</button>
+      <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
+      <button onclick="runLiftSearch()">Trace</button>
     </div>
 
-    <div class="lift-header">
-      <div class="lift-id-row">
-        <div class="lift-id">#310563</div>
-        <div class="status-chip" style="background:var(--amber-dim); color:var(--amber);">Installation Support Active</div>
-      </div>
-      <div class="lift-project">Anwar Sadat — MRL, 630kg, 7 Floors</div>
-      <div class="lift-specs specs-4" style="row-gap:18px;">
-        <div><div class="spec-l">Model Number</div><div class="spec-v">WL-MRL-630</div></div>
-        <div><div class="spec-l">Lift Type</div><div class="spec-v">MRL</div></div>
-        <div><div class="spec-l">Capacity</div><div class="spec-v">630 kg</div></div>
-        <div><div class="spec-l">F/S/O</div><div class="spec-v">7/7/7</div></div>
-        <div><div class="spec-l">Cabin Size</div><div class="spec-v">1100x1400x2200</div></div>
-        <div><div class="spec-l">Door Type</div><div class="spec-v">Center Opening</div></div>
-        <div><div class="spec-l">Door Opening Width</div><div class="spec-v">800mm</div></div>
-      </div>
-    </div>
-
-    <div class="block-head"><div class="block-title">Full timeline</div><div class="block-sub">Entry to current status</div></div>
-    <div class="timeline">
-      <div class="t-item">
-        <div class="t-dot"></div>
-        <div class="t-card">
-          <div class="t-top"><div class="t-title">Pre-sales layout support</div><div class="t-date">08 Apr 2026</div></div>
-          <div class="t-desc">Draft capacity solution and BOM shared during sales conversation.</div>
-          <div class="t-emp">Logged by Rusafi (44305) · Pre-Sales Support</div>
-        </div>
-      </div>
-      <div class="t-item">
-        <div class="t-dot red"></div>
-        <div class="t-card">
-          <div class="t-top"><div class="t-title">Survey flagged — wrong data</div><div class="t-date">21 Apr 2026</div></div>
-          <div class="t-desc">Full survey found incorrect; cabin and motor base had to be reproduced. ~৳60,000 of material affected.</div>
-          <div class="t-emp">Logged by Md. Joynul Abedin (59872) · Wrong Survey</div>
-        </div>
-      </div>
-      <div class="t-item">
-        <div class="t-dot"></div>
-        <div class="t-card">
-          <div class="t-top"><div class="t-title">Revised layout, DXF &amp; BOM</div><div class="t-date">30 Apr 2026</div></div>
-          <div class="t-desc">Final layout approved after re-survey. Packing list generated.</div>
-          <div class="t-emp">Logged by Iftekhar (44154) · Post-Sales Project</div>
-        </div>
-      </div>
-      <div class="t-item">
-        <div class="t-dot green"></div>
-        <div class="t-card">
-          <div class="t-top"><div class="t-title">Checklist submitted — sent to production</div><div class="t-date">14 May 2026</div></div>
-          <div class="t-desc">Pre-production checklist completed. Projected production submission date: 22 May 2026.</div>
-          <div class="t-emp">Logged by Mim (50309) · Pre-Production Checklist</div>
-        </div>
-      </div>
-      <div class="t-item">
-        <div class="t-dot amber"></div>
-        <div class="t-card">
-          <div class="t-top"><div class="t-title">Rail &amp; bracket issue on site</div><div class="t-date">03 Aug 2026</div></div>
-          <div class="t-desc">Bracket spacing mismatch reported from site. Resolved by phone consultation with revised bracket drawing.</div>
-          <div class="t-emp">Logged by Hakim (57913) · Installation Support</div>
-        </div>
-      </div>
-    </div>
+    <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID above and click Trace to see its full history across every category.</div></div>
   </div>
 
   <!-- ============ CATEGORY LOG ============ -->
@@ -928,10 +925,10 @@
 
     <div class="kpi-card">
       <div>
-        <div class="kpi-num" id="profileTaskCount">—</div>
-        <div class="kpi-lbl">Total tasks logged (all-time)</div>
+        <div class="kpi-num" id="profileKpiScore">—</div>
+        <div class="kpi-lbl" id="profileKpiLabel">KPI score</div>
       </div>
-      <div style="font-size:11.5px; color:var(--text-faint); max-width:180px; text-align:right;">Weighted KPI scoring is coming in a later update — this shows your raw activity count for now.</div>
+      <div style="font-size:11.5px; color:var(--text-faint); max-width:180px; text-align:right;"><span id="profileTaskCount">—</span> total tasks logged (all-time)</div>
     </div>
 
     <div class="split-grid">
@@ -985,10 +982,10 @@
     </div>
 
     <div class="stat-row">
-      <div class="stat-card"><div class="n">8</div><div class="l">Total dev projects</div></div>
-      <div class="stat-card"><div class="n">6</div><div class="l">In progress</div></div>
-      <div class="stat-card"><div class="n">2</div><div class="l">Done this year</div></div>
-      <div class="stat-card"><div class="n">6/8</div><div class="l">With financial outcome</div></div>
+      <div class="stat-card"><div class="n" id="devStatTotal">—</div><div class="l">Total dev projects</div></div>
+      <div class="stat-card"><div class="n" id="devStatProgress">—</div><div class="l">In progress</div></div>
+      <div class="stat-card"><div class="n" id="devStatDone">—</div><div class="l">Done this year</div></div>
+      <div class="stat-card"><div class="n" id="devStatFin">—</div><div class="l">With financial outcome</div></div>
     </div>
 
     <!-- new dev task input zone: full-width, organized as numbered cards -->
@@ -1000,16 +997,16 @@
           <div class="form-card-head"><div class="form-card-badge">1</div><div class="form-card-title">Project Identity</div></div>
           <div class="form-field">
             <div class="field-label">Project Name<span class="required-star">*</span></div>
-            <input type="text" placeholder="e.g. Regenerative Drive Pilot">
+            <input type="text" id="devName" placeholder="e.g. Regenerative Drive Pilot">
           </div>
           <div class="form-row-2">
             <div class="form-field">
               <div class="field-label">Lead<span class="required-star">*</span></div>
-              <select><option>Arun (66636)</option><option>Hakim (57913)</option><option>Iftekhar (44154)</option><option>Mim (50309)</option><option>Rusafi (44305)</option><option>Mahabub (58150)</option><option>Hamid (68021)</option><option>Fahin (68032)</option></select>
+              <select id="devLead"><option value="">Loading…</option></select>
             </div>
             <div class="form-field">
               <div class="field-label">Impact Type</div>
-              <select><option>Product Development</option><option>Process Improvement</option><option>Market Development</option><option>Business Development</option></select>
+              <select id="devImpact"><option>Product Development</option><option>Process Improvement</option><option>Market Development</option><option>Business Development</option></select>
             </div>
           </div>
         </div>
@@ -1018,27 +1015,19 @@
           <div class="form-card-head"><div class="form-card-badge">2</div><div class="form-card-title">Team</div></div>
           <div class="form-field">
             <div class="field-label">Collaborators <span class="chip-hint">tag anyone contributing</span></div>
-            <div class="chip-group">
-              <div class="chip-opt" onclick="pickChip(this)">Hakim (57913)</div>
-              <div class="chip-opt" onclick="pickChip(this)">Iftekhar (44154)</div>
-              <div class="chip-opt" onclick="pickChip(this)">Mim (50309)</div>
-              <div class="chip-opt" onclick="pickChip(this)">Rusafi (44305)</div>
-              <div class="chip-opt" onclick="pickChip(this)">Mahabub (58150)</div>
-              <div class="chip-opt" onclick="pickChip(this)">Fahin (68032)</div>
-              <div class="chip-opt" onclick="pickChip(this)">+ Add person</div>
-            </div>
+            <div class="chip-group" id="devCollabChips"><div class="chip-opt">Loading…</div></div>
           </div>
         </div>
 
         <div class="form-card">
           <div class="form-card-head"><div class="form-card-badge">3</div><div class="form-card-title">Timeline &amp; Status</div></div>
           <div class="form-row-2">
-            <div class="form-field"><div class="field-label">Start Date<span class="required-star">*</span></div><input type="text" placeholder="dd/mm/yyyy"></div>
-            <div class="form-field"><div class="field-label">Target Completion</div><input type="text" placeholder="dd/mm/yyyy"></div>
+            <div class="form-field"><div class="field-label">Start Date<span class="required-star">*</span></div><input type="date" id="devStart"></div>
+            <div class="form-field"><div class="field-label">Target Completion</div><input type="date" id="devTarget"></div>
           </div>
           <div class="form-field">
             <div class="field-label">Status</div>
-            <div class="chip-group">
+            <div class="chip-group" id="devStatusChips">
               <div class="chip-opt picked-single" onclick="pickSingleChip(this)">In Progress</div>
               <div class="chip-opt" onclick="pickSingleChip(this)">On Hold</div>
               <div class="chip-opt" onclick="pickSingleChip(this)">Done</div>
@@ -1052,71 +1041,36 @@
           <div class="form-row-2">
             <div class="form-field">
               <div class="field-label">Financial Outcome</div>
-              <div class="chip-group"><div class="chip-opt picked-single" onclick="pickSingleChip(this)">Yes</div><div class="chip-opt" onclick="pickSingleChip(this)">No</div></div>
+              <div class="chip-group" id="devFinChips"><div class="chip-opt picked-single" onclick="pickSingleChip(this)">Yes</div><div class="chip-opt" onclick="pickSingleChip(this)">No</div></div>
             </div>
             <div class="form-field">
               <div class="field-label">Documentation</div>
-              <div class="chip-group"><div class="chip-opt picked-single" onclick="pickSingleChip(this)">Yes</div><div class="chip-opt" onclick="pickSingleChip(this)">No</div></div>
+              <div class="chip-group" id="devDocChips"><div class="chip-opt picked-single" onclick="pickSingleChip(this)">Yes</div><div class="chip-opt" onclick="pickSingleChip(this)">No</div></div>
             </div>
           </div>
         </div>
 
         <div class="form-card span-2">
           <div class="form-card-head"><div class="form-card-badge">5</div><div class="form-card-title">Notes</div></div>
-          <div class="form-field"><textarea placeholder="Impact, notes, blockers..."></textarea></div>
+          <div class="form-field"><textarea id="devNotes" placeholder="Impact, notes, blockers..."></textarea></div>
         </div>
       </div>
 
-      <button class="submit-btn" style="margin-top:18px;" onclick="alert('In the live app, this adds the project to the Gantt board instantly.')">Add project to Gantt</button>
+      <button class="submit-btn" style="margin-top:18px;" onclick="submitDevProject()">Add project to Gantt</button>
     </div>
 
     <!-- gantt board -->
-    <div class="block-head"><div class="block-title">Project timeline</div></div>
+    <div class="block-head"><div class="block-title">Project timeline</div><div class="block-sub" id="devRangeLabel">—</div></div>
     <div class="filter-row" style="margin-bottom:14px;">
-      <div class="fselect">All leads ▾</div>
-      <div class="fselect">All impact types ▾</div>
-      <div class="fselect">In progress ▾</div>
+      <select class="fselect" id="devFilterLead" onchange="renderGanttRows()"><option value="">All leads</option></select>
+      <select class="fselect" id="devFilterImpact" onchange="renderGanttRows()"><option value="">All impact types</option></select>
+      <select class="fselect" id="devFilterStatus" onchange="renderGanttRows()">
+        <option value="">All statuses</option><option>In Progress</option><option>On Hold</option><option>Done</option><option>Skipped</option>
+      </select>
     </div>
 
     <div class="gantt-wrap">
-      <div class="gantt-months">
-        <div></div>
-        <div class="gm">Mar</div><div class="gm">Apr</div><div class="gm">May</div>
-        <div class="gm">Jun</div><div class="gm">Jul</div><div class="gm">Aug</div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Casting Pulley Development" data-lead="Arun (66636)" data-collab="Hakim (57913), Fahin (68032)" data-status="In Progress" data-impact="Product Development" data-fin="Yes" data-doc="Yes" data-remarks="Improves inventory efficiency by sourcing pulley castings in-house.">
-        <div><div class="gt-name">Casting Pulley Development</div><div class="gt-sub">Arun (66636) · Product Development</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:0%; width:66%; background:#2F5FE0;" title="In Progress · Arun (66636)">In Progress</div></div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Fire Exit Door" data-lead="Hamid (68021)" data-collab="Mim (50309)" data-status="In Progress" data-impact="Product Development" data-fin="Yes" data-doc="Yes" data-remarks="UL test study and business proposal ongoing.">
-        <div><div class="gt-name">Fire Exit Door</div><div class="gt-sub">Hamid (68021) · Product Development</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:0%; width:100%; background:#2F5FE0;" title="In Progress · Hamid (68021)">In Progress</div></div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Development of Market Share with Foreign Lift" data-lead="Arun (66636)" data-collab="Rusafi (44305)" data-status="In Progress" data-impact="Market Development" data-fin="Yes" data-doc="Yes" data-remarks="Revenue increase and technology sharing.">
-        <div><div class="gt-name">Foreign Lift Market Share</div><div class="gt-sub">Arun (66636) · Market Development</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:0%; width:83%; background:#2F5FE0;" title="In Progress · Arun (66636)">In Progress</div></div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Structural Design — Common Modular Setup" data-lead="Mahabub (58150)" data-collab="Iftekhar (44154), Hakim (57913)" data-status="In Progress" data-impact="Product Development" data-fin="No" data-doc="Yes" data-remarks="Design variation reduction across modular platform.">
-        <div><div class="gt-name">Modular Structural Design</div><div class="gt-sub">Mahabub (58150) · Product Development</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:16%; width:60%; background:#2F5FE0;" title="In Progress · Mahabub (58150)">In Progress</div></div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Lift Factory Layout Rearrangement" data-lead="Arun (66636)" data-collab="—" data-status="Skipped" data-impact="Process Improvement" data-fin="Yes" data-doc="No" data-remarks="Old layout checking and planning; deprioritized.">
-        <div><div class="gt-name">Factory Layout Rearrangement</div><div class="gt-sub">Arun (66636) · Process Improvement</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:66%; width:20%; background:#8A93A1;" title="Skipped · Arun (66636)">Skipped</div></div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Reduction of MRL BOM Value" data-lead="Mahabub (58150)" data-collab="Fahin (68032)" data-status="In Progress" data-impact="Product Development" data-fin="Yes" data-doc="Yes" data-remarks="Bar chart maintained manually today — first candidate to migrate.">
-        <div><div class="gt-name">MRL BOM Value Reduction</div><div class="gt-sub">Mahabub (58150) · Product Development</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:50%; width:50%; background:#2F5FE0;" title="In Progress · Mahabub (58150)">In Progress</div></div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Special Series BOM" data-lead="Iftekhar (44154)" data-collab="Rusafi (44305), Mim (50309), Hakim (57913)" data-status="Done" data-impact="Product Development" data-fin="Yes" data-doc="Yes" data-remarks="Completed 28 Jun – 16 Jul 2026.">
-        <div><div class="gt-name">Special Series BOM</div><div class="gt-sub">Iftekhar (44154) · Product Development</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:50%; width:17%; background:#188A5A;" title="Done · Iftekhar (44154)">Done</div></div>
-      </div>
-      <div class="gantt-row" onclick="showDevDetail(this)" data-name="Full Height COP Cladding — New Design" data-lead="Fahin (68032)" data-collab="—" data-status="In Progress" data-impact="—" data-fin="—" data-doc="—" data-remarks="Just started; impact type not yet classified.">
-        <div><div class="gt-name">Full Height COP Cladding</div><div class="gt-sub">Fahin (68032) · New Design</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:83%; width:17%; background:#2F5FE0;" title="In Progress · Fahin (68032)">In Progress</div></div>
-      </div>
-
+      <div id="devGanttRows"><div class="placeholder-note">Loading…</div></div>
       <div class="legend">
         <div class="leg-item"><div class="leg-dot" style="background:#2F5FE0;"></div>In Progress</div>
         <div class="leg-item"><div class="leg-dot" style="background:#188A5A;"></div>Done</div>
@@ -1142,7 +1096,7 @@
 
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
-    <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Take Salam from Walton Lift R&amp;I has three roles — this page is only reachable by Superadmins</div></div></div>
+    <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Take Salam from Walton Lift R&amp;I has three roles</div></div></div>
     <div class="role-grid" style="margin-bottom:32px;">
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
@@ -1160,6 +1114,9 @@
         <div class="role-desc">Full system access. Only Superadmins can approve pending sign-ins, assign roles, and remove people from Take Salam from Walton Lift R&amp;I.</div>
       </div>
     </div>
+
+    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">KPI category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's KPI score</div></div></div>
+    <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" style="padding:6px 20px; margin-bottom:32px;">
@@ -1186,7 +1143,7 @@
       </div>
     </div>
 
-    <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub">14 active accounts · Add / Remove is Superadmin-only</div></div></div>
+    <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div></div>
     <div class="panel" style="padding:8px 20px;">
       <table class="data">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
@@ -1220,6 +1177,7 @@
     if(name === 'mytasks' && typeof loadMyTasks === 'function') loadMyTasks();
     if(name === 'profile' && typeof loadProfile === 'function') loadProfile();
     if(name === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
+    if(name === 'gantt' && typeof loadDevDashboard === 'function') loadDevDashboard();
   }
 
   // ---- Mobile: left slide-in drawer (hamburger menu) ----
@@ -1248,104 +1206,6 @@
     scm:{name:'SCM Support', hasLift:false},
     existingdev:{name:'Existing Development', hasLift:false},
   };
-  const categoryEntries = {
-    rni:[
-      {subject:'Client training session — new BOM tool', employee:'Arun', date:'18 Aug 2026', summary:'90 min training for sales team.'},
-      {subject:'Regenerative drive — feasibility note', employee:'Hamid', date:'12 Aug 2026', summary:'Internal write-up shared with team.'},
-      {subject:'Weekly R&I sync', employee:'Mahabub', date:'11 Aug 2026', summary:'Reviewed development log status.'},
-      {subject:'Special engineering task — rope tension', employee:'Arun', date:'05 Aug 2026', summary:'QA study kickoff.'},
-    ],
-    presales:[
-      {subject:'Capacity solution — Bashundhara project', employee:'Rusafi', date:'21 Aug 2026', summary:'Draft layout shared via phone.'},
-      {subject:'BOM estimate — Gulshan tower enquiry', employee:'Rusafi', date:'17 Aug 2026', summary:'Preliminary BOM sent to sales.'},
-      {subject:'Capacity solution — Uttara residential', employee:'Iftekhar', date:'09 Aug 2026', summary:'Draft layout revised twice.'},
-    ],
-    client:[
-      {subject:'Display center visit — Anwar Sadat family', employee:'Mim', date:'19 Aug 2026', summary:'Walkthrough of cabin finishes.'},
-      {subject:'Client meeting — Didar Tower', employee:'Arun', date:'14 Aug 2026', summary:'Discussed delivery timeline.'},
-      {subject:'Floor visit — Angon Tower', employee:'Hakim', date:'02 Aug 2026', summary:'Pre-installation walk-through.'},
-    ],
-    postsales:[
-      {liftId:'310863', subject:'Neaz Mahmud — 630kg, 7F', employee:'Iftekhar', date:'20 Aug 2026', summary:'Revised layout & BOM, packing list generated.'},
-      {liftId:'310563', subject:'Anwar Sadat — MRL, 630kg, 7F', employee:'Mim', date:'14 May 2026', summary:'Checklist submitted, sent to production.'},
-      {liftId:'311243', subject:'Angon Tower — 1000kg, 10F', employee:'Mim', date:'23 Aug 2026', summary:'Pre-production checklist completed.'},
-      {liftId:'311104', subject:'Didar Tower — 630kg, 6F', employee:'Md. Joynul Abedin', date:'21 Apr 2026', summary:'Survey flagged, cabin reproduced.'},
-      {liftId:'309123', subject:'Rangs Center — 800kg, 8F', employee:'Iftekhar', date:'03 Aug 2026', summary:'Initial DXF and drawing issued.'},
-    ],
-    install:[
-      {liftId:'311105', subject:'Rail & bracket mismatch', employee:'Hakim', date:'22 Aug 2026', summary:'Resolved via phone consultation.'},
-      {liftId:'311043', subject:'Shaft clearance issue', employee:'Hakim', date:'10 Aug 2026', summary:'Site visit; revised bracket drawing shared.'},
-      {liftId:'309981', subject:'Cabin & CWT alignment', employee:'Hakim', date:'28 Jul 2026', summary:'Resolved same day via site visit.'},
-    ],
-    commission:[
-      {liftId:'309981', subject:'Door sensor calibration', employee:'Hakim', date:'15 Aug 2026', summary:'Site visit; sensor realigned.'},
-      {liftId:'310863', subject:'Final commissioning check', employee:'Hakim', date:'25 Jul 2026', summary:'Signed off after test run.'},
-    ],
-    aftersales:[
-      {liftId:'308210', subject:'Anwar Sadat — post-handover query', employee:'Hakim', date:'19 Aug 2026', summary:'Remote support call, resolved.'},
-      {liftId:'307765', subject:'Rangs Center — noise complaint', employee:'Hakim', date:'06 Aug 2026', summary:'Scheduled inspection visit.'},
-    ],
-    production:[
-      {liftId:'311243', subject:'Drawing revision for production', employee:'Mahabub', date:'23 Aug 2026', summary:'BOM value reduction applied.'},
-      {liftId:'310863', subject:'Process improvement — casting', employee:'Arun', date:'19 Aug 2026', summary:'In-house pulley casting trial.'},
-      {liftId:'—', subject:'General design review', employee:'Mahabub', date:'12 Aug 2026', summary:'Not tied to a specific lift.'},
-    ],
-    requisition:[
-      {subject:'Pricing sheet — bulk MRL order', employee:'Rusafi', date:'20 Aug 2026', summary:'Requested by Sales dept.'},
-      {subject:'Design docs — special series', employee:'Mahabub', date:'11 Aug 2026', summary:'Requested by Production dept.'},
-    ],
-    scm:[
-      {subject:'Casting supplier development', employee:'Arun', date:'17 Aug 2026', summary:'New local supplier onboarding.'},
-      {subject:'SCM collaboration — rope vendor', employee:'Arun', date:'03 Aug 2026', summary:'Quality terms revised.'},
-    ],
-    existingdev:[
-      {subject:'MRL BOM value reduction', employee:'Mahabub', date:'18 Aug 2026', summary:'Ongoing — bar chart tracked manually today.'},
-      {subject:'Factory layout rearrangement', employee:'Arun', date:'02 Jul 2026', summary:'Deprioritized this quarter.'},
-    ],
-  };
-
-  let currentCatKey = null;
-  function showCategoryLog(key){
-    currentCatKey = key;
-    const meta = catMeta[key];
-    const color = CAT_COLOR[key];
-    const titleEl = document.getElementById('catLogTitle');
-    titleEl.textContent = meta.name;
-    titleEl.style.color = color;
-    document.getElementById('catLogSub').textContent = meta.hasLift
-      ? `${categoryEntries[key].length} entries shown · search below to trace by Lift ID`
-      : `${categoryEntries[key].length} entries shown · not tied to a Lift ID`;
-    document.getElementById('catLogAddBtn').style.borderColor = color;
-    document.getElementById('catLogAddBtn').style.color = color;
-    document.getElementById('catLogSearchWrap').style.display = meta.hasLift ? 'flex' : 'none';
-    document.getElementById('catLogNoLiftNote').style.display = meta.hasLift ? 'none' : 'block';
-    document.getElementById('catLogSearch').value = '';
-    renderCategoryRows(categoryEntries[key], meta.hasLift);
-    showView('category');
-  }
-
-  const EMP_ID = {Hakim:'57913', Iftekhar:'44154', Mim:'50309', Rusafi:'44305', Arun:'66636', Mahabub:'58150', Hamid:'68021', Fahin:'68032', 'Golam Mustafa':'61245', 'Md. Joynul Abedin':'59872'};
-  function formatEmp(name){ return EMP_ID[name] ? `${name} (${EMP_ID[name]})` : name; }
-
-  function renderCategoryRows(list, hasLift){
-    document.getElementById('catLogThead').innerHTML = hasLift
-      ? '<tr><th>Lift ID</th><th>Activity</th><th>Engineer</th><th>Date</th></tr>'
-      : '<tr><th>Activity</th><th>Engineer</th><th>Date</th></tr>';
-    document.getElementById('catLogBody').innerHTML = list.map(e => hasLift
-      ? `<tr><td class="mono" style="font-weight:600;">${e.liftId||'—'}</td><td>${e.subject}<div class="rank-sub">${e.summary||''}</div></td><td>${formatEmp(e.employee)}</td><td class="mono" style="font-size:12px;">${e.date}</td></tr>`
-      : `<tr><td>${e.subject}<div class="rank-sub">${e.summary||''}</div></td><td>${formatEmp(e.employee)}</td><td class="mono" style="font-size:12px;">${e.date}</td></tr>`
-    ).join('');
-    document.getElementById('catLogEmpty').style.display = list.length ? 'none' : 'block';
-    document.getElementById('catLogTable').style.display = list.length ? 'table' : 'none';
-  }
-
-  function filterCategoryLog(){
-    const q = document.getElementById('catLogSearch').value.trim().toLowerCase();
-    const meta = catMeta[currentCatKey];
-    const filtered = q ? categoryEntries[currentCatKey].filter(e => (e.liftId||'').toLowerCase().includes(q)) : categoryEntries[currentCatKey];
-    renderCategoryRows(filtered, meta.hasLift);
-  }
-
   function logInThisCategory(){
     if(!currentCatKey) return;
     document.getElementById('catSelect').value = currentCatKey;
@@ -1435,15 +1295,17 @@
 
   function innerFieldHTML(f){
     if(f.t==='text'){
-      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="text" placeholder="${f.ph||''}" style="${f.mono?"font-family:'IBM Plex Mono'":''}"></div>`;
+      const isDate = /date/i.test(f.l);
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${isDate?'date':'text'}" class="ti" placeholder="${isDate?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}"></div>`;
     }
     if(f.t==='textarea'){
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><textarea placeholder="${f.ph||''}"></textarea></div>`;
     }
     if(f.t==='row2text'){
+      const isDate1 = /date/i.test(f.l1), isDate2 = /date/i.test(f.l2);
       return `<div class="form-field"><div class="form-row-2">
-        <div><div class="field-label">${f.l1}</div><input type="text" placeholder="${f.ph1||''}"></div>
-        <div><div class="field-label">${f.l2}</div><input type="text" placeholder="${f.ph2||''}"></div>
+        <div><div class="field-label">${f.l1}</div><input type="${isDate1?'date':'text'}" class="ti" placeholder="${isDate1?'':(f.ph1||'')}"></div>
+        <div><div class="field-label">${f.l2}</div><input type="${isDate2?'date':'text'}" class="ti" placeholder="${isDate2?'':(f.ph2||'')}"></div>
       </div></div>`;
     }
     if(f.t==='chips'){
@@ -1533,7 +1395,7 @@
   // ---- Live date/time (nav pill + dashboard "as of") ----
   // ---- Admin: remove a user from the system ----
   function removeUser(name, btn){
-    if(confirm(`Remove ${name} from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.`)){
+    if(confirm(`Remove ${name} from Take Salam from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.`)){
       const row = btn.closest('tr');
       row.style.opacity = '0.4';
       row.querySelector('td:last-child').innerHTML = '<span class="tag red">Removed</span>';
@@ -1612,6 +1474,21 @@
   async function signInWithGoogle(){
     await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
   }
+  function toggleAccountMenu(){
+    const menu = document.getElementById('accountMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+  }
+  document.addEventListener('click', (e) => {
+    const menu = document.getElementById('accountMenu');
+    const avatar = document.getElementById('userAvatar');
+    if(menu && menu.style.display === 'block' && !menu.contains(e.target) && e.target !== avatar){
+      menu.style.display = 'none';
+    }
+  });
+  function confirmSignOut(){
+    toggleAccountMenu();
+    if(confirm('Log out of Take Salam from Walton Lift R&I?')) signOutUser();
+  }
   async function signOutUser(){
     await sb.auth.signOut();
     window.location.reload();
@@ -1655,7 +1532,8 @@
 
     applyRoleUI(profile.role);
     document.getElementById('userAvatar').textContent = initials(profile.nickname);
-    document.getElementById('userAvatar').title = `${profile.full_name} (${profile.nickname}) · ${profile.role} (sign out)`;
+    document.getElementById('userAvatar').title = 'Account menu';
+    document.getElementById('accountMenuName').textContent = `${profile.full_name} (${profile.nickname})`;
     showAuthScreen('app');
     loadHomeFeed();
 
@@ -1934,7 +1812,7 @@
     let inputIndex = 0;
     fields.forEach(f => {
       if(f.t === 'text'){
-        const input = document.querySelectorAll('#dynamicForm input[type="text"]:not([disabled])')[inputIndex++];
+        const input = document.querySelectorAll('#dynamicForm input.ti:not([disabled])')[inputIndex++];
         const val = input ? input.value.trim() : '';
         details[f.l] = val;
         if(f.l === 'Lift ID') liftId = val || null;
@@ -1948,7 +1826,7 @@
     // row2text + textarea values, matched by label via DOM order
     document.querySelectorAll('#dynamicForm .form-row-2').forEach(row => {
       const labels = row.querySelectorAll('.field-label');
-      const inputs = row.querySelectorAll('input[type="text"]');
+      const inputs = row.querySelectorAll('input.ti');
       labels.forEach((lab, i) => { if(inputs[i]) details[lab.textContent] = inputs[i].value.trim(); });
     });
     document.querySelectorAll('#dynamicForm textarea').forEach(ta => {
@@ -2003,7 +1881,7 @@
       alert('Could not save: ' + error.message);
       return;
     }
-    alert(`Saved ${payload.length} task${payload.length>1?'s':''} to Walton Lift R&I.`);
+    alert(`Saved ${payload.length} task${payload.length>1?'s':''} to Take Salam from Walton Lift R&I.`);
     queuedTasks = [];
     renderQueue();
     renderTaskForm();
@@ -2018,6 +1896,9 @@
     document.getElementById('pendingPill').style.display = (pending||[]).length ? 'flex' : 'none';
 
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
+    document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
+    if(isSuperadmin) loadKpiWeights();
 
     const pendSection = document.querySelector('#view-admin .panel')?.closest('.block, section, div');
     const pendWrap = document.querySelector('#view-admin .panel');
@@ -2038,6 +1919,7 @@
       }
     }
 
+    document.getElementById('approvedCountText').textContent = `${(approved||[]).length} active account${(approved||[]).length===1?'':'s'}`;
     const tbody = document.querySelector('#view-admin table.data tbody');
     if(tbody){
       tbody.innerHTML = (approved||[]).map(p => `
@@ -2062,10 +1944,193 @@
     loadAdminPanel();
   }
   async function removeUser(id, btn){
-    if(!confirm('Remove this person from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.')) return;
+    if(!confirm('Remove this person from Take Salam from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.')) return;
     const { error } = await sb.from('profiles').update({ status: 'pending' }).eq('id', id);
     if(error){ alert('Could not remove: ' + error.message); return; }
     loadAdminPanel();
+  }
+
+  // ============ KPI WEIGHTS (Superadmin only) ============
+  async function loadKpiWeights(){
+    const el = document.getElementById('kpiWeightsPanel');
+    const { data, error } = await sb.from('kpi_weights').select('*');
+    if(error){
+      el.innerHTML = `<div class="placeholder-note">Could not load weights: ${error.message}. Make sure the kpi_weights table has been created (see setup SQL).</div>`;
+      return;
+    }
+    const weightMap = {};
+    (data||[]).forEach(w => weightMap[w.category] = w.weight);
+    el.innerHTML = Object.keys(catMeta).map(key => `
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+        <span style="font-size:13.5px;">${catMeta[key].name}</span>
+        <input type="number" step="0.1" min="0" id="kw_${key}" value="${weightMap[key] ?? 1}" style="width:80px; padding:6px 10px; border-radius:7px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); text-align:right;">
+      </div>`).join('') + `<button class="submit-btn" style="margin-top:14px;" onclick="saveKpiWeights()">Save weights</button>`;
+  }
+
+  async function saveKpiWeights(){
+    const rows = Object.keys(catMeta).map(key => ({ category: key, weight: parseFloat(document.getElementById('kw_'+key).value) || 0 }));
+    const { error } = await sb.from('kpi_weights').upsert(rows, { onConflict: 'category' });
+    if(error){ alert('Could not save: ' + error.message); return; }
+    alert('KPI weights saved. Every engineer\'s KPI score now reflects these weights.');
+  }
+
+  // ============ LIFT SEARCH (real data, across every category) ============
+  const TIMELINE_DOT_COLORS = ['', 'red', 'green', 'amber'];
+  async function runLiftSearch(){
+    const liftId = document.getElementById('liftSearchInput').value.trim();
+    const resultEl = document.getElementById('liftSearchResult');
+    if(!liftId){ resultEl.innerHTML = '<div class="placeholder-note">Enter a Lift ID above and click Trace.</div>'; return; }
+    resultEl.innerHTML = '<div class="placeholder-note">Searching…</div>';
+
+    const { data, error } = await sb.from('tasks')
+      .select('*, profiles(full_name, nickname)')
+      .eq('lift_id', liftId)
+      .order('created_at', { ascending: true });
+
+    if(error){ resultEl.innerHTML = `<div class="placeholder-note">Could not search: ${error.message}</div>`; return; }
+    if(!data || !data.length){
+      resultEl.innerHTML = `<div class="placeholder-note">No entries found for Lift ${liftId}. Check the ID, or this lift may not have any logged activity yet.</div>`;
+      return;
+    }
+
+    const latest = data[data.length - 1];
+    const header = `
+      <div class="lift-header">
+        <div class="lift-id-row">
+          <div class="lift-id">#${liftId}</div>
+          <div class="status-chip">${catMeta[latest.category]?.name || latest.category} — most recent activity</div>
+        </div>
+        <div class="lift-project">${latest.project_name || ''}</div>
+      </div>`;
+
+    const timeline = `
+      <div class="block-head"><div class="block-title">Full timeline</div><div class="block-sub">${data.length} entr${data.length===1?'y':'ies'} across every category</div></div>
+      <div class="timeline">
+        ${data.map((row,i) => `
+          <div class="t-item">
+            <div class="t-dot ${TIMELINE_DOT_COLORS[i % TIMELINE_DOT_COLORS.length]}"></div>
+            <div class="t-card">
+              <div class="t-top"><div class="t-title">${row.project_name || '(untitled)'} <span class="tag c-${row.category}" style="margin-left:6px;">${catMeta[row.category]?.name || row.category}</span></div><div class="t-date">${new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</div></div>
+              <div class="t-desc">${row.notes || ''}</div>
+              <div class="t-emp">Logged by ${row.profiles ? displayName(row.profiles) : '—'}</div>
+            </div>
+          </div>`).join('')}
+      </div>`;
+
+    resultEl.innerHTML = header + timeline;
+  }
+
+  // ============ R&I DEVELOPMENT DASHBOARD (real data) ============
+  let devPeople = []; // active profiles, for Lead select + Collaborator chips
+  let devProjectsCache = [];
+
+  async function populateDevPeople(){
+    if(devPeople.length) return;
+    const { data } = await sb.from('profiles').select('id, full_name, nickname').eq('status', 'active').order('full_name');
+    devPeople = data || [];
+    document.getElementById('devLead').innerHTML = devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('') || '<option value="">No active users</option>';
+    document.getElementById('devCollabChips').innerHTML = devPeople.map(p => `<div class="chip-opt" data-pid="${p.id}" onclick="pickChip(this)">${displayName(p)}</div>`).join('') || '<div class="chip-opt">No one else yet</div>';
+    document.getElementById('devFilterLead').innerHTML = '<option value="">All leads</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
+  }
+
+  async function loadDevDashboard(){
+    await populateDevPeople();
+    const { data, error } = await sb.from('dev_projects').select('*').order('start_date', { ascending: true });
+    if(error){
+      document.getElementById('devGanttRows').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the dev_projects table has been created (see setup SQL).</div>`;
+      return;
+    }
+    devProjectsCache = data || [];
+
+    const impacts = [...new Set(devProjectsCache.map(p => p.impact_type).filter(Boolean))];
+    document.getElementById('devFilterImpact').innerHTML = '<option value="">All impact types</option>' + impacts.map(i => `<option>${i}</option>`).join('');
+
+    const thisYear = new Date().getFullYear();
+    document.getElementById('devStatTotal').textContent = devProjectsCache.length;
+    document.getElementById('devStatProgress').textContent = devProjectsCache.filter(p => p.status === 'In Progress').length;
+    document.getElementById('devStatDone').textContent = devProjectsCache.filter(p => p.status === 'Done' && new Date(p.created_at).getFullYear() === thisYear).length;
+    const withFin = devProjectsCache.filter(p => p.financial_outcome === 'Yes').length;
+    document.getElementById('devStatFin').textContent = devProjectsCache.length ? `${withFin}/${devProjectsCache.length}` : '0/0';
+
+    renderGanttRows();
+  }
+
+  const DEV_STATUS_COLOR = { 'In Progress':'#2F5FE0', 'Done':'#188A5A', 'On Hold':'#C97A16', 'Skipped':'#8A93A1' };
+
+  function renderGanttRows(){
+    const leadFilter = document.getElementById('devFilterLead').value;
+    const impactFilter = document.getElementById('devFilterImpact').value;
+    const statusFilter = document.getElementById('devFilterStatus').value;
+
+    let rows = devProjectsCache.filter(p =>
+      (!leadFilter || p.lead_id === leadFilter) &&
+      (!impactFilter || p.impact_type === impactFilter) &&
+      (!statusFilter || p.status === statusFilter)
+    );
+
+    const el = document.getElementById('devGanttRows');
+    if(!rows.length){
+      el.innerHTML = '<div class="placeholder-note">No development projects match this filter yet — add one above.</div>';
+      document.getElementById('devRangeLabel').textContent = 'No projects yet';
+      return;
+    }
+
+    const starts = rows.map(p => new Date(p.start_date).getTime());
+    const ends = rows.map(p => new Date(p.target_date || p.start_date).getTime());
+    const rangeStart = Math.min(...starts);
+    const rangeEnd = Math.max(...ends, rangeStart + 86400000);
+    const span = rangeEnd - rangeStart;
+    const fmt = d => new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
+    document.getElementById('devRangeLabel').textContent = `${fmt(rangeStart)} → ${fmt(rangeEnd)}`;
+
+    el.innerHTML = rows.map(p => {
+      const leadName = devPeople.find(dp => dp.id === p.lead_id);
+      const leadLabel = leadName ? displayName(leadName) : '—';
+      const collabNames = (p.collaborators || []).map(id => { const c = devPeople.find(dp => dp.id === id); return c ? displayName(c) : null; }).filter(Boolean).join(', ') || '—';
+      const s = new Date(p.start_date).getTime();
+      const e = new Date(p.target_date || p.start_date).getTime();
+      const left = Math.round(((s - rangeStart) / span) * 100);
+      const width = Math.max(4, Math.round(((e - s) / span) * 100));
+      const color = DEV_STATUS_COLOR[p.status] || '#2F5FE0';
+      return `<div class="gantt-row" onclick="showDevDetail(this)"
+        data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
+        data-impact="${p.impact_type||'—'}" data-fin="${p.financial_outcome||'—'}" data-doc="${p.documentation||'—'}" data-remarks="${(p.notes||'').replace(/"/g,'&quot;')}">
+        <div><div class="gt-name">${p.name}</div><div class="gt-sub">${leadLabel} · ${p.impact_type||'—'}</div></div>
+        <div class="gt-track"><div class="gt-bar" style="left:${left}%; width:${width}%; background:${color};" title="${p.status} · ${leadLabel}">${p.status}</div></div>
+      </div>`;
+    }).join('');
+  }
+
+  async function submitDevProject(){
+    const name = document.getElementById('devName').value.trim();
+    const leadId = document.getElementById('devLead').value;
+    const impact = document.getElementById('devImpact').value;
+    const start = document.getElementById('devStart').value;
+    const target = document.getElementById('devTarget').value;
+    const status = document.querySelector('#devStatusChips .picked-single')?.textContent || 'In Progress';
+    const fin = document.querySelector('#devFinChips .picked-single')?.textContent || 'No';
+    const doc = document.querySelector('#devDocChips .picked-single')?.textContent || 'No';
+    const notes = document.getElementById('devNotes').value.trim();
+    const collaborators = Array.from(document.querySelectorAll('#devCollabChips .chip-opt.picked')).map(c => c.dataset.pid).filter(Boolean);
+
+    if(!name || !leadId || !start){
+      alert('Project Name, Lead, and Start Date are required.');
+      return;
+    }
+
+    const { error } = await sb.from('dev_projects').insert({
+      name, lead_id: leadId, impact_type: impact, start_date: start, target_date: target || null,
+      status, financial_outcome: fin, documentation: doc, notes, collaborators, created_by: currentUser.id
+    });
+    if(error){ alert('Could not save: ' + error.message); return; }
+
+    document.getElementById('devName').value = '';
+    document.getElementById('devStart').value = '';
+    document.getElementById('devTarget').value = '';
+    document.getElementById('devNotes').value = '';
+    document.querySelectorAll('#devCollabChips .chip-opt').forEach(c => c.classList.remove('picked'));
+    alert('Project added to the Gantt board.');
+    loadDevDashboard();
   }
 
   // ============ MY TASKS (real data) ============
@@ -2093,12 +2158,25 @@
     document.getElementById('profileRole').textContent =
       currentProfile.role === 'superadmin' ? 'Superadmin' : currentProfile.role === 'admin' ? 'Admin' : 'R&I Engineer';
 
-    const { data, error } = await sb.from('tasks').select('category').eq('employee_id', currentUser.id);
+    const { data } = await sb.from('tasks').select('category').eq('employee_id', currentUser.id);
     const rows = data || [];
     document.getElementById('profileTaskCount').textContent = rows.length;
 
     const counts = {};
     rows.forEach(r => { counts[r.category] = (counts[r.category]||0) + 1; });
+
+    const { data: weightData } = await sb.from('kpi_weights').select('*');
+    if(weightData && weightData.length){
+      const weightMap = {};
+      weightData.forEach(w => weightMap[w.category] = w.weight);
+      const score = Object.entries(counts).reduce((sum, [cat,count]) => sum + count * (weightMap[cat] ?? 1), 0);
+      document.getElementById('profileKpiScore').textContent = score.toFixed(1);
+      document.getElementById('profileKpiLabel').textContent = 'Weighted KPI score (all-time)';
+    } else {
+      document.getElementById('profileKpiScore').textContent = rows.length;
+      document.getElementById('profileKpiLabel').textContent = 'Total tasks logged — weights not set yet by a Superadmin';
+    }
+
     const max = Math.max(1, ...Object.values(counts));
     const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
     const bEl = document.getElementById('profileBreakdown');
