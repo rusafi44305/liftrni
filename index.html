@@ -1716,18 +1716,35 @@
     document.getElementById('appShell').style.display = which==='app' ? 'block' : 'none';
   }
 
+  // "Stale response" guard for boot(). Supabase can fire several auth events
+  // in quick succession during a single sign-in (INITIAL_SESSION, then
+  // shortly after SIGNED_IN once the Google redirect finishes processing).
+  // Each one used to trigger its own full boot() run with no protection
+  // against overlap — if an OLDER call happened to finish its network
+  // round-trips AFTER a NEWER call, the older one would win and silently
+  // overwrite a correct "you're signed in" screen with "please sign in",
+  // even though nothing was actually wrong. bootToken makes every boot()
+  // call check, after each await, whether a newer call has since started;
+  // if so, it abandons itself instead of touching the screen.
+  let bootToken = 0;
+
   async function boot(){
+    const myToken = ++bootToken;
     showAuthScreen('loading');
     const { data: { session } } = await sb.auth.getSession();
+    if(myToken !== bootToken) return; // a newer boot() has since taken over
     if(!session){ showAuthScreen('login'); return; }
     currentUser = session.user;
 
     // fetch (or wait for trigger to create) the profile row
     let { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+    if(myToken !== bootToken) return;
     if(!profile){
       // trigger may not have fired yet on a brand-new signup — try once more shortly
       await new Promise(r => setTimeout(r, 1200));
+      if(myToken !== bootToken) return;
       ({ data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single());
+      if(myToken !== bootToken) return;
     }
     currentProfile = profile;
 
@@ -1815,9 +1832,18 @@
   // and flash the login screen even for a valid sign-in. Supabase's own
   // INITIAL_SESSION event only fires once the redirect has been fully
   // processed, so waiting for it avoids that race entirely.
+  //
+  // Multiple auth events (INITIAL_SESSION, then SIGNED_IN moments later)
+  // commonly fire in a single burst during one sign-in. Debouncing them into
+  // one boot() call avoids running several redundant, competing network
+  // round-trips at once, which was the main source of "sign-in takes a long
+  // time" — the bootToken guard inside boot() above is what actually fixes
+  // correctness if any overlap still slips through.
+  let bootDebounceTimer = null;
   sb.auth.onAuthStateChange((event) => {
     if(['INITIAL_SESSION','SIGNED_IN','SIGNED_OUT','TOKEN_REFRESHED','USER_UPDATED'].includes(event)){
-      boot();
+      clearTimeout(bootDebounceTimer);
+      bootDebounceTimer = setTimeout(boot, 60);
     }
   });
 
