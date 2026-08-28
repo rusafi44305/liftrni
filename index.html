@@ -1705,7 +1705,12 @@
   }
   async function signOutUser(){
     await sb.auth.signOut();
-    window.location.reload();
+    // Belt-and-braces: wipe any leftover Supabase auth keys so a stale/corrupted
+    // entry can never cause the next sign-in attempt to fail silently.
+    try{
+      Object.keys(localStorage).forEach(k => { if(k.startsWith('sb-')) localStorage.removeItem(k); });
+    } catch(e){}
+    window.location.href = window.location.origin + window.location.pathname;
   }
 
   function showAuthScreen(which){
@@ -1731,8 +1736,27 @@
   async function boot(){
     const myToken = ++bootToken;
     showAuthScreen('loading');
-    const { data: { session } } = await sb.auth.getSession();
+
+    // Surface any real error Google/Supabase sent back instead of silently bouncing to login
+    const url = new URL(window.location.href);
+    const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
+    const oauthError = url.searchParams.get('error_description') || url.searchParams.get('error') || hashParams.get('error_description') || hashParams.get('error');
+    if(oauthError){
+      history.replaceState(null, '', url.pathname);
+      showAuthScreen('login');
+      alert('Google sign-in failed: ' + decodeURIComponent(oauthError));
+      return;
+    }
+
+    let { data: { session } } = await sb.auth.getSession();
     if(myToken !== bootToken) return; // a newer boot() has since taken over
+    if(!session){
+      // Right after a Google redirect the session can take a beat to land — retry once before giving up.
+      await new Promise(r => setTimeout(r, 900));
+      if(myToken !== bootToken) return;
+      ({ data: { session } } = await sb.auth.getSession());
+      if(myToken !== bootToken) return;
+    }
     if(!session){ showAuthScreen('login'); return; }
     currentUser = session.user;
 
