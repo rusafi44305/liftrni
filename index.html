@@ -1686,7 +1686,12 @@
   }
 
   async function signInWithGoogle(){
-    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+    // Always send Google back to a guaranteed-clean URL — never reuse the current
+    // address bar as-is, since a leftover #access_token or ?code from a previous
+    // attempt can still be sitting there and corrupts the next redirect (seen as a
+    // malformed "##access_token=..." URL that fails to parse and silently loops).
+    const cleanUrl = window.location.origin + window.location.pathname;
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: cleanUrl } });
   }
   function toggleAccountMenu(){
     const menu = document.getElementById('accountMenu');
@@ -1759,6 +1764,11 @@
     }
     if(!session){ showAuthScreen('login'); return; }
     currentUser = session.user;
+    // Clean up the address bar now that we've read whatever it had (leftover
+    // #access_token or ?code left sitting here would corrupt the *next* sign-in attempt).
+    if(window.location.hash || window.location.search){
+      history.replaceState(null, '', window.location.pathname);
+    }
 
     // fetch (or wait for trigger to create) the profile row
     let { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
