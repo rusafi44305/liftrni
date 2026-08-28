@@ -1784,6 +1784,19 @@
       ({ data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single());
       if(myToken !== bootToken) return;
     }
+    if(!profile){
+      // Still nothing — most likely this account was declined/removed before (which
+      // deletes the profile row but not the underlying Google sign-in), or the
+      // creation trigger genuinely missed. Self-heal by creating the row ourselves
+      // instead of silently bouncing the person back to the login screen.
+      const { data: created } = await sb.from('profiles').insert({
+        id: currentUser.id,
+        email: currentUser.email,
+        full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email
+      }).select().single();
+      if(myToken !== bootToken) return;
+      profile = created;
+    }
     currentProfile = profile;
 
     if(!profile){ showAuthScreen('login'); return; }
