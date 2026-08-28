@@ -615,12 +615,16 @@
   ============================================================ */
   .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #accountMenu, #editModal .panel,
   .cat-tile, .t-card, .lift-header, .gantt-row, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
-  .indicator-panel, .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
+  .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
     background:var(--surface) !important;
     border:1px solid var(--border) !important;
     box-shadow:var(--shadow);
     border-radius:18px !important;
   }
+  /* .indicator-panel is DELIBERATELY excluded above — it's a permanent dark card
+     (like .kpi-card) with hardcoded light text, by design, in every theme. If it
+     ever gets added back to the shared list above, its text goes invisible in
+     light mode again. */
   .clock-pill, .pending-pill{ border-radius:999px !important; }
   .chip-opt.picked-single, .chip-opt.picked{
     background:var(--accent) !important;
