@@ -1654,20 +1654,51 @@
   // ============ SUPABASE SETUP ============
   const SUPABASE_URL = 'https://hsqzrzmdxotorgwqrour.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzcXpyem1keG90b3Jnd3Fyb3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzUwMDksImV4cCI6MjEwMzMxMTAwOX0.TebAzaiasJnK2Qsg8A1SpH8TQ5iC0TZcgTxrnDS2Qgo';
-  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // More reliable browser auth (fixes slow / stuck Google login)
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+      flowType: 'pkce'
+    }
+  });
 
   let currentUser = null;   // Supabase auth user
   let currentProfile = null; // row from public.profiles
   let myTasksRows = []; // cache for edit lookups from "My Tasks"
+  let bootInProgress = false; // prevent double boot race
+  let initialBootDone = false;
 
   function initials(name){
     if(!name) return '--';
     return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
   }
 
-  async function signInWithGoogle(){
-    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.href } });
+  // Clean URL without leftover OAuth hash/query (prevents messy re-login)
+  function cleanAppUrl(){
+    const u = new URL(window.location.href);
+    u.hash = '';
+    return u.origin + u.pathname + (u.search || '');
   }
+
+  async function signInWithGoogle(){
+    showAuthScreen('loading');
+    const { error } = await sb.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: cleanAppUrl(),
+        queryParams: { prompt: 'select_account' }
+      }
+    });
+    if(error){
+      console.error(error);
+      showAuthScreen('login');
+      alert('Sign-in failed: ' + error.message);
+    }
+  }
+
   function toggleAccountMenu(){
     const menu = document.getElementById('accountMenu');
     menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
@@ -1679,13 +1710,24 @@
       menu.style.display = 'none';
     }
   });
+
   function confirmSignOut(){
     toggleAccountMenu();
     if(confirm('Log out of Walton Lift R&I?')) signOutUser();
   }
+
+  // Reliable logout — no race with reload + onAuthStateChange
   async function signOutUser(){
-    await sb.auth.signOut();
-    window.location.reload();
+    showAuthScreen('loading');
+    try {
+      await sb.auth.signOut({ scope: 'local' });
+    } catch(e){
+      console.warn('signOut:', e);
+    }
+    currentUser = null;
+    currentProfile = null;
+    try { localStorage.clear(); sessionStorage.clear(); } catch(_){}
+    window.location.replace(cleanAppUrl());
   }
 
   function showAuthScreen(which){
@@ -1696,48 +1738,80 @@
     document.getElementById('appShell').style.display = which==='app' ? 'block' : 'none';
   }
 
+  // Poll until session appears after Google redirect (fixes long hang)
+  async function waitForSession(maxMs = 8000){
+    const start = Date.now();
+    while(Date.now() - start < maxMs){
+      const { data: { session } } = await sb.auth.getSession();
+      if(session) return session;
+      await new Promise(r => setTimeout(r, 250));
+    }
+    return null;
+  }
+
+  // Poll until profile row exists (DB trigger can take a moment for new users)
+  async function waitForProfile(userId, maxMs = 10000){
+    const start = Date.now();
+    while(Date.now() - start < maxMs){
+      const { data, error } = await sb.from('profiles').select('*').eq('id', userId).maybeSingle();
+      if(data) return data;
+      if(error) console.warn('profile poll:', error.message);
+      await new Promise(r => setTimeout(r, 400));
+    }
+    return null;
+  }
+
   async function boot(){
+    if(bootInProgress) return;
+    bootInProgress = true;
     showAuthScreen('loading');
-    let { data: { session } } = await sb.auth.getSession();
-    if(!session){
-      // Right after a Google redirect, the session can take a beat to be written to storage — retry once before giving up.
-      await new Promise(r => setTimeout(r, 800));
-      ({ data: { session } } = await sb.auth.getSession());
+
+    try {
+      let session = (await sb.auth.getSession()).data.session;
+      if(!session) session = await waitForSession(8000);
+
+      if(!session){
+        showAuthScreen('login');
+        return;
+      }
+
+      currentUser = session.user;
+
+      let profile = await waitForProfile(currentUser.id, 10000);
+      currentProfile = profile;
+
+      if(!profile){
+        console.error('No profile row for', currentUser.id);
+        showAuthScreen('login');
+        return;
+      }
+
+      if(!profile.nickname){
+        showAuthScreen('nickname');
+        return;
+      }
+
+      if(profile.status !== 'active'){
+        document.getElementById('pendingEmail').textContent = currentUser.email;
+        showAuthScreen('pending');
+        return;
+      }
+
+      applyRoleUI(profile.role);
+      document.getElementById('userAvatar').textContent = initials(profile.nickname);
+      document.getElementById('userAvatar').title = 'Account menu';
+      document.getElementById('accountMenuName').textContent = `${profile.full_name} (${profile.nickname})`;
+      showAuthScreen('app');
+      loadHomeFeed();
+      loadHomeOverview();
+
+      if(profile.role === 'superadmin' || profile.role === 'admin'){ loadAdminPanel(); }
+    } catch(e){
+      console.error('boot failed', e);
+      showAuthScreen('login');
+    } finally {
+      bootInProgress = false;
     }
-    if(!session){ showAuthScreen('login'); return; }
-    currentUser = session.user;
-
-    // fetch (or wait for trigger to create) the profile row
-    let { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-    if(!profile){
-      // trigger may not have fired yet on a brand-new signup — try once more shortly
-      await new Promise(r => setTimeout(r, 1200));
-      ({ data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single());
-    }
-    currentProfile = profile;
-
-    if(!profile){ showAuthScreen('login'); return; }
-
-    if(!profile.nickname){
-      showAuthScreen('nickname');
-      return;
-    }
-
-    if(profile.status !== 'active'){
-      document.getElementById('pendingEmail').textContent = currentUser.email;
-      showAuthScreen('pending');
-      return;
-    }
-
-    applyRoleUI(profile.role);
-    document.getElementById('userAvatar').textContent = initials(profile.nickname);
-    document.getElementById('userAvatar').title = 'Account menu';
-    document.getElementById('accountMenuName').textContent = `${profile.full_name} (${profile.nickname})`;
-    showAuthScreen('app');
-    loadHomeFeed();
-    loadHomeOverview();
-
-    if(profile.role === 'superadmin' || profile.role === 'admin'){ loadAdminPanel(); }
   }
 
   const NICKNAME_RE = /^\d{2,10}$/;
@@ -1778,10 +1852,22 @@
     teamViews.forEach(el => el.style.display = (role === 'admin' || role === 'superadmin') ? '' : 'none');
   }
 
-  sb.auth.onAuthStateChange((event) => {
-    if(event === 'SIGNED_IN' || event === 'SIGNED_OUT') boot();
+  // Boot once on page load
+  document.addEventListener('DOMContentLoaded', async () => {
+    await boot();
+    initialBootDone = true;
   });
-  document.addEventListener('DOMContentLoaded', boot);
+
+  // React to later sign-in / sign-out without double-running the first boot
+  sb.auth.onAuthStateChange((event) => {
+    if(!initialBootDone) return;
+    if(event === 'SIGNED_IN') boot();
+    if(event === 'SIGNED_OUT'){
+      currentUser = null;
+      currentProfile = null;
+      showAuthScreen('login');
+    }
+  });
 
   // ============ REAL TASK LOGGING (overrides mockup versions) ============
   let currentCatRows = []; // raw rows currently loaded for this category (used by export + search)
