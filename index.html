@@ -552,6 +552,10 @@
   .queued-item .qi-remove{color:var(--red); font-weight:700; cursor:pointer; padding:0 4px;}
   .chip-hint{font-size:10.5px; color:var(--text-faint); font-weight:500; text-transform:none; letter-spacing:0; margin-left:5px;}
   .form-note{font-size:11.5px; color:var(--text-faint); margin-top:10px; text-align:center;}
+  .form-banner{ padding:11px 14px; border-radius:9px; font-size:13.5px; font-weight:600; margin-bottom:16px; }
+  .form-banner.success{ background:color-mix(in srgb, var(--green) 16%, var(--surface)); color:var(--green); border:1px solid color-mix(in srgb, var(--green) 45%, var(--border)); }
+  .form-banner.error{ background:color-mix(in srgb, var(--red) 16%, var(--surface)); color:var(--red); border:1px solid color-mix(in srgb, var(--red) 45%, var(--border)); }
+  .field-warning{ font-size:11.5px; color:var(--red); margin-top:4px; }
   .mytask-item{padding:13px 2px; border-bottom:1px solid var(--border);}
   .mytask-item:last-of-type{border-bottom:none;}
   .mt-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
@@ -1048,6 +1052,7 @@
       <!-- entry form -->
       <div class="panel" id="taskFormPanel">
         <div class="panel-title">Log a task</div>
+        <div id="taskFormBanner" class="form-banner" style="display:none;"></div>
  
         <div style="margin-bottom:16px;">
           <div class="field-label">Category</div>
@@ -1417,7 +1422,7 @@
   // req:true marks a mandatory field (shown with a red asterisk). All chip groups are multi-select —
   // engineers often perform more than one work type in a single task, so exclusive picking was wrong.
   // section: 'identity' (what/where this task is), 'details' (categorical work info), 'description' (free text)
-  const liftId = () => ({t:'text', l:'Lift ID', mono:true, req:true, ph:'Mandatory — required for lift tracing', section:'identity'});
+  const liftId = () => ({t:'text', l:'Lift ID', mono:true, req:true, numeric:true, ph:'Mandatory — required for lift tracing', section:'identity'});
  
   // Technical Supports merges three previously-separate categories
   // (Installation, Commissioning, After-Sales) into one card, each kept
@@ -1471,7 +1476,7 @@
     techsupport: [
       liftId(),
       {t:'text', l:'Project Name', req:true, section:'identity'},
-      {t:'staticselect', l:'Support Type', id:'techSupportType', req:true, opts:['Installation Support','Commissioning Support','After-Sales Support'], onchange:'renderTaskForm()', section:'identity'}
+      {t:'staticselect', l:'Support Type', id:'techSupportType', req:true, opts:['Installation Support','Commissioning Support','After-Sales Support'], onchange:'renderTaskForm(true)', section:'identity'}
     ],
     production: [
       liftId(),
@@ -1528,7 +1533,9 @@
       const isMonth = /month/i.test(f.l);
       const isDate = /date/i.test(f.l) && !isMonth;
       const inputType = isMonth ? 'month' : (isDate ? 'date' : 'text');
-      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${inputType}" class="ti" placeholder="${(isDate||isMonth)?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}"></div>`;
+      const numericAttrs = f.numeric ? `inputmode="numeric" oninput="filterNumericInput(this)"` : '';
+      const numericWarning = f.numeric ? `<div class="field-warning" style="display:none;">Only numbers are allowed here — letters were removed.</div>` : '';
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${inputType}" class="ti" placeholder="${(isDate||isMonth)?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}" ${numericAttrs}>${numericWarning}</div>`;
     }
     if(f.t==='select'){
       const opts = (dynamicFieldOptions[f.source] || []).map(o => `<option value="${o.id}">${o.name}</option>`).join('');
@@ -1575,7 +1582,7 @@
     return `<div class="form-section"><div class="section-label">${SECTION_LABELS[key]}</div>${fieldsArr.map(fieldHTML).join('')}</div>`;
   }
  
-  async function renderTaskForm(){
+  async function renderTaskForm(preserveOnTypeChange){
     const cat = document.getElementById('catSelect').value;
     let fields = taskForms[cat] || [];
 
@@ -1596,9 +1603,12 @@
     // entire form fresh — that used to silently wipe out anything already
     // typed into Lift ID / Project Name above it, since they're part of the
     // same block being replaced. Capturing their values here and restoring
-    // them after the rebuild (below) fixes that.
+    // them after the rebuild (below) fixes that. Gated behind the explicit
+    // preserveOnTypeChange flag — a genuine category switch, an initial
+    // page load, or a fresh render right after submitting should all still
+    // clear the form completely, not resurrect whatever used to be in it.
     let preservedBaseValues = null;
-    if(cat === 'techsupport' && document.getElementById('techSupportType')){
+    if(preserveOnTypeChange && cat === 'techsupport' && document.getElementById('techSupportType')){
       preservedBaseValues = {};
       document.querySelectorAll('#dynamicForm .form-field').forEach(fieldEl => {
         const labelEl = fieldEl.querySelector('.field-label');
@@ -1649,6 +1659,22 @@
   function pickChip(el){
     el.classList.toggle('picked');
     updateConditionals();
+  }
+
+  // Strips any non-digit character the moment it's typed or pasted into a
+  // Lift ID field, and flashes a brief warning explaining why — rather than
+  // silently discarding what was typed with no explanation, or letting a
+  // stray letter slip through and break Lift Trace for that entry later.
+  function filterNumericInput(el){
+    const filtered = el.value.replace(/[^0-9]/g, '');
+    if(el.value === filtered) return;
+    el.value = filtered;
+    const warningEl = el.nextElementSibling && el.nextElementSibling.classList.contains('field-warning') ? el.nextElementSibling : null;
+    if(warningEl){
+      warningEl.style.display = 'block';
+      clearTimeout(el._warnTimer);
+      el._warnTimer = setTimeout(() => { warningEl.style.display = 'none'; }, 2500);
+    }
   }
  
   function updateConditionals(){
@@ -2425,14 +2451,36 @@
     document.getElementById('submitCount').textContent = queuedTasks.length ? `(${queuedTasks.length + 1})` : '';
   }
  
+  function showFormBanner(message, type){
+    const el = document.getElementById('taskFormBanner');
+    if(!el) return;
+    el.textContent = message;
+    el.className = 'form-banner ' + type;
+    el.style.display = 'block';
+    clearTimeout(el._hideTimer);
+    el._hideTimer = setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
   async function submitTask(){
     if(!currentUser || !currentProfile || currentProfile.status !== 'active'){
-      alert('You must be signed in and approved to submit tasks.');
+      showFormBanner('You must be signed in and approved to submit tasks.', 'error');
       return;
     }
     const rows = queuedTasks.map(q => q.data);
     rows.push(collectFormData());
- 
+
+    // Defense-in-depth: the live filter on Lift ID fields already strips
+    // letters as they're typed, but this double-checks right before saving
+    // in case a value ever reached here some other way (e.g. a queued task
+    // built earlier). A bad Lift ID silently breaks Lift Trace for that
+    // entry forever, so it's worth blocking here rather than trusting the
+    // input alone.
+    const badLift = rows.find(r => r.lift_id && /[^0-9]/.test(r.lift_id));
+    if(badLift){
+      showFormBanner('Lift ID must contain numbers only — please fix it and try again.', 'error');
+      return;
+    }
+
     const payload = rows.map(r => ({
       category: r.category,
       lift_id: r.lift_id,
@@ -2444,13 +2492,13 @@
  
     const { error } = await sb.from('tasks').insert(payload);
     if(error){
-      alert('Could not save: ' + error.message);
+      showFormBanner('Could not save: ' + error.message, 'error');
       return;
     }
-    alert(`Saved ${payload.length} task${payload.length>1?'s':''} to Walton Lift R&I.`);
+    showFormBanner(`Successfully submitted ${payload.length} task${payload.length>1?'s':''} — ready for your next entry.`, 'success');
     queuedTasks = [];
     renderQueue();
-    renderTaskForm();
+    renderTaskForm(); // no preserve flag — fields fully clear for the next entry
   }
  
   // ============ REAL ADMIN PANEL ============
