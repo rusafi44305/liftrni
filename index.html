@@ -904,9 +904,9 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
     <span>Profile</span>
   </button>
-  <button data-view="gantt" title="R&amp;I Dev">
+  <button data-view="gantt" title="R&amp;I Project Manager">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/></svg>
-    <span>Dev</span>
+    <span>Projects</span>
   </button>
   <button data-view="admin" title="Admin">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z"/></svg>
@@ -972,10 +972,10 @@
         <div class="link-more" onclick="showView('dashboard')">View breakdown →</div>
       </div>
       <div class="cat-grid">
-        <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-name">R&amp;I Task</div><div class="cat-count" id="catCount-rni">— logged</div></div>
+        <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-name">R&amp;I Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div>
         <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div>
         <div class="cat-tile cc-client" onclick="showCategoryLog('client')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'client')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-name">Client Support</div><div class="cat-count" id="catCount-client">— logged</div></div>
-        <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Post-Sales Support</div><div class="cat-count" id="catCount-postsales">— logged</div></div>
+        <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div>
         <div class="cat-tile cc-install" onclick="showCategoryLog('install')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'install')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-name">Installation Support</div><div class="cat-count" id="catCount-install">— logged</div></div>
         <div class="cat-tile cc-commission" onclick="showCategoryLog('commission')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'commission')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-name">Commissioning Support</div><div class="cat-count" id="catCount-commission">— logged</div></div>
         <div class="cat-tile cc-aftersales" onclick="showCategoryLog('aftersales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'aftersales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-name">After-Sales Support</div><div class="cat-count" id="catCount-aftersales">— logged</div></div>
@@ -1055,10 +1055,10 @@
           <div class="field-label">Category</div>
           <div class="cat-select">
             <select id="catSelect" onchange="renderTaskForm()">
-              <option value="rni">R&amp;I Task</option>
+              <option value="rni">R&amp;I Activity</option>
               <option value="presales">Pre-Sales Support</option>
               <option value="client">Client Support</option>
-              <option value="postsales">Post-Sales Support</option>
+              <option value="postsales">Post-Sales Activity</option>
               <option value="install">Installation Support</option>
               <option value="commission">Commissioning Support</option>
               <option value="aftersales">After-Sales Support</option>
@@ -1198,7 +1198,7 @@
   <!-- ============ GANTT ============ -->
   <div class="view" id="view-gantt">
     <div class="block-head">
-      <div><div class="block-title">R&amp;I Development Dashboard</div><div class="block-sub">Internal projects, not tied to a Lift ID — tracked by Lead, Impact Type &amp; outcome</div></div>
+      <div><div class="block-title">R&amp;I Project Manager</div><div class="block-sub">Internal projects, not tied to a Lift ID — tracked by Lead, Impact Type &amp; outcome. Open to everyone — add your own projects or check in on the team’s.</div></div>
     </div>
  
     <div class="stat-row">
@@ -1323,12 +1323,12 @@
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
         <div class="role-name">User (Engineer)</div>
-        <div class="role-desc">Logs their own tasks across categories and views their own profile, KPI, and history. No access to other people's data or admin tools.</div>
+        <div class="role-desc">Logs their own tasks across categories, and can view and add to the R&amp;I Project Manager. Views their own profile, KPI, and history. No access to other people's data or admin tools.</div>
       </div>
       <div class="role-card">
         <div class="role-icon" style="background:var(--accent-dim); color:var(--accent);">A</div>
         <div class="role-name">Admin (Manager)</div>
-        <div class="role-desc">Everything a User can do, plus full visibility into the team Dashboard, Lift Search, and R&amp;I Development Dashboard. Cannot add, approve, or remove people.</div>
+        <div class="role-desc">Everything a User can do, plus full visibility into the team Dashboard and Lift Search. Cannot add, approve, or remove people.</div>
       </div>
       <div class="role-card">
         <div class="role-icon" style="background:var(--red-dim); color:var(--red);">S</div>
@@ -1403,10 +1403,10 @@
   // ---- Category Log: per-category metadata, mock entries, search-by-Lift-ID ----
   const CAT_COLOR = {rni:'#6E4FD1', presales:'#1D6FD9', client:'#0E8F8F', postsales:'#188A5A', install:'#B3651B', commission:'#C25B00', aftersales:'#C23D74', production:'#4A50C9', requisition:'#0E8FA3', scm:'#6B8E00', existingdev:'#6B5B44'};
   const catMeta = {
-    rni:{name:'R&I Task', hasLift:false},
+    rni:{name:'R&I Activity', hasLift:false},
     presales:{name:'Pre-Sales Support', hasLift:false},
     client:{name:'Client Support', hasLift:false},
-    postsales:{name:'Post-Sales Support', hasLift:true},
+    postsales:{name:'Post-Sales Activity', hasLift:true},
     install:{name:'Installation Support', hasLift:true},
     commission:{name:'Commissioning Support', hasLift:true},
     aftersales:{name:'After-Sales Support', hasLift:true},
@@ -2023,8 +2023,12 @@
     // read-only view inside it (no approve/decline/remove/role-assign) — see loadAdminPanel().
     const adminOnly = document.querySelectorAll('[data-view="admin"]');
     adminOnly.forEach(el => el.style.display = (role === 'superadmin' || role === 'admin') ? '' : 'none');
-    const teamViews = document.querySelectorAll('[data-view="dashboard"], [data-view="gantt"]');
-    teamViews.forEach(el => el.style.display = (role === 'admin' || role === 'superadmin') ? '' : 'none');
+    // Team Dashboard (KPI leaderboard) stays Admin/Superadmin only.
+    const dashboardOnly = document.querySelectorAll('[data-view="dashboard"]');
+    dashboardOnly.forEach(el => el.style.display = (role === 'admin' || role === 'superadmin') ? '' : 'none');
+    // R&I Project Manager is open to every role — everyone can add and view
+    // every project, not just their own or an admin's.
+    document.querySelectorAll('[data-view="gantt"]').forEach(el => el.style.display = '');
   }
  
   // A single source of truth for booting the app. We deliberately do NOT also
