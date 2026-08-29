@@ -981,8 +981,7 @@
         <div class="cat-tile cc-production" onclick="showCategoryLog('production')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'production')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-name">Production Support</div><div class="cat-count" id="catCount-production">— logged</div></div>
         <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-name">Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div>
         <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div>
-        <div class="cat-tile cc-existingdev" onclick="showCategoryLog('existingdev')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'existingdev')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">08</div><div class="cat-name">Existing Development</div><div class="cat-count" id="catCount-existingdev">— logged</div></div>
-        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">09</div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div>
+        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">08</div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div>
       </div>
     </section>
  
@@ -1061,7 +1060,6 @@
               <option value="production">Production Support</option>
               <option value="requisition">Requisition</option>
               <option value="scm">SCM Support</option>
-              <option value="existingdev">Existing Development</option>
               <option value="surveyissues">Survey Report Issues</option>
             </select>
           </div>
@@ -1406,7 +1404,6 @@
     production:{name:'Production Support', hasLift:true},
     requisition:{name:'Requisition', hasLift:false},
     scm:{name:'SCM Support', hasLift:false},
-    existingdev:{name:'Existing Development', hasLift:false},
     surveyissues:{name:'Survey Report Issues', hasLift:true},
   };
   function logInThisCategory(){
@@ -1447,7 +1444,7 @@
   const taskForms = {
     rni: [
       {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
-      {t:'chips', l:'Task Category', hint:'select all that apply', opts:['New Product Development','Special Engineering','Prototype','Process Improvement','Training','Meeting'], section:'details'},
+      {t:'chips', l:'Task Category', hint:'select all that apply', opts:['New Product Development','Special Engineering','Prototype','Process Improvement','Training','Meeting','Existing Development'], section:'details'},
       {t:'row2text', l1:'Project Start Date', l2:'Project Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
       {t:'text', l:'Duration (min) — for meetings/training', ph:'e.g. 90', section:'details'},
       {t:'chips', l:'Status', opts:['Completed','Ongoing','On Hold','Cancelled'], section:'details'},
@@ -1490,11 +1487,6 @@
       {t:'text', l:'Supplier Name', req:true, section:'identity'},
       {t:'chips', l:'Work Type', hint:'select all that apply', opts:['SCM Collaboration','Supplier Development'], section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
-    ],
-    existingdev: [
-      {t:'text', l:'Product / Process Name', req:true, section:'identity'},
-      {t:'row2text', l1:'Start Date', l2:'Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
-      {t:'textarea', l:'Development Description', section:'description'}
     ],
     surveyissues: [
       liftId(),
