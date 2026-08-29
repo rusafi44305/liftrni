@@ -1660,6 +1660,14 @@
     }
   }
  
+  function toggleSearchResultDetails(btn){
+    const card = btn.closest('.t-card');
+    const details = card.querySelector('.search-result-details');
+    const isOpen = details.style.display !== 'none';
+    details.style.display = isOpen ? 'none' : 'block';
+    btn.textContent = isOpen ? 'View details' : 'Hide details';
+  }
+
   function pickChip(el){
     el.classList.toggle('picked');
     updateConditionals();
@@ -2255,7 +2263,7 @@
   let editingTaskRow = null;
  
   function findTaskById(id){
-    return currentCatRows.find(r => r.id === id) || myTasksRows.find(r => r.id === id) || null;
+    return currentCatRows.find(r => r.id === id) || myTasksRows.find(r => r.id === id) || liftSearchRows.find(r => r.id === id) || null;
   }
  
   function openEditTask(id){
@@ -2329,6 +2337,10 @@
     // refresh whichever view we're looking at
     if(currentCatKey) showCategoryLog(currentCatKey);
     loadMyTasks();
+    // If a Lift Search result is what was actually being edited, re-run that
+    // same search so the refreshed data (and its new "edited" mark) shows
+    // immediately instead of only updating after the next manual search.
+    if(liftSearchRows.some(r => r.id === editingTaskRow.id)) runLiftSearch();
   }
  
   function filterCategoryLog(){
@@ -2758,6 +2770,11 @@
     if(val) runLiftSearch();
   }
 
+  // Populated fresh on every search — lets the Edit button on a search
+  // result actually find its row (findTaskById checks this too), and lets a
+  // saved edit refresh this same view instead of only the category log.
+  let liftSearchRows = [];
+
   async function runLiftSearch(){
     const term = document.getElementById('liftSearchInput').value.trim();
     const resultEl = document.getElementById('liftSearchResult');
@@ -2777,9 +2794,11 @@
 
     if(error){ resultEl.innerHTML = `<div class="placeholder-note">Could not search: ${error.message}</div>`; return; }
     if(!data || !data.length){
+      liftSearchRows = [];
       resultEl.innerHTML = `<div class="placeholder-note">No entries found for "${term}". Check the spelling, or this lift/project may not have any logged activity yet.</div>`;
       return;
     }
+    liftSearchRows = data;
 
     // Group by Lift ID — a project-name search can genuinely match several
     // different lifts, so each distinct lift gets its own card + timeline
@@ -2809,15 +2828,47 @@
       const timeline = `
         <div class="block-head"><div class="block-title">Full timeline</div><div class="block-sub">${rows.length} entr${rows.length===1?'y':'ies'} across every category</div></div>
         <div class="timeline">
-          ${rows.map((row,i) => `
+          ${rows.map((row,i) => {
+            const details = row.details || {};
+            const fieldsHtml = Object.entries(details)
+              .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
+              .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${k}</span><span class="detail-v">${Array.isArray(v) ? v.join(', ') : v}</span></div>`)
+              .join('');
+            // Edit history is shown to everyone read-only — only the Edit
+            // button itself (further below) is restricted to whoever logged
+            // the entry. Showing who made each past change, not just that a
+            // change happened, so this stays meaningful to a non-owner too.
+            const hist = row.edit_history || [];
+            const historyHtml = hist.length
+              ? `<details style="margin-top:12px;">
+                  <summary style="cursor:pointer; color:var(--text-faint); font-size:12px;">${hist.length} previous version${hist.length>1?'s':''}</summary>
+                  <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+                    ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
+                      <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${h.by || 'someone'}</div>
+                      <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+                    </div>`).join('')}
+                  </div>
+                </details>`
+              : '';
+            const canEdit = row.employee_id === currentUser?.id;
+            return `
             <div class="t-item">
               <div class="t-dot ${TIMELINE_DOT_COLORS[i % TIMELINE_DOT_COLORS.length]}"></div>
               <div class="t-card">
-                <div class="t-top"><div class="t-title">${row.project_name || '(untitled)'} <span class="tag c-${row.category}" style="margin-left:6px;">${catMeta[row.category]?.name || row.category}</span></div><div class="t-date">${new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}</div></div>
+                <div class="t-top"><div class="t-title">${row.project_name || '(untitled)'} <span class="tag c-${row.category}" style="margin-left:6px;">${catMeta[row.category]?.name || row.category}</span></div><div class="t-date">${new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</div></div>
                 <div class="t-desc">${row.notes || ''}</div>
-                <div class="t-emp">Logged by ${row.profiles ? displayName(row.profiles) : '—'}</div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; gap:10px;">
+                  <div class="t-emp">Logged by ${row.profiles ? displayName(row.profiles) : '—'}</div>
+                  <button class="btn" style="padding:4px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleSearchResultDetails(this)">View details</button>
+                </div>
+                <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+                  <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
+                  ${historyHtml}
+                  ${canEdit ? `<button class="btn" style="margin-top:12px; padding:5px 14px; font-size:12px;" onclick="openEditTask('${row.id}')">Edit this entry</button>` : ''}
+                </div>
               </div>
-            </div>`).join('')}
+            </div>`;
+          }).join('')}
         </div>`;
 
       return `<div style="margin-bottom:32px;">${header}${timeline}</div>`;
