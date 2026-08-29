@@ -610,6 +610,19 @@
     .indicator-panel{padding:20px;}
     .digit{width:44px; height:64px; font-size:30px;}
     .cat-grid, .stat-row, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr) !important;}
+
+    /* Pending sign-in row: avatar/name/email + a role dropdown + two buttons
+       all had to share one line before, which pushed the buttons off the
+       edge of the screen on narrow phones. Stack it into two lines instead. */
+    .approve-row{
+      flex-direction:column; align-items:stretch; gap:12px;
+    }
+    .approve-row > div:last-child{
+      display:flex; flex-wrap:wrap; gap:8px; width:100%;
+    }
+    .approve-row .role-select{ flex:1; min-width:0; }
+    .approve-row .btn{ flex:1; min-width:0; text-align:center; }
+    .approve-row .btn.reject{ margin-left:0; }
   }
  
   /* ============================================================
@@ -634,7 +647,10 @@
     border-color:var(--accent) !important;
   }
   .chip-opt{ border-radius:999px !important; }
-  .queue-btn, .btn, .submit-btn, .fselect, select, input[type="text"], input[type="date"], input[type="month"], input[type="number"]{
+  .queue-btn, .submit-btn, .fselect, select, input[type="text"], input[type="date"], input[type="month"], input[type="number"]{
+    background:var(--surface) !important;
+  }
+  .btn:not(.approve):not(.reject):not(.remove){
     background:var(--surface) !important;
   }
   .kpi-card{
