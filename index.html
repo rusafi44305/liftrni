@@ -24,13 +24,13 @@
     --radius:14px;
     --shadow:0 1px 3px rgba(10,14,23,0.06), 0 10px 26px -12px rgba(10,14,23,0.16);
     --header-bg:#EEF0F4;
-
+ 
     /* dim tints auto-derive from the solid color + current surface, so every theme gets a correct tint for free */
     --accent-dim:color-mix(in srgb, var(--accent) 14%, var(--surface));
     --amber-dim:color-mix(in srgb, var(--amber) 16%, var(--surface));
     --green-dim:color-mix(in srgb, var(--green) 16%, var(--surface));
     --red-dim:color-mix(in srgb, var(--red) 14%, var(--surface));
-
+ 
     /* task-category solid colors — tints are derived automatically, see .cc-* / .tag.c-* below.
        client/postsales/install/commission/requisition/scm were darkened slightly from their
        original hues to clear WCAG AA contrast as small text on white/near-white backgrounds. */
@@ -45,7 +45,7 @@
     --c-requisition:#0C7788;
     --c-scm:#597600;
     --c-existingdev:#6B5B44;
-
+ 
     /* Fixed category "icon" colors — deliberately NOT overridden per theme (unlike --c-* above).
        .cat-icon always puts white text on these, so they must stay dark enough for white text
        at every contrast in every theme; the theme-adjusted --c-* set above is tuned instead for
@@ -54,7 +54,7 @@
     --ic-install:#A15B18; --ic-commission:#AF5200; --ic-aftersales:#C23D74; --ic-production:#4A50C9;
     --ic-requisition:#0C7788; --ic-scm:#597600; --ic-existingdev:#6B5B44;
   }
-
+ 
   /* ---------- THEMES ---------- */
   /* "dark" is a standard mid-gray dark mode (closer to macOS/iOS dark). "midnight" is a much
      deeper near-black OLED tier — the two should feel clearly different in brightness. */
@@ -90,7 +90,7 @@
   .mono{font-family:'IBM Plex Mono',monospace;}
   .disp{font-family:'Space Grotesk',sans-serif;}
   a{color:inherit; text-decoration:none;}
-
+ 
   /* ---------- TOP NAV ---------- */
   header.topnav{
     position:sticky; top:0; z-index:50;
@@ -147,7 +147,7 @@
     font-size:12px; font-weight:700; color:var(--text-dim);
   }
   .avatar img{ width:100%; height:100%; object-fit:cover; border-radius:50%; }
-
+ 
   /* ---------- TOGGLE SWITCH (real sliding knob) ---------- */
   .switch{ position:relative; display:inline-block; width:44px; height:24px; flex-shrink:0; }
   .switch input{ opacity:0; width:0; height:0; position:absolute; }
@@ -162,13 +162,13 @@
   }
   .switch input:checked + .switch-track{ background:var(--accent); }
   .switch input:checked + .switch-track::before{ transform:translateX(20px); }
-
-
+ 
+ 
   main{max-width:1180px; margin:0 auto; padding:36px 28px 90px;}
   .view{display:none;}
   .view.active{display:block; animation:fade .35s ease;}
   @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
-
+ 
   /* ---------- HOMEPAGE HERO ---------- */
   .hero{
     display:grid; grid-template-columns:1.1fr 0.9fr; gap:40px;
@@ -203,7 +203,7 @@
   .searchbar button:hover{background:#254CBE;}
   .search-hint{font-size:12px; color:var(--text-faint); margin-top:10px; padding-left:4px;}
   .search-hint b{color:var(--text-dim); font-family:'IBM Plex Mono'; font-weight:500;}
-
+ 
   /* ---------- FLOOR INDICATOR (signature element) ---------- */
   .indicator-panel{
     background:linear-gradient(180deg, #0E1420, #182238);
@@ -232,7 +232,7 @@
   .mini-stat{background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px;}
   .mini-stat .num{font-family:'Space Grotesk'; font-size:20px; font-weight:700; color:#fff;}
   .mini-stat .lbl{font-size:11px; color:#8391AE; margin-top:2px;}
-
+ 
   /* ---------- STAT ROW ---------- */
   .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:40px;}
   .stat-card{
@@ -243,13 +243,13 @@
   .stat-card .l{font-size:12.5px; color:var(--text-dim); margin-top:4px;}
   .stat-card .delta{font-size:11.5px; font-weight:600; margin-top:8px; display:inline-block;}
   .delta.up{color:var(--green);} .delta.flat{color:var(--text-faint);}
-
+ 
   section.block{margin-bottom:44px;}
   .block-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px;}
   .block-title{font-family:'Space Grotesk'; font-size:19px; font-weight:600;}
   .block-sub{font-size:12.5px; color:var(--text-faint);}
   .link-more{font-size:13px; font-weight:600; color:var(--accent); cursor:pointer;}
-
+ 
   /* ---------- CATEGORY GRID ---------- */
   .cat-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;}
   .cat-tile{
@@ -290,7 +290,7 @@
   }
   .cat-name{font-size:13.5px; font-weight:600; line-height:1.3; margin-bottom:4px; color:var(--text);}
   .cat-count{font-size:11.5px; color:var(--text-dim); font-weight:500;}
-
+ 
   /* per-category accent variable — tints (--tint) derive automatically via color-mix, adapting to any theme */
   /* per-category accent variable — --accent-c (theme-adjusted) is for colored TEXT/borders;
      --accent-ic (fixed across themes) is for the solid icon-chip background behind white text. */
@@ -305,7 +305,7 @@
   .cc-requisition{--accent-c:var(--c-requisition); --accent-ic:var(--ic-requisition);}
   .cc-scm{--accent-c:var(--c-scm); --accent-ic:var(--ic-scm);}
   .cc-existingdev{--accent-c:var(--c-existingdev); --accent-ic:var(--ic-existingdev);}
-
+ 
   /* ---------- ACTIVITY FEED ---------- */
   .feed-item{
     display:flex; gap:14px; padding:13px 4px; border-bottom:1px solid var(--border);
@@ -337,7 +337,7 @@
   .feed-text b{font-weight:600;}
   .feed-meta{font-size:11.5px; color:var(--text-faint); margin-top:2px;}
   .feed-lift{font-family:'IBM Plex Mono'; color:var(--text-dim);}
-
+ 
   /* ---------- LIFT SEARCH RESULT ---------- */
   .lift-header{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -352,7 +352,7 @@
   .lift-specs.specs-5{grid-template-columns:repeat(5,1fr);}
   .spec-l{font-size:11px; color:var(--text-faint); margin-bottom:3px;}
   .spec-v{font-size:13.5px; font-weight:600; font-family:'IBM Plex Mono';}
-
+ 
   .timeline{position:relative; padding-left:28px;}
   .timeline::before{content:''; position:absolute; left:6px; top:6px; bottom:6px; width:1.5px; background:var(--border);}
   .t-item{position:relative; padding-bottom:26px;}
@@ -365,7 +365,7 @@
   .t-title{font-size:14px; font-weight:600; margin-bottom:3px;}
   .t-desc{font-size:13px; color:var(--text-dim); line-height:1.5;}
   .t-emp{font-size:11.5px; color:var(--text-faint); margin-top:8px;}
-
+ 
   /* ---------- PROFILE ---------- */
   .profile-head{display:flex; align-items:center; gap:18px; margin-bottom:30px;}
   .p-avatar{
@@ -387,7 +387,7 @@
   .p-name{font-family:'Space Grotesk'; font-size:22px; font-weight:700;}
   .p-role{font-size:13px; color:var(--text-dim); margin-top:2px;}
   .p-id{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--text-faint); margin-top:3px;}
-
+ 
   .kpi-card{
     background:linear-gradient(135deg, #0E1420, #1B2745);
     border-radius:var(--radius); padding:22px 26px; color:#fff;
@@ -397,17 +397,17 @@
   .kpi-lbl{font-size:12.5px; color:#93A0C2; margin-top:2px;}
   .kpi-spark{display:flex; align-items:flex-end; gap:4px; height:44px;}
   .kpi-spark div{width:7px; background:var(--accent); border-radius:2px 2px 0 0;}
-
+ 
   .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px;}
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px;}
   .panel-title{font-size:13.5px; font-weight:600; margin-bottom:16px; color:var(--text-dim);}
-
+ 
   .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:11px;}
   .bar-label{font-size:12px; width:150px; color:var(--text-dim); flex-shrink:0;}
   .bar-track{flex:1; height:8px; background:var(--surface-alt); border-radius:4px; overflow:hidden;}
   .bar-fill{height:100%; background:var(--accent); border-radius:4px;}
   .bar-val{font-size:11.5px; font-family:'IBM Plex Mono'; color:var(--text-faint); width:22px; text-align:right;}
-
+ 
   /* ---------- DASHBOARD FILTERS ---------- */
   .filter-row{display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap;}
   .fselect{
@@ -416,7 +416,7 @@
     display:flex; align-items:center; gap:8px; cursor:pointer;
   }
   .fselect:hover{border-color:var(--accent); color:var(--text);}
-
+ 
   table.data{width:100%; border-collapse:collapse;}
   table.data th{
     text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.04em;
@@ -427,7 +427,7 @@
   .rank-name{font-weight:600;}
   .rank-sub{font-size:11.5px; color:var(--text-faint);}
   .kpi-pill{font-family:'IBM Plex Mono'; font-weight:600; font-size:13px; padding:3px 9px; border-radius:6px; background:var(--green-dim); color:var(--green);}
-
+ 
   /* ---------- GANTT ---------- */
   .gantt-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; overflow-x:auto;}
   .gantt-months{display:grid; grid-template-columns:220px repeat(6, 1fr); gap:0; margin-bottom:6px; min-width:900px;}
@@ -445,7 +445,7 @@
   .legend{display:flex; gap:18px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border);}
   .leg-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim);}
   .leg-dot{width:9px; height:9px; border-radius:3px;}
-
+ 
   /* ---------- ADMIN ---------- */
   .approve-row{
     display:flex; align-items:center; justify-content:space-between;
@@ -481,7 +481,7 @@
   .role-name{font-size:13.5px; font-weight:700; margin-bottom:6px;}
   .role-desc{font-size:12px; color:var(--text-dim); line-height:1.55;}
   @media (max-width: 860px){ .role-grid{grid-template-columns:1fr;} }
-
+ 
   .field-label{font-size:12px; font-weight:600; color:var(--text-dim); margin-bottom:6px;}
   .cat-select select{
     width:100%; padding:11px 14px; border-radius:9px; border:1.5px solid var(--border);
@@ -551,19 +551,19 @@
   .mt-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
   .mt-title{font-size:13.5px; font-weight:600; margin-bottom:3px;}
   .mt-desc{font-size:12.5px; color:var(--text-dim); line-height:1.5;}
-
+ 
   .placeholder-note{
     font-size:12px; color:var(--text-faint); text-align:center; padding:20px;
     border:1px dashed var(--border); border-radius:12px; margin-top:8px;
   }
-
+ 
   .panel:has(table.data){overflow-x:auto;}
   table.data{min-width:480px;}
-
+ 
   /* ---------- HEADER: left / center / right grid ---------- */
   .nav-left{display:flex; align-items:center; gap:10px;}
   .hamburger{ display:none; }
-
+ 
   /* ---------- FLOATING BOTTOM DOCK (always-on primary nav) ---------- */
   nav.tabs.dock{
     display:flex; align-items:center;
@@ -587,7 +587,7 @@
   nav.tabs.dock button svg{ width:19px; height:19px; }
   nav.tabs.dock button.active{ background:var(--surface); color:var(--accent); box-shadow:var(--shadow); }
   nav.tabs.dock button:hover:not(.active){ color:var(--text); }
-
+ 
   /* ---------- RESPONSIVE OVERRIDES (kept last so they win the cascade) ---------- */
   @media (max-width: 860px){
     .hero{grid-template-columns:1fr;}
@@ -609,7 +609,7 @@
     .digit{width:44px; height:64px; font-size:30px;}
     .cat-grid, .stat-row, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr) !important;}
   }
-
+ 
   /* ============================================================
      SOLID UI POLISH — flat, opaque surfaces (no blur/translucency).
   ============================================================ */
@@ -669,7 +669,7 @@
 </style>
 </head>
 <body>
-
+ 
 <!-- ============================================================
      LIGHT BACKGROUND ANIMATION — a lift car gliding within its
      shaft, and two gears slowly meshing. Pure CSS/SVG, no images,
@@ -681,7 +681,7 @@
   #bgAnim{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
   #bgAnim svg{ position:absolute; opacity:0.16; }
   html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg{ opacity:0.10; }
-
+ 
   .bg-lift-svg{ left:1vw; top:6vh; height:88vh; width:clamp(64px, 9vw, 130px); }
   .bg-lift-car{
     animation:bgLiftMove 13s ease-in-out infinite alternate;
@@ -691,13 +691,13 @@
     0%{ transform:translateY(0); }
     100%{ transform:translateY(300px); }
   }
-
+ 
   .bg-gears-svg{ right:0.5vw; bottom:5vh; width:clamp(150px, 20vw, 300px); height:auto; }
   .bg-gear-big{ transform-box:fill-box; transform-origin:center; animation:bgGearCW 26s linear infinite; }
   .bg-gear-small{ transform-box:fill-box; transform-origin:center; animation:bgGearCCW 19s linear infinite; }
   @keyframes bgGearCW{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
   @keyframes bgGearCCW{ from{ transform:rotate(0deg);} to{ transform:rotate(-360deg);} }
-
+ 
   @media (max-width: 700px){
     .bg-lift-svg{ width:clamp(44px, 14vw, 80px); }
     .bg-gears-svg{ width:clamp(110px, 40vw, 190px); bottom:80px; }
@@ -720,7 +720,7 @@
       <circle cx="114" cy="190" r="6" fill="var(--text-faint)"/>
     </g>
   </svg>
-
+ 
   <!-- Two meshing gears, rotating in opposite directions -->
   <svg class="bg-gears-svg" viewBox="0 0 340 220" fill="none" xmlns="http://www.w3.org/2000/svg">
     <polygon class="bg-gear-big" points="198.0,130.0 179.9,146.0 187.5,169.0 163.8,173.8 159.0,197.5 136.0,189.9 120.0,208.0 104.0,189.9 81.0,197.5 76.2,173.8 52.5,169.0 60.1,146.0 42.0,130.0 60.1,114.0 52.5,91.0 76.2,86.2 81.0,62.5 104.0,70.1 120.0,52.0 136.0,70.1 159.0,62.5 163.8,86.2 187.5,91.0 179.9,114.0" stroke="var(--text-faint)" stroke-width="3" stroke-linejoin="round"/>
@@ -729,8 +729,8 @@
     <circle cx="230" cy="110" r="11" stroke="var(--text-faint)" stroke-width="3"/>
   </svg>
 </div>
-
-
+ 
+ 
 <!-- ============ AUTH GATE SCREENS ============ -->
 <div id="authLoading" style="position:fixed; inset:0; z-index:999; background:var(--bg); display:flex; align-items:center; justify-content:center; font-family:'Inter',sans-serif; color:var(--text-dim);">
   Loading Walton Lift R&amp;I…
@@ -755,7 +755,7 @@
   <div style="color:var(--text-dim); margin-bottom:24px; max-width:360px;">You're signed in as <span id="pendingEmail" style="font-weight:600;"></span>. A Superadmin needs to approve your account before you can use Walton Lift R&amp;I. Check back soon.</div>
   <button onclick="signOutUser()" style="padding:10px 18px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text-dim); cursor:pointer;">Sign out</button>
 </div>
-
+ 
 <div id="editModal" style="display:none; position:fixed; inset:0; z-index:998; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:20px;">
   <div class="panel" style="max-width:520px; width:100%; max-height:85vh; overflow-y:auto; padding:22px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -770,20 +770,20 @@
     </div>
   </div>
 </div>
-
+ 
 <div id="appShell" style="display:none;">
 <header class="topnav">
   <div class="nav-left">
     <div class="brand-mark"><img src="logo.png" alt="Walton Lift logo"></div>
   </div>
-
+ 
   <div class="nav-center">
     <div class="brand-center">
       <div class="brand-center-name">Walton Hi-Tech Industries PLC</div>
       <div class="brand-center-sub">Walton Lift R&amp;I Dashboard</div>
     </div>
   </div>
-
+ 
   <div class="navright">
     <div id="navClockDesktop" class="mono nav-clock-desktop" style="font-size:11.5px; color:var(--text-faint); white-space:nowrap; letter-spacing:0.01em;">—</div>
     <div style="position:relative;">
@@ -809,7 +809,7 @@
     </div>
   </div>
 </header>
-
+ 
 <!-- ============ FLOATING BOTTOM DOCK (primary navigation) ============ -->
 <nav class="tabs dock" id="tabs">
   <button class="active" data-view="home" title="Home">
@@ -841,16 +841,16 @@
     <span>Admin</span>
   </button>
 </nav>
-
+ 
 <!-- ============ HOMEPAGE PER-CATEGORY QUICK SEARCH POPOVER ============ -->
 <div id="catQuickSearch" class="cat-quick-search">
   <div class="cat-quick-search-label" id="catQuickSearchLabel">Search category</div>
   <input type="text" id="catQuickSearchInput" placeholder="Enter a Lift ID…" onkeydown="if(event.key==='Enter') submitCatQuickSearch();">
   <button onclick="submitCatQuickSearch()">Go</button>
 </div>
-
+ 
 <main>
-
+ 
   <!-- ============ HOME ============ -->
   <div class="view active" id="view-home">
     <div class="hero">
@@ -865,7 +865,7 @@
         </div>
         <div class="search-hint">Search by the exact Lift ID (as entered when the task was logged).</div>
       </div>
-
+ 
       <div class="indicator-panel">
         <div class="indicator-row">
           <div class="indicator-label">Live This Month</div>
@@ -883,14 +883,14 @@
         </div>
       </div>
     </div>
-
+ 
     <div class="stat-row">
       <div class="stat-card"><div class="n" id="homeStatLifts">—</div><div class="l">Distinct lifts tracked</div><div class="delta flat" id="homeStatLiftsDelta">—</div></div>
       <div class="stat-card"><div class="n" id="homeStatActivities">—</div><div class="l">Activities logged</div><div class="delta flat" id="homeStatActivitiesDelta">—</div></div>
       <div class="stat-card"><div class="n" id="homeStatDevProjects">—</div><div class="l">Active R&amp;I projects</div><div class="delta flat" id="homeStatDevDelta">—</div></div>
       <div class="stat-card"><div class="n" id="homeStatEngineers">—</div><div class="l">Active engineers</div><div class="delta flat" id="homeStatEngineersDelta">—</div></div>
     </div>
-
+ 
     <section class="block">
       <div class="block-head">
         <div>
@@ -913,7 +913,7 @@
         <div class="cat-tile cc-existingdev" onclick="showCategoryLog('existingdev')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'existingdev')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">11</div><div class="cat-name">Existing Development</div><div class="cat-count" id="catCount-existingdev">— logged</div></div>
       </div>
     </section>
-
+ 
     <section class="block">
       <div class="block-head">
         <div>
@@ -926,7 +926,7 @@
       </div>
     </section>
   </div>
-
+ 
   <!-- ============ LIFT SEARCH ============ -->
   <div class="view" id="view-search">
     <div class="searchbar" style="max-width:100%; margin-bottom:26px;">
@@ -934,10 +934,10 @@
       <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
       <button onclick="runLiftSearch()">Trace</button>
     </div>
-
+ 
     <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID above and click Trace to see its full history across every category.</div></div>
   </div>
-
+ 
   <!-- ============ CATEGORY LOG ============ -->
   <div class="view" id="view-category">
     <div class="block-head">
@@ -948,7 +948,7 @@
       </div>
       <button class="queue-btn" id="catLogAddBtn" onclick="logInThisCategory()">+ Log a task here</button>
     </div>
-
+ 
     <div class="filter-row" style="flex-wrap:wrap;">
       <div class="searchbar" id="catLogSearchWrap" style="max-width:340px; margin-bottom:0;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -961,23 +961,23 @@
       <button class="queue-btn" onclick="exportCategoryToExcel()">⬇ Export to Excel</button>
     </div>
     <div class="placeholder-note" id="catLogNoLiftNote" style="display:none; text-align:left; max-width:420px; margin-bottom:20px;">This category isn't tied to a Lift ID — entries are general activity.</div>
-
+ 
     <div id="catLogCards" style="margin-top:18px; display:flex; flex-direction:column; gap:10px;"></div>
     <div class="placeholder-note" id="catLogEmpty" style="display:none;">No entries match this filter</div>
   </div>
-
+ 
   <!-- ============ MY TASKS ============ -->
   <div class="view" id="view-mytasks">
     <div class="block-head">
       <div><div class="block-title">My Tasks</div><div class="block-sub">Log a new task, or review what you've submitted</div></div>
     </div>
-
+ 
     <div class="split-grid" style="grid-template-columns:1fr 1.15fr; align-items:flex-start;">
-
+ 
       <!-- entry form -->
       <div class="panel" id="taskFormPanel">
         <div class="panel-title">Log a task</div>
-
+ 
         <div style="margin-bottom:16px;">
           <div class="field-label">Category</div>
           <div class="cat-select">
@@ -996,18 +996,18 @@
             </select>
           </div>
         </div>
-
+ 
         <div id="dynamicForm"></div>
-
+ 
         <div id="taskQueue"></div>
-
+ 
         <div style="display:flex; gap:8px; margin-top:6px;">
           <button class="queue-btn" onclick="queueTask()">+ Add another task</button>
           <button class="submit-btn" style="margin-top:0; flex:1;" onclick="submitTask()">Submit <span id="submitCount"></span></button>
         </div>
         <div class="form-note">Entry date is stamped automatically. Fields marked <span class="required-star">*</span> are mandatory — Lift ID is required wherever the task can be traced to one.</div>
       </div>
-
+ 
       <!-- my submissions -->
       <div class="panel">
         <div class="panel-title" id="myTasksTitle">Submitted by me</div>
@@ -1015,7 +1015,7 @@
       </div>
     </div>
   </div>
-
+ 
   <!-- ============ PROFILE ============ -->
   <div class="view" id="view-profile">
     <div class="profile-head">
@@ -1032,7 +1032,7 @@
         <div id="avatarUploadStatus" style="font-size:11.5px; color:var(--text-faint); margin-top:4px;"></div>
       </div>
     </div>
-
+ 
     <div class="stat-row" style="grid-template-columns:1fr 1fr;">
       <div class="kpi-card">
         <div>
@@ -1052,7 +1052,7 @@
     <div style="display:flex; justify-content:flex-end; margin:-14px 0 24px;">
       <button class="queue-btn" onclick="loadProfile()">↻ Recalculate my KPI</button>
     </div>
-
+ 
     <div class="split-grid">
       <div class="panel">
         <div class="panel-title">Task breakdown by category</div>
@@ -1081,7 +1081,7 @@
       </div>
     </div>
   </div>
-
+ 
   <!-- ============ DASHBOARD ============ -->
   <div class="view" id="view-dashboard">
     <div class="block-head">
@@ -1097,19 +1097,19 @@
         <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team KPI from the latest logged tasks">↻ Recalculate team KPI</button>
       </div>
     </div>
-
+ 
     <div class="stat-row">
       <div class="stat-card"><div class="n" id="dashStatActivities">—</div><div class="l">Activities in range</div></div>
       <div class="stat-card"><div class="n" id="dashStatLifts">—</div><div class="l">Distinct Lift IDs touched</div></div>
       <div class="stat-card"><div class="n" id="dashStatEngineers">—</div><div class="l">Engineers active in range</div></div>
       <div class="stat-card"><div class="n" id="dashStatCategories">—</div><div class="l">Categories used</div></div>
     </div>
-
+ 
     <section class="block">
       <div class="block-head"><div class="block-title" id="breakdownTitle">Activity by category</div></div>
       <div class="panel" id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
     </section>
-
+ 
     <section class="block">
       <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
       <div class="panel" style="padding:8px 20px;">
@@ -1120,24 +1120,24 @@
       </div>
     </section>
   </div>
-
+ 
   <!-- ============ GANTT ============ -->
   <div class="view" id="view-gantt">
     <div class="block-head">
       <div><div class="block-title">R&amp;I Development Dashboard</div><div class="block-sub">Internal projects, not tied to a Lift ID — tracked by Lead, Impact Type &amp; outcome</div></div>
     </div>
-
+ 
     <div class="stat-row">
       <div class="stat-card"><div class="n" id="devStatTotal">—</div><div class="l">Total dev projects</div></div>
       <div class="stat-card"><div class="n" id="devStatProgress">—</div><div class="l">In progress</div></div>
       <div class="stat-card"><div class="n" id="devStatDone">—</div><div class="l">Done this year</div></div>
       <div class="stat-card"><div class="n" id="devStatFin">—</div><div class="l">With financial outcome</div></div>
     </div>
-
+ 
     <!-- new dev task input zone: full-width, organized as numbered cards -->
     <div class="panel" id="devTaskPanel" style="margin-bottom:36px;">
       <div class="panel-title" id="devTaskPanelTitle">Add a development task</div>
-
+ 
       <div class="dev-form-grid">
         <div class="form-card">
           <div class="form-card-head"><div class="form-card-badge">1</div><div class="form-card-title">Project Identity</div></div>
@@ -1156,7 +1156,7 @@
             </div>
           </div>
         </div>
-
+ 
         <div class="form-card">
           <div class="form-card-head"><div class="form-card-badge">2</div><div class="form-card-title">Team</div></div>
           <div class="form-field">
@@ -1164,7 +1164,7 @@
             <div class="chip-group" id="devCollabChips"><div class="chip-opt">Loading…</div></div>
           </div>
         </div>
-
+ 
         <div class="form-card">
           <div class="form-card-head"><div class="form-card-badge">3</div><div class="form-card-title">Timeline &amp; Status</div></div>
           <div class="form-row-2">
@@ -1181,7 +1181,7 @@
             </div>
           </div>
         </div>
-
+ 
         <div class="form-card">
           <div class="form-card-head"><div class="form-card-badge">4</div><div class="form-card-title">Outcome</div></div>
           <div class="form-row-2">
@@ -1195,17 +1195,17 @@
             </div>
           </div>
         </div>
-
+ 
         <div class="form-card span-2">
           <div class="form-card-head"><div class="form-card-badge">5</div><div class="form-card-title">Notes</div></div>
           <div class="form-field"><textarea id="devNotes" placeholder="Impact, notes, blockers..."></textarea></div>
         </div>
       </div>
-
+ 
       <button class="submit-btn" id="devSubmitBtn" style="margin-top:18px;" onclick="submitDevProject()">Add project to Gantt</button>
       <button class="btn" id="devCancelEditBtn" style="display:none; margin-top:18px; margin-left:8px;" onclick="cancelEditDevProject()">Cancel edit</button>
     </div>
-
+ 
     <!-- gantt board -->
     <div class="block-head"><div class="block-title">Project timeline</div><div class="block-sub" id="devRangeLabel">—</div></div>
     <div class="filter-row" style="margin-bottom:14px;">
@@ -1215,7 +1215,7 @@
         <option value="">All statuses</option><option>In Progress</option><option>On Hold</option><option>Done</option><option>Skipped</option>
       </select>
     </div>
-
+ 
     <div class="gantt-wrap">
       <div id="devGanttRows"><div class="placeholder-note">Loading…</div></div>
       <div class="legend">
@@ -1225,7 +1225,7 @@
         <div class="leg-item"><div class="leg-dot" style="background:#8A93A1;"></div>Skipped</div>
       </div>
     </div>
-
+ 
     <div class="block-head" style="margin-top:24px;"><div class="block-title">Project detail</div></div>
     <div class="panel" id="devDetailPanel">
       <div class="spec-l" style="margin-bottom:10px;">Click any bar above to see full details</div>
@@ -1240,8 +1240,8 @@
       <button class="btn" id="dd-edit-btn" style="display:none; margin-top:14px;" onclick="editDevProjectFromDetail()">✎ Edit this project</button>
     </div>
   </div>
-
-
+ 
+ 
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
     <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
@@ -1262,13 +1262,13 @@
         <div class="role-desc">Full system access. Only Superadmins can approve pending sign-ins, assign roles, and remove people from Walton Lift R&amp;I.</div>
       </div>
     </div>
-
+ 
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">KPI category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's KPI score</div></div></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
-
+ 
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
-
+ 
     <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div></div>
     <div class="panel" style="padding:8px 20px;">
       <table class="data">
@@ -1282,10 +1282,10 @@
       </table>
     </div>
   </div>
-
+ 
 </main>
 </div><!-- /appShell -->
-
+ 
 <script>
   function showView(name){
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -1297,7 +1297,7 @@
     showView(t.dataset.view);
     onViewShown(t.dataset.view);
   }));
-
+ 
   function onViewShown(name){
     if(name === 'admin' && typeof loadAdminPanel === 'function') loadAdminPanel();
     if(name === 'mytasks' && typeof loadMyTasks === 'function') loadMyTasks();
@@ -1305,7 +1305,7 @@
     if(name === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
     if(name === 'gantt' && typeof loadDevDashboard === 'function') loadDevDashboard();
   }
-
+ 
   // ---- Category Log: per-category metadata, mock entries, search-by-Lift-ID ----
   const CAT_COLOR = {rni:'#6E4FD1', presales:'#1D6FD9', client:'#0E8F8F', postsales:'#188A5A', install:'#B3651B', commission:'#C25B00', aftersales:'#C23D74', production:'#4A50C9', requisition:'#0E8FA3', scm:'#6B8E00', existingdev:'#6B5B44'};
   const catMeta = {
@@ -1327,13 +1327,13 @@
     renderTaskForm();
     showView('mytasks');
   }
-
+ 
   // ---- My Tasks: dynamic per-category form fields ----
   // req:true marks a mandatory field (shown with a red asterisk). All chip groups are multi-select —
   // engineers often perform more than one work type in a single task, so exclusive picking was wrong.
   // section: 'identity' (what/where this task is), 'details' (categorical work info), 'description' (free text)
   const liftId = () => ({t:'text', l:'Lift ID', mono:true, req:true, ph:'Mandatory — required for lift tracing', section:'identity'});
-
+ 
   const taskForms = {
     rni: [
       {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
@@ -1405,9 +1405,9 @@
       {t:'textarea', l:'Development Description', section:'description'}
     ],
   };
-
+ 
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
-
+ 
   function innerFieldHTML(f){
     if(f.t==='text'){
       const isDate = /date/i.test(f.l);
@@ -1430,7 +1430,7 @@
     }
     return '';
   }
-
+ 
   function fieldHTML(f){
     const inner = innerFieldHTML(f);
     if(f.showIf){
@@ -1438,22 +1438,22 @@
     }
     return inner;
   }
-
+ 
   const SECTION_LABELS = {identity:'Task Identity', details:'Work Details', description:'Description'};
   function sectionBlock(key, fieldsArr){
     if(!fieldsArr.length) return '';
     return `<div class="form-section"><div class="section-label">${SECTION_LABELS[key]}</div>${fieldsArr.map(fieldHTML).join('')}</div>`;
   }
-
+ 
   function renderTaskForm(){
     const cat = document.getElementById('catSelect').value;
     const fields = taskForms[cat] || [];
     const groups = {identity:[], details:[], description:[]};
     fields.forEach(f => groups[f.section || 'details'].push(f));
-
+ 
     const panel = document.getElementById('taskFormPanel');
     panel.className = 'panel cc-' + cat;
-
+ 
     document.getElementById('dynamicForm').innerHTML =
       `<div class="form-section"><div class="section-label">Entry Date</div>
         <input type="text" value="24/08/2026, 10:42 AM" class="mono" style="width:100%; padding:10px 13px; border-radius:9px; border:1.5px solid var(--border); color:var(--text-faint); background:var(--surface-alt);" disabled>
@@ -1462,19 +1462,19 @@
       + sectionBlock('details', groups.details)
       + sectionBlock('description', groups.description);
   }
-
+ 
   function pickChip(el){
     el.classList.toggle('picked');
     updateConditionals();
   }
-
+ 
   function updateConditionals(){
     document.querySelectorAll('#dynamicForm .conditional').forEach(cf=>{
       const match = document.querySelector(`#dynamicForm .chip-opt.picked[data-group="${cf.dataset.condgroup}"][data-opt="${cf.dataset.condopt}"]`);
       cf.style.display = match ? 'block' : 'none';
     });
   }
-
+ 
   // ---- Batch entry: queue several tasks, then submit them all together ----
   let queuedTasks = [];
   function queueTask(){
@@ -1504,9 +1504,9 @@
     renderQueue();
     renderTaskForm();
   }
-
+ 
   document.addEventListener('DOMContentLoaded', renderTaskForm);
-
+ 
   // ---- Live date/time (nav pill + dashboard "as of") ----
   // ---- Admin: remove a user from the system ----
   function removeUser(name, btn){
@@ -1516,7 +1516,7 @@
       row.querySelector('td:last-child').innerHTML = '<span class="tag red">Removed</span>';
     }
   }
-
+ 
   // ---- Theme switcher (white / dark / midnight) ----
   // Lives in the Profile page's Appearance section and in the profile-corner
   // dropdown menu (both share the .theme-dot markup, so setTheme keeps every
@@ -1537,13 +1537,13 @@
     document.querySelectorAll(`.theme-dot[data-theme-name="${saved}"]`).forEach(d => d.classList.add('active'));
   }
   initTheme();
-
+ 
   function openTutorial(){
     // Point this at wherever the tutorial PDF is hosted in this repo/site,
     // e.g. a "tutorial.pdf" committed alongside index.html on GitHub Pages.
     window.open('tutorial.pdf', '_blank');
   }
-
+ 
   function tickClock(){
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
@@ -1558,7 +1558,7 @@
   tickClock();
   setInterval(tickClock, 1000);
   let selectedDevProjectId = null;
-
+ 
   function showDevDetail(row){
     const d = row.dataset;
     selectedDevProjectId = d.id;
@@ -1568,27 +1568,27 @@
     document.getElementById('dd-fin').textContent = d.fin;
     document.getElementById('dd-doc').textContent = d.doc;
     document.getElementById('dd-remarks').innerHTML = '<b>' + d.name + '</b> — ' + d.remarks;
-
+ 
     const editBtn = document.getElementById('dd-edit-btn');
     const project = devProjectsCache.find(p => p.id === d.id);
     const canEdit = project && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin' || project.created_by === currentUser.id || project.lead_id === currentUser.id);
     editBtn.style.display = canEdit ? 'inline-block' : 'none';
   }
-
+ 
   let editingDevProjectId = null;
-
+ 
   function editDevProjectFromDetail(){
     const project = devProjectsCache.find(p => p.id === selectedDevProjectId);
     if(!project) return;
     editingDevProjectId = project.id;
-
+ 
     document.getElementById('devName').value = project.name || '';
     document.getElementById('devLead').value = project.lead_id || '';
     document.getElementById('devImpact').value = project.impact_type || 'Product Development';
     document.getElementById('devStart').value = project.start_date || '';
     document.getElementById('devTarget').value = project.target_date || '';
     document.getElementById('devNotes').value = project.notes || '';
-
+ 
     ['devStatusChips','devFinChips','devDocChips'].forEach(id => {
       document.querySelectorAll(`#${id} .chip-opt`).forEach(c => c.classList.remove('picked-single'));
     });
@@ -1598,17 +1598,17 @@
     if(finMatch) finMatch.classList.add('picked-single');
     const docMatch = Array.from(document.querySelectorAll('#devDocChips .chip-opt')).find(c => c.textContent === (project.documentation || 'No'));
     if(docMatch) docMatch.classList.add('picked-single');
-
+ 
     document.querySelectorAll('#devCollabChips .chip-opt').forEach(c => {
       c.classList.toggle('picked', (project.collaborators||[]).includes(c.dataset.pid));
     });
-
+ 
     document.getElementById('devTaskPanelTitle').textContent = `Editing: ${project.name}`;
     document.getElementById('devSubmitBtn').textContent = 'Save changes';
     document.getElementById('devCancelEditBtn').style.display = 'inline-block';
     document.getElementById('devTaskPanel').scrollIntoView({ behavior:'smooth', block:'start' });
   }
-
+ 
   function cancelEditDevProject(){
     editingDevProjectId = null;
     document.getElementById('devName').value = '';
@@ -1620,13 +1620,13 @@
     document.getElementById('devSubmitBtn').textContent = 'Add project to Gantt';
     document.getElementById('devCancelEditBtn').style.display = 'none';
   }
-
+ 
   // exclusive single-pick chips (Status, Financial Outcome, Documentation in the dev task form)
   function pickSingleChip(el){
     Array.from(el.parentElement.children).forEach(c => c.classList.remove('picked-single'));
     el.classList.add('picked-single');
   }
-
+ 
   // floor indicator tick-up animation on load
   window.addEventListener('load', () => {
     const target = [1,2,8,4];
@@ -1643,22 +1643,22 @@
     });
   });
 </script>
-
+ 
 <script>
   // ============ SUPABASE SETUP ============
   const SUPABASE_URL = 'https://hsqzrzmdxotorgwqrour.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzcXpyem1keG90b3Jnd3Fyb3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzUwMDksImV4cCI6MjEwMzMxMTAwOX0.TebAzaiasJnK2Qsg8A1SpH8TQ5iC0TZcgTxrnDS2Qgo';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+ 
   let currentUser = null;   // Supabase auth user
   let currentProfile = null; // row from public.profiles
   let myTasksRows = []; // cache for edit lookups from "My Tasks"
-
+ 
   function initials(name){
     if(!name) return '--';
     return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
   }
-
+ 
   // Renders a profile picture into an avatar element if the profile has one,
   // otherwise falls back to initials. Used for both the header avatar and the
   // Profile page avatar; the header one also carries the notification dot.
@@ -1670,7 +1670,7 @@
       el.innerHTML = fallback + (badgeHtml || '');
     }
   }
-
+ 
   async function uploadAvatar(file){
     if(!file || !currentUser) return;
     const statusEl = document.getElementById('avatarUploadStatus');
@@ -1688,7 +1688,7 @@
     renderAvatar(document.getElementById('profileAvatar'), currentProfile);
     renderAvatar(document.getElementById('userAvatar'), currentProfile, document.getElementById('avatarBadge').outerHTML);
   }
-
+ 
   async function signInWithGoogle(){
     // Always send Google back to a guaranteed-clean URL — never reuse the current
     // address bar as-is, since a leftover #access_token or ?code from a previous
@@ -1721,7 +1721,7 @@
     } catch(e){}
     window.location.href = window.location.origin + window.location.pathname;
   }
-
+ 
   function showAuthScreen(which){
     document.getElementById('authLoading').style.display = which==='loading' ? 'flex' : 'none';
     document.getElementById('authLogin').style.display = which==='login' ? 'flex' : 'none';
@@ -1729,7 +1729,7 @@
     document.getElementById('authPending').style.display = which==='pending' ? 'flex' : 'none';
     document.getElementById('appShell').style.display = which==='app' ? 'block' : 'none';
   }
-
+ 
   // "Stale response" guard for boot(). Supabase can fire several auth events
   // in quick succession during a single sign-in (INITIAL_SESSION, then
   // shortly after SIGNED_IN once the Google redirect finishes processing).
@@ -1741,11 +1741,11 @@
   // call check, after each await, whether a newer call has since started;
   // if so, it abandons itself instead of touching the screen.
   let bootToken = 0;
-
+ 
   async function boot(){
     const myToken = ++bootToken;
     showAuthScreen('loading');
-
+ 
     // Surface any real error Google/Supabase sent back instead of silently bouncing to login
     const url = new URL(window.location.href);
     const hashParams = new URLSearchParams(url.hash.replace(/^#/, ''));
@@ -1756,7 +1756,7 @@
       alert('Google sign-in failed: ' + decodeURIComponent(oauthError));
       return;
     }
-
+ 
     let { data: { session } } = await sb.auth.getSession();
     if(myToken !== bootToken) return; // a newer boot() has since taken over
     if(!session){
@@ -1773,45 +1773,59 @@
     if(window.location.hash || window.location.search){
       history.replaceState(null, '', window.location.pathname);
     }
-
+ 
     // fetch (or wait for trigger to create) the profile row
-    let { data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
-    if(myToken !== bootToken) return;
-    if(!profile){
-      // trigger may not have fired yet on a brand-new signup — try once more shortly
-      await new Promise(r => setTimeout(r, 1200));
+    let profile = null;
+    try{
+      let { data, error: fetchErr1 } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
       if(myToken !== bootToken) return;
-      ({ data: profile } = await sb.from('profiles').select('*').eq('id', currentUser.id).single());
-      if(myToken !== bootToken) return;
-    }
-    if(!profile){
-      // Still nothing — most likely this account was declined/removed before (which
-      // deletes the profile row but not the underlying Google sign-in), or the
-      // creation trigger genuinely missed. Self-heal by creating the row ourselves
-      // instead of silently bouncing the person back to the login screen.
-      const { data: created } = await sb.from('profiles').insert({
-        id: currentUser.id,
-        email: currentUser.email,
-        full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email
-      }).select().single();
-      if(myToken !== bootToken) return;
-      profile = created;
+      if(fetchErr1) throw new Error('Step 1 (fetch profile): ' + fetchErr1.message);
+      profile = data;
+ 
+      if(!profile){
+        // trigger may not have fired yet on a brand-new signup — try once more shortly
+        await new Promise(r => setTimeout(r, 1200));
+        if(myToken !== bootToken) return;
+        const { data: data2, error: fetchErr2 } = await sb.from('profiles').select('*').eq('id', currentUser.id).maybeSingle();
+        if(myToken !== bootToken) return;
+        if(fetchErr2) throw new Error('Step 2 (retry fetch): ' + fetchErr2.message);
+        profile = data2;
+      }
+ 
+      if(!profile){
+        // Still nothing — most likely this account was declined/removed before (which
+        // deletes the profile row but not the underlying Google sign-in), or the
+        // creation trigger genuinely missed. Self-heal by creating the row ourselves
+        // instead of silently bouncing the person back to the login screen.
+        const { data: created, error: createErr } = await sb.from('profiles').insert({
+          id: currentUser.id,
+          email: currentUser.email,
+          full_name: currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || currentUser.email
+        }).select().maybeSingle();
+        if(myToken !== bootToken) return;
+        if(createErr) throw new Error('Step 3 (create profile): ' + createErr.message);
+        profile = created;
+      }
+ 
+      if(!profile) throw new Error('Step 4: profile is still empty after fetch + create, with no database error reported.');
+    } catch(err){
+      showAuthScreen('login');
+      alert('Sign-in could not finish setting up your account.\n\n' + err.message + '\n\nPlease screenshot this and send it to support.');
+      return;
     }
     currentProfile = profile;
-
-    if(!profile){ showAuthScreen('login'); return; }
-
+ 
     if(!profile.nickname){
       showAuthScreen('nickname');
       return;
     }
-
+ 
     if(profile.status !== 'active'){
       document.getElementById('pendingEmail').textContent = currentUser.email;
       showAuthScreen('pending');
       return;
     }
-
+ 
     applyRoleUI(profile.role);
     const avatarEl = document.getElementById('userAvatar');
     const badgeHtml = document.getElementById('avatarBadge') ? document.getElementById('avatarBadge').outerHTML : '';
@@ -1821,12 +1835,12 @@
     showAuthScreen('app');
     loadHomeFeed();
     loadHomeOverview();
-
+ 
     if(profile.role === 'superadmin' || profile.role === 'admin'){ loadAdminPanel(); }
   }
-
+ 
   const NICKNAME_RE = /^\d{2,10}$/;
-
+ 
   async function saveNickname(){
     const input = document.getElementById('nicknameInput');
     const errEl = document.getElementById('nicknameError');
@@ -1857,7 +1871,7 @@
     currentProfile = data;
     boot(); // re-run the gate now that nickname exists
   }
-
+ 
   function displayName(p){
     // p = { full_name, nickname }. Admins/Superadmins see "Original Name (Nickname)"; everyone else just sees the nickname.
     if(!p) return '—';
@@ -1865,7 +1879,7 @@
     if(isPrivileged && p.full_name) return `${p.full_name} (${p.nickname || '—'})`;
     return p.nickname || p.full_name || '—';
   }
-
+ 
   function applyRoleUI(role){
     // Admin tab: Superadmins get full account management. Admins get the tab too but see a
     // read-only view inside it (no approve/decline/remove/role-assign) — see loadAdminPanel().
@@ -1874,7 +1888,7 @@
     const teamViews = document.querySelectorAll('[data-view="dashboard"], [data-view="gantt"]');
     teamViews.forEach(el => el.style.display = (role === 'admin' || role === 'superadmin') ? '' : 'none');
   }
-
+ 
   // A single source of truth for booting the app. We deliberately do NOT also
   // call boot() on DOMContentLoaded: right after the Google OAuth redirect,
   // there's a brief window where Supabase hasn't finished parsing the
@@ -1897,10 +1911,10 @@
       bootDebounceTimer = setTimeout(boot, 60);
     }
   });
-
+ 
   // ============ REAL TASK LOGGING (overrides mockup versions) ============
   let currentCatRows = []; // raw rows currently loaded for this category (used by export + search)
-
+ 
   // ============ HOMEPAGE PER-CATEGORY QUICK SEARCH ============
   // Each category tile on the home page carries its own search icon so an
   // engineer can jump straight to a Lift ID within that category, without
@@ -1936,7 +1950,7 @@
     const searchInput = document.getElementById('catLogSearch');
     if(searchInput){ searchInput.value = val; filterCategoryLog(); }
   }
-
+ 
   async function showCategoryLog(key){
     currentCatKey = key;
     const meta = catMeta[key];
@@ -1951,7 +1965,7 @@
     document.getElementById('catLogSearch').value = '';
     document.getElementById('catLogSub').textContent = 'Loading…';
     showView('category');
-
+ 
     let query = sb.from('tasks').select('*, profiles(full_name, nickname)').eq('category', key).order('created_at', { ascending: false });
     const fromVal = document.getElementById('catFromMonth').value;
     const toVal = document.getElementById('catToMonth').value;
@@ -1960,7 +1974,7 @@
       const [y,m] = toVal.split('-').map(Number);
       query = query.lt('created_at', new Date(y, m, 1).toISOString().slice(0,10));
     }
-
+ 
     const { data, error } = await query;
     currentCatRows = data || [];
     document.getElementById('catLogSub').textContent = meta.hasLift
@@ -1968,7 +1982,7 @@
       : `${currentCatRows.length} entries shown · not tied to a Lift ID`;
     renderCategoryRows(currentCatRows, meta.hasLift);
   }
-
+ 
   // Every field the engineer filled in is stored in `details` — show all of it, not just Lift ID
   function renderCategoryRows(rows, hasLift){
     const el = document.getElementById('catLogCards');
@@ -1997,7 +2011,7 @@
     }).join('');
     document.getElementById('catLogEmpty').style.display = rows.length ? 'none' : 'block';
   }
-
+ 
   function exportCategoryToExcel(){
     if(!currentCatRows.length){ alert('No entries to export for this range.'); return; }
     const meta = catMeta[currentCatKey];
@@ -2019,20 +2033,20 @@
     const toVal = document.getElementById('catToMonth').value || 'all';
     XLSX.writeFile(wb, `${meta.name.replace(/\s+/g,'_')}_${fromVal}_to_${toVal}.xlsx`);
   }
-
+ 
   // ============ EDIT TASK (own entries only, with history trail) ============
   let editingTaskRow = null;
-
+ 
   function findTaskById(id){
     return currentCatRows.find(r => r.id === id) || myTasksRows.find(r => r.id === id) || null;
   }
-
+ 
   function openEditTask(id){
     const row = findTaskById(id);
     if(!row){ alert('Could not find that entry — try reopening the list.'); return; }
     if(row.employee_id !== currentUser.id){ alert('You can only edit your own entries.'); return; }
     editingTaskRow = row;
-
+ 
     const meta = catMeta[row.category];
     const fieldsHtml = [];
     fieldsHtml.push(`<div style="margin-bottom:12px;"><div class="field-label">Project / Subject</div><input type="text" id="edit_project_name" value="${(row.project_name||'').replace(/"/g,'&quot;')}" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></div>`);
@@ -2045,7 +2059,7 @@
       fieldsHtml.push(`<div style="margin-bottom:12px;"><div class="field-label">${k}</div><input type="text" class="edit-detail-field" data-key="${k}" value="${String(val).replace(/"/g,'&quot;')}" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></div>`);
     });
     document.getElementById('editModalFields').innerHTML = fieldsHtml.join('');
-
+ 
     const histWrap = document.getElementById('editHistoryToggleWrap');
     const hist = row.edit_history || [];
     histWrap.innerHTML = hist.length
@@ -2058,15 +2072,15 @@
           </div>
         </details>`
       : `<div style="font-size:12px; color:var(--text-faint);">No previous edits.</div>`;
-
+ 
     document.getElementById('editModal').style.display = 'flex';
   }
-
+ 
   function closeEditModal(){
     document.getElementById('editModal').style.display = 'none';
     editingTaskRow = null;
   }
-
+ 
   async function saveEditedTask(){
     if(!editingTaskRow) return;
     const newProjectName = document.getElementById('edit_project_name').value.trim();
@@ -2078,35 +2092,35 @@
       const original = editingTaskRow.details ? editingTaskRow.details[key] : undefined;
       newDetails[key] = Array.isArray(original) ? inp.value.split(',').map(s=>s.trim()).filter(Boolean) : inp.value;
     });
-
+ 
     const historyEntry = {
       at: new Date().toISOString(),
       by: currentProfile.nickname,
       previous: { project_name: editingTaskRow.project_name, lift_id: editingTaskRow.lift_id, details: editingTaskRow.details }
     };
     const newHistory = [...(editingTaskRow.edit_history || []), historyEntry];
-
+ 
     const { error } = await sb.from('tasks').update({
       project_name: newProjectName,
       lift_id: newLiftId,
       details: newDetails,
       edit_history: newHistory
     }).eq('id', editingTaskRow.id);
-
+ 
     if(error){ alert('Could not save changes: ' + error.message); return; }
     closeEditModal();
     // refresh whichever view we're looking at
     if(currentCatKey) showCategoryLog(currentCatKey);
     loadMyTasks();
   }
-
+ 
   function filterCategoryLog(){
     const q = document.getElementById('catLogSearch').value.trim().toLowerCase();
     const meta = catMeta[currentCatKey];
     const filtered = q ? currentCatRows.filter(r => (r.lift_id||'').toLowerCase().includes(q)) : currentCatRows;
     renderCategoryRows(filtered, meta.hasLift);
   }
-
+ 
   // ============ HOME: live "Recent activity" feed (everyone's inputs, real-time) ============
   function timeAgo(dateStr){
     const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -2119,7 +2133,7 @@
     if(days === 1) return 'yesterday';
     return `${days} days ago`;
   }
-
+ 
   function feedItemHtml(row){
     const cat = catMeta[row.category]?.name || row.category;
     const who = displayName({ full_name: row.employee_full_name, nickname: row.employee_nickname });
@@ -2130,7 +2144,7 @@
       </div>
     </div>`;
   }
-
+ 
   async function loadHomeFeed(){
     const el = document.getElementById('homeFeed');
     const { data, error } = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(10);
@@ -2138,7 +2152,7 @@
     if(!data || !data.length){ el.innerHTML = '<div class="placeholder-note">No activity logged yet — be the first!</div>'; return; }
     el.innerHTML = data.map(feedItemHtml).join('');
   }
-
+ 
   // Real-time: whenever ANYONE logs a task, everyone's home feed gets a generic "someone logged X" line — no names or details
   sb.channel('public:activity-feed')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
@@ -2151,7 +2165,7 @@
       if(items.length > 10) items[items.length-1].remove();
     })
     .subscribe();
-
+ 
   // Collect every field the person filled in #dynamicForm into one details object
   function collectFormData(){
     const cat = document.getElementById('catSelect').value;
@@ -2159,7 +2173,7 @@
     const details = {};
     let liftId = null;
     let projectName = null;
-
+ 
     const textInputs = document.querySelectorAll('#dynamicForm .form-field');
     let inputIndex = 0;
     fields.forEach(f => {
@@ -2190,10 +2204,10 @@
       const picked = Array.from(group.querySelectorAll('.chip-opt.picked')).map(c => c.dataset.opt);
       details[label] = picked;
     });
-
+ 
     return { category: cat, lift_id: liftId, project_name: projectName || '(untitled)', details };
   }
-
+ 
   function queueTask(){
     const data = collectFormData();
     const cat = document.getElementById('catSelect');
@@ -2202,7 +2216,7 @@
     renderQueue();
     renderTaskForm();
   }
-
+ 
   function renderQueue(){
     const el = document.getElementById('taskQueue');
     el.innerHTML = queuedTasks.map((q,i)=>
@@ -2210,7 +2224,7 @@
     ).join('');
     document.getElementById('submitCount').textContent = queuedTasks.length ? `(${queuedTasks.length + 1})` : '';
   }
-
+ 
   async function submitTask(){
     if(!currentUser || !currentProfile || currentProfile.status !== 'active'){
       alert('You must be signed in and approved to submit tasks.');
@@ -2218,7 +2232,7 @@
     }
     const rows = queuedTasks.map(q => q.data);
     rows.push(collectFormData());
-
+ 
     const payload = rows.map(r => ({
       category: r.category,
       lift_id: r.lift_id,
@@ -2227,7 +2241,7 @@
       details: r.details,
       notes: r.details['Notes'] || r.details['Remarks'] || r.details['Notes / Challenges / Achievements'] || null
     }));
-
+ 
     const { error } = await sb.from('tasks').insert(payload);
     if(error){
       alert('Could not save: ' + error.message);
@@ -2238,12 +2252,12 @@
     renderQueue();
     renderTaskForm();
   }
-
+ 
   // ============ REAL ADMIN PANEL ============
   async function loadAdminPanel(){
     const { data: pending } = await sb.from('profiles').select('*').eq('status', 'pending');
     const { data: approved } = await sb.from('profiles').select('*').eq('status', 'active');
-
+ 
     // Pending-account notification now lives in the profile-corner dropdown
     // (per-request), plus a small red dot on the avatar itself for visibility.
     const pendingCountNum = (pending||[]).length;
@@ -2254,12 +2268,12 @@
     }
     const badge = document.getElementById('avatarBadge');
     if(badge) badge.style.display = pendingCountNum ? 'block' : 'none';
-
+ 
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
     document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
     if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); }
-
+ 
     const pendWrap = document.getElementById('pendingSigninsPanel');
     if(pendWrap){
       if(!isSuperadmin){
@@ -2277,7 +2291,7 @@
           </div>`).join('') : '<div style="padding:16px; color:var(--text-faint);">No pending sign-ins.</div>';
       }
     }
-
+ 
     document.getElementById('approvedCountText').textContent = `${(approved||[]).length} active account${(approved||[]).length===1?'':'s'}`;
     const tbody = document.querySelector('#view-admin table.data tbody');
     if(tbody){
@@ -2288,7 +2302,7 @@
         <td>${isSuperadmin ? `<button class="btn remove" onclick="removeUser('${p.id}', this)">Remove</button>` : '<span style="color:var(--text-faint); font-size:12px;">—</span>'}</td></tr>`).join('');
     }
   }
-
+ 
   async function approveUser(id){
     const roleSel = document.getElementById('role-'+id);
     const role = roleSel ? roleSel.value : 'engineer';
@@ -2308,7 +2322,7 @@
     if(error){ alert('Could not remove: ' + error.message); return; }
     loadAdminPanel();
   }
-
+ 
   // ============ KPI WEIGHTS (Superadmin only) ============
   async function loadKpiWeights(){
     const el = document.getElementById('kpiWeightsPanel');
@@ -2345,14 +2359,14 @@
         </label>
       </div>`;
   }
-
+ 
   async function saveKpiWeights(){
     const rows = Object.keys(catMeta).map(key => ({ category: key, weight: parseFloat(document.getElementById('kw_'+key).value) || 0 }));
     const { error } = await sb.from('kpi_weights').upsert(rows, { onConflict: 'category' });
     if(error){ alert('Could not save: ' + error.message); return; }
     alert('KPI weights saved. Every engineer\'s KPI score now reflects these weights.');
   }
-
+ 
   // ============ LIFT SEARCH (real data, across every category) ============
   const TIMELINE_DOT_COLORS = ['', 'red', 'green', 'amber'];
   async function runLiftSearch(){
@@ -2360,18 +2374,18 @@
     const resultEl = document.getElementById('liftSearchResult');
     if(!liftId){ resultEl.innerHTML = '<div class="placeholder-note">Enter a Lift ID above and click Trace.</div>'; return; }
     resultEl.innerHTML = '<div class="placeholder-note">Searching…</div>';
-
+ 
     const { data, error } = await sb.from('tasks')
       .select('*, profiles(full_name, nickname)')
       .eq('lift_id', liftId)
       .order('created_at', { ascending: true });
-
+ 
     if(error){ resultEl.innerHTML = `<div class="placeholder-note">Could not search: ${error.message}</div>`; return; }
     if(!data || !data.length){
       resultEl.innerHTML = `<div class="placeholder-note">No entries found for Lift ${liftId}. Check the ID, or this lift may not have any logged activity yet.</div>`;
       return;
     }
-
+ 
     const latest = data[data.length - 1];
     const header = `
       <div class="lift-header">
@@ -2381,7 +2395,7 @@
         </div>
         <div class="lift-project">${latest.project_name || ''}</div>
       </div>`;
-
+ 
     const timeline = `
       <div class="block-head"><div class="block-title">Full timeline</div><div class="block-sub">${data.length} entr${data.length===1?'y':'ies'} across every category</div></div>
       <div class="timeline">
@@ -2395,14 +2409,14 @@
             </div>
           </div>`).join('')}
       </div>`;
-
+ 
     resultEl.innerHTML = header + timeline;
   }
-
+ 
   // ============ R&I DEVELOPMENT DASHBOARD (real data) ============
   let devPeople = []; // active profiles, for Lead select + Collaborator chips
   let devProjectsCache = [];
-
+ 
   async function populateDevPeople(){
     if(devPeople.length) return;
     const { data } = await sb.from('profiles').select('id, full_name, nickname').eq('status', 'active').order('full_name');
@@ -2411,7 +2425,7 @@
     document.getElementById('devCollabChips').innerHTML = devPeople.map(p => `<div class="chip-opt" data-pid="${p.id}" onclick="pickChip(this)">${displayName(p)}</div>`).join('') || '<div class="chip-opt">No one else yet</div>';
     document.getElementById('devFilterLead').innerHTML = '<option value="">All leads</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
   }
-
+ 
   async function loadDevDashboard(){
     await populateDevPeople();
     const { data, error } = await sb.from('dev_projects').select('*').order('start_date', { ascending: true });
@@ -2420,40 +2434,40 @@
       return;
     }
     devProjectsCache = data || [];
-
+ 
     const impacts = [...new Set(devProjectsCache.map(p => p.impact_type).filter(Boolean))];
     document.getElementById('devFilterImpact').innerHTML = '<option value="">All impact types</option>' + impacts.map(i => `<option>${i}</option>`).join('');
-
+ 
     const thisYear = new Date().getFullYear();
     document.getElementById('devStatTotal').textContent = devProjectsCache.length;
     document.getElementById('devStatProgress').textContent = devProjectsCache.filter(p => p.status === 'In Progress').length;
     document.getElementById('devStatDone').textContent = devProjectsCache.filter(p => p.status === 'Done' && new Date(p.created_at).getFullYear() === thisYear).length;
     const withFin = devProjectsCache.filter(p => p.financial_outcome === 'Yes').length;
     document.getElementById('devStatFin').textContent = devProjectsCache.length ? `${withFin}/${devProjectsCache.length}` : '0/0';
-
+ 
     renderGanttRows();
   }
-
+ 
   const DEV_STATUS_COLOR = { 'In Progress':'#2F5FE0', 'Done':'#188A5A', 'On Hold':'#C97A16', 'Skipped':'#8A93A1' };
-
+ 
   function renderGanttRows(){
     const leadFilter = document.getElementById('devFilterLead').value;
     const impactFilter = document.getElementById('devFilterImpact').value;
     const statusFilter = document.getElementById('devFilterStatus').value;
-
+ 
     let rows = devProjectsCache.filter(p =>
       (!leadFilter || p.lead_id === leadFilter) &&
       (!impactFilter || p.impact_type === impactFilter) &&
       (!statusFilter || p.status === statusFilter)
     );
-
+ 
     const el = document.getElementById('devGanttRows');
     if(!rows.length){
       el.innerHTML = '<div class="placeholder-note">No development projects match this filter yet — add one above.</div>';
       document.getElementById('devRangeLabel').textContent = 'No projects yet';
       return;
     }
-
+ 
     const starts = rows.map(p => new Date(p.start_date).getTime());
     const ends = rows.map(p => new Date(p.target_date || p.start_date).getTime());
     const rangeStart = Math.min(...starts);
@@ -2461,7 +2475,7 @@
     const span = rangeEnd - rangeStart;
     const fmt = d => new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
     document.getElementById('devRangeLabel').textContent = `${fmt(rangeStart)} → ${fmt(rangeEnd)}`;
-
+ 
     el.innerHTML = rows.map(p => {
       const leadName = devPeople.find(dp => dp.id === p.lead_id);
       const leadLabel = leadName ? displayName(leadName) : '—';
@@ -2479,7 +2493,7 @@
       </div>`;
     }).join('');
   }
-
+ 
   async function submitDevProject(){
     const name = document.getElementById('devName').value.trim();
     const leadId = document.getElementById('devLead').value;
@@ -2491,17 +2505,17 @@
     const doc = document.querySelector('#devDocChips .picked-single')?.textContent || 'No';
     const notes = document.getElementById('devNotes').value.trim();
     const collaborators = Array.from(document.querySelectorAll('#devCollabChips .chip-opt.picked')).map(c => c.dataset.pid).filter(Boolean);
-
+ 
     if(!name || !leadId || !start){
       alert('Project Name, Lead, and Start Date are required.');
       return;
     }
-
+ 
     const payload = {
       name, lead_id: leadId, impact_type: impact, start_date: start, target_date: target || null,
       status, financial_outcome: fin, documentation: doc, notes, collaborators
     };
-
+ 
     let error;
     if(editingDevProjectId){
       ({ error } = await sb.from('dev_projects').update(payload).eq('id', editingDevProjectId));
@@ -2509,13 +2523,13 @@
       ({ error } = await sb.from('dev_projects').insert({ ...payload, created_by: currentUser.id }));
     }
     if(error){ alert('Could not save: ' + error.message); return; }
-
+ 
     const wasEdit = !!editingDevProjectId;
     cancelEditDevProject();
     alert(wasEdit ? 'Project updated.' : 'Project added to the Gantt board.');
     loadDevDashboard();
   }
-
+ 
   // ============ HOME OVERVIEW STATS (real, company-wide, via secure RPC) ============
   async function loadHomeOverview(){
     const { data, error } = await sb.rpc('get_home_stats');
@@ -2528,14 +2542,14 @@
     document.getElementById('homeStatActivitiesDelta').textContent = `${data.activities_last_7d} in last 7 days`;
     document.getElementById('homeStatDevDelta').textContent = `${data.dev_due_this_week} due this week`;
     document.getElementById('homeStatEngineersDelta').textContent = `${data.pending_signins} pending sign-in${data.pending_signins===1?'':'s'}`;
-
+ 
     document.getElementById('heroActivitiesNum').textContent = data.total_activities;
     document.getElementById('heroCaption').textContent = `activities logged across ${data.active_engineers} engineers`;
     document.getElementById('heroLifts').textContent = data.distinct_lifts;
     document.getElementById('heroDevProjects').textContent = data.active_dev_projects;
     document.getElementById('heroEngineers').textContent = data.active_engineers;
     document.getElementById('heroPending').textContent = data.pending_signins;
-
+ 
     const catCounts = data.category_counts || {};
     Object.keys(catMeta).forEach(key => {
       const count = catCounts[key] || 0;
@@ -2543,7 +2557,7 @@
       if(el) el.textContent = `${count} logged`;
     });
   }
-
+ 
   // ============ MY TASKS (real data) ============
   async function loadMyTasks(){
     const el = document.getElementById('myTasksList');
@@ -2560,7 +2574,7 @@
         <button class="btn" style="margin-top:6px; padding:3px 10px; font-size:11px;" onclick="openEditTask('${t.id}')">Edit</button>
       </div>`).join('');
   }
-
+ 
   // ============ PROFILE (real data) ============
   async function loadProfile(){
     if(!currentProfile) return;
@@ -2569,33 +2583,33 @@
     document.getElementById('profileRole').textContent =
       currentProfile.role === 'superadmin' ? 'Superadmin' : currentProfile.role === 'admin' ? 'Admin' : 'R&I Engineer';
     document.getElementById('avatarUploadStatus').textContent = '';
-
+ 
     const now = new Date();
     document.getElementById('profileKpiMonthLabel').textContent = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
+ 
     const { data } = await sb.from('tasks').select('category, created_at').eq('employee_id', currentUser.id);
     const rows = data || [];
     document.getElementById('profileTaskCount').textContent = rows.length;
     const monthlyRows = rows.filter(r => r.created_at >= monthStart);
     document.getElementById('profileTaskCountMonthly').textContent = monthlyRows.length;
-
+ 
     const counts = {};
     rows.forEach(r => { counts[r.category] = (counts[r.category]||0) + 1; });
     const monthlyCounts = {};
     monthlyRows.forEach(r => { monthlyCounts[r.category] = (monthlyCounts[r.category]||0) + 1; });
-
+ 
     const { data: weightData } = await sb.from('kpi_weights').select('*');
     const weightMap = {};
     (weightData||[]).forEach(w => weightMap[w.category] = w.weight);
     const hasWeights = weightData && weightData.length;
-
+ 
     const overallScore = Object.entries(counts).reduce((sum, [cat,count]) => sum + count * (weightMap[cat] ?? 1), 0);
     const monthlyScore = Object.entries(monthlyCounts).reduce((sum, [cat,count]) => sum + count * (weightMap[cat] ?? 1), 0);
     document.getElementById('profileKpiScore').textContent = hasWeights ? overallScore.toFixed(1) : rows.length;
     document.getElementById('profileKpiLabel').textContent = hasWeights ? 'Overall weighted KPI' : 'Overall — weights not set yet by a Superadmin';
     document.getElementById('profileKpiMonthly').textContent = hasWeights ? monthlyScore.toFixed(1) : monthlyRows.length;
-
+ 
     const max = Math.max(1, ...Object.values(counts));
     const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
     const bEl = document.getElementById('profileBreakdown');
@@ -2603,7 +2617,7 @@
       <div class="bar-row"><div class="bar-label">${catMeta[cat]?.name || cat}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/max*100)}%"></div></div><div class="bar-val">${count}</div></div>
     `).join('') : '<div class="placeholder-note">No tasks logged yet.</div>';
   }
-
+ 
   // ============ DASHBOARD (real data, Admin/Superadmin) ============
   async function populateDashEngineerSelect(){
     const sel = document.getElementById('dashEngineerSelect');
@@ -2617,7 +2631,7 @@
     });
     sel.dataset.loaded = '1';
   }
-
+ 
   async function loadDashboard(){
     await populateDashEngineerSelect();
     await loadAppSettings();
@@ -2625,7 +2639,7 @@
     const fromVal = document.getElementById('dashFromMonth').value; // "2026-01"
     const toVal = document.getElementById('dashToMonth').value;
     const engineerId = document.getElementById('dashEngineerSelect').value;
-
+ 
     let query = sb.from('tasks').select('*, profiles(full_name, nickname)');
     if(fromVal) query = query.gte('created_at', fromVal + '-01');
     if(toVal){
@@ -2634,35 +2648,35 @@
       query = query.lt('created_at', nextMonth);
     }
     if(engineerId) query = query.eq('employee_id', engineerId);
-
+ 
     const { data, error } = await query;
     document.getElementById('dashAsOf').textContent = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
     if(error){ document.getElementById('dashCategoryBreakdown').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
-
+ 
     const rows = data || [];
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
     const engineerSet = new Set(rows.map(r=>r.employee_id));
     const catCounts = {};
     rows.forEach(r => { catCounts[r.category] = (catCounts[r.category]||0) + 1; });
-
+ 
     document.getElementById('dashStatActivities').textContent = rows.length;
     document.getElementById('dashStatLifts').textContent = liftSet.size;
     document.getElementById('dashStatEngineers').textContent = engineerSet.size;
     document.getElementById('dashStatCategories').textContent = Object.keys(catCounts).length;
-
+ 
     const maxCat = Math.max(1, ...Object.values(catCounts));
     const catSorted = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
     document.getElementById('breakdownTitle').textContent = engineerId ? 'Activity by category — this engineer' : 'Activity by category — whole team';
     document.getElementById('dashCategoryBreakdown').innerHTML = catSorted.length ? catSorted.map(([cat,count]) => `
       <div class="bar-row"><div class="bar-label">${catMeta[cat]?.name || cat}</div><div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/maxCat*100)}%"></div></div><div class="bar-val">${count}</div></div>
     `).join('') : '<div class="placeholder-note">No activity in this range.</div>';
-
+ 
     // Leaderboard: per engineer totals + their top category, built from the same filtered rows
     const { data: weightData } = await sb.from('kpi_weights').select('*');
     const weightMap = {};
     (weightData||[]).forEach(w => weightMap[w.category] = w.weight);
     const canSeeIndividualKpi = currentProfile.role === 'superadmin' || (currentProfile.role === 'admin' && appSettings.admins_see_kpi);
-
+ 
     const byEngineer = {};
     rows.forEach(r => {
       const id = r.employee_id;
@@ -2682,31 +2696,31 @@
       </tr>`;
     }).join('') : '<tr><td colspan="5" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
   }
-
+ 
   // ============ APP SETTINGS (KPI visibility + trigger control, Superadmin only) ============
   let appSettings = { admins_see_kpi: true, admins_trigger_kpi: false };
   let appSettingsLoaded = false;
-
+ 
   async function loadAppSettings(){
     if(appSettingsLoaded) return;
     const { data, error } = await sb.from('app_settings').select('*').eq('id', 1).single();
     if(!error && data) appSettings = { admins_trigger_kpi: false, ...data };
     appSettingsLoaded = true;
   }
-
+ 
   async function toggleAdminsSeeKpi(checkbox){
     const { error } = await sb.from('app_settings').update({ admins_see_kpi: checkbox.checked }).eq('id', 1);
     if(error){ alert('Could not save: ' + error.message); checkbox.checked = !checkbox.checked; return; }
     appSettings.admins_see_kpi = checkbox.checked;
   }
-
+ 
   async function toggleAdminsTriggerKpi(checkbox){
     const { error } = await sb.from('app_settings').update({ admins_trigger_kpi: checkbox.checked }).eq('id', 1);
     if(error){ alert('Could not save: ' + error.message); checkbox.checked = !checkbox.checked; return; }
     appSettings.admins_trigger_kpi = checkbox.checked;
     renderKpiTriggerButton();
   }
-
+ 
   // Every engineer can always recalculate their own KPI (see the Profile page
   // button). Team-wide recalculation on the Dashboard is Superadmin-only by
   // default; a Superadmin can extend that permission to Admins above.
@@ -2715,18 +2729,18 @@
     if(currentProfile.role === 'superadmin') return true;
     return currentProfile.role === 'admin' && !!appSettings.admins_trigger_kpi;
   }
-
+ 
   function renderKpiTriggerButton(){
     const el = document.getElementById('dashKpiTriggerWrap');
     if(!el) return;
     el.style.display = canTriggerTeamKpi() ? 'block' : 'none';
   }
-
+ 
   function triggerTeamKpiRecalc(){
     if(!canTriggerTeamKpi()) return;
     loadDashboard();
   }
 </script>
-
+ 
 </body>
 </html>
