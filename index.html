@@ -1591,6 +1591,24 @@
     // fields come after them depends on the "Support Type" dropdown. On the
     // very first render that dropdown doesn't exist in the DOM yet, so it
     // defaults to whichever option is listed first.
+    //
+    // Changing that dropdown re-runs this whole function, which rebuilds the
+    // entire form fresh — that used to silently wipe out anything already
+    // typed into Lift ID / Project Name above it, since they're part of the
+    // same block being replaced. Capturing their values here and restoring
+    // them after the rebuild (below) fixes that.
+    let preservedBaseValues = null;
+    if(cat === 'techsupport' && document.getElementById('techSupportType')){
+      preservedBaseValues = {};
+      document.querySelectorAll('#dynamicForm .form-field').forEach(fieldEl => {
+        const labelEl = fieldEl.querySelector('.field-label');
+        const input = fieldEl.querySelector('input.ti');
+        if(labelEl && input && input.id !== 'techSupportType'){
+          preservedBaseValues[labelEl.textContent.replace('*','').trim()] = input.value;
+        }
+      });
+    }
+
     if(cat === 'techsupport'){
       const subSelect = document.getElementById('techSupportType');
       const subType = subSelect ? subSelect.value : 'Installation Support';
@@ -1616,6 +1634,16 @@
       + sectionBlock('identity', groups.identity)
       + sectionBlock('details', groups.details)
       + sectionBlock('description', groups.description);
+
+    if(preservedBaseValues){
+      document.querySelectorAll('#dynamicForm .form-field').forEach(fieldEl => {
+        const labelEl = fieldEl.querySelector('.field-label');
+        const input = fieldEl.querySelector('input.ti');
+        if(!labelEl || !input || input.id === 'techSupportType') return;
+        const label = labelEl.textContent.replace('*','').trim();
+        if(preservedBaseValues.hasOwnProperty(label)) input.value = preservedBaseValues[label];
+      });
+    }
   }
  
   function pickChip(el){
