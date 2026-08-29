@@ -1536,7 +1536,11 @@
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti">${f.placeholder ? `<option value="">${f.placeholder}</option>` : ''}${opts}</select>${!hasOpts ? `<div style="font-size:11px; color:var(--text-faint); margin-top:4px;">No options yet — a Superadmin can add some from the Admin panel.</div>` : ''}</div>`;
     }
     if(f.t==='staticselect'){
-      const opts = (f.opts || []).map(o => `<option value="${o}">${o}</option>`).join('');
+      // f.currentValue (set by renderTaskForm right before this runs) marks
+      // which option should stay visually selected across a rebuild — without
+      // it, every re-render silently snapped back to showing the first listed
+      // option, even when a different one was actually in effect.
+      const opts = (f.opts || []).map(o => `<option value="${o}" ${o === f.currentValue ? 'selected' : ''}>${o}</option>`).join('');
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti" id="${f.id||''}" ${f.onchange ? `onchange="${f.onchange}"` : ''}>${opts}</select></div>`;
     }
     if(f.t==='textarea'){
@@ -1590,6 +1594,12 @@
     if(cat === 'techsupport'){
       const subSelect = document.getElementById('techSupportType');
       const subType = subSelect ? subSelect.value : 'Installation Support';
+      // Record the actual current choice on the field definition itself so
+      // innerFieldHTML can mark the matching <option> as selected when it
+      // rebuilds the dropdown — otherwise the rebuilt select always visually
+      // reset to its first option, regardless of what was really chosen.
+      const subField = fields.find(f => f.id === 'techSupportType');
+      if(subField) subField.currentValue = subType;
       fields = fields.concat(techSupportSubforms[subType] || []);
     }
 
