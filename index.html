@@ -40,6 +40,7 @@
     --c-client:#0C7979;
     --c-postsales:#167C51;
     --c-install:#A15B18;
+    --c-techsupport:#A15B18;
     --c-commission:#AF5200;
     --c-aftersales:#C23D74;
     --c-production:#4A50C9;
@@ -53,7 +54,7 @@
        at every contrast in every theme; the theme-adjusted --c-* set above is tuned instead for
        colored text on a light tint, which needs the opposite (brighter) treatment in dark themes. */
     --ic-rni:#6E4FD1; --ic-presales:#1D6FD9; --ic-client:#0C7979; --ic-postsales:#167C51;
-    --ic-install:#A15B18; --ic-commission:#AF5200; --ic-aftersales:#C23D74; --ic-production:#4A50C9;
+    --ic-install:#A15B18; --ic-commission:#AF5200; --ic-aftersales:#C23D74; --ic-production:#4A50C9; --ic-techsupport:#A15B18;
     --ic-requisition:#0C7788; --ic-scm:#597600; --ic-existingdev:#6B5B44; --ic-surveyissues:#956504;
   }
  
@@ -65,7 +66,7 @@
     --text:#F5F6F8; --text-dim:#B8BFCC; --text-faint:#8F98A7; --bg-anim-ink:#8B96B8;
     --accent:#6C9BFF; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
-    --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5;
+    --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5; --c-techsupport:#E8AD6C;
     --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8; --c-surveyissues:#F0BA4C;
     --shadow:0 1px 3px rgba(0,0,0,0.28), 0 10px 26px -12px rgba(0,0,0,0.45);
     --header-bg:#202329;
@@ -75,7 +76,7 @@
     --text:#F5F7FB; --text-dim:#9CA5B8; --text-faint:#737D91; --bg-anim-ink:#7482A6;
     --accent:#5B8DEF; --amber:#E0A23D; --green:#34D399; --red:#F0685C;
     --c-rni:#9A82F0; --c-presales:#5C97F5; --c-client:#3FC2C2; --c-postsales:#3FCF8E;
-    --c-install:#E3A25B; --c-commission:#F0954D; --c-aftersales:#F06FA0; --c-production:#8890F0;
+    --c-install:#E3A25B; --c-commission:#F0954D; --c-aftersales:#F06FA0; --c-production:#8890F0; --c-techsupport:#E3A25B;
     --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A; --c-surveyissues:#F0BA4C;
     --shadow:0 1px 3px rgba(0,0,0,0.5), 0 14px 34px -14px rgba(0,0,0,0.7);
     --header-bg:#05070D;
@@ -308,6 +309,7 @@
   .cc-scm{--accent-c:var(--c-scm); --accent-ic:var(--ic-scm);}
   .cc-existingdev{--accent-c:var(--c-existingdev); --accent-ic:var(--ic-existingdev);}
   .cc-surveyissues{--accent-c:var(--c-surveyissues); --accent-ic:var(--ic-surveyissues);}
+  .cc-techsupport{--accent-c:var(--c-techsupport); --accent-ic:var(--ic-techsupport);}
  
   /* ---------- ACTIVITY FEED ---------- */
   .feed-item{
@@ -975,14 +977,12 @@
         <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-name">R&amp;I Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div>
         <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div>
         <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div>
-        <div class="cat-tile cc-install" onclick="showCategoryLog('install')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'install')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Installation Support</div><div class="cat-count" id="catCount-install">— logged</div></div>
-        <div class="cat-tile cc-commission" onclick="showCategoryLog('commission')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'commission')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-name">Commissioning Support</div><div class="cat-count" id="catCount-commission">— logged</div></div>
-        <div class="cat-tile cc-aftersales" onclick="showCategoryLog('aftersales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'aftersales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-name">After-Sales Support</div><div class="cat-count" id="catCount-aftersales">— logged</div></div>
-        <div class="cat-tile cc-production" onclick="showCategoryLog('production')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'production')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-name">Production Support</div><div class="cat-count" id="catCount-production">— logged</div></div>
-        <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">08</div><div class="cat-name">Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div>
-        <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">09</div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div>
-        <div class="cat-tile cc-existingdev" onclick="showCategoryLog('existingdev')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'existingdev')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">10</div><div class="cat-name">Existing Development</div><div class="cat-count" id="catCount-existingdev">— logged</div></div>
-        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">11</div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div>
+        <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Technical Supports</div><div class="cat-count" id="catCount-techsupport">— logged</div></div>
+        <div class="cat-tile cc-production" onclick="showCategoryLog('production')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'production')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-name">Production Support</div><div class="cat-count" id="catCount-production">— logged</div></div>
+        <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-name">Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div>
+        <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div>
+        <div class="cat-tile cc-existingdev" onclick="showCategoryLog('existingdev')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'existingdev')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">08</div><div class="cat-name">Existing Development</div><div class="cat-count" id="catCount-existingdev">— logged</div></div>
+        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">09</div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div>
       </div>
     </section>
  
@@ -1057,9 +1057,7 @@
               <option value="rni">R&amp;I Activity</option>
               <option value="presales">Pre-Sales Support</option>
               <option value="postsales">Post-Sales Activity</option>
-              <option value="install">Installation Support</option>
-              <option value="commission">Commissioning Support</option>
-              <option value="aftersales">After-Sales Support</option>
+              <option value="techsupport">Technical Supports</option>
               <option value="production">Production Support</option>
               <option value="requisition">Requisition</option>
               <option value="scm">SCM Support</option>
@@ -1404,9 +1402,7 @@
     rni:{name:'R&I Activity', hasLift:false},
     presales:{name:'Pre-Sales Support', hasLift:false},
     postsales:{name:'Post-Sales Activity', hasLift:true},
-    install:{name:'Installation Support', hasLift:true},
-    commission:{name:'Commissioning Support', hasLift:true},
-    aftersales:{name:'After-Sales Support', hasLift:true},
+    techsupport:{name:'Technical Supports', hasLift:true},
     production:{name:'Production Support', hasLift:true},
     requisition:{name:'Requisition', hasLift:false},
     scm:{name:'SCM Support', hasLift:false},
@@ -1426,6 +1422,28 @@
   // section: 'identity' (what/where this task is), 'details' (categorical work info), 'description' (free text)
   const liftId = () => ({t:'text', l:'Lift ID', mono:true, req:true, ph:'Mandatory — required for lift tracing', section:'identity'});
  
+  // Technical Supports merges three previously-separate categories
+  // (Installation, Commissioning, After-Sales) into one card, each kept
+  // exactly as it was before — the "Support Type" dropdown on the form just
+  // swaps in the right set of fields below it. renderTaskForm() appends
+  // whichever of these arrays matches the current selection.
+  const techSupportSubforms = {
+    'Installation Support': [
+      {t:'chips', l:'Problem Category', hint:'select all that apply', opts:['Layout','Shaft','Safety Item','Rail & Bracket','Cabin & CWT','Door & Jamb','Rope','Machine Room','Structural'], section:'details'},
+      {t:'chips', l:'Support Medium', hint:'select all that apply', opts:['Phone','Text','Meeting','Site Visit'], section:'details'},
+      {t:'textarea', l:'Problem Statement', section:'description'},
+      {t:'textarea', l:'Solution Statement', section:'description'}
+    ],
+    'Commissioning Support': [
+      {t:'chips', l:'Support Medium', hint:'select all that apply', opts:['Phone','Text','Meeting','Site Visit'], section:'details'},
+      {t:'textarea', l:'Problem Statement', section:'description'},
+      {t:'textarea', l:'Solution Statement', section:'description'}
+    ],
+    'After-Sales Support': [
+      {t:'textarea', l:'Support provided', section:'description'}
+    ]
+  };
+
   const taskForms = {
     rni: [
       {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
@@ -1453,25 +1471,10 @@
       {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
       {t:'textarea', l:'Remarks', section:'description'}
     ],
-    install: [
+    techsupport: [
       liftId(),
       {t:'text', l:'Project Name', req:true, section:'identity'},
-      {t:'chips', l:'Problem Category', hint:'select all that apply', opts:['Layout','Shaft','Safety Item','Rail & Bracket','Cabin & CWT','Door & Jamb','Rope','Machine Room','Structural'], section:'details'},
-      {t:'chips', l:'Support Medium', hint:'select all that apply', opts:['Phone','Text','Meeting','Site Visit'], section:'details'},
-      {t:'textarea', l:'Problem Statement', section:'description'},
-      {t:'textarea', l:'Solution Statement', section:'description'}
-    ],
-    commission: [
-      liftId(),
-      {t:'text', l:'Project Name', req:true, section:'identity'},
-      {t:'chips', l:'Support Medium', hint:'select all that apply', opts:['Phone','Text','Meeting','Site Visit'], section:'details'},
-      {t:'textarea', l:'Problem Statement', section:'description'},
-      {t:'textarea', l:'Solution Statement', section:'description'}
-    ],
-    aftersales: [
-      liftId(),
-      {t:'text', l:'Project / Client Name', req:true, section:'identity'},
-      {t:'textarea', l:'Support provided', section:'description'}
+      {t:'staticselect', l:'Support Type', id:'techSupportType', req:true, opts:['Installation Support','Commissioning Support','After-Sales Support'], onchange:'renderTaskForm()', section:'identity'}
     ],
     production: [
       liftId(),
@@ -1513,13 +1516,17 @@
   let dynamicFieldOptionsLoaded = false;
   async function loadDynamicFieldOptions(force){
     if(dynamicFieldOptionsLoaded && !force) return;
-    const [{ data: wings }, { data: types }] = await Promise.all([
+    const [{ data: wings, error: wingsErr }, { data: types, error: typesErr }] = await Promise.all([
       sb.from('installation_wings').select('*').order('name'),
       sb.from('data_issue_types').select('*').order('name')
     ]);
     dynamicFieldOptions.installationWings = wings || [];
     dynamicFieldOptions.dataIssueTypes = types || [];
-    dynamicFieldOptionsLoaded = true;
+    // Only mark this as "successfully loaded" if both queries actually
+    // succeeded. If either failed (a network blip, a timing hiccup — anything),
+    // leave the flag false so the NEXT time this form is opened, it tries
+    // fetching again instead of permanently trusting an empty result.
+    if(!wingsErr && !typesErr) dynamicFieldOptionsLoaded = true;
   }
 
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
@@ -1535,6 +1542,10 @@
       const opts = (dynamicFieldOptions[f.source] || []).map(o => `<option value="${o.id}">${o.name}</option>`).join('');
       const hasOpts = (dynamicFieldOptions[f.source] || []).length > 0;
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti">${f.placeholder ? `<option value="">${f.placeholder}</option>` : ''}${opts}</select>${!hasOpts ? `<div style="font-size:11px; color:var(--text-faint); margin-top:4px;">No options yet — a Superadmin can add some from the Admin panel.</div>` : ''}</div>`;
+    }
+    if(f.t==='staticselect'){
+      const opts = (f.opts || []).map(o => `<option value="${o}">${o}</option>`).join('');
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti" id="${f.id||''}" ${f.onchange ? `onchange="${f.onchange}"` : ''}>${opts}</select></div>`;
     }
     if(f.t==='textarea'){
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><textarea placeholder="${f.ph||''}"></textarea></div>`;
@@ -1570,7 +1581,7 @@
  
   async function renderTaskForm(){
     const cat = document.getElementById('catSelect').value;
-    const fields = taskForms[cat] || [];
+    let fields = taskForms[cat] || [];
 
     // Any category using a Superadmin-managed dropdown (currently just Survey
     // Report Issues) needs its options fetched before the <select> can be
@@ -1578,6 +1589,16 @@
     // load completes, so switching back to this category later is instant.
     if(fields.some(f => f.t === 'select') && !dynamicFieldOptionsLoaded){
       await loadDynamicFieldOptions();
+    }
+
+    // Technical Supports: the base fields above always show; which extra
+    // fields come after them depends on the "Support Type" dropdown. On the
+    // very first render that dropdown doesn't exist in the DOM yet, so it
+    // defaults to whichever option is listed first.
+    if(cat === 'techsupport'){
+      const subSelect = document.getElementById('techSupportType');
+      const subType = subSelect ? subSelect.value : 'Installation Support';
+      fields = fields.concat(techSupportSubforms[subType] || []);
     }
 
     const groups = {identity:[], details:[], description:[]};
@@ -2545,10 +2566,13 @@
 
     // Keep the task-entry form's cached dropdown options in sync with whatever
     // a Superadmin just changed here, so switching to Survey Report Issues
-    // right after adding/removing one reflects it immediately.
+    // right after adding/removing one reflects it immediately. Same rule as
+    // loadDynamicFieldOptions(): only trust this as "loaded" if both queries
+    // actually succeeded, so a failed background fetch here never poisons the
+    // My Tasks form's cache into showing "no options" when real data exists.
     dynamicFieldOptions.installationWings = wings || [];
     dynamicFieldOptions.dataIssueTypes = types || [];
-    dynamicFieldOptionsLoaded = true;
+    if(!wingsErr && !typesErr) dynamicFieldOptionsLoaded = true;
   }
 
   async function addInstallationWing(){
