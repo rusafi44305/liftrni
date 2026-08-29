@@ -46,6 +46,7 @@
     --c-requisition:#0C7788;
     --c-scm:#597600;
     --c-existingdev:#6B5B44;
+    --c-surveyissues:#956504;
  
     /* Fixed category "icon" colors — deliberately NOT overridden per theme (unlike --c-* above).
        .cat-icon always puts white text on these, so they must stay dark enough for white text
@@ -53,7 +54,7 @@
        colored text on a light tint, which needs the opposite (brighter) treatment in dark themes. */
     --ic-rni:#6E4FD1; --ic-presales:#1D6FD9; --ic-client:#0C7979; --ic-postsales:#167C51;
     --ic-install:#A15B18; --ic-commission:#AF5200; --ic-aftersales:#C23D74; --ic-production:#4A50C9;
-    --ic-requisition:#0C7788; --ic-scm:#597600; --ic-existingdev:#6B5B44;
+    --ic-requisition:#0C7788; --ic-scm:#597600; --ic-existingdev:#6B5B44; --ic-surveyissues:#956504;
   }
  
   /* ---------- THEMES ---------- */
@@ -65,7 +66,7 @@
     --accent:#6C9BFF; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
     --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5;
-    --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8;
+    --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8; --c-surveyissues:#F0BA4C;
     --shadow:0 1px 3px rgba(0,0,0,0.28), 0 10px 26px -12px rgba(0,0,0,0.45);
     --header-bg:#202329;
   }
@@ -75,7 +76,7 @@
     --accent:#5B8DEF; --amber:#E0A23D; --green:#34D399; --red:#F0685C;
     --c-rni:#9A82F0; --c-presales:#5C97F5; --c-client:#3FC2C2; --c-postsales:#3FCF8E;
     --c-install:#E3A25B; --c-commission:#F0954D; --c-aftersales:#F06FA0; --c-production:#8890F0;
-    --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A;
+    --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A; --c-surveyissues:#F0BA4C;
     --shadow:0 1px 3px rgba(0,0,0,0.5), 0 14px 34px -14px rgba(0,0,0,0.7);
     --header-bg:#05070D;
   }
@@ -306,6 +307,7 @@
   .cc-requisition{--accent-c:var(--c-requisition); --accent-ic:var(--ic-requisition);}
   .cc-scm{--accent-c:var(--c-scm); --accent-ic:var(--ic-scm);}
   .cc-existingdev{--accent-c:var(--c-existingdev); --accent-ic:var(--ic-existingdev);}
+  .cc-surveyissues{--accent-c:var(--c-surveyissues); --accent-ic:var(--ic-surveyissues);}
  
   /* ---------- ACTIVITY FEED ---------- */
   .feed-item{
@@ -981,6 +983,7 @@
         <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">09</div><div class="cat-name">Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div>
         <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">10</div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div>
         <div class="cat-tile cc-existingdev" onclick="showCategoryLog('existingdev')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'existingdev')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">11</div><div class="cat-name">Existing Development</div><div class="cat-count" id="catCount-existingdev">— logged</div></div>
+        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">12</div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div>
       </div>
     </section>
  
@@ -1063,6 +1066,7 @@
               <option value="requisition">Requisition</option>
               <option value="scm">SCM Support</option>
               <option value="existingdev">Existing Development</option>
+              <option value="surveyissues">Survey Report Issues</option>
             </select>
           </div>
         </div>
@@ -1335,6 +1339,26 @@
  
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">KPI category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's KPI score</div></div></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+
+    <div class="block-head" id="surveyOptionsBlock" style="display:none;"><div><div class="block-title">Survey Report Issues — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging an entry</div></div></div>
+    <div class="split-grid" id="surveyOptionsPanel" style="display:none; margin-bottom:32px;">
+      <div class="panel">
+        <div class="panel-title">Installation Wings</div>
+        <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
+          <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Types of Data Missing</div>
+        <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
+          <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
+        </div>
+      </div>
+    </div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
@@ -1390,6 +1414,7 @@
     requisition:{name:'Requisition', hasLift:false},
     scm:{name:'SCM Support', hasLift:false},
     existingdev:{name:'Existing Development', hasLift:false},
+    surveyissues:{name:'Survey Report Issues', hasLift:true},
   };
   function logInThisCategory(){
     if(!currentCatKey) return;
@@ -1474,14 +1499,48 @@
       {t:'row2text', l1:'Start Date', l2:'Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
       {t:'textarea', l:'Development Description', section:'description'}
     ],
+    surveyissues: [
+      liftId(),
+      {t:'text', l:'Project Name', req:true, section:'identity'},
+      {t:'text', l:'Month', req:true, section:'identity'},
+      {t:'select', l:'Installation Wing', req:true, source:'installationWings', placeholder:'Select a wing…', section:'details'},
+      {t:'select', l:'Type of Data Missing', req:true, source:'dataIssueTypes', placeholder:'Select a type…', section:'details'},
+      {t:'text', l:'Short Description', req:true, ph:'What data is missing or wrong', section:'details'},
+      {t:'textarea', l:'Impact', ph:'What effect this had — rework, delay, cost, etc.', section:'description'},
+      {t:'textarea', l:'Remarks', section:'description'}
+    ],
   };
  
+  // Options for dropdown fields that a Superadmin manages (Installation Wings,
+  // Issue Types) rather than being hard-coded like the chip lists above.
+  // Loaded once and cached; loadDynamicFieldOptions() re-fetches on demand
+  // (e.g. right after a Superadmin adds/removes one in the Admin panel).
+  let dynamicFieldOptions = { installationWings: [], dataIssueTypes: [] };
+  let dynamicFieldOptionsLoaded = false;
+  async function loadDynamicFieldOptions(force){
+    if(dynamicFieldOptionsLoaded && !force) return;
+    const [{ data: wings }, { data: types }] = await Promise.all([
+      sb.from('installation_wings').select('*').order('name'),
+      sb.from('data_issue_types').select('*').order('name')
+    ]);
+    dynamicFieldOptions.installationWings = wings || [];
+    dynamicFieldOptions.dataIssueTypes = types || [];
+    dynamicFieldOptionsLoaded = true;
+  }
+
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
- 
+
   function innerFieldHTML(f){
     if(f.t==='text'){
-      const isDate = /date/i.test(f.l);
-      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${isDate?'date':'text'}" class="ti" placeholder="${isDate?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}"></div>`;
+      const isMonth = /month/i.test(f.l);
+      const isDate = /date/i.test(f.l) && !isMonth;
+      const inputType = isMonth ? 'month' : (isDate ? 'date' : 'text');
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${inputType}" class="ti" placeholder="${(isDate||isMonth)?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}"></div>`;
+    }
+    if(f.t==='select'){
+      const opts = (dynamicFieldOptions[f.source] || []).map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+      const hasOpts = (dynamicFieldOptions[f.source] || []).length > 0;
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti">${f.placeholder ? `<option value="">${f.placeholder}</option>` : ''}${opts}</select>${!hasOpts ? `<div style="font-size:11px; color:var(--text-faint); margin-top:4px;">No options yet — a Superadmin can add some from the Admin panel.</div>` : ''}</div>`;
     }
     if(f.t==='textarea'){
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><textarea placeholder="${f.ph||''}"></textarea></div>`;
@@ -1515,9 +1574,18 @@
     return `<div class="form-section"><div class="section-label">${SECTION_LABELS[key]}</div>${fieldsArr.map(fieldHTML).join('')}</div>`;
   }
  
-  function renderTaskForm(){
+  async function renderTaskForm(){
     const cat = document.getElementById('catSelect').value;
     const fields = taskForms[cat] || [];
+
+    // Any category using a Superadmin-managed dropdown (currently just Survey
+    // Report Issues) needs its options fetched before the <select> can be
+    // built. Fetched once and cached — this just re-renders after the first
+    // load completes, so switching back to this category later is instant.
+    if(fields.some(f => f.t === 'select') && !dynamicFieldOptionsLoaded){
+      await loadDynamicFieldOptions();
+    }
+
     const groups = {identity:[], details:[], description:[]};
     fields.forEach(f => groups[f.section || 'details'].push(f));
  
@@ -2252,7 +2320,12 @@
         const val = input ? input.value.trim() : '';
         details[f.l] = val;
         if(f.l === 'Lift ID') liftId = val || null;
-        if(!projectName && f.section === 'identity') projectName = val;
+        // Skip Lift ID specifically — every lift-traceable category lists it
+        // FIRST in the identity section, which meant this was picking the
+        // Lift ID as the "project name" for every one of those categories
+        // (Post-Sales, Installation, Commissioning, After-Sales, Production,
+        // Survey Report Issues) instead of the actual project name field.
+        if(!projectName && f.section === 'identity' && f.l !== 'Lift ID') projectName = val;
       } else if(f.t === 'row2text'){
         // row2text uses two inputs but they share the same querySelectorAll pool above only for type=text;
       } else if(f.t === 'textarea'){
@@ -2273,6 +2346,14 @@
       const label = group.closest('.form-field').querySelector('.field-label').textContent.replace('*','').split('(')[0].trim();
       const picked = Array.from(group.querySelectorAll('.chip-opt.picked')).map(c => c.dataset.opt);
       details[label] = picked;
+    });
+    // Superadmin-managed dropdowns (Installation Wing, Type of Data Missing) —
+    // store the readable name, not its id, so the log/search/export views
+    // (which just print whatever's in `details`) show something meaningful.
+    document.querySelectorAll('#dynamicForm select.ti').forEach(sel => {
+      const label = sel.closest('.form-field').querySelector('.field-label').textContent.replace('*','').trim();
+      const opt = sel.options[sel.selectedIndex];
+      details[label] = (opt && opt.value) ? opt.textContent.trim() : '';
     });
  
     return { category: cat, lift_id: liftId, project_name: projectName || '(untitled)', details };
@@ -2342,7 +2423,9 @@
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
     document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
-    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); }
+    document.getElementById('surveyOptionsBlock').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('surveyOptionsPanel').style.display = isSuperadmin ? 'grid' : 'none';
+    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); loadSurveyOptionsPanel(); }
  
     const pendWrap = document.getElementById('pendingSigninsPanel');
     if(pendWrap){
@@ -2435,6 +2518,71 @@
     const { error } = await sb.from('kpi_weights').upsert(rows, { onConflict: 'category' });
     if(error){ alert('Could not save: ' + error.message); return; }
     alert('KPI weights saved. Every engineer\'s KPI score now reflects these weights.');
+  }
+
+  // ============ SURVEY REPORT ISSUES — dropdown options (Superadmin only) ============
+  // Both lists work the same way: read-only for everyone (so the dropdown on
+  // the task form can populate), add/delete restricted to Superadmin by RLS
+  // on the database side. This panel is just the admin UI for managing them.
+  function wingOrTypeRowHtml(row, deleteFn){
+    return `
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+        <span style="font-size:13.5px;">${row.name}</span>
+        <button class="btn remove" style="padding:4px 10px; font-size:11.5px;" onclick="${deleteFn}('${row.id}')">Remove</button>
+      </div>`;
+  }
+
+  async function loadSurveyOptionsPanel(){
+    const wingsEl = document.getElementById('installationWingsList');
+    const typesEl = document.getElementById('dataIssueTypesList');
+    const { data: wings, error: wingsErr } = await sb.from('installation_wings').select('*').order('name');
+    wingsEl.innerHTML = wingsErr
+      ? `<div class="placeholder-note">Could not load: ${wingsErr.message}. Make sure the installation_wings table has been created (see setup SQL).</div>`
+      : (wings && wings.length ? wings.map(w => wingOrTypeRowHtml(w, 'deleteInstallationWing')).join('') : '<div class="placeholder-note">No wings yet.</div>');
+
+    const { data: types, error: typesErr } = await sb.from('data_issue_types').select('*').order('name');
+    typesEl.innerHTML = typesErr
+      ? `<div class="placeholder-note">Could not load: ${typesErr.message}. Make sure the data_issue_types table has been created (see setup SQL).</div>`
+      : (types && types.length ? types.map(t => wingOrTypeRowHtml(t, 'deleteDataIssueType')).join('') : '<div class="placeholder-note">No types yet.</div>');
+
+    // Keep the task-entry form's cached dropdown options in sync with whatever
+    // a Superadmin just changed here, so switching to Survey Report Issues
+    // right after adding/removing one reflects it immediately.
+    dynamicFieldOptions.installationWings = wings || [];
+    dynamicFieldOptions.dataIssueTypes = types || [];
+    dynamicFieldOptionsLoaded = true;
+  }
+
+  async function addInstallationWing(){
+    const input = document.getElementById('newWingInput');
+    const name = input.value.trim();
+    if(!name) return;
+    const { error } = await sb.from('installation_wings').insert({ name });
+    if(error){ alert('Could not add: ' + error.message); return; }
+    input.value = '';
+    loadSurveyOptionsPanel();
+  }
+  async function deleteInstallationWing(id){
+    if(!confirm('Remove this installation wing? Past entries that used it keep their recorded value — only the dropdown option goes away.')) return;
+    const { error } = await sb.from('installation_wings').delete().eq('id', id);
+    if(error){ alert('Could not remove: ' + error.message); return; }
+    loadSurveyOptionsPanel();
+  }
+
+  async function addDataIssueType(){
+    const input = document.getElementById('newIssueTypeInput');
+    const name = input.value.trim();
+    if(!name) return;
+    const { error } = await sb.from('data_issue_types').insert({ name });
+    if(error){ alert('Could not add: ' + error.message); return; }
+    input.value = '';
+    loadSurveyOptionsPanel();
+  }
+  async function deleteDataIssueType(id){
+    if(!confirm('Remove this issue type? Past entries that used it keep their recorded value — only the dropdown option goes away.')) return;
+    const { error } = await sb.from('data_issue_types').delete().eq('id', id);
+    if(error){ alert('Could not remove: ' + error.message); return; }
+    loadSurveyOptionsPanel();
   }
  
   // ============ LIFT SEARCH (real data, across every category) ============
