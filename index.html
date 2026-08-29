@@ -400,6 +400,7 @@
   .kpi-spark div{width:7px; background:var(--accent); border-radius:2px 2px 0 0;}
  
   .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px;}
+  .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:flex-start; }
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px;}
   .panel-title{font-size:13.5px; font-weight:600; margin-bottom:16px; color:var(--text-dim);}
  
@@ -593,7 +594,7 @@
   @media (max-width: 860px){
     .hero{grid-template-columns:1fr;}
     .stat-row, .cat-grid, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr);}
-    .split-grid, .dev-form-grid{grid-template-columns:1fr;}
+    .split-grid, .split-grid-tasks, .dev-form-grid{grid-template-columns:1fr;}
     .form-row-2{grid-template-columns:1fr;}
     .nav-clock-desktop{display:none;}
     main{padding:24px 16px 110px;}
@@ -1025,7 +1026,7 @@
       <div><div class="block-title">My Tasks</div><div class="block-sub">Log a new task, or review what you've submitted</div></div>
     </div>
  
-    <div class="split-grid" style="grid-template-columns:1fr 1.15fr; align-items:flex-start;">
+    <div class="split-grid split-grid-tasks">
  
       <!-- entry form -->
       <div class="panel" id="taskFormPanel">
