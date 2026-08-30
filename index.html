@@ -1319,48 +1319,6 @@
         <div class="leg-item"><div class="leg-dot" style="background:#8A93A1;"></div>Skipped</div>
       </div>
     </div>
- 
-    <div class="block-head" style="margin-top:24px;"><div class="block-title">Project detail</div></div>
-    <div class="panel" id="devDetailPanel">
-      <div class="spec-l" style="margin-bottom:10px;">Click any bar above to see full details</div>
-      <div class="lift-specs specs-5" style="border-top:none; padding-top:0;">
-        <div><div class="spec-l">Lead</div><div class="spec-v" id="dd-lead">—</div></div>
-        <div><div class="spec-l">Collaborators</div><div class="spec-v" id="dd-collab">—</div></div>
-        <div><div class="spec-l">Status</div><div class="spec-v" id="dd-status">—</div></div>
-        <div><div class="spec-l">Financial Outcome</div><div class="spec-v" id="dd-fin">—</div></div>
-        <div><div class="spec-l">Documentation</div><div class="spec-v" id="dd-doc">—</div></div>
-      </div>
-      <div style="margin-top:16px; font-size:13px; color:var(--text-dim); line-height:1.6;" id="dd-remarks"></div>
-      <button class="btn edit" id="dd-edit-btn" style="display:none; margin-top:14px;" onclick="editDevProjectFromDetail()">Edit this project</button>
-
-      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
-        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-          <div class="panel-title" style="margin:0;">Task breakdown</div>
-          <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="showAddProjectTaskForm()">+ Add task</button>
-        </div>
-        <div id="projTaskAddForm" style="display:none; margin-bottom:12px; padding:12px; border:1px solid var(--border); border-radius:8px;">
-          <div class="form-row-2" style="margin-bottom:8px;">
-            <input type="text" id="ptName" placeholder="Task name" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
-            <select id="ptAssigned" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"><option value="">Unassigned</option></select>
-          </div>
-          <div class="form-row-2" style="margin-bottom:8px;">
-            <input type="date" id="ptStart" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
-            <input type="date" id="ptEnd" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
-          </div>
-          <div class="chip-group" id="ptStatusChips" style="margin-bottom:10px;">
-            <div class="chip-opt picked-single" data-group="ptStatus" onclick="pickSingleChip(this)">In Progress</div>
-            <div class="chip-opt" data-group="ptStatus" onclick="pickSingleChip(this)">Done</div>
-            <div class="chip-opt" data-group="ptStatus" onclick="pickSingleChip(this)">On Hold</div>
-            <div class="chip-opt" data-group="ptStatus" onclick="pickSingleChip(this)">Skipped</div>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn" style="padding:6px 14px; font-size:12px;" onclick="document.getElementById('projTaskAddForm').style.display='none';">Cancel</button>
-            <button class="submit-btn" style="padding:6px 14px; font-size:12px; margin-top:0;" onclick="submitProjectTask()">Save task</button>
-          </div>
-        </div>
-        <div id="projTaskList" style="display:flex; flex-direction:column; gap:8px;"><div class="placeholder-note">Select a project above to see its tasks.</div></div>
-      </div>
-    </div>
   </div>
  
  
@@ -1825,85 +1783,195 @@
   setInterval(tickClock, 1000);
   let selectedDevProjectId = null;
  
-  function showDevDetail(row){
-    const d = row.dataset;
-    selectedDevProjectId = d.id;
-    document.getElementById('dd-lead').textContent = d.lead;
-    document.getElementById('dd-collab').textContent = d.collab || '—';
-    document.getElementById('dd-status').textContent = d.status;
-    document.getElementById('dd-fin').textContent = d.fin;
-    document.getElementById('dd-doc').textContent = d.doc;
-    document.getElementById('dd-remarks').innerHTML = '<b>' + d.name + '</b> — ' + d.remarks;
- 
-    const editBtn = document.getElementById('dd-edit-btn');
-    const project = devProjectsCache.find(p => p.id === d.id);
-    const canEdit = project && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin' || project.created_by === currentUser.id || project.lead_id === currentUser.id);
-    editBtn.style.display = canEdit ? 'inline-block' : 'none';
-    document.getElementById('projTaskAddForm').style.display = 'none';
-    loadProjectTasks(d.id);
+  // ============ PROJECT TASK BREAKDOWN (inline accordion + Gantt view) ============
+  let projectTasksCache = [];
+  let openProjectDetailId = null;
+
+  async function toggleProjectDetailsInline(projectId){
+    const wrap = document.getElementById('projDetailWrap-' + projectId);
+    if(!wrap) return;
+
+    // Accordion: close whichever project's details were open before opening
+    // this one, so there's only ever one instance of the add-task form's
+    // fixed-id fields in the DOM at a time.
+    if(openProjectDetailId && openProjectDetailId !== projectId){
+      const prevWrap = document.getElementById('projDetailWrap-' + openProjectDetailId);
+      const prevBtn = document.getElementById('ptToggleBtn-' + openProjectDetailId);
+      if(prevWrap) prevWrap.style.display = 'none';
+      if(prevBtn) prevBtn.textContent = 'See details';
+    }
+
+    const isOpen = wrap.style.display !== 'none';
+    const btn = document.getElementById('ptToggleBtn-' + projectId);
+    if(isOpen){
+      wrap.style.display = 'none';
+      if(btn) btn.textContent = 'See details';
+      openProjectDetailId = null;
+      return;
+    }
+
+    openProjectDetailId = projectId;
+    if(btn) btn.textContent = 'Hide details';
+    wrap.style.display = 'block';
+    await loadProjectTasks(projectId);
   }
 
-  // ============ PROJECT TASK BREAKDOWN ============
-  let projectTasksCache = [];
-
   async function loadProjectTasks(projectId){
-    const el = document.getElementById('projTaskList');
-    el.innerHTML = '<div class="placeholder-note">Loading…</div>';
+    const wrap = document.getElementById('projDetailWrap-' + projectId);
+    wrap.innerHTML = '<div class="placeholder-note" style="margin-top:10px;">Loading…</div>';
     const { data, error } = await sb.from('dev_project_tasks').select('*').eq('project_id', projectId).order('start_date', { ascending: true });
     if(error){
-      el.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the dev_project_tasks table has been created (see setup SQL).</div>`;
+      wrap.innerHTML = `<div class="placeholder-note" style="margin-top:10px;">Could not load: ${error.message}. Make sure the dev_project_tasks table has been created (see setup SQL).</div>`;
       return;
     }
     projectTasksCache = data || [];
-    renderProjectTasksBreakdown();
+    renderProjectDetailInline(projectId);
   }
 
-  function renderProjectTasksBreakdown(){
-    const el = document.getElementById('projTaskList');
+  function renderProjectDetailInline(projectId){
+    const wrap = document.getElementById('projDetailWrap-' + projectId);
+    const project = devProjectsCache.find(p => p.id === projectId);
+    if(!project || !wrap) return;
+
+    const leadName = devPeople.find(dp => dp.id === project.lead_id);
+    const leadLabel = leadName ? displayName(leadName) : '—';
+    const collabNames = (project.collaborators || []).map(id => { const c = devPeople.find(dp => dp.id === id); return c ? displayName(c) : null; }).filter(Boolean).join(', ') || '—';
+
+    const infoHtml = `
+      <div class="lift-specs specs-5" style="border-top:none; padding-top:0; margin-top:10px;">
+        <div><div class="spec-l">Lead</div><div class="spec-v">${leadLabel}</div></div>
+        <div><div class="spec-l">Collaborators</div><div class="spec-v">${collabNames}</div></div>
+        <div><div class="spec-l">Status</div><div class="spec-v">${project.status}</div></div>
+        <div><div class="spec-l">Financial Outcome</div><div class="spec-v">${project.financial_outcome || '—'}</div></div>
+        <div><div class="spec-l">Documentation</div><div class="spec-v">${project.documentation || '—'}</div></div>
+      </div>
+      ${project.notes ? `<div style="margin-top:12px; font-size:13px; color:var(--text-dim); line-height:1.6;">${project.notes}</div>` : ''}
+    `;
+
+    wrap.innerHTML = `
+      <div style="padding-top:14px; margin-top:4px; border-top:1px solid var(--border);">
+        ${infoHtml}
+        <div style="display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px;">
+          <div class="panel-title" style="margin:0;">Task breakdown — Gantt view</div>
+          <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="showAddProjectTaskForm('${projectId}')">+ Add task</button>
+        </div>
+        <div id="projTaskAddFormWrap-${projectId}"></div>
+        <div id="projGanttChart-${projectId}"></div>
+      </div>
+    `;
+    renderProjectGanttChart(projectId);
+  }
+
+  // A genuine Gantt visual: a date-ruler header, and one horizontal bar per
+  // task positioned and sized by its own start/end date within the whole
+  // project's date span — not just a text list of dates.
+  function renderProjectGanttChart(projectId){
+    const el = document.getElementById('projGanttChart-' + projectId);
+    if(!el) return;
+    const project = devProjectsCache.find(p => p.id === projectId);
     if(!projectTasksCache.length){
       el.innerHTML = '<div class="placeholder-note">No tasks added yet — use "+ Add task" above.</div>';
       return;
     }
-    const fmt = d => d ? new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) : '—';
-    el.innerHTML = projectTasksCache.map(t => {
+
+    const allDates = [];
+    projectTasksCache.forEach(t => {
+      if(t.start_date) allDates.push(new Date(t.start_date).getTime());
+      if(t.end_date) allDates.push(new Date(t.end_date).getTime());
+    });
+    if(project?.start_date) allDates.push(new Date(project.start_date).getTime());
+    if(project?.target_date) allDates.push(new Date(project.target_date).getTime());
+    const rangeStart = Math.min(...allDates);
+    const rangeEnd = Math.max(...allDates, rangeStart + 86400000);
+    const span = rangeEnd - rangeStart;
+    const fmtShort = d => new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short'});
+
+    const TICKS = 5;
+    const ticksHtml = Array.from({length: TICKS + 1}, (_, i) => {
+      const t = rangeStart + (span * i / TICKS);
+      return `<span>${fmtShort(t)}</span>`;
+    }).join('');
+
+    const groups = { 'In Progress': [], 'Done': [], 'On Hold': [], 'Skipped': [] };
+    projectTasksCache.forEach(t => { (groups[t.status] || groups['In Progress']).push(t); });
+
+    const rowHtml = t => {
       const person = devPeople.find(p => p.id === t.assigned_to);
       const personLabel = person ? displayName(person) : 'Unassigned';
       const color = DEV_STATUS_COLOR[t.status] || '#2F5FE0';
+      const s = t.start_date ? new Date(t.start_date).getTime() : rangeStart;
+      const e = t.end_date ? new Date(t.end_date).getTime() : s;
+      const left = Math.max(0, Math.round(((s - rangeStart) / span) * 100));
+      const width = Math.max(3, Math.round(((e - s) / span) * 100));
       const canEditTask = t.created_by === currentUser?.id;
       const canDeleteTask = canEditTask || currentProfile?.role === 'superadmin';
-      return `<div class="proj-task-row">
-        <div style="flex:2; min-width:140px;">
-          <div style="font-size:13px; font-weight:600;">${t.task_name}</div>
-          <div style="font-size:11.5px; color:var(--text-faint);">${personLabel}</div>
+      return `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;">
+        <div style="width:170px; flex-shrink:0;">
+          <div style="font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.task_name}</div>
+          <div style="font-size:11px; color:var(--text-faint);">${personLabel}</div>
         </div>
-        <div style="font-size:12px; color:var(--text-faint); flex-shrink:0;">${fmt(t.start_date)} → ${fmt(t.end_date)}</div>
-        <span class="status-capsule" style="background:${color};">${t.status}</span>
-        <div style="display:flex; gap:6px; margin-left:auto;">
-          ${canEditTask ? `<button class="btn edit" style="padding:4px 10px; font-size:11px;" onclick="editProjectTask('${t.id}')">Edit</button>` : ''}
-          ${canDeleteTask ? `<button class="btn remove" style="padding:4px 10px; font-size:11px;" onclick="deleteProjectTask('${t.id}')">Delete</button>` : ''}
+        <div style="flex:1; position:relative; height:24px; background:var(--surface-alt); border-radius:6px;">
+          <div style="position:absolute; left:${left}%; width:${width}%; height:100%; background:${color}; border-radius:6px; display:flex; align-items:center; padding:0 8px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden;" title="${fmtShort(s)} → ${fmtShort(e)}">${t.task_name}</div>
+        </div>
+        <div style="display:flex; gap:4px; flex-shrink:0;">
+          ${canEditTask ? `<button class="btn edit" style="padding:4px 9px; font-size:10.5px;" onclick="editProjectTask('${projectId}','${t.id}')">Edit</button>` : ''}
+          ${canDeleteTask ? `<button class="btn remove" style="padding:4px 9px; font-size:10.5px;" onclick="deleteProjectTask('${projectId}','${t.id}')">Delete</button>` : ''}
         </div>
       </div>`;
-    }).join('');
+    };
+
+    const groupHtml = (label, tasks) => tasks.length ? `
+      <div style="margin-top:10px;">
+        <div style="font-size:11.5px; font-weight:600; color:${DEV_STATUS_COLOR[label]}; margin-bottom:2px;">${label}</div>
+        ${tasks.map(rowHtml).join('<div style="border-bottom:1px solid var(--border);"></div>')}
+      </div>` : '';
+
+    el.innerHTML = `
+      <div style="display:flex; gap:10px; margin-bottom:4px;">
+        <div style="width:170px; flex-shrink:0;"></div>
+        <div style="flex:1; display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint);">${ticksHtml}</div>
+        <div style="width:90px; flex-shrink:0;"></div>
+      </div>
+      ${groupHtml('In Progress', groups['In Progress'])}
+      ${groupHtml('Done', groups['Done'])}
+      ${groupHtml('On Hold', groups['On Hold'])}
+      ${groupHtml('Skipped', groups['Skipped'])}
+    `;
   }
 
   let editingProjectTaskId = null;
 
-  function showAddProjectTaskForm(){
+  function showAddProjectTaskForm(projectId){
     editingProjectTaskId = null;
-    document.getElementById('ptAssigned').innerHTML = '<option value="">Unassigned</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
-    document.getElementById('ptName').value = '';
-    document.getElementById('ptStart').value = '';
-    document.getElementById('ptEnd').value = '';
-    document.querySelectorAll('#ptStatusChips .chip-opt').forEach(c => c.classList.remove('picked-single'));
-    document.querySelector('#ptStatusChips .chip-opt').classList.add('picked-single');
-    document.getElementById('projTaskAddForm').style.display = 'block';
+    const formWrap = document.getElementById('projTaskAddFormWrap-' + projectId);
+    formWrap.innerHTML = `
+      <div style="margin-bottom:12px; padding:12px; border:1px solid var(--border); border-radius:8px;">
+        <div class="form-row-2" style="margin-bottom:8px;">
+          <input type="text" id="ptName" placeholder="Task name" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+          <select id="ptAssigned" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"><option value="">Unassigned</option>${devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('')}</select>
+        </div>
+        <div class="form-row-2" style="margin-bottom:8px;">
+          <input type="date" id="ptStart" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+          <input type="date" id="ptEnd" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>
+        <div class="chip-group" id="ptStatusChips" style="margin-bottom:10px;">
+          <div class="chip-opt picked-single" onclick="pickSingleChip(this)">In Progress</div>
+          <div class="chip-opt" onclick="pickSingleChip(this)">Done</div>
+          <div class="chip-opt" onclick="pickSingleChip(this)">On Hold</div>
+          <div class="chip-opt" onclick="pickSingleChip(this)">Skipped</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="padding:6px 14px; font-size:12px;" onclick="document.getElementById('projTaskAddFormWrap-${projectId}').innerHTML='';">Cancel</button>
+          <button class="submit-btn" style="padding:6px 14px; font-size:12px; margin-top:0;" onclick="submitProjectTask('${projectId}')">Save task</button>
+        </div>
+      </div>`;
   }
 
-  function editProjectTask(id){
+  function editProjectTask(projectId, id){
     const t = projectTasksCache.find(x => x.id === id);
     if(!t) return;
     editingProjectTaskId = id;
-    document.getElementById('ptAssigned').innerHTML = '<option value="">Unassigned</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
+    showAddProjectTaskForm(projectId);
     document.getElementById('ptName').value = t.task_name || '';
     document.getElementById('ptAssigned').value = t.assigned_to || '';
     document.getElementById('ptStart').value = t.start_date || '';
@@ -1911,14 +1979,13 @@
     document.querySelectorAll('#ptStatusChips .chip-opt').forEach(c => {
       c.classList.toggle('picked-single', c.textContent === t.status);
     });
-    document.getElementById('projTaskAddForm').style.display = 'block';
   }
 
-  async function submitProjectTask(){
+  async function submitProjectTask(projectId){
     const taskName = document.getElementById('ptName').value.trim();
     if(!taskName){ alert('Task name is required.'); return; }
     const payload = {
-      project_id: selectedDevProjectId,
+      project_id: projectId,
       task_name: taskName,
       assigned_to: document.getElementById('ptAssigned').value || null,
       start_date: document.getElementById('ptStart').value || null,
@@ -1932,15 +1999,15 @@
       ({ error } = await sb.from('dev_project_tasks').insert({ ...payload, created_by: currentUser.id }));
     }
     if(error){ alert('Could not save: ' + error.message); return; }
-    document.getElementById('projTaskAddForm').style.display = 'none';
-    loadProjectTasks(selectedDevProjectId);
+    document.getElementById('projTaskAddFormWrap-' + projectId).innerHTML = '';
+    loadProjectTasks(projectId);
   }
 
-  async function deleteProjectTask(id){
+  async function deleteProjectTask(projectId, id){
     if(!confirm('Delete this task? This cannot be undone.')) return;
     const { error } = await sb.from('dev_project_tasks').delete().eq('id', id);
     if(error){ alert('Could not delete: ' + error.message); return; }
-    loadProjectTasks(selectedDevProjectId);
+    loadProjectTasks(projectId);
   }
 
   async function deleteDevProject(id){
@@ -1952,8 +2019,8 @@
  
   let editingDevProjectId = null;
  
-  function editDevProjectFromDetail(){
-    const project = devProjectsCache.find(p => p.id === selectedDevProjectId);
+  function editDevProject(id){
+    const project = devProjectsCache.find(p => p.id === id);
     if(!project) return;
     editingDevProjectId = project.id;
  
@@ -3136,16 +3203,19 @@
       const color = DEV_STATUS_COLOR[p.status] || '#2F5FE0';
       const canEdit = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin' || p.created_by === currentUser?.id || p.lead_id === currentUser?.id);
       const canDelete = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin');
-      return `<div class="gantt-row"
+      return `<div>
+      <div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
         data-impact="${p.impact_type||'—'}" data-fin="${p.financial_outcome||'—'}" data-doc="${p.documentation||'—'}" data-remarks="${(p.notes||'').replace(/"/g,'&quot;')}">
         <div><div class="gt-name">${p.name}</div><div class="gt-sub">${leadLabel}</div></div>
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="status-capsule" style="background:${color};">${p.status}</span>
-          ${canEdit ? `<button class="btn edit" style="padding:5px 12px; font-size:11.5px;" onclick="event.stopPropagation(); showDevDetail(this.closest('.gantt-row')); editDevProjectFromDetail();">Edit</button>` : ''}
-          ${canDelete ? `<button class="btn remove" style="padding:5px 12px; font-size:11.5px;" onclick="event.stopPropagation(); deleteDevProject('${p.id}')">Delete</button>` : ''}
-          <button class="btn view-details" style="padding:5px 12px; font-size:11.5px;" onclick="event.stopPropagation(); showDevDetail(this.closest('.gantt-row'))">See details</button>
+          ${canEdit ? `<button class="btn edit" style="padding:5px 12px; font-size:11.5px;" onclick="editDevProject('${p.id}')">Edit</button>` : ''}
+          ${canDelete ? `<button class="btn remove" style="padding:5px 12px; font-size:11.5px;" onclick="deleteDevProject('${p.id}')">Delete</button>` : ''}
+          <button class="btn view-details" style="padding:5px 12px; font-size:11.5px;" onclick="toggleProjectDetailsInline('${p.id}')" id="ptToggleBtn-${p.id}">See details</button>
         </div>
+      </div>
+      <div id="projDetailWrap-${p.id}" style="display:none;"></div>
       </div>`;
     }).join('');
   }
