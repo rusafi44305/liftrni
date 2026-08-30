@@ -906,7 +906,7 @@
     <div style="position:relative;">
       <div class="avatar" id="userAvatar" title="Account menu" onclick="toggleAccountMenu()" style="cursor:pointer; overflow:hidden; position:relative;">
         --
-        <span id="avatarBadge" style="display:none; position:absolute; top:-2px; right:-2px; width:10px; height:10px; border-radius:50%; background:var(--red); border:2px solid var(--surface);"></span>
+        <span id="avatarBadge" style="display:none; position:absolute; top:-2px; right:-2px; width:10px; height:10px; border-radius:50%; background:var(--red); border:2px solid var(--surface); pointer-events:none;"></span>
       </div>
       <div id="accountMenu" style="display:none; position:absolute; right:0; top:calc(100% + 8px); background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:8px; min-width:230px; z-index:200; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
         <div id="accountMenuName" style="font-size:12.5px; font-weight:600; padding:6px 10px 8px; border-bottom:1px solid var(--border); margin-bottom:4px;">—</div>
@@ -2136,8 +2136,8 @@
   function roleIconHtml(role){
     if(role !== 'superadmin' && role !== 'admin') return '';
     const color = role === 'superadmin' ? 'var(--amber)' : 'var(--accent)';
-    return `<span style="position:absolute; bottom:-2px; right:-2px; width:15px; height:15px; border-radius:50%; background:${color}; border:2px solid var(--surface); display:flex; align-items:center; justify-content:center;" title="${role === 'superadmin' ? 'Superadmin' : 'Admin'}">
-      <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
+    return `<span style="position:absolute; bottom:-2px; right:-2px; width:15px; height:15px; border-radius:50%; background:${color}; border:2px solid var(--surface); display:flex; align-items:center; justify-content:center; pointer-events:none;" title="${role === 'superadmin' ? 'Superadmin' : 'Admin'}">
+      <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff" stroke="none" style="pointer-events:none;"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
     </span>`;
   }
 
@@ -2145,7 +2145,7 @@
   // someone hasn't uploaded a profile picture — sized as a percentage of
   // its container so it scales correctly whether it's sitting in the small
   // header avatar or the larger one on the Profile page.
-  const PERSON_ICON_SVG = `<svg width="55%" height="55%" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.6-9.8 4.9V22h19.6v-2.7c0-3.3-6.5-4.9-9.8-4.9z"/></svg>`;
+  const PERSON_ICON_SVG = `<svg width="55%" height="55%" viewBox="0 0 24 24" fill="#fff" stroke="none" style="pointer-events:none;"><path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.6-9.8 4.9V22h19.6v-2.7c0-3.3-6.5-4.9-9.8-4.9z"/></svg>`;
 
   function renderAvatar(el, profile, badgeHtml){
     const fallback = PERSON_ICON_SVG;
@@ -2190,7 +2190,7 @@
   document.addEventListener('click', (e) => {
     const menu = document.getElementById('accountMenu');
     const avatar = document.getElementById('userAvatar');
-    if(menu && menu.style.display === 'block' && !menu.contains(e.target) && e.target !== avatar){
+    if(menu && menu.style.display === 'block' && !menu.contains(e.target) && !avatar.contains(e.target)){
       menu.style.display = 'none';
     }
   });
