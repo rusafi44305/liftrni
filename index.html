@@ -2121,12 +2121,24 @@
   // Renders a profile picture into an avatar element if the profile has one,
   // otherwise falls back to initials. Used for both the header avatar and the
   // Profile page avatar; the header one also carries the notification dot.
+  // A small role indicator — the one bit of "personality" added to the
+  // avatar itself, showing at a glance whether this account has elevated
+  // access, without needing to open the account menu to check.
+  function roleIconHtml(role){
+    if(role !== 'superadmin' && role !== 'admin') return '';
+    const color = role === 'superadmin' ? 'var(--amber)' : 'var(--accent)';
+    return `<span style="position:absolute; bottom:-2px; right:-2px; width:15px; height:15px; border-radius:50%; background:${color}; border:2px solid var(--surface); display:flex; align-items:center; justify-content:center;" title="${role === 'superadmin' ? 'Superadmin' : 'Admin'}">
+      <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
+    </span>`;
+  }
+
   function renderAvatar(el, profile, badgeHtml){
     const fallback = initials(profile && profile.nickname);
+    const roleIcon = roleIconHtml(profile && profile.role);
     if(profile && profile.avatar_url){
-      el.innerHTML = `<img src="${profile.avatar_url}" alt="">` + (badgeHtml || '');
+      el.innerHTML = `<img src="${profile.avatar_url}" alt="">` + roleIcon + (badgeHtml || '');
     } else {
-      el.innerHTML = fallback + (badgeHtml || '');
+      el.innerHTML = fallback + roleIcon + (badgeHtml || '');
     }
   }
  
@@ -2194,13 +2206,34 @@
     }
     const rows = data || [];
     const unread = rows.filter(n => !n.read).length;
-    badge.style.display = unread > 0 ? 'flex' : 'none';
-    badge.textContent = unread > 9 ? '9+' : String(unread);
-    if(!rows.length){
+
+    // Approving a pending sign-in is Superadmin-only — Admins can see the
+    // Admin panel but can't act on this, so this only ever shows for the
+    // one role that can actually do something about it. Not a real stored
+    // notification, just surfaced live here alongside the real ones.
+    let pendingCount = 0;
+    let pendingListHtml = '';
+    if(currentProfile?.role === 'superadmin'){
+      const { data: pending } = await sb.from('profiles').select('id').eq('status', 'pending');
+      pendingCount = (pending || []).length;
+      if(pendingCount){
+        pendingListHtml = `
+          <div onclick="toggleNotifPanel(); showView('admin'); onViewShown('admin');" style="padding:9px 8px; border-radius:8px; cursor:pointer; margin-bottom:4px; background:color-mix(in srgb, var(--red) 12%, transparent);" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='color-mix(in srgb, var(--red) 12%, transparent)'">
+            <div style="font-size:12.5px; font-weight:600;">${pendingCount} account${pendingCount===1?'':'s'} waiting for your approval</div>
+            <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">Tap to review in Admin</div>
+          </div>`;
+      }
+    }
+
+    const totalBadgeCount = unread + pendingCount;
+    badge.style.display = totalBadgeCount > 0 ? 'flex' : 'none';
+    badge.textContent = totalBadgeCount > 9 ? '9+' : String(totalBadgeCount);
+
+    if(!rows.length && !pendingCount){
       list.innerHTML = '<div class="placeholder-note" style="font-size:12px;">No notifications yet.</div>';
       return;
     }
-    list.innerHTML = rows.map(n => `
+    list.innerHTML = pendingListHtml + rows.map(n => `
       <div onclick="markNotificationRead('${n.id}')" style="padding:9px 8px; border-radius:8px; cursor:pointer; margin-bottom:2px; background:${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'};" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'}'">
         <div style="font-size:12.5px; line-height:1.4; ${n.read ? 'color:var(--text-dim);' : 'font-weight:600;'}">${n.message}</div>
         <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">${timeAgo(n.created_at)}</div>
@@ -2944,16 +2977,12 @@
     const { data: pending } = await sb.from('profiles').select('*').eq('status', 'pending');
     const { data: approved } = await sb.from('profiles').select('*').eq('status', 'active');
  
-    // Pending-account notification now lives in the profile-corner dropdown
-    // (per-request), plus a small red dot on the avatar itself for visibility.
     const pendingCountNum = (pending||[]).length;
     const menuPending = document.getElementById('accountMenuPending');
     if(menuPending){
       menuPending.style.display = pendingCountNum ? 'block' : 'none';
       document.getElementById('accountMenuPendingCount').textContent = `${pendingCountNum} pending account${pendingCountNum===1?'':'s'}`;
     }
-    const badge = document.getElementById('avatarBadge');
-    if(badge) badge.style.display = pendingCountNum ? 'block' : 'none';
  
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
     document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
