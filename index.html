@@ -1865,12 +1865,16 @@
       ${project.notes ? `<div style="margin-top:12px; font-size:13px; color:var(--text-dim); line-height:1.6;">${project.notes}</div>` : ''}
     `;
 
+    // Same rule as the per-task Edit/Delete buttons below — only this
+    // project's own creator or Lead can add a task to it at all.
+    const canManageTasks = project.created_by === currentUser?.id || project.lead_id === currentUser?.id;
+
     wrap.innerHTML = `
       <div style="padding-top:14px; margin-top:4px; border-top:1px solid var(--border);">
         ${infoHtml}
         <div style="display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px;">
           <div class="panel-title" style="margin:0;">Task breakdown — Gantt view</div>
-          <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="showAddProjectTaskForm('${projectId}')">+ Add task</button>
+          ${canManageTasks ? `<button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="showAddProjectTaskForm('${projectId}')">+ Add task</button>` : ''}
         </div>
         <div id="projTaskAddFormWrap-${projectId}"></div>
         <div id="projGanttChart-${projectId}"></div>
@@ -1912,6 +1916,13 @@
     const groups = { 'In Progress': [], 'Done': [], 'On Hold': [], 'Skipped': [] };
     projectTasksCache.forEach(t => { (groups[t.status] || groups['In Progress']).push(t); });
 
+    // Managing this project's task breakdown — adding, editing, deleting —
+    // is restricted to whoever actually owns this specific project (its
+    // creator or its designated Lead). Not the individual task's creator,
+    // not any other collaborator, and — deliberately — not even a
+    // Superadmin. This project's tasks are this project's business alone.
+    const canManageTasks = project && (project.created_by === currentUser?.id || project.lead_id === currentUser?.id);
+
     const rowHtml = t => {
       const person = devPeople.find(p => p.id === t.assigned_to);
       const personLabel = person ? displayName(person) : 'Unassigned';
@@ -1920,8 +1931,6 @@
       const e = t.end_date ? new Date(t.end_date).getTime() : s;
       const left = Math.max(0, Math.round(((s - rangeStart) / span) * 100));
       const width = Math.max(3, Math.round(((e - s) / span) * 100));
-      const canEditTask = t.created_by === currentUser?.id;
-      const canDeleteTask = canEditTask || currentProfile?.role === 'superadmin';
       return `<div style="display:flex; align-items:center; gap:10px; padding:6px 0;">
         <div style="width:170px; flex-shrink:0;">
           <div style="font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.task_name}</div>
@@ -1931,8 +1940,8 @@
           <div style="position:absolute; left:${left}%; width:${width}%; height:100%; background:${color}; border-radius:6px; display:flex; align-items:center; padding:0 8px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden;" title="${fmtShort(s)} → ${fmtShort(e)}">${t.task_name}</div>
         </div>
         <div style="display:flex; gap:4px; flex-shrink:0;">
-          ${canEditTask ? `<button class="btn edit" style="padding:4px 9px; font-size:10.5px;" onclick="editProjectTask('${projectId}','${t.id}')">Edit</button>` : ''}
-          ${canDeleteTask ? `<button class="btn remove" style="padding:4px 9px; font-size:10.5px;" onclick="deleteProjectTask('${projectId}','${t.id}')">Delete</button>` : ''}
+          ${canManageTasks ? `<button class="btn edit" style="padding:4px 9px; font-size:10.5px;" onclick="editProjectTask('${projectId}','${t.id}')">Edit</button>` : ''}
+          ${canManageTasks ? `<button class="btn remove" style="padding:4px 9px; font-size:10.5px;" onclick="deleteProjectTask('${projectId}','${t.id}')">Delete</button>` : ''}
         </div>
       </div>`;
     };
@@ -2132,8 +2141,14 @@
     </span>`;
   }
 
+  // A generic person-silhouette icon, used as the avatar fallback whenever
+  // someone hasn't uploaded a profile picture — sized as a percentage of
+  // its container so it scales correctly whether it's sitting in the small
+  // header avatar or the larger one on the Profile page.
+  const PERSON_ICON_SVG = `<svg width="55%" height="55%" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.6-9.8 4.9V22h19.6v-2.7c0-3.3-6.5-4.9-9.8-4.9z"/></svg>`;
+
   function renderAvatar(el, profile, badgeHtml){
-    const fallback = initials(profile && profile.nickname);
+    const fallback = PERSON_ICON_SVG;
     const roleIcon = roleIconHtml(profile && profile.role);
     if(profile && profile.avatar_url){
       el.innerHTML = `<img src="${profile.avatar_url}" alt="">` + roleIcon + (badgeHtml || '');
