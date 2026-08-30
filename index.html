@@ -960,10 +960,10 @@
         <p class="hero-desc">Search any Lift ID to see its full history — from first survey to production submission to installation support — logged by the engineer who did the work.</p>
         <div class="searchbar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="homeLiftSearchInput" placeholder="Enter a Lift ID or project name…" style="font-weight:600;" onkeydown="if(event.key==='Enter') quickTraceFromHome();">
+          <input type="text" id="homeLiftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') quickTraceFromHome();">
           <button onclick="quickTraceFromHome()">Trace</button>
         </div>
-        <div class="search-hint">Search by Lift ID or project name.</div>
+        <div class="search-hint">Search by Lift ID, project name, or any keyword in the entry.</div>
       </div>
  
       <div class="indicator-panel">
@@ -1028,11 +1028,11 @@
   <div class="view" id="view-search">
     <div class="searchbar" style="max-width:100%; margin-bottom:26px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID or project name…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
+      <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
       <button onclick="runLiftSearch()">Trace</button>
     </div>
  
-    <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID or project name above and click Trace to see its full history across every category.</div></div>
+    <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace to see its full history across every category.</div></div>
   </div>
  
   <!-- ============ CATEGORY LOG ============ -->
@@ -3055,7 +3055,7 @@
   async function runLiftSearch(){
     const term = document.getElementById('liftSearchInput').value.trim();
     const resultEl = document.getElementById('liftSearchResult');
-    if(!term){ resultEl.innerHTML = '<div class="placeholder-note">Enter a Lift ID or project name above and click Trace.</div>'; return; }
+    if(!term){ resultEl.innerHTML = '<div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace.</div>'; return; }
     resultEl.innerHTML = '<div class="placeholder-note">Searching…</div>';
 
     // Case-insensitive, partial match on either field — a strict exact match
@@ -3064,12 +3064,28 @@
     // Commas are stripped from the term since PostgREST's .or() filter syntax
     // uses commas as a separator and a literal comma would break the query.
     const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\\$&');
-    const { data, error } = await sb.from('tasks')
+    let { data, error } = await sb.from('tasks')
       .select('*, profiles(full_name, nickname)')
       .or(`lift_id.ilike.%${safeTerm}%,project_name.ilike.%${safeTerm}%`)
       .order('created_at', { ascending: true });
 
     if(error){ resultEl.innerHTML = `<div class="placeholder-note">Could not search: ${error.message}</div>`; return; }
+
+    // A direct Lift ID / project name match is the common case and stays
+    // fast — but the term might instead be a keyword sitting inside some
+    // other field (e.g. a word from a Problem Statement). Postgres can't
+    // easily search inside a JSON blob through this simple query, so as a
+    // fallback, pull everything and check every field client-side the same
+    // way the category log already does — only when the fast path found
+    // nothing, so this never slows down the common case.
+    if(!data || !data.length){
+      const { data: allData, error: allError } = await sb.from('tasks').select('*, profiles(full_name, nickname)').order('created_at', { ascending: true });
+      if(!allError && allData){
+        const q = term.toLowerCase();
+        data = allData.filter(r => rowMatchesKeyword(r, q));
+      }
+    }
+
     if(!data || !data.length){
       liftSearchRows = [];
       resultEl.innerHTML = `<div class="placeholder-note">No entries found for "${term}". Check the spelling, or this lift/project may not have any logged activity yet.</div>`;
