@@ -680,7 +680,10 @@
   .avatar{
     background:linear-gradient(145deg, color-mix(in srgb, var(--accent) 85%, white 15%), var(--accent));
     border-radius:50%;
+    box-shadow:0 0 0 2px var(--surface), 0 0 0 3.5px color-mix(in srgb, var(--accent) 45%, transparent), 0 2px 6px rgba(0,0,0,0.15);
+    transition:transform 0.15s ease;
   }
+  .avatar:hover{ transform:scale(1.05); }
   .queue-btn, .btn, .submit-btn, .fselect{
     border-radius:999px !important;
     transition:transform .15s ease, box-shadow .15s ease;
@@ -887,6 +890,19 @@
  
   <div class="navright">
     <div id="navClockDesktop" class="mono nav-clock-desktop" style="font-size:11.5px; color:var(--text-faint); white-space:nowrap; letter-spacing:0.01em;">—</div>
+    <div style="position:relative;">
+      <button id="notifBell" title="Notifications" onclick="toggleNotifPanel()" style="position:relative; background:var(--surface-alt); border:1px solid var(--border); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-dim);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notifBadge" style="display:none; position:absolute; top:-3px; right:-3px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:var(--red); color:#fff; font-size:10px; font-weight:700; align-items:center; justify-content:center;">0</span>
+      </button>
+      <div id="notifPanel" style="display:none; position:absolute; right:0; top:calc(100% + 8px); width:320px; max-height:420px; overflow-y:auto; background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:8px; z-index:200; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px 8px; border-bottom:1px solid var(--border); margin-bottom:6px;">
+          <div style="font-size:12.5px; font-weight:600;">Notifications</div>
+          <span style="font-size:11.5px; color:var(--accent); cursor:pointer;" onclick="markAllNotificationsRead()">Mark all read</span>
+        </div>
+        <div id="notifList"><div class="placeholder-note" style="font-size:12px;">Loading…</div></div>
+      </div>
+    </div>
     <div style="position:relative;">
       <div class="avatar" id="userAvatar" title="Account menu" onclick="toggleAccountMenu()" style="cursor:pointer; overflow:hidden; position:relative;">
         --
@@ -2151,6 +2167,72 @@
       menu.style.display = 'none';
     }
   });
+
+  // ============ NOTIFICATIONS ============
+  function toggleNotifPanel(){
+    const panel = document.getElementById('notifPanel');
+    const opening = panel.style.display === 'none';
+    panel.style.display = opening ? 'block' : 'none';
+    if(opening) loadNotifications();
+  }
+  document.addEventListener('click', (e) => {
+    const panel = document.getElementById('notifPanel');
+    const bell = document.getElementById('notifBell');
+    if(panel && panel.style.display === 'block' && !panel.contains(e.target) && !bell.contains(e.target)){
+      panel.style.display = 'none';
+    }
+  });
+
+  async function loadNotifications(){
+    if(!currentUser) return;
+    const { data, error } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(30);
+    const badge = document.getElementById('notifBadge');
+    const list = document.getElementById('notifList');
+    if(error){
+      if(list) list.innerHTML = `<div class="placeholder-note" style="font-size:12px;">Could not load: ${error.message}. Make sure the notifications table has been created (see setup SQL).</div>`;
+      return;
+    }
+    const rows = data || [];
+    const unread = rows.filter(n => !n.read).length;
+    badge.style.display = unread > 0 ? 'flex' : 'none';
+    badge.textContent = unread > 9 ? '9+' : String(unread);
+    if(!rows.length){
+      list.innerHTML = '<div class="placeholder-note" style="font-size:12px;">No notifications yet.</div>';
+      return;
+    }
+    list.innerHTML = rows.map(n => `
+      <div onclick="markNotificationRead('${n.id}')" style="padding:9px 8px; border-radius:8px; cursor:pointer; margin-bottom:2px; background:${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'};" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'}'">
+        <div style="font-size:12.5px; line-height:1.4; ${n.read ? 'color:var(--text-dim);' : 'font-weight:600;'}">${n.message}</div>
+        <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">${timeAgo(n.created_at)}</div>
+      </div>`).join('');
+  }
+
+  async function markNotificationRead(id){
+    await sb.from('notifications').update({ read: true }).eq('id', id);
+    loadNotifications();
+  }
+
+  async function markAllNotificationsRead(){
+    if(!currentUser) return;
+    await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id).eq('read', false);
+    loadNotifications();
+  }
+
+  // Safety-net for the 9:30 AM / 4:00 PM deadline reminders: pg_cron handles
+  // the true scheduled firing server-side, but this quietly runs the same
+  // check whenever anyone opens the app after either time has passed that
+  // day — so reminders still go out even on a project without pg_cron
+  // available, or if the scheduled job ever fails to run.
+  async function checkDeadlineNotificationsClientSide(){
+    const now = new Date();
+    const hour = now.getHours() + now.getMinutes() / 60;
+    try{
+      if(hour >= 9.5) await sb.rpc('check_deadline_notifications', { p_slot: 'morning' });
+      if(hour >= 16) await sb.rpc('check_deadline_notifications', { p_slot: 'afternoon' });
+      loadNotifications();
+    } catch(e){ /* silent — this is a background convenience check, not user-facing */ }
+  }
+
   function confirmSignOut(){
     toggleAccountMenu();
     if(confirm('Log out of Walton Lift R&I?')) signOutUser();
@@ -2278,6 +2360,8 @@
     showAuthScreen('app');
     loadHomeFeed();
     loadHomeOverview();
+    loadNotifications();
+    checkDeadlineNotificationsClientSide();
  
     if(profile.role === 'superadmin' || profile.role === 'admin'){ loadAdminPanel(); }
   }
