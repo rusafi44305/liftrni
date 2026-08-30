@@ -3374,8 +3374,12 @@
       const leadLabel = leadName ? displayName(leadName) : '—';
       const collabNames = (p.collaborators || []).map(id => { const c = devPeople.find(dp => dp.id === id); return c ? displayName(c) : null; }).filter(Boolean).join(', ') || '—';
       const color = DEV_STATUS_COLOR[p.status] || '#2F5FE0';
-      const canEdit = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin' || p.created_by === currentUser?.id || p.lead_id === currentUser?.id);
-      const canDelete = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin');
+      // Same rule as the task breakdown — managing this project (editing or
+      // deleting the project itself) is restricted to whoever created it or
+      // is its designated Lead. Deliberately excludes Admin/Superadmin too.
+      const canManageProject = currentUser && (p.created_by === currentUser.id || p.lead_id === currentUser.id);
+      const canEdit = canManageProject;
+      const canDelete = canManageProject;
       return `<div>
       <div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
