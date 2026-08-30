@@ -441,8 +441,8 @@
   .gantt-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; overflow-x:auto;}
   .gantt-months{display:grid; grid-template-columns:220px repeat(6, 1fr); gap:0; margin-bottom:6px; min-width:900px;}
   .gantt-months .gm{font-size:11px; font-weight:600; color:var(--text-faint); text-align:center; padding-bottom:8px; border-bottom:1px solid var(--border);}
-  .gantt-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
-  .gantt-row:last-child{border-bottom:none;}
+  .gantt-project-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden; }
+  .gantt-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 20px; flex-wrap:wrap;}
   .gt-name{font-size:14px; font-weight:600;}
   .gt-sub{font-size:12px; color:var(--text-faint); font-weight:400; margin-top:2px;}
   .status-capsule{font-size:11.5px; font-weight:600; padding:4px 12px; border-radius:999px; color:#fff; white-space:nowrap;}
@@ -635,7 +635,7 @@
      SOLID UI POLISH — flat, opaque surfaces (no blur/translucency).
   ============================================================ */
   .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #accountMenu, #editModal .panel,
-  .cat-tile, .t-card, .lift-header, .gantt-row, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
+  .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
     background:var(--surface) !important;
     border:1px solid var(--border) !important;
@@ -651,7 +651,7 @@
      Placed AFTER that shared rule so it actually wins the cascade — two
      equally-specific !important rules resolve by source order, and this
      needs to come second. */
-  .mytask-item, .cat-log-row, .gantt-row, .proj-task-row{ border-radius:10px !important; }
+  .mytask-item, .cat-log-row, .gantt-project-card, .proj-task-row{ border-radius:10px !important; }
   /* .indicator-panel is DELIBERATELY excluded above — it's a permanent dark card
      (like .kpi-card) with hardcoded light text, by design, in every theme. If it
      ever gets added back to the shared list above, its text goes invisible in
@@ -1870,7 +1870,7 @@
     const canManageTasks = project.created_by === currentUser?.id || project.lead_id === currentUser?.id;
 
     wrap.innerHTML = `
-      <div style="padding-top:14px; margin-top:4px; border-top:1px solid var(--border);">
+      <div style="padding:14px 20px 18px; margin-top:0; border-top:1px solid var(--border);">
         ${infoHtml}
         <div style="display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px;">
           <div class="panel-title" style="margin:0;">Task breakdown — Gantt view</div>
@@ -2127,33 +2127,24 @@
     return name.trim().split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
   }
  
-  // Renders a profile picture into an avatar element if the profile has one,
-  // otherwise falls back to initials. Used for both the header avatar and the
-  // Profile page avatar; the header one also carries the notification dot.
-  // A small role indicator — the one bit of "personality" added to the
-  // avatar itself, showing at a glance whether this account has elevated
-  // access, without needing to open the account menu to check.
-  function roleIconHtml(role){
-    if(role !== 'superadmin' && role !== 'admin') return '';
-    const color = role === 'superadmin' ? 'var(--amber)' : 'var(--accent)';
-    return `<span style="position:absolute; bottom:-2px; right:-2px; width:15px; height:15px; border-radius:50%; background:${color}; border:2px solid var(--surface); display:flex; align-items:center; justify-content:center; pointer-events:none;" title="${role === 'superadmin' ? 'Superadmin' : 'Admin'}">
-      <svg width="8" height="8" viewBox="0 0 24 24" fill="#fff" stroke="none" style="pointer-events:none;"><path d="M12 2l8 4v6c0 5-3.5 9-8 10-4.5-1-8-5-8-10V6l8-4z"/></svg>
-    </span>`;
-  }
-
   // A generic person-silhouette icon, used as the avatar fallback whenever
   // someone hasn't uploaded a profile picture — sized as a percentage of
   // its container so it scales correctly whether it's sitting in the small
   // header avatar or the larger one on the Profile page.
   const PERSON_ICON_SVG = `<svg width="55%" height="55%" viewBox="0 0 24 24" fill="#fff" stroke="none" style="pointer-events:none;"><path d="M12 12c2.7 0 4.9-2.2 4.9-4.9S14.7 2.2 12 2.2 7.1 4.4 7.1 7.1 9.3 12 12 12zm0 2.4c-3.3 0-9.8 1.6-9.8 4.9V22h19.6v-2.7c0-3.3-6.5-4.9-9.8-4.9z"/></svg>`;
 
+  // Superadmin's avatar is tinted red across the whole circle — a clear,
+  // unambiguous "this account has full access" signal at a glance, rather
+  // than a small badge dot that needed a tooltip to explain itself.
   function renderAvatar(el, profile, badgeHtml){
     const fallback = PERSON_ICON_SVG;
-    const roleIcon = roleIconHtml(profile && profile.role);
+    el.style.background = profile && profile.role === 'superadmin'
+      ? 'linear-gradient(145deg, color-mix(in srgb, var(--red) 85%, white 15%), var(--red))'
+      : '';
     if(profile && profile.avatar_url){
-      el.innerHTML = `<img src="${profile.avatar_url}" alt="">` + roleIcon + (badgeHtml || '');
+      el.innerHTML = `<img src="${profile.avatar_url}" alt="">` + (badgeHtml || '');
     } else {
-      el.innerHTML = fallback + roleIcon + (badgeHtml || '');
+      el.innerHTML = fallback + (badgeHtml || '');
     }
   }
  
@@ -3380,7 +3371,7 @@
       const canManageProject = currentUser && (p.created_by === currentUser.id || p.lead_id === currentUser.id);
       const canEdit = canManageProject;
       const canDelete = canManageProject;
-      return `<div>
+      return `<div class="gantt-project-card">
       <div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
         data-impact="${p.impact_type||'—'}" data-fin="${p.financial_outcome||'—'}" data-doc="${p.documentation||'—'}" data-remarks="${(p.notes||'').replace(/"/g,'&quot;')}">
