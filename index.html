@@ -1049,7 +1049,7 @@
     <div class="filter-row" style="flex-wrap:wrap;">
       <div class="searchbar" id="catLogSearchWrap" style="max-width:340px; margin-bottom:0;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="catLogSearch" placeholder="Search this category by Lift ID..." oninput="filterCategoryLog()">
+        <input type="text" id="catLogSearch" placeholder="Search this category by Lift ID, project name, or keyword..." oninput="filterCategoryLog()">
       </div>
       <input type="month" id="catFromMonth" class="fselect" style="cursor:pointer;">
       <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
@@ -2370,7 +2370,7 @@
     ev.stopPropagation();
     catQuickSearchKey = key;
     const pop = document.getElementById('catQuickSearch');
-    document.getElementById('catQuickSearchLabel').textContent = `Search ${catMeta[key]?.name || key} by Lift ID`;
+    document.getElementById('catQuickSearchLabel').textContent = `Search ${catMeta[key]?.name || key} by Lift ID, project name, or keyword`;
     const rect = ev.currentTarget.getBoundingClientRect();
     pop.style.top = (rect.bottom + 8 + window.scrollY) + 'px';
     let left = rect.right - 280 + window.scrollX;
@@ -2603,8 +2603,22 @@
   function filterCategoryLog(){
     const q = document.getElementById('catLogSearch').value.trim().toLowerCase();
     const meta = catMeta[currentCatKey];
-    const filtered = q ? currentCatRows.filter(r => (r.lift_id||'').toLowerCase().includes(q)) : currentCatRows;
+    const filtered = q ? currentCatRows.filter(r => rowMatchesKeyword(r, q)) : currentCatRows;
     renderCategoryRows(filtered, meta.hasLift);
+  }
+
+  // Checks Lift ID, project name, and every value actually entered into this
+  // task's category-specific fields — not just Lift ID — so searching finds
+  // an entry by any keyword that appears anywhere in it.
+  function rowMatchesKeyword(r, q){
+    if((r.lift_id||'').toLowerCase().includes(q)) return true;
+    if((r.project_name||'').toLowerCase().includes(q)) return true;
+    if((r.notes||'').toLowerCase().includes(q)) return true;
+    const details = r.details || {};
+    return Object.values(details).some(v => {
+      const text = Array.isArray(v) ? v.join(' ') : String(v ?? '');
+      return text.toLowerCase().includes(q);
+    });
   }
  
   // ============ HOME: live "Recent activity" feed (everyone's inputs, real-time) ============
