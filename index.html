@@ -702,8 +702,8 @@
 ============================================================ -->
 <style>
   #bgAnim{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
-  #bgAnim svg{ position:absolute; opacity:0.22; }
-  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg{ opacity:0.15; }
+  #bgAnim svg{ position:absolute; opacity:0.13; }
+  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg{ opacity:0.08; }
   #bgAnim svg *{ stroke:var(--bg-anim-ink, var(--text-faint)); }
   #bgAnim svg .bg-fill{ fill:var(--bg-anim-ink, var(--text-faint)); stroke:none; }
 
@@ -1668,7 +1668,7 @@
   }
  
   function toggleSearchResultDetails(btn){
-    const card = btn.closest('.t-card');
+    const card = btn.closest('.t-card, .mytask-item');
     const details = card.querySelector('.search-result-details');
     const isOpen = details.style.display !== 'none';
     details.style.display = isOpen ? 'none' : 'block';
@@ -3035,13 +3035,39 @@
     if(error){ el.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
     myTasksRows = data || [];
     if(!myTasksRows.length){ el.innerHTML = '<div class="placeholder-note">No tasks logged yet — use the form on the left to log your first one.</div>'; return; }
-    el.innerHTML = myTasksRows.map(t => `
+    el.innerHTML = myTasksRows.map(t => {
+      const details = t.details || {};
+      const fieldsHtml = Object.entries(details)
+        .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
+        .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${k}</span><span class="detail-v">${Array.isArray(v) ? v.join(', ') : v}</span></div>`)
+        .join('');
+      const hist = t.edit_history || [];
+      const historyHtml = hist.length
+        ? `<details style="margin-top:12px;">
+            <summary style="cursor:pointer; color:var(--text-faint); font-size:12px;">${hist.length} previous version${hist.length>1?'s':''}</summary>
+            <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+              ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
+                <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${h.by || 'someone'}</div>
+                <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+              </div>`).join('')}
+            </div>
+          </details>`
+        : '';
+      return `
       <div class="mytask-item">
-        <div class="mt-top"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span><span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${t.edit_history && t.edit_history.length ? ' · edited' : ''}</span></div>
+        <div class="mt-top"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span><span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</span></div>
         <div class="mt-title">${t.project_name || '(untitled)'}${t.lift_id ? ' — Lift <span class="mono">'+t.lift_id+'</span>' : ''}</div>
         <div class="mt-desc">${t.notes || ''}</div>
-        <button class="btn" style="margin-top:6px; padding:3px 10px; font-size:11px;" onclick="openEditTask('${t.id}')">Edit</button>
-      </div>`).join('');
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="btn" style="padding:3px 10px; font-size:11px;" onclick="openEditTask('${t.id}')">Edit</button>
+          <button class="btn" style="padding:3px 10px; font-size:11px;" onclick="toggleSearchResultDetails(this)">View details</button>
+        </div>
+        <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
+          ${historyHtml}
+        </div>
+      </div>`;
+    }).join('');
   }
  
   // ============ PROFILE (real data) ============
