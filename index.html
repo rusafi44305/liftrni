@@ -1409,6 +1409,10 @@
     document.getElementById('view-' + name).classList.add('active');
     document.querySelectorAll('[data-view]').forEach(el => el.classList.toggle('active', el.dataset.view === name));
     window.scrollTo({top:0, behavior:'smooth'});
+    // The category-tint background on My Tasks only makes sense while
+    // actually on that tab — clear it the moment any other view is shown,
+    // so it doesn't linger behind Home, Dashboard, etc.
+    if(name !== 'mytasks') document.body.style.background = '';
   }
   document.querySelectorAll('nav.tabs button[data-view]').forEach(t => t.addEventListener('click', () => {
     showView(t.dataset.view);
@@ -1664,17 +1668,17 @@
     const panel = document.getElementById('taskFormPanel');
     panel.className = 'panel cc-' + cat;
 
-    // The whole My Tasks tab picks up a faint tint of whatever category is
+    // The whole page picks up a faint tint of whatever category is
     // currently selected — using the exact same --c-<category> color each
     // category already has everywhere else in the app, just at very low
     // strength so it reads as "background mood," not a loud color change.
+    // Applied to the actual page body (not the content column itself,
+    // which is narrower than the full viewport) so it genuinely covers the
+    // whole screen, margins included — not just a strip behind the content.
     const catColorVar = getComputedStyle(document.documentElement).getPropertyValue(`--c-${cat}`).trim();
-    const mytasksView = document.getElementById('view-mytasks');
-    if(mytasksView){
-      mytasksView.style.background = catColorVar
-        ? `color-mix(in srgb, ${catColorVar} 6%, var(--bg))`
-        : '';
-    }
+    document.body.style.background = catColorVar
+      ? `color-mix(in srgb, ${catColorVar} 6%, var(--bg))`
+      : '';
 
     // "Perform Date" is genuinely editable — it's when the work itself
     // happened, which can be earlier than today if someone's logging a
