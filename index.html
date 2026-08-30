@@ -2543,11 +2543,12 @@
   }
  
   function displayName(p){
-    // p = { full_name, nickname }. Admins/Superadmins see "Original Name (Nickname)"; everyone else just sees the nickname.
+    // Full names are now shown to everyone, regardless of role — this used
+    // to be Admin/Superadmin-only, but that restriction has been removed
+    // app-wide per request.
     if(!p) return '—';
-    const isPrivileged = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin');
-    if(isPrivileged && p.full_name) return `${p.full_name} (${p.nickname || '—'})`;
-    return p.nickname || p.full_name || '—';
+    if(p.full_name) return `${p.full_name} (${p.nickname || '—'})`;
+    return p.nickname || '—';
   }
  
   function applyRoleUI(role){
