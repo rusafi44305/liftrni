@@ -2406,8 +2406,14 @@
     titleEl.style.color = color;
     document.getElementById('catLogAddBtn').style.borderColor = color;
     document.getElementById('catLogAddBtn').style.color = color;
-    document.getElementById('catLogSearchWrap').style.display = meta.hasLift ? 'flex' : 'none';
-    document.getElementById('catLogNoLiftNote').style.display = meta.hasLift ? 'none' : 'block';
+    // The search box used to be hidden entirely for categories with no Lift
+    // ID, back when it could only search by Lift ID. Now that it also
+    // searches by project name and keyword, it's useful everywhere — so it
+    // always shows, regardless of whether this category is Lift-traceable.
+    document.getElementById('catLogSearchWrap').style.display = 'flex';
+    document.getElementById('catLogSearch').placeholder = meta.hasLift
+      ? 'Search this category by Lift ID, project name, or keyword...'
+      : 'Search this category by project name or keyword...';
     document.getElementById('catLogSearch').value = '';
     document.getElementById('catLogSub').textContent = 'Loading…';
     showView('category');
