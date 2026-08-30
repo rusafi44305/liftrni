@@ -2240,6 +2240,21 @@
         .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
         .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${k}</span><span class="detail-v">${Array.isArray(v) ? v.join(', ') : v}</span></div>`)
         .join('');
+      // Edit history is shown to everyone read-only, matching Lift Search and
+      // My Tasks — only the Edit button itself (further above) is restricted
+      // to whoever logged the entry.
+      const hist = row.edit_history || [];
+      const historyHtml = hist.length
+        ? `<details style="margin-top:12px;">
+            <summary style="cursor:pointer; color:var(--text-faint); font-size:12px;">${hist.length} previous version${hist.length>1?'s':''}</summary>
+            <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+              ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
+                <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${h.by || 'someone'}</div>
+                <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+              </div>`).join('')}
+            </div>
+          </details>`
+        : '';
       return `<div class="panel cat-log-row" style="padding:14px 20px;" data-lift="${(row.lift_id||'').toLowerCase()}">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
           <div>
@@ -2258,6 +2273,7 @@
         </div>
         <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
           <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
+          ${historyHtml}
         </div>
       </div>`;
     }).join('');
