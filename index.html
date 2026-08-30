@@ -1632,6 +1632,7 @@
     // page load, or a fresh render right after submitting should all still
     // clear the form completely, not resurrect whatever used to be in it.
     let preservedBaseValues = null;
+    let preservedPerformDate = null;
     if(preserveOnTypeChange && cat === 'techsupport' && document.getElementById('techSupportType')){
       preservedBaseValues = {};
       document.querySelectorAll('#dynamicForm .form-field').forEach(fieldEl => {
@@ -1641,6 +1642,8 @@
           preservedBaseValues[labelEl.textContent.replace('*','').trim()] = input.value;
         }
       });
+      const performDateEl = document.getElementById('performDate');
+      if(performDateEl) preservedPerformDate = performDateEl.value;
     }
 
     if(cat === 'techsupport'){
@@ -1660,10 +1663,31 @@
  
     const panel = document.getElementById('taskFormPanel');
     panel.className = 'panel cc-' + cat;
- 
+
+    // The whole My Tasks tab picks up a faint tint of whatever category is
+    // currently selected — using the exact same --c-<category> color each
+    // category already has everywhere else in the app, just at very low
+    // strength so it reads as "background mood," not a loud color change.
+    const catColorVar = getComputedStyle(document.documentElement).getPropertyValue(`--c-${cat}`).trim();
+    const mytasksView = document.getElementById('view-mytasks');
+    if(mytasksView){
+      mytasksView.style.background = catColorVar
+        ? `color-mix(in srgb, ${catColorVar} 6%, var(--bg))`
+        : '';
+    }
+
+    // "Perform Date" is genuinely editable — it's when the work itself
+    // happened, which can be earlier than today if someone's logging a
+    // task after the fact. It's stored as its own field in details,
+    // completely separate from created_at (the real database timestamp of
+    // this entry) and from edit_history's timestamps — both of those stay
+    // tied to actual real-world clock time no matter what date is picked
+    // here, so the audit trail always reflects reality.
+    const today = new Date().toISOString().slice(0, 10);
+
     document.getElementById('dynamicForm').innerHTML =
-      `<div class="form-section"><div class="section-label">Entry Date</div>
-        <input type="text" value="24/08/2026, 10:42 AM" class="mono" style="width:100%; padding:10px 13px; border-radius:9px; border:1.5px solid var(--border); color:var(--text-faint); background:var(--surface-alt);" disabled>
+      `<div class="form-section"><div class="section-label">Perform Date</div>
+        <input type="date" id="performDate" value="${preservedPerformDate || today}" class="mono" style="width:100%; padding:10px 13px; border-radius:9px; border:1.5px solid var(--border); color:var(--text); background:var(--surface);">
       </div>`
       + sectionBlock('identity', groups.identity)
       + sectionBlock('details', groups.details)
@@ -2811,6 +2835,13 @@
     const details = {};
     let liftId = null;
     let projectName = null;
+
+    // The date the work was actually performed — separate from created_at
+    // (the real timestamp this row was inserted) and from any future
+    // edit_history entry's timestamp, both of which always reflect genuine
+    // real-world clock time regardless of what's picked here.
+    const performDateEl = document.getElementById('performDate');
+    if(performDateEl && performDateEl.value) details['Perform Date'] = performDateEl.value;
  
     const textInputs = document.querySelectorAll('#dynamicForm .form-field');
     let inputIndex = 0;
