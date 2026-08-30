@@ -440,16 +440,12 @@
   .gantt-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; overflow-x:auto;}
   .gantt-months{display:grid; grid-template-columns:220px repeat(6, 1fr); gap:0; margin-bottom:6px; min-width:900px;}
   .gantt-months .gm{font-size:11px; font-weight:600; color:var(--text-faint); text-align:center; padding-bottom:8px; border-bottom:1px solid var(--border);}
-  .gantt-row{display:grid; grid-template-columns:220px repeat(6, 1fr); align-items:center; min-height:52px; border-bottom:1px solid var(--border); min-width:900px;}
+  .gantt-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:13px 18px; border-bottom:1px solid var(--border); flex-wrap:wrap;}
   .gantt-row:last-child{border-bottom:none;}
-  .gt-name{font-size:13px; font-weight:600; padding-right:12px;}
-  .gt-sub{font-size:11px; color:var(--text-faint); font-weight:400; margin-top:2px;}
-  .gt-track{position:relative; height:26px; grid-column:2/8;}
-  .gt-bar{
-    position:absolute; height:26px; border-radius:7px; top:0;
-    display:flex; align-items:center; padding:0 10px; font-size:11px; font-weight:600; color:#fff;
-    white-space:nowrap; overflow:hidden;
-  }
+  .gt-name{font-size:14px; font-weight:600;}
+  .gt-sub{font-size:12px; color:var(--text-faint); font-weight:400; margin-top:2px;}
+  .status-capsule{font-size:11.5px; font-weight:600; padding:4px 12px; border-radius:999px; color:#fff; white-space:nowrap;}
+  .proj-task-row{background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
   .legend{display:flex; gap:18px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border);}
   .leg-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim);}
   .leg-dot{width:9px; height:9px; border-radius:3px;}
@@ -654,7 +650,7 @@
      Placed AFTER that shared rule so it actually wins the cascade — two
      equally-specific !important rules resolve by source order, and this
      needs to come second. */
-  .mytask-item, .cat-log-row{ border-radius:10px !important; }
+  .mytask-item, .cat-log-row, .gantt-row, .proj-task-row{ border-radius:10px !important; }
   /* .indicator-panel is DELIBERATELY excluded above — it's a permanent dark card
      (like .kpi-card) with hardcoded light text, by design, in every theme. If it
      ever gets added back to the shared list above, its text goes invisible in
@@ -1335,7 +1331,35 @@
         <div><div class="spec-l">Documentation</div><div class="spec-v" id="dd-doc">—</div></div>
       </div>
       <div style="margin-top:16px; font-size:13px; color:var(--text-dim); line-height:1.6;" id="dd-remarks"></div>
-      <button class="btn" id="dd-edit-btn" style="display:none; margin-top:14px;" onclick="editDevProjectFromDetail()">✎ Edit this project</button>
+      <button class="btn edit" id="dd-edit-btn" style="display:none; margin-top:14px;" onclick="editDevProjectFromDetail()">Edit this project</button>
+
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+          <div class="panel-title" style="margin:0;">Task breakdown</div>
+          <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="showAddProjectTaskForm()">+ Add task</button>
+        </div>
+        <div id="projTaskAddForm" style="display:none; margin-bottom:12px; padding:12px; border:1px solid var(--border); border-radius:8px;">
+          <div class="form-row-2" style="margin-bottom:8px;">
+            <input type="text" id="ptName" placeholder="Task name" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <select id="ptAssigned" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"><option value="">Unassigned</option></select>
+          </div>
+          <div class="form-row-2" style="margin-bottom:8px;">
+            <input type="date" id="ptStart" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <input type="date" id="ptEnd" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+          </div>
+          <div class="chip-group" id="ptStatusChips" style="margin-bottom:10px;">
+            <div class="chip-opt picked-single" data-group="ptStatus" onclick="pickSingleChip(this)">In Progress</div>
+            <div class="chip-opt" data-group="ptStatus" onclick="pickSingleChip(this)">Done</div>
+            <div class="chip-opt" data-group="ptStatus" onclick="pickSingleChip(this)">On Hold</div>
+            <div class="chip-opt" data-group="ptStatus" onclick="pickSingleChip(this)">Skipped</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn" style="padding:6px 14px; font-size:12px;" onclick="document.getElementById('projTaskAddForm').style.display='none';">Cancel</button>
+            <button class="submit-btn" style="padding:6px 14px; font-size:12px; margin-top:0;" onclick="submitProjectTask()">Save task</button>
+          </div>
+        </div>
+        <div id="projTaskList" style="display:flex; flex-direction:column; gap:8px;"><div class="placeholder-note">Select a project above to see its tasks.</div></div>
+      </div>
     </div>
   </div>
  
@@ -1815,6 +1839,115 @@
     const project = devProjectsCache.find(p => p.id === d.id);
     const canEdit = project && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin' || project.created_by === currentUser.id || project.lead_id === currentUser.id);
     editBtn.style.display = canEdit ? 'inline-block' : 'none';
+    document.getElementById('projTaskAddForm').style.display = 'none';
+    loadProjectTasks(d.id);
+  }
+
+  // ============ PROJECT TASK BREAKDOWN ============
+  let projectTasksCache = [];
+
+  async function loadProjectTasks(projectId){
+    const el = document.getElementById('projTaskList');
+    el.innerHTML = '<div class="placeholder-note">Loading…</div>';
+    const { data, error } = await sb.from('dev_project_tasks').select('*').eq('project_id', projectId).order('start_date', { ascending: true });
+    if(error){
+      el.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the dev_project_tasks table has been created (see setup SQL).</div>`;
+      return;
+    }
+    projectTasksCache = data || [];
+    renderProjectTasksBreakdown();
+  }
+
+  function renderProjectTasksBreakdown(){
+    const el = document.getElementById('projTaskList');
+    if(!projectTasksCache.length){
+      el.innerHTML = '<div class="placeholder-note">No tasks added yet — use "+ Add task" above.</div>';
+      return;
+    }
+    const fmt = d => d ? new Date(d).toLocaleDateString('en-GB', {day:'2-digit', month:'short'}) : '—';
+    el.innerHTML = projectTasksCache.map(t => {
+      const person = devPeople.find(p => p.id === t.assigned_to);
+      const personLabel = person ? displayName(person) : 'Unassigned';
+      const color = DEV_STATUS_COLOR[t.status] || '#2F5FE0';
+      const canEditTask = t.created_by === currentUser?.id;
+      const canDeleteTask = canEditTask || currentProfile?.role === 'superadmin';
+      return `<div class="proj-task-row">
+        <div style="flex:2; min-width:140px;">
+          <div style="font-size:13px; font-weight:600;">${t.task_name}</div>
+          <div style="font-size:11.5px; color:var(--text-faint);">${personLabel}</div>
+        </div>
+        <div style="font-size:12px; color:var(--text-faint); flex-shrink:0;">${fmt(t.start_date)} → ${fmt(t.end_date)}</div>
+        <span class="status-capsule" style="background:${color};">${t.status}</span>
+        <div style="display:flex; gap:6px; margin-left:auto;">
+          ${canEditTask ? `<button class="btn edit" style="padding:4px 10px; font-size:11px;" onclick="editProjectTask('${t.id}')">Edit</button>` : ''}
+          ${canDeleteTask ? `<button class="btn remove" style="padding:4px 10px; font-size:11px;" onclick="deleteProjectTask('${t.id}')">Delete</button>` : ''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  let editingProjectTaskId = null;
+
+  function showAddProjectTaskForm(){
+    editingProjectTaskId = null;
+    document.getElementById('ptAssigned').innerHTML = '<option value="">Unassigned</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
+    document.getElementById('ptName').value = '';
+    document.getElementById('ptStart').value = '';
+    document.getElementById('ptEnd').value = '';
+    document.querySelectorAll('#ptStatusChips .chip-opt').forEach(c => c.classList.remove('picked-single'));
+    document.querySelector('#ptStatusChips .chip-opt').classList.add('picked-single');
+    document.getElementById('projTaskAddForm').style.display = 'block';
+  }
+
+  function editProjectTask(id){
+    const t = projectTasksCache.find(x => x.id === id);
+    if(!t) return;
+    editingProjectTaskId = id;
+    document.getElementById('ptAssigned').innerHTML = '<option value="">Unassigned</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
+    document.getElementById('ptName').value = t.task_name || '';
+    document.getElementById('ptAssigned').value = t.assigned_to || '';
+    document.getElementById('ptStart').value = t.start_date || '';
+    document.getElementById('ptEnd').value = t.end_date || '';
+    document.querySelectorAll('#ptStatusChips .chip-opt').forEach(c => {
+      c.classList.toggle('picked-single', c.textContent === t.status);
+    });
+    document.getElementById('projTaskAddForm').style.display = 'block';
+  }
+
+  async function submitProjectTask(){
+    const taskName = document.getElementById('ptName').value.trim();
+    if(!taskName){ alert('Task name is required.'); return; }
+    const payload = {
+      project_id: selectedDevProjectId,
+      task_name: taskName,
+      assigned_to: document.getElementById('ptAssigned').value || null,
+      start_date: document.getElementById('ptStart').value || null,
+      end_date: document.getElementById('ptEnd').value || null,
+      status: document.querySelector('#ptStatusChips .picked-single')?.textContent || 'In Progress'
+    };
+    let error;
+    if(editingProjectTaskId){
+      ({ error } = await sb.from('dev_project_tasks').update(payload).eq('id', editingProjectTaskId));
+    } else {
+      ({ error } = await sb.from('dev_project_tasks').insert({ ...payload, created_by: currentUser.id }));
+    }
+    if(error){ alert('Could not save: ' + error.message); return; }
+    document.getElementById('projTaskAddForm').style.display = 'none';
+    loadProjectTasks(selectedDevProjectId);
+  }
+
+  async function deleteProjectTask(id){
+    if(!confirm('Delete this task? This cannot be undone.')) return;
+    const { error } = await sb.from('dev_project_tasks').delete().eq('id', id);
+    if(error){ alert('Could not delete: ' + error.message); return; }
+    loadProjectTasks(selectedDevProjectId);
+  }
+
+  async function deleteDevProject(id){
+    if(!confirm('Delete this entire project, including its task breakdown? This cannot be undone.')) return;
+    const { error } = await sb.from('dev_projects').delete().eq('id', id);
+    if(error){ alert('Could not delete: ' + error.message); return; }
+    loadDevDashboard();
   }
  
   let editingDevProjectId = null;
@@ -3000,16 +3133,19 @@
       const leadName = devPeople.find(dp => dp.id === p.lead_id);
       const leadLabel = leadName ? displayName(leadName) : '—';
       const collabNames = (p.collaborators || []).map(id => { const c = devPeople.find(dp => dp.id === id); return c ? displayName(c) : null; }).filter(Boolean).join(', ') || '—';
-      const s = new Date(p.start_date).getTime();
-      const e = new Date(p.target_date || p.start_date).getTime();
-      const left = Math.round(((s - rangeStart) / span) * 100);
-      const width = Math.max(4, Math.round(((e - s) / span) * 100));
       const color = DEV_STATUS_COLOR[p.status] || '#2F5FE0';
-      return `<div class="gantt-row" onclick="showDevDetail(this)"
+      const canEdit = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin' || p.created_by === currentUser?.id || p.lead_id === currentUser?.id);
+      const canDelete = currentProfile && (currentProfile.role === 'admin' || currentProfile.role === 'superadmin');
+      return `<div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
         data-impact="${p.impact_type||'—'}" data-fin="${p.financial_outcome||'—'}" data-doc="${p.documentation||'—'}" data-remarks="${(p.notes||'').replace(/"/g,'&quot;')}">
-        <div><div class="gt-name">${p.name}</div><div class="gt-sub">${leadLabel} · ${p.impact_type||'—'}</div></div>
-        <div class="gt-track"><div class="gt-bar" style="left:${left}%; width:${width}%; background:${color};" title="${p.status} · ${leadLabel}">${p.status}</div></div>
+        <div><div class="gt-name">${p.name}</div><div class="gt-sub">${leadLabel}</div></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="status-capsule" style="background:${color};">${p.status}</span>
+          ${canEdit ? `<button class="btn edit" style="padding:5px 12px; font-size:11.5px;" onclick="event.stopPropagation(); showDevDetail(this.closest('.gantt-row')); editDevProjectFromDetail();">Edit</button>` : ''}
+          ${canDelete ? `<button class="btn remove" style="padding:5px 12px; font-size:11.5px;" onclick="event.stopPropagation(); deleteDevProject('${p.id}')">Delete</button>` : ''}
+          <button class="btn view-details" style="padding:5px 12px; font-size:11.5px;" onclick="event.stopPropagation(); showDevDetail(this.closest('.gantt-row'))">See details</button>
+        </div>
       </div>`;
     }).join('');
   }
