@@ -47,7 +47,7 @@
     --c-requisition:#0C7788;
     --c-scm:#597600;
     --c-existingdev:#6B5B44;
-    --c-surveyissues:#956504;
+    --c-surveyissues:#B31919;
  
     /* Fixed category "icon" colors — deliberately NOT overridden per theme (unlike --c-* above).
        .cat-icon always puts white text on these, so they must stay dark enough for white text
@@ -55,7 +55,7 @@
        colored text on a light tint, which needs the opposite (brighter) treatment in dark themes. */
     --ic-rni:#6E4FD1; --ic-presales:#1D6FD9; --ic-client:#0C7979; --ic-postsales:#167C51;
     --ic-install:#A15B18; --ic-commission:#AF5200; --ic-aftersales:#C23D74; --ic-production:#4A50C9; --ic-techsupport:#A15B18;
-    --ic-requisition:#0C7788; --ic-scm:#597600; --ic-existingdev:#6B5B44; --ic-surveyissues:#956504;
+    --ic-requisition:#0C7788; --ic-scm:#597600; --ic-existingdev:#6B5B44; --ic-surveyissues:#B31919;
   }
  
   /* ---------- THEMES ---------- */
@@ -67,7 +67,7 @@
     --accent:#6C9BFF; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
     --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5; --c-techsupport:#E8AD6C;
-    --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8; --c-surveyissues:#F0BA4C;
+    --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8; --c-surveyissues:#F47171;
     --shadow:0 1px 3px rgba(0,0,0,0.28), 0 10px 26px -12px rgba(0,0,0,0.45);
     --header-bg:#202329;
   }
@@ -77,7 +77,7 @@
     --accent:#5B8DEF; --amber:#E0A23D; --green:#34D399; --red:#F0685C;
     --c-rni:#9A82F0; --c-presales:#5C97F5; --c-client:#3FC2C2; --c-postsales:#3FCF8E;
     --c-install:#E3A25B; --c-commission:#F0954D; --c-aftersales:#F06FA0; --c-production:#8890F0; --c-techsupport:#E3A25B;
-    --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A; --c-surveyissues:#F0BA4C;
+    --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A; --c-surveyissues:#F47171;
     --shadow:0 1px 3px rgba(0,0,0,0.5), 0 14px 34px -14px rgba(0,0,0,0.7);
     --header-bg:#05070D;
   }
@@ -469,6 +469,8 @@
   .btn.approve{background:var(--green); color:#fff;}
   .btn.reject{background:var(--surface-alt); color:var(--text-dim); margin-left:8px;}
   .btn.remove{background:var(--red-dim); color:var(--red);}
+  .btn.edit{background:color-mix(in srgb, var(--amber) 16%, var(--surface)); color:var(--amber);}
+  .btn.view-details{background:var(--surface-alt); color:var(--text-dim);}
   .btn.remove:hover{background:var(--red); color:#fff;}
   .tag.gray{background:var(--surface-alt); color:var(--text-dim);}
   .tag.gold{background:color-mix(in srgb, var(--amber) 18%, var(--surface)); color:var(--amber);}
@@ -665,7 +667,7 @@
   .queue-btn, .submit-btn, .fselect, select, input[type="text"], input[type="date"], input[type="month"], input[type="number"]{
     background:var(--surface) !important;
   }
-  .btn:not(.approve):not(.reject):not(.remove){
+  .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details){
     background:var(--surface) !important;
   }
   .kpi-card{
@@ -2246,8 +2248,8 @@
             <div>${emp}</div>
             <div class="mono">${date}${row.edit_history && row.edit_history.length ? ' · edited' : ''}</div>
             <div style="margin-top:6px; display:flex; gap:4px; justify-content:flex-end;">
-              ${row.employee_id === currentUser?.id ? `<button class="btn" style="padding:3px 10px; font-size:11px;" onclick="openEditTask('${row.id}')">Edit</button>` : ''}
-              <button class="btn" style="padding:3px 10px; font-size:11px;" onclick="toggleSearchResultDetails(this)">View details</button>
+              ${row.employee_id === currentUser?.id ? `<button class="btn edit" style="padding:3px 10px; font-size:11px;" onclick="openEditTask('${row.id}')">Edit</button>` : ''}
+              <button class="btn view-details" style="padding:3px 10px; font-size:11px;" onclick="toggleSearchResultDetails(this)">View details</button>
               ${currentProfile?.role === 'superadmin' ? `<button class="btn remove" style="padding:3px 10px; font-size:11px;" onclick="deleteTaskEntry('${row.id}')">Delete</button>` : ''}
             </div>
           </div>
@@ -2896,12 +2898,12 @@
                 <div class="t-desc">${row.notes || ''}</div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; gap:10px;">
                   <div class="t-emp">Logged by ${row.profiles ? displayName(row.profiles) : '—'}</div>
-                  <button class="btn" style="padding:4px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleSearchResultDetails(this)">View details</button>
+                  <button class="btn view-details" style="padding:4px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleSearchResultDetails(this)">View details</button>
                 </div>
                 <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
                   <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
                   ${historyHtml}
-                  ${canEdit ? `<button class="btn" style="margin-top:12px; padding:5px 14px; font-size:12px;" onclick="openEditTask('${row.id}')">Edit this entry</button>` : ''}
+                  ${canEdit ? `<button class="btn edit" style="margin-top:12px; padding:5px 14px; font-size:12px;" onclick="openEditTask('${row.id}')">Edit this entry</button>` : ''}
                   ${currentProfile?.role === 'superadmin' ? `<button class="btn remove" style="margin-top:12px; margin-left:6px; padding:5px 14px; font-size:12px;" onclick="deleteTaskEntry('${row.id}')">Delete this entry</button>` : ''}
                 </div>
               </div>
@@ -3090,8 +3092,8 @@
         <div class="mt-title">${t.project_name || '(untitled)'}${t.lift_id ? ' — Lift <span class="mono">'+t.lift_id+'</span>' : ''}</div>
         <div class="mt-desc">${t.notes || ''}</div>
         <div style="display:flex; gap:8px; margin-top:6px;">
-          <button class="btn" style="padding:3px 10px; font-size:11px;" onclick="openEditTask('${t.id}')">Edit</button>
-          <button class="btn" style="padding:3px 10px; font-size:11px;" onclick="toggleSearchResultDetails(this)">View details</button>
+          <button class="btn edit" style="padding:3px 10px; font-size:11px;" onclick="openEditTask('${t.id}')">Edit</button>
+          <button class="btn view-details" style="padding:3px 10px; font-size:11px;" onclick="toggleSearchResultDetails(this)">View details</button>
           ${currentProfile?.role === 'superadmin' ? `<button class="btn remove" style="padding:3px 10px; font-size:11px;" onclick="deleteTaskEntry('${t.id}')">Delete</button>` : ''}
         </div>
         <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
