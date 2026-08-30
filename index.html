@@ -198,6 +198,7 @@
     padding:10px 4px; background:transparent; color:var(--text);
   }
   .searchbar input::placeholder{color:var(--text-faint); font-family:'Inter'; font-weight:500;}
+  #catLogSearch::placeholder{font-weight:400; font-size:13.5px;}
   .searchbar button{
     background:var(--accent); color:#fff; border:none; padding:10px 18px;
     border-radius:9px; font-weight:600; font-size:13.5px; cursor:pointer;
@@ -1000,14 +1001,14 @@
         <div class="link-more" onclick="showView('dashboard')">View breakdown →</div>
       </div>
       <div class="cat-grid">
-        <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-name">R&amp;I Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div>
-        <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div>
-        <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div>
-        <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div>
-        <div class="cat-tile cc-production" onclick="showCategoryLog('production')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'production')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-name">Production Support</div><div class="cat-count" id="catCount-production">— logged</div></div>
-        <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div>
-        <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-name">Departmental Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div>
-        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">08</div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div>
+        <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-name">R&amp;I Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div>
+        <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div>
+        <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div>
+        <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div>
+        <div class="cat-tile cc-production" onclick="showCategoryLog('production')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'production')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-name">Production Support</div><div class="cat-count" id="catCount-production">— logged</div></div>
+        <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div>
+        <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-name">Departmental Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div>
+        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">08</div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div>
       </div>
     </section>
  
@@ -1049,7 +1050,7 @@
     <div class="filter-row" style="flex-wrap:wrap;">
       <div class="searchbar" id="catLogSearchWrap" style="max-width:340px; margin-bottom:0;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="catLogSearch" placeholder="Search this category by Lift ID, project name, or keyword..." oninput="filterCategoryLog()">
+        <input type="text" id="catLogSearch" placeholder="Search in this category..." oninput="filterCategoryLog()" style="font-family:'Inter'; font-weight:400; font-size:13.5px;">
       </div>
       <input type="month" id="catFromMonth" class="fselect" style="cursor:pointer;">
       <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
@@ -2366,6 +2367,17 @@
   // engineer can jump straight to a Lift ID within that category, without
   // first opening the category then hunting for the search box.
   let catQuickSearchKey = null;
+  // The homepage search icon used to open a small popover — simplified to
+  // just take you straight to that category's page with its search box
+  // ready to type into, using the same search bar already confirmed to
+  // work correctly there. One less moving part, one less thing to break.
+  async function goToCategorySearch(ev, key){
+    ev.stopPropagation();
+    await showCategoryLog(key);
+    const input = document.getElementById('catLogSearch');
+    if(input) input.focus();
+  }
+
   function openCatQuickSearch(ev, key){
     ev.stopPropagation();
     catQuickSearchKey = key;
@@ -2411,9 +2423,6 @@
     // searches by project name and keyword, it's useful everywhere — so it
     // always shows, regardless of whether this category is Lift-traceable.
     document.getElementById('catLogSearchWrap').style.display = 'flex';
-    document.getElementById('catLogSearch').placeholder = meta.hasLift
-      ? 'Search this category by Lift ID, project name, or keyword...'
-      : 'Search this category by project name or keyword...';
     document.getElementById('catLogSearch').value = '';
     document.getElementById('catLogSub').textContent = 'Loading…';
     showView('category');
