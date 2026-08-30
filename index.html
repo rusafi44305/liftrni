@@ -101,7 +101,35 @@
     padding:8px 24px;
     background:var(--header-bg);
     border-bottom:1px solid var(--border);
+    transition: grid-template-columns 0.3s ease, padding 0.25s ease;
   }
+  header.topnav.scrolled{
+    grid-template-columns: 0fr auto 1fr;
+    padding: 5px 20px;
+  }
+  .nav-left{
+    justify-self:start;
+    overflow:hidden;
+    transition: opacity 0.25s ease;
+  }
+  header.topnav.scrolled .nav-left{
+    opacity:0;
+    pointer-events:none;
+  }
+  .brand-center-name{
+    max-height:20px; opacity:1; overflow:hidden;
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+  }
+  header.topnav.scrolled .brand-center-name{
+    max-height:0; opacity:0;
+  }
+  .brand-center-sub{
+    transition: font-size 0.25s ease, color 0.25s ease, font-weight 0.25s ease;
+  }
+  header.topnav.scrolled .brand-center-sub{
+    font-size:13.5px; font-weight:600; color:var(--text);
+  }
+  #navClockTimeWrap{ transition: opacity 0.2s ease; }
   .brand-center{ text-align:center; }
   .brand-center-name{ font-family:'Space Grotesk'; font-weight:700; font-size:14.5px; letter-spacing:-0.01em; line-height:1.2; }
   .brand-center-sub{ font-size:10.5px; color:var(--text-faint); margin-top:1px; line-height:1.2; }
@@ -602,15 +630,22 @@
     .stat-row, .cat-grid, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr);}
     .split-grid, .split-grid-tasks, .dev-form-grid{grid-template-columns:1fr;}
     .form-row-2{grid-template-columns:1fr;}
-    .nav-clock-desktop{display:none;}
     main{padding:24px 16px 110px;}
     header.topnav{padding:7px 16px;}
     nav.tabs.dock button span{ display:none; }
     nav.tabs.dock button{ padding:10px; }
   }
   @media (max-width: 600px){
-    .brand-center-sub{display:none;}
-    .brand-center-name{font-size:12.5px; max-width:170px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:0 auto;}
+    /* Mobile always shows the thin, compact header — the same look
+       desktop only switches into once you scroll down — since there's
+       never enough room here for the full logo + two-line brand text. */
+    header.topnav{ grid-template-columns: 0fr auto 1fr !important; padding:6px 14px !important; }
+    .nav-left{ opacity:0 !important; pointer-events:none; }
+    .brand-center-name{ max-height:0 !important; opacity:0 !important; }
+    .brand-center-sub{ display:block !important; font-size:13px !important; font-weight:600 !important; color:var(--text) !important; margin-top:0 !important; }
+    /* The date stays put; the time is what gets dropped when space is
+       tight, since the date alone is what people actually glance for. */
+    #navClockTimeWrap{ display:none; }
     .navright{gap:8px;}
     .hero-title{font-size:32px;}
     .indicator-panel{padding:20px;}
@@ -889,7 +924,7 @@
   </div>
  
   <div class="navright">
-    <div id="navClockDesktop" class="mono nav-clock-desktop" style="font-size:11.5px; color:var(--text-faint); white-space:nowrap; letter-spacing:0.01em;">—</div>
+    <div id="navClockDesktop" class="mono nav-clock-desktop" style="font-size:11.5px; color:var(--text-faint); white-space:nowrap; letter-spacing:0.01em;"><span id="navClockDate">—</span><span id="navClockTimeWrap"> · <span id="navClockTime">—</span></span></div>
     <div style="position:relative;">
       <button id="notifBell" title="Notifications" onclick="toggleNotifPanel()" style="position:relative; background:var(--surface-alt); border:1px solid var(--border); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-dim);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1818,14 +1853,50 @@
     const dateStr = now.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
     const timeStr = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true});
     const nav = document.getElementById('navClock');
-    const navDesktop = document.getElementById('navClockDesktop');
+    const navDate = document.getElementById('navClockDate');
+    const navTime = document.getElementById('navClockTime');
     const dash = document.getElementById('dashAsOf');
     if(nav) nav.textContent = `${dateStr} · ${timeStr}`;
-    if(navDesktop) navDesktop.textContent = `${dateStr} · ${timeStr}`;
+    if(navDate) navDate.textContent = dateStr;
+    if(navTime) navTime.textContent = timeStr;
     if(dash) dash.textContent = `as of ${dateStr}, ${timeStr}`;
   }
   tickClock();
   setInterval(tickClock, 1000);
+
+  // ============ HEADER SCROLL ANIMATION ============
+  // Scrolling down past a small threshold slides the logo out and shrinks
+  // the header down to a thin bar showing just "Walton Lift R&I Dashboard"
+  // on the left plus the notification/profile icons on the right.
+  // Scrolling back up reverses it immediately. On narrow (mobile) screens
+  // this compact look applies permanently via CSS media query instead,
+  // regardless of scroll position.
+  (function(){
+    let lastScrollY = window.scrollY;
+    let locked = false;
+    const header = document.querySelector('header.topnav');
+    if(!header) return;
+    window.addEventListener('scroll', () => {
+      if(locked) return;
+      const y = window.scrollY;
+      const delta = y - lastScrollY;
+      if(Math.abs(delta) < 5) return;
+      // Briefly ignore further scroll events right after toggling — the
+      // header animating in size shifts the page content by a few pixels
+      // as it plays, which without this lock gets misread as the user
+      // scrolling and immediately flips the state back mid-animation.
+      if(delta > 0 && y > 60 && !header.classList.contains('scrolled')){
+        header.classList.add('scrolled');
+        locked = true;
+        setTimeout(() => { locked = false; lastScrollY = window.scrollY; }, 400);
+      } else if(delta < 0 && header.classList.contains('scrolled')){
+        header.classList.remove('scrolled');
+        locked = true;
+        setTimeout(() => { locked = false; lastScrollY = window.scrollY; }, 400);
+      }
+      lastScrollY = y;
+    }, { passive: true });
+  })();
   let selectedDevProjectId = null;
  
   // ============ PROJECT TASK BREAKDOWN (inline accordion + Gantt view) ============
