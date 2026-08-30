@@ -364,7 +364,7 @@
   .t-item:last-child{padding-bottom:0;}
   .t-dot{position:absolute; left:-28px; top:3px; width:13px; height:13px; border-radius:50%; background:var(--surface); border:2.5px solid var(--accent);}
   .t-dot.green{border-color:var(--green);} .t-dot.amber{border-color:var(--amber);} .t-dot.red{border-color:var(--red);}
-  .t-card{background:var(--surface); border:1px solid var(--border); border-radius:11px; padding:14px 16px;}
+  .t-card{background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 16px;}
   .t-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
   .t-date{font-family:'IBM Plex Mono'; font-size:11.5px; color:var(--text-faint);}
   .t-title{font-size:14px; font-weight:600; margin-bottom:3px;}
@@ -641,6 +641,16 @@
     box-shadow:var(--shadow);
     border-radius:18px !important;
   }
+  /* These three render the same kind of task-entry card in three different
+     views (My Tasks, category log, and search results). The shared rule
+     just above gives .panel/.mytask-item an 18px radius app-wide, which
+     reads as too round for this dense, list-like content specifically —
+     tightening just these, without touching the many other things that
+     still use the shared 18px look intentionally (KPI panels, forms, etc).
+     Placed AFTER that shared rule so it actually wins the cascade — two
+     equally-specific !important rules resolve by source order, and this
+     needs to come second. */
+  .mytask-item, .cat-log-row{ border-radius:10px !important; }
   /* .indicator-panel is DELIBERATELY excluded above — it's a permanent dark card
      (like .kpi-card) with hardcoded light text, by design, in every theme. If it
      ever gets added back to the shared list above, its text goes invisible in
@@ -993,7 +1003,7 @@
         <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-name">R&amp;I Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div>
         <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div>
         <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div>
-        <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Technical Team Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div>
+        <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div>
         <div class="cat-tile cc-production" onclick="showCategoryLog('production')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'production')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-name">Production Support</div><div class="cat-count" id="catCount-production">— logged</div></div>
         <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-name">Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div>
         <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search this category by Lift ID" onclick="openCatQuickSearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div>
@@ -1072,7 +1082,7 @@
               <option value="rni">R&amp;I Activity</option>
               <option value="presales">Pre-Sales Support</option>
               <option value="postsales">Post-Sales Activity</option>
-              <option value="techsupport">Technical Team Support</option>
+              <option value="techsupport">Technical Support</option>
               <option value="production">Production Support</option>
               <option value="requisition">Requisition</option>
               <option value="scm">SCM Support</option>
@@ -1416,7 +1426,7 @@
     rni:{name:'R&I Activity', hasLift:false},
     presales:{name:'Pre-Sales Support', hasLift:false},
     postsales:{name:'Post-Sales Activity', hasLift:true},
-    techsupport:{name:'Technical Team Support', hasLift:true},
+    techsupport:{name:'Technical Support', hasLift:true},
     production:{name:'Production Support', hasLift:true},
     requisition:{name:'Requisition', hasLift:false},
     scm:{name:'SCM Support', hasLift:false},
@@ -2226,7 +2236,7 @@
         .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
         .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${k}</span><span class="detail-v">${Array.isArray(v) ? v.join(', ') : v}</span></div>`)
         .join('');
-      return `<div class="panel" style="padding:14px 20px;" data-lift="${(row.lift_id||'').toLowerCase()}">
+      return `<div class="panel cat-log-row" style="padding:14px 20px;" data-lift="${(row.lift_id||'').toLowerCase()}">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
           <div>
             ${hasLift ? `<div class="mono" style="font-weight:700; font-size:14px; margin-bottom:2px;">Lift ${row.lift_id || '—'}</div>` : ''}
@@ -2236,6 +2246,7 @@
             <div>${emp}</div>
             <div class="mono">${date}${row.edit_history && row.edit_history.length ? ' · edited' : ''}</div>
             ${row.employee_id === currentUser?.id ? `<button class="btn" style="margin-top:6px; padding:3px 10px; font-size:11px;" onclick="openEditTask('${row.id}')">Edit</button>` : ''}
+            ${currentProfile?.role === 'superadmin' ? `<button class="btn remove" style="margin-top:6px; margin-left:4px; padding:3px 10px; font-size:11px;" onclick="deleteTaskEntry('${row.id}')">Delete</button>` : ''}
           </div>
         </div>
         <div class="detail-grid" style="margin-top:10px; display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
@@ -2271,6 +2282,20 @@
  
   function findTaskById(id){
     return currentCatRows.find(r => r.id === id) || myTasksRows.find(r => r.id === id) || liftSearchRows.find(r => r.id === id) || null;
+  }
+
+  // Deleting an entry outright (as opposed to editing it) is Superadmin-only
+  // — the delete button itself is only ever rendered for that role, and the
+  // database's own DELETE policy independently enforces the same rule, so
+  // this can't be bypassed even by calling the function directly.
+  async function deleteTaskEntry(id){
+    if(!confirm('Delete this entry permanently? This cannot be undone.')) return;
+    const { error } = await sb.from('tasks').delete().eq('id', id);
+    if(error){ alert('Could not delete: ' + error.message); return; }
+    // Refresh whichever view(s) currently show this entry.
+    if(currentCatKey) showCategoryLog(currentCatKey);
+    loadMyTasks();
+    if(liftSearchRows.some(r => r.id === id)) runLiftSearch();
   }
  
   function openEditTask(id){
@@ -2872,6 +2897,7 @@
                   <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
                   ${historyHtml}
                   ${canEdit ? `<button class="btn" style="margin-top:12px; padding:5px 14px; font-size:12px;" onclick="openEditTask('${row.id}')">Edit this entry</button>` : ''}
+                  ${currentProfile?.role === 'superadmin' ? `<button class="btn remove" style="margin-top:12px; margin-left:6px; padding:5px 14px; font-size:12px;" onclick="deleteTaskEntry('${row.id}')">Delete this entry</button>` : ''}
                 </div>
               </div>
             </div>`;
@@ -3061,6 +3087,7 @@
         <div style="display:flex; gap:8px; margin-top:6px;">
           <button class="btn" style="padding:3px 10px; font-size:11px;" onclick="openEditTask('${t.id}')">Edit</button>
           <button class="btn" style="padding:3px 10px; font-size:11px;" onclick="toggleSearchResultDetails(this)">View details</button>
+          ${currentProfile?.role === 'superadmin' ? `<button class="btn remove" style="padding:3px 10px; font-size:11px;" onclick="deleteTaskEntry('${t.id}')">Delete</button>` : ''}
         </div>
         <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
           <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
