@@ -263,7 +263,7 @@
   .indicator-caption{font-size:12.5px; color:#7B87A3; position:relative; z-index:1; margin-bottom:22px;}
   .indicator-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; position:relative; z-index:1;}
   .trend-range-row{display:flex; align-items:center; gap:8px; margin:14px 0 16px; position:relative; z-index:1; flex-wrap:wrap;}
-  .trend-date-input{background:#141B2B; border:1px solid #2A3548; border-radius:8px; padding:6px 10px; color:#E7ECF5; font-size:12px; font-family:'IBM Plex Mono';}
+  .trend-date-input{background:#141B2B; border:1px solid #2A3548; border-radius:8px; padding:6px 10px; color:#E7ECF5; font-size:12px; font-family:'IBM Plex Mono'; color-scheme:dark;}
   .trend-to-label{color:#7B87A3; font-size:12px;}
   .trend-apply-btn{background:var(--accent); border:none; border-radius:8px; padding:6px 16px; color:#fff; font-size:12px; font-weight:600; cursor:pointer;}
   .trend-svg{width:100%; height:130px; overflow:visible; position:relative; z-index:1;}
@@ -709,7 +709,7 @@
     border-color:var(--accent) !important;
   }
   .chip-opt{ border-radius:999px !important; }
-  .queue-btn, .submit-btn, .fselect, select, input[type="text"], input[type="date"], input[type="month"], input[type="number"]{
+  .queue-btn, .submit-btn, .fselect, select, input[type="text"], input[type="date"]:not(.trend-date-input), input[type="month"], input[type="number"]{
     background:var(--surface) !important;
   }
   .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details){
