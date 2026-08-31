@@ -269,7 +269,7 @@
   .trend-svg{width:100%; height:130px; overflow:visible; position:relative; z-index:1;}
   .trend-labels-row{display:flex; margin-top:6px; position:relative; z-index:1;}
   .trend-labels-row > div{flex:1; text-align:center; font-size:11px; color:#7B87A3;}
-  .trend-legend-row{display:flex; gap:16px; margin-top:14px; position:relative; z-index:1;}
+  .trend-legend-row{display:flex; gap:16px; margin-top:14px; position:relative; z-index:1; flex-wrap:wrap;}
   .trend-legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:#B9C6DE;}
   .trend-legend-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
   .mini-stat{background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px;}
@@ -1049,6 +1049,7 @@
         <div id="trendChartLabels" class="trend-labels-row"></div>
         <div class="trend-legend-row">
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#4CE0FF; box-shadow:0 0 6px #4CE0FF;"></span>R&amp;I Activity</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#C77DFF; box-shadow:0 0 6px #C77DFF;"></span>R&amp;I Projects</div>
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#7C8AAE;"></span>All other categories</div>
         </div>
       </div>
@@ -3851,32 +3852,44 @@
     const fromDate = new Date(fromEl.value + 'T00:00:00');
     const toDate = new Date(toEl.value + 'T23:59:59');
 
-    const { data, error } = await sb.from('tasks').select('created_at, category').gte('created_at', fromEl.value).lte('created_at', toEl.value + 'T23:59:59');
-    if(error){ console.error('activity trend:', error.message); return; }
+    const [tasksRes, projectsRes] = await Promise.all([
+      sb.from('tasks').select('created_at, category').gte('created_at', fromEl.value).lte('created_at', toEl.value + 'T23:59:59'),
+      sb.from('dev_projects').select('created_at').gte('created_at', fromEl.value).lte('created_at', toEl.value + 'T23:59:59')
+    ]);
+    if(tasksRes.error){ console.error('activity trend:', tasksRes.error.message); return; }
+    if(projectsRes.error){ console.error('activity trend (projects):', projectsRes.error.message); }
 
     // Build one bucket per calendar month spanning the selected range, even
     // for months with zero activity, so the lines don't skip gaps. Every
-    // category except R&I Activity is combined into one "other" total.
+    // task category except R&I Activity is combined into one "other" total;
+    // projects created in R&I Project Manager get their own separate count.
     const buckets = [];
     const cursor = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
     const end = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
     while(cursor <= end){
-      buckets.push({ key: `${cursor.getFullYear()}-${cursor.getMonth()}`, label: cursor.toLocaleDateString('en-GB', {month:'short'}), rni: 0, other: 0 });
+      buckets.push({ key: `${cursor.getFullYear()}-${cursor.getMonth()}`, label: cursor.toLocaleDateString('en-GB', {month:'short'}), rni: 0, other: 0, projects: 0 });
       cursor.setMonth(cursor.getMonth() + 1);
     }
-    (data || []).forEach(row => {
+    (tasksRes.data || []).forEach(row => {
       const d = new Date(row.created_at);
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       const bucket = buckets.find(b => b.key === key);
       if(!bucket) return;
       if(row.category === 'rni') bucket.rni++; else bucket.other++;
     });
+    (projectsRes.data || []).forEach(row => {
+      if(!row.created_at) return;
+      const d = new Date(row.created_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      const bucket = buckets.find(b => b.key === key);
+      if(bucket) bucket.projects++;
+    });
 
     renderTrendChart(buckets);
   }
 
   function renderTrendChart(months){
-    const max = Math.max(...months.map(m => Math.max(m.rni, m.other)), 1);
+    const max = Math.max(...months.map(m => Math.max(m.rni, m.other, m.projects)), 1);
     const w = 560, h = 130, pad = 10;
     const stepX = months.length > 1 ? (w - pad*2) / (months.length - 1) : 0;
 
@@ -3897,15 +3910,17 @@
 
     const rniLine = buildLine('rni');
     const otherLine = buildLine('other');
+    const projectsLine = buildLine('projects');
     const gridLines = [0.25,0.5,0.75].map(f => `<line x1="0" y1="${h - h*f}" x2="${w}" y2="${h - h*f}" stroke="#1E2A40" stroke-width="1" stroke-dasharray="4 4"/>`).join('');
 
-    // R&I gets a genuine glow — a blurred duplicate of the same line sitting
-    // behind the crisp one, the classic sci-fi HUD technique — while the
-    // "other" line stays a clean, ungl owed cyan-adjacent tone so the two
-    // read as clearly different tiers at a glance, not just different hues.
+    // Both R&I Activity and R&I Projects get a genuine glow — a blurred
+    // duplicate of the same line sitting behind the crisp one, the classic
+    // sci-fi HUD technique — using two different colors so they stay
+    // distinguishable from each other, not just from the muted "other"
+    // line.
     document.getElementById('trendChart').innerHTML = `
       <defs>
-        <filter id="rniGlow" x="-60%" y="-60%" width="220%" height="220%">
+        <filter id="glowFilter" x="-60%" y="-60%" width="220%" height="220%">
           <feGaussianBlur stdDeviation="5" result="blur"/>
           <feMerge>
             <feMergeNode in="blur"/>
@@ -3917,8 +3932,10 @@
       ${gridLines}
       <path d="${otherLine.path}" fill="none" stroke="#7C8AAE" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
       ${otherLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#7C8AAE"><title>${p.v}</title></circle>`).join('')}
-      <path d="${rniLine.path}" fill="none" stroke="#4CE0FF" stroke-width="2.5" stroke-linecap="round" filter="url(#rniGlow)"/>
-      ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#4CE0FF" filter="url(#rniGlow)"><title>${p.v}</title></circle>`).join('')}
+      <path d="${projectsLine.path}" fill="none" stroke="#C77DFF" stroke-width="2.5" stroke-linecap="round" filter="url(#glowFilter)"/>
+      ${projectsLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#C77DFF" filter="url(#glowFilter)"><title>${p.v}</title></circle>`).join('')}
+      <path d="${rniLine.path}" fill="none" stroke="#4CE0FF" stroke-width="2.5" stroke-linecap="round" filter="url(#glowFilter)"/>
+      ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#4CE0FF" filter="url(#glowFilter)"><title>${p.v}</title></circle>`).join('')}
     `;
     document.getElementById('trendChartLabels').innerHTML = months.map(m => `<div>${m.label}</div>`).join('');
   }
