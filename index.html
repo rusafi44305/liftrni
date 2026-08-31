@@ -996,9 +996,9 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
     <span>Dashboard</span>
   </button>
-  <button data-view="profile" title="Profile">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-    <span>Profile</span>
+  <button data-view="notebook" title="Notebook" style="position:relative;">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H4z"/><path d="M4 4v17"/><path d="M8 9h7M8 13h7M8 17h4"/></svg>
+    <span>Notebook</span>
   </button>
   <button data-view="gantt" title="R&amp;I Project Manager">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/></svg>
@@ -1049,7 +1049,7 @@
         <div id="trendChartLabels" class="trend-labels-row"></div>
         <div class="trend-legend-row">
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#4CE0FF; box-shadow:0 0 6px #4CE0FF;"></span>R&amp;I Activity</div>
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#C77DFF; box-shadow:0 0 6px #C77DFF;"></span>R&amp;I Projects</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#FFDD33; box-shadow:0 0 6px #FFDD33;"></span>R&amp;I Projects</div>
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#7C8AAE;"></span>All other categories</div>
         </div>
       </div>
@@ -1200,7 +1200,22 @@
       </div>
     </div>
   </div>
- 
+
+  <!-- ============ NOTEBOOK ============ -->
+  <div class="view" id="view-notebook">
+    <div class="block-head">
+      <div><div class="block-title">Notebook</div><div class="block-sub">Your own private to-do list — nobody else can see this, not even Admins.</div></div>
+    </div>
+    <div class="panel">
+      <div style="display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap;">
+        <input type="text" id="notebookTaskInput" placeholder="Add a task..." style="flex:1; min-width:180px; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:13.5px;" onkeydown="if(event.key==='Enter') addNotebookTask();">
+        <input type="datetime-local" id="notebookDueInput" style="padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;">
+        <button class="submit-btn" style="margin-top:0; padding:10px 20px;" onclick="addNotebookTask()">+ Add</button>
+      </div>
+      <div id="notebookTaskList"><div class="placeholder-note">Loading…</div></div>
+    </div>
+  </div>
+
   <!-- ============ PROFILE ============ -->
   <div class="view" id="view-profile">
     <div class="profile-head">
@@ -1505,6 +1520,7 @@
     if(name === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
     if(name === 'gantt' && typeof loadDevDashboard === 'function') loadDevDashboard();
     if(name === 'chat' && typeof loadChatMessages === 'function') loadChatMessages();
+    if(name === 'notebook' && typeof loadNotebook === 'function') loadNotebook();
   }
  
   // ---- Category Log: per-category metadata, mock entries, search-by-Lift-ID ----
@@ -2548,6 +2564,8 @@
     loadNotifications();
     checkDeadlineNotificationsClientSide();
     checkChatUnreadCount();
+    checkPersonalReminders();
+    setInterval(checkPersonalReminders, 60000);
  
     if(profile.role === 'superadmin' || profile.role === 'admin'){ loadAdminPanel(); }
   }
@@ -3148,6 +3166,79 @@
         document.querySelector(`.chat-msg[data-id="${payload.old.id}"]`)?.remove();
       })
       .subscribe();
+  }
+
+  // ============ NOTEBOOK — a private per-person to-do list ============
+  async function loadNotebook(){
+    if(!currentUser) return;
+    const el = document.getElementById('notebookTaskList');
+    el.innerHTML = '<div class="placeholder-note">Loading…</div>';
+    const { data, error } = await sb.from('notebook_tasks').select('*').eq('user_id', currentUser.id).order('due_at', { ascending: true, nullsFirst: false });
+    if(error){
+      el.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the notebook_tasks table has been created (see setup SQL).</div>`;
+      return;
+    }
+    const rows = data || [];
+    // Not-yet-done tasks first (soonest due first), completed ones — kept
+    // visible, crossed out, until deleted — sink to the bottom.
+    const pending = rows.filter(r => !r.done);
+    const done = rows.filter(r => r.done);
+    const ordered = [...pending, ...done];
+    el.innerHTML = ordered.length ? ordered.map(notebookTaskHtml).join('') : '<div class="placeholder-note">Nothing here yet — add your first task above.</div>';
+  }
+
+  function notebookTaskHtml(t){
+    const now = new Date();
+    const due = t.due_at ? new Date(t.due_at) : null;
+    const overdue = !t.done && due && due < now;
+    const dueLabel = due ? due.toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' }) : null;
+    return `<div style="display:flex; align-items:center; gap:12px; padding:11px 14px; border:1px solid var(--border); border-radius:10px; margin-bottom:8px; background:var(--surface);">
+      <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleNotebookTask('${t.id}')" style="width:16px; height:16px; cursor:pointer; flex-shrink:0;">
+      <div style="flex:1; min-width:0;">
+        <div style="font-size:13.5px; ${t.done ? 'text-decoration:line-through; color:var(--text-faint);' : ''}">${escapeHtml(t.text)}</div>
+        ${dueLabel ? `<div style="font-size:11px; margin-top:2px; ${overdue ? 'color:var(--red); font-weight:600;' : 'color:var(--text-faint);'}">${overdue ? 'Overdue · ' : 'Due '}${dueLabel}</div>` : ''}
+      </div>
+      <button class="btn remove" style="padding:4px 10px; font-size:11px; flex-shrink:0;" onclick="deleteNotebookTask('${t.id}')">Delete</button>
+    </div>`;
+  }
+
+  async function addNotebookTask(){
+    const textEl = document.getElementById('notebookTaskInput');
+    const dueEl = document.getElementById('notebookDueInput');
+    const text = textEl.value.trim();
+    if(!text || !currentUser) return;
+    const { error } = await sb.from('notebook_tasks').insert({
+      user_id: currentUser.id,
+      text,
+      due_at: dueEl.value ? new Date(dueEl.value).toISOString() : null
+    });
+    if(error){ alert('Could not add task: ' + error.message); return; }
+    textEl.value = '';
+    dueEl.value = '';
+    loadNotebook();
+  }
+
+  async function toggleNotebookTask(id){
+    const { data } = await sb.from('notebook_tasks').select('done').eq('id', id).single();
+    await sb.from('notebook_tasks').update({ done: !data.done }).eq('id', id);
+    loadNotebook();
+  }
+
+  async function deleteNotebookTask(id){
+    if(!confirm('Delete this task?')) return;
+    await sb.from('notebook_tasks').delete().eq('id', id);
+    loadNotebook();
+  }
+
+  // Checked on boot, then every minute while the app is open — a lightweight
+  // fallback alongside pg_cron (if enabled) so a reminder still fires close
+  // to on-time even without the scheduled job running server-side.
+  async function checkPersonalReminders(){
+    try{
+      await sb.rpc('check_personal_notebook_reminders');
+      loadNotifications();
+      if(document.getElementById('view-notebook')?.classList.contains('active')) loadNotebook();
+    } catch(e){ /* silent — background convenience check, not user-facing */ }
   }
 
  
@@ -3932,8 +4023,8 @@
       ${gridLines}
       <path d="${otherLine.path}" fill="none" stroke="#7C8AAE" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
       ${otherLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#7C8AAE"><title>${p.v}</title></circle>`).join('')}
-      <path d="${projectsLine.path}" fill="none" stroke="#C77DFF" stroke-width="2.5" stroke-linecap="round" filter="url(#glowFilter)"/>
-      ${projectsLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#C77DFF" filter="url(#glowFilter)"><title>${p.v}</title></circle>`).join('')}
+      <path d="${projectsLine.path}" fill="none" stroke="#FFDD33" stroke-width="2.5" stroke-linecap="round" filter="url(#glowFilter)"/>
+      ${projectsLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#FFDD33" filter="url(#glowFilter)"><title>${p.v}</title></circle>`).join('')}
       <path d="${rniLine.path}" fill="none" stroke="#4CE0FF" stroke-width="2.5" stroke-linecap="round" filter="url(#glowFilter)"/>
       ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#4CE0FF" filter="url(#glowFilter)"><title>${p.v}</title></circle>`).join('')}
     `;
