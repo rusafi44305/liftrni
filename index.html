@@ -249,7 +249,8 @@
   }
   .indicator-row{display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;}
   .indicator-label{font-size:11px; color:#8FA2D6; letter-spacing:.08em; text-transform:uppercase; font-weight:600;}
-  .indicator-dot{width:7px; height:7px; border-radius:50%; background:#3DCB7F; box-shadow:0 0 8px #3DCB7F;}
+  .indicator-dot{width:7px; height:7px; border-radius:50%; background:#3DCB7F; box-shadow:0 0 8px #3DCB7F; animation:pulseDot 2s ease-in-out infinite;}
+  @keyframes pulseDot{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.6; transform:scale(1.3); } }
   .indicator-display{
     display:flex; gap:6px; margin:20px 0 6px; position:relative; z-index:1;
   }
@@ -261,6 +262,16 @@
   }
   .indicator-caption{font-size:12.5px; color:#7B87A3; position:relative; z-index:1; margin-bottom:22px;}
   .indicator-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; position:relative; z-index:1;}
+  .trend-range-row{display:flex; align-items:center; gap:8px; margin:14px 0 16px; position:relative; z-index:1; flex-wrap:wrap;}
+  .trend-date-input{background:#141B2B; border:1px solid #2A3548; border-radius:8px; padding:6px 10px; color:#E7ECF5; font-size:12px; font-family:'IBM Plex Mono';}
+  .trend-to-label{color:#7B87A3; font-size:12px;}
+  .trend-apply-btn{background:var(--accent); border:none; border-radius:8px; padding:6px 16px; color:#fff; font-size:12px; font-weight:600; cursor:pointer;}
+  .trend-svg{width:100%; height:130px; overflow:visible; position:relative; z-index:1;}
+  .trend-labels-row{display:flex; margin-top:6px; position:relative; z-index:1;}
+  .trend-labels-row > div{flex:1; text-align:center; font-size:11px; color:#7B87A3;}
+  .trend-legend-row{display:flex; gap:16px; margin-top:14px; position:relative; z-index:1;}
+  .trend-legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:#B9C6DE;}
+  .trend-legend-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
   .mini-stat{background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px;}
   .mini-stat .num{font-family:'Space Grotesk'; font-size:20px; font-weight:700; color:#fff;}
   .mini-stat .lbl{font-size:11px; color:#8391AE; margin-top:2px;}
@@ -1025,18 +1036,20 @@
  
       <div class="indicator-panel">
         <div class="indicator-row">
-          <div class="indicator-label">Live This Month</div>
+          <div class="indicator-label">Activity Trend</div>
           <div class="indicator-dot"></div>
         </div>
-        <div class="indicator-display" id="heroDigits">
-          <div class="digit" id="heroActivitiesNum">—</div>
+        <div class="trend-range-row">
+          <input type="date" id="trendFrom" class="trend-date-input">
+          <span class="trend-to-label">to</span>
+          <input type="date" id="trendTo" class="trend-date-input">
+          <button class="trend-apply-btn" onclick="loadActivityTrend()">Apply</button>
         </div>
-        <div class="indicator-caption" id="heroCaption">activities logged</div>
-        <div class="indicator-stats">
-          <div class="mini-stat"><div class="num" id="heroLifts">—</div><div class="lbl">Distinct lifts</div></div>
-          <div class="mini-stat"><div class="num" id="heroDevProjects">—</div><div class="lbl">Active R&amp;I projects</div></div>
-          <div class="mini-stat"><div class="num" id="heroEngineers">—</div><div class="lbl">Active engineers</div></div>
-          <div class="mini-stat"><div class="num" id="heroPending">—</div><div class="lbl">Pending sign-ins</div></div>
+        <svg id="trendChart" viewBox="0 0 560 150" class="trend-svg"></svg>
+        <div id="trendChartLabels" class="trend-labels-row"></div>
+        <div class="trend-legend-row">
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#4CE0FF; box-shadow:0 0 6px #4CE0FF;"></span>R&amp;I Activity</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#7C8AAE;"></span>All other categories</div>
         </div>
       </div>
     </div>
@@ -2529,6 +2542,8 @@
     showAuthScreen('app');
     loadHomeFeed();
     loadHomeOverview();
+    setDefaultTrendRange();
+    loadActivityTrend();
     loadNotifications();
     checkDeadlineNotificationsClientSide();
     checkChatUnreadCount();
@@ -3807,19 +3822,105 @@
     document.getElementById('homeStatDevDelta').textContent = `${data.dev_due_this_week} due this week`;
     document.getElementById('homeStatEngineersDelta').textContent = `${data.pending_signins} pending sign-in${data.pending_signins===1?'':'s'}`;
  
-    document.getElementById('heroActivitiesNum').textContent = data.total_activities;
-    document.getElementById('heroCaption').textContent = `activities logged across ${data.active_engineers} engineers`;
-    document.getElementById('heroLifts').textContent = data.distinct_lifts;
-    document.getElementById('heroDevProjects').textContent = data.active_dev_projects;
-    document.getElementById('heroEngineers').textContent = data.active_engineers;
-    document.getElementById('heroPending').textContent = data.pending_signins;
- 
     const catCounts = data.category_counts || {};
     Object.keys(catMeta).forEach(key => {
       const count = catCounts[key] || 0;
       const el = document.getElementById('catCount-'+key);
       if(el) el.textContent = `${count} logged`;
     });
+  }
+
+  // ============ ACTIVITY TREND CHART (hero card) ============
+  // Grouped client-side rather than via a new database function — with
+  // this app's actual data volume, fetching created_at for the selected
+  // range and grouping by month in JS is simple and plenty fast, and it
+  // means this feature needed no database changes at all.
+  function setDefaultTrendRange(){
+    const to = new Date();
+    const from = new Date();
+    from.setMonth(from.getMonth() - 5);
+    from.setDate(1);
+    document.getElementById('trendFrom').value = from.toISOString().slice(0, 10);
+    document.getElementById('trendTo').value = to.toISOString().slice(0, 10);
+  }
+
+  async function loadActivityTrend(){
+    const fromEl = document.getElementById('trendFrom');
+    const toEl = document.getElementById('trendTo');
+    if(!fromEl.value || !toEl.value) return;
+    const fromDate = new Date(fromEl.value + 'T00:00:00');
+    const toDate = new Date(toEl.value + 'T23:59:59');
+
+    const { data, error } = await sb.from('tasks').select('created_at, category').gte('created_at', fromEl.value).lte('created_at', toEl.value + 'T23:59:59');
+    if(error){ console.error('activity trend:', error.message); return; }
+
+    // Build one bucket per calendar month spanning the selected range, even
+    // for months with zero activity, so the lines don't skip gaps. Every
+    // category except R&I Activity is combined into one "other" total.
+    const buckets = [];
+    const cursor = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
+    const end = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
+    while(cursor <= end){
+      buckets.push({ key: `${cursor.getFullYear()}-${cursor.getMonth()}`, label: cursor.toLocaleDateString('en-GB', {month:'short'}), rni: 0, other: 0 });
+      cursor.setMonth(cursor.getMonth() + 1);
+    }
+    (data || []).forEach(row => {
+      const d = new Date(row.created_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      const bucket = buckets.find(b => b.key === key);
+      if(!bucket) return;
+      if(row.category === 'rni') bucket.rni++; else bucket.other++;
+    });
+
+    renderTrendChart(buckets);
+  }
+
+  function renderTrendChart(months){
+    const max = Math.max(...months.map(m => Math.max(m.rni, m.other)), 1);
+    const w = 560, h = 130, pad = 10;
+    const stepX = months.length > 1 ? (w - pad*2) / (months.length - 1) : 0;
+
+    function buildLine(key){
+      const pts = months.map((m,i) => {
+        const x = months.length > 1 ? pad + i*stepX : w/2;
+        const y = h - pad - ((m[key]/max) * (h - pad*2));
+        return { x, y, v: m[key] };
+      });
+      let path = `M ${pts[0].x} ${pts[0].y}`;
+      for(let i=1;i<pts.length;i++){
+        const prev = pts[i-1], cur = pts[i];
+        const midX = (prev.x + cur.x)/2;
+        path += ` C ${midX} ${prev.y}, ${midX} ${cur.y}, ${cur.x} ${cur.y}`;
+      }
+      return { pts, path };
+    }
+
+    const rniLine = buildLine('rni');
+    const otherLine = buildLine('other');
+    const gridLines = [0.25,0.5,0.75].map(f => `<line x1="0" y1="${h - h*f}" x2="${w}" y2="${h - h*f}" stroke="#1E2A40" stroke-width="1" stroke-dasharray="4 4"/>`).join('');
+
+    // R&I gets a genuine glow — a blurred duplicate of the same line sitting
+    // behind the crisp one, the classic sci-fi HUD technique — while the
+    // "other" line stays a clean, ungl owed cyan-adjacent tone so the two
+    // read as clearly different tiers at a glance, not just different hues.
+    document.getElementById('trendChart').innerHTML = `
+      <defs>
+        <filter id="rniGlow" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="5" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      ${gridLines}
+      <path d="${otherLine.path}" fill="none" stroke="#7C8AAE" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
+      ${otherLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#7C8AAE"><title>${p.v}</title></circle>`).join('')}
+      <path d="${rniLine.path}" fill="none" stroke="#4CE0FF" stroke-width="2.5" stroke-linecap="round" filter="url(#rniGlow)"/>
+      ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#4CE0FF" filter="url(#rniGlow)"><title>${p.v}</title></circle>`).join('')}
+    `;
+    document.getElementById('trendChartLabels').innerHTML = months.map(m => `<div>${m.label}</div>`).join('');
   }
  
   // ============ MY TASKS (real data) ============
