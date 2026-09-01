@@ -1520,6 +1520,9 @@
         </div>
       </div>
     </div>
+
+    <div class="block-head" id="chipOptionsBlock" style="display:none;"><div><div class="block-title">Category chip options</div><div class="block-sub">Superadmin only — manage the capsule/chip choices engineers pick from in every category's form. Removing one doesn't change past entries that already used it.</div></div></div>
+    <div class="split-grid" id="chipOptionsPanel" style="display:none; grid-template-columns:1fr 1fr; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
@@ -1617,16 +1620,16 @@
   const taskForms = {
     rni: [
       {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
-      {t:'chips', l:'Task Category', hint:'select all that apply', opts:['New Product Development','Special Engineering','Prototype','Process Improvement','Training','Meeting','Existing Development'], section:'details'},
+      {t:'chips', l:'Task Category', hint:'select all that apply', source:'rni:task_category', section:'details'},
       {t:'row2text', l1:'Project Start Date', l2:'Project Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
       {t:'text', l:'Duration (min) — for meetings/training', ph:'e.g. 90', section:'details'},
-      {t:'chips', l:'Status', opts:['Completed','Ongoing','On Hold','Cancelled'], section:'details'},
+      {t:'chips', l:'Status', source:'rni:status', section:'details'},
       {t:'textarea', l:'Notes / Challenges / Achievements', section:'description'}
     ],
     presales: [
       {t:'text', l:'Client / Project Name', req:true, section:'identity'},
-      {t:'chips', l:'Support Medium', hint:'select all that apply', opts:['Phone','Draft Layout','Capacity Solution','BOM'], section:'details'},
-      {t:'chips', l:'Client Support Task', hint:'select all that apply', opts:['Client Meeting','Floor Visit','Display Center Visit'], section:'details'},
+      {t:'chips', l:'Support Medium', hint:'select all that apply', source:'presales:support_medium', section:'details'},
+      {t:'chips', l:'Client Support Task', hint:'select all that apply', source:'presales:client_support_task', section:'details'},
       {t:'text', l:'Deployed Time (min)', ph:'e.g. 60', section:'details'},
       {t:'textarea', l:'Summary of support provided', section:'description'}
     ],
@@ -1636,7 +1639,7 @@
       {t:'row2text', l1:'Lift Type', l2:'Capacity', ph1:'MRL / MR / Hydraulic', ph2:'630 / 800 / 1000...', section:'details'},
       {t:'row2text', l1:'Model Number', l2:'F/S/O', ph1:'e.g. WL-MRL-630', ph2:'e.g. 7/7/7', section:'details'},
       {t:'row2text', l1:'Door Type', l2:'Door Opening Width', ph1:'Center / Side Opening', ph2:'e.g. 800mm', section:'details'},
-      {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', opts:['Initial Layout','DXF','Drawing','BOM','Packing List','Pre-Production Checklist','Revised Layout','Client Coordination'], section:'details'},
+      {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', source:'postsales:work_type', section:'details'},
       {t:'text', l:'Projected Production Submission Date', showIf:{group:'Work Type', opt:'Pre-Production Checklist'}, ph:'dd/mm/yyyy — from the production sheet', section:'details'},
       {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
       {t:'textarea', l:'Remarks', section:'description'}
@@ -1648,17 +1651,17 @@
     ],
     production: [
       liftId(),
-      {t:'chips', l:'Work Type', hint:'select all that apply', opts:['Drawing','Design','Process Improvement'], section:'details'},
+      {t:'chips', l:'Work Type', hint:'select all that apply', source:'production:work_type', section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
     ],
     requisition: [
       {t:'text', l:'Requested By', req:true, section:'identity'},
-      {t:'chips', l:'Requesting Dept.', hint:'select all that apply', opts:['Pricing','Design','Documents','Other'], section:'details'},
+      {t:'chips', l:'Requesting Dept.', hint:'select all that apply', source:'requisition:requesting_dept', section:'details'},
       {t:'textarea', l:'Task Description', section:'description'}
     ],
     scm: [
       {t:'text', l:'Supplier Name', req:true, section:'identity'},
-      {t:'chips', l:'Work Type', hint:'select all that apply', opts:['SCM Collaboration','Supplier Development'], section:'details'},
+      {t:'chips', l:'Work Type', hint:'select all that apply', source:'scm:work_type', section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
     ],
     surveyissues: [
@@ -1673,25 +1676,33 @@
     ],
   };
  
-  // Options for dropdown fields that a Superadmin manages (Installation Wings,
-  // Issue Types) rather than being hard-coded like the chip lists above.
-  // Loaded once and cached; loadDynamicFieldOptions() re-fetches on demand
-  // (e.g. right after a Superadmin adds/removes one in the Admin panel).
-  let dynamicFieldOptions = { installationWings: [], dataIssueTypes: [] };
+  // Every chip field (multi-select capsule buttons) above and both dropdown
+  // fields in Survey Report Issues are Superadmin-managed from the Admin
+  // panel — none of these lists live in the code anymore. Loaded once and
+  // cached; loadDynamicFieldOptions() re-fetches on demand (e.g. right
+  // after a Superadmin adds/removes one in the Admin panel).
+  let dynamicFieldOptions = { installationWings: [], dataIssueTypes: [], chips: {} };
   let dynamicFieldOptionsLoaded = false;
   async function loadDynamicFieldOptions(force){
     if(dynamicFieldOptionsLoaded && !force) return;
-    const [{ data: wings, error: wingsErr }, { data: types, error: typesErr }] = await Promise.all([
+    const [{ data: wings, error: wingsErr }, { data: types, error: typesErr }, { data: chipRows, error: chipErr }] = await Promise.all([
       sb.from('installation_wings').select('*').order('name'),
-      sb.from('data_issue_types').select('*').order('name')
+      sb.from('data_issue_types').select('*').order('name'),
+      sb.from('chip_options').select('*').order('sort_order')
     ]);
     dynamicFieldOptions.installationWings = wings || [];
     dynamicFieldOptions.dataIssueTypes = types || [];
-    // Only mark this as "successfully loaded" if both queries actually
-    // succeeded. If either failed (a network blip, a timing hiccup — anything),
+    const chipGroups = {};
+    (chipRows || []).forEach(row => {
+      const key = `${row.category}:${row.field_key}`;
+      (chipGroups[key] = chipGroups[key] || []).push(row);
+    });
+    dynamicFieldOptions.chips = chipGroups;
+    // Only mark this as "successfully loaded" if all three queries actually
+    // succeeded. If any failed (a network blip, a timing hiccup — anything),
     // leave the flag false so the NEXT time this form is opened, it tries
     // fetching again instead of permanently trusting an empty result.
-    if(!wingsErr && !typesErr) dynamicFieldOptionsLoaded = true;
+    if(!wingsErr && !typesErr && !chipErr) dynamicFieldOptionsLoaded = true;
   }
 
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
@@ -1730,8 +1741,10 @@
     }
     if(f.t==='chips'){
       const grp = f.group || f.l;
-      const chips = f.opts.map(o=>`<div class="chip-opt" data-group="${grp}" data-opt="${o}" onclick="pickChip(this)">${o}</div>`).join('');
-      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}${f.hint?`<span class="chip-hint">(${f.hint})</span>`:''}</div><div class="chip-group">${chips}</div></div>`;
+      const chipRows = f.source ? (dynamicFieldOptions.chips[f.source] || []) : (f.opts || []);
+      const chips = chipRows.map(o=>`<div class="chip-opt" data-group="${grp}" data-opt="${typeof o === 'string' ? o : o.label}" onclick="pickChip(this)">${typeof o === 'string' ? o : o.label}</div>`).join('');
+      const emptyNote = (f.source && !chipRows.length) ? `<div style="font-size:11px; color:var(--text-faint); margin-top:4px;">No options yet — a Superadmin can add some from the Admin panel.</div>` : '';
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}${f.hint?`<span class="chip-hint">(${f.hint})</span>`:''}</div><div class="chip-group">${chips}</div>${emptyNote}</div>`;
     }
     return '';
   }
@@ -3600,7 +3613,9 @@
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('surveyOptionsBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('surveyOptionsPanel').style.display = isSuperadmin ? 'grid' : 'none';
-    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); loadSurveyOptionsPanel(); }
+    document.getElementById('chipOptionsBlock').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('chipOptionsPanel').style.display = isSuperadmin ? 'grid' : 'none';
+    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); loadSurveyOptionsPanel(); loadChipOptionsPanel(); }
  
     const pendWrap = document.getElementById('pendingSigninsPanel');
     if(pendWrap){
@@ -3761,6 +3776,77 @@
     const { error } = await sb.from('data_issue_types').delete().eq('id', id);
     if(error){ alert('Could not remove: ' + error.message); return; }
     loadSurveyOptionsPanel();
+  }
+
+  // ============ CATEGORY CHIP OPTIONS (Superadmin-managed) ============
+  // One generalized admin UI covers every chip field across every category
+  // — built from this list rather than 8 hand-written near-duplicate panels.
+  const CHIP_FIELD_GROUPS = [
+    { key: 'rni:task_category', label: 'R&I Activity — Task Category' },
+    { key: 'rni:status', label: 'R&I Activity — Status' },
+    { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium' },
+    { key: 'presales:client_support_task', label: 'Pre-Sales Support — Client Support Task' },
+    { key: 'postsales:work_type', label: 'Post-Sales Activity — Work Type' },
+    { key: 'production:work_type', label: 'Production Support — Work Type' },
+    { key: 'requisition:requesting_dept', label: 'Departmental Requisition — Requesting Dept.' },
+    { key: 'scm:work_type', label: 'SCM Support — Work Type' },
+  ];
+
+  function chipOptionRowHtml(row){
+    return `<div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border);">
+      <span style="font-size:13.5px;">${escapeHtml(row.label)}</span>
+      <button class="btn remove" style="padding:4px 10px; font-size:11.5px;" onclick="deleteChipOptionRow('${row.id}')">Remove</button>
+    </div>`;
+  }
+
+  async function loadChipOptionsPanel(){
+    const panel = document.getElementById('chipOptionsPanel');
+    const { data, error } = await sb.from('chip_options').select('*').order('sort_order');
+    if(error){
+      panel.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the chip_options table has been created (see setup SQL).</div>`;
+      return;
+    }
+    const byGroup = {};
+    (data || []).forEach(row => {
+      const key = `${row.category}:${row.field_key}`;
+      (byGroup[key] = byGroup[key] || []).push(row);
+    });
+    panel.innerHTML = CHIP_FIELD_GROUPS.map(g => {
+      const rows = byGroup[g.key] || [];
+      const rowsHtml = rows.length ? rows.map(chipOptionRowHtml).join('') : '<div class="placeholder-note">No options yet.</div>';
+      const inputId = `newChipInput-${g.key.replace(':', '-')}`;
+      return `<div class="panel">
+        <div class="panel-title">${g.label}</div>
+        <div>${rowsHtml}</div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <input type="text" id="${inputId}" placeholder="e.g. New option" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addChipOption('${g.key}', '${inputId}');">
+          <button class="queue-btn" onclick="addChipOption('${g.key}', '${inputId}')">+ Add</button>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Keep the task-entry form's cached chip options in sync with whatever
+    // a Superadmin just changed here, same rule as loadSurveyOptionsPanel().
+    dynamicFieldOptions.chips = byGroup;
+  }
+
+  async function addChipOption(groupKey, inputId){
+    const input = document.getElementById(inputId);
+    const label = input.value.trim();
+    if(!label) return;
+    const [category, field_key] = groupKey.split(':');
+    const existingCount = (dynamicFieldOptions.chips[groupKey] || []).length;
+    const { error } = await sb.from('chip_options').insert({ category, field_key, label, sort_order: existingCount });
+    if(error){ alert('Could not add: ' + error.message); return; }
+    input.value = '';
+    loadChipOptionsPanel();
+  }
+
+  async function deleteChipOptionRow(id){
+    if(!confirm('Remove this option? Past entries that used it keep their recorded value — only the choice goes away for future entries.')) return;
+    const { error } = await sb.from('chip_options').delete().eq('id', id);
+    if(error){ alert('Could not remove: ' + error.message); return; }
+    loadChipOptionsPanel();
   }
  
   // ============ LIFT SEARCH (real data, across every category) ============
