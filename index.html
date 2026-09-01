@@ -1608,11 +1608,13 @@
       {t:'textarea', l:'Solution Statement', section:'description'}
     ],
     'Commissioning Support': [
+      {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category_commissioning', section:'details'},
       {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
       {t:'textarea', l:'Problem Statement', section:'description'},
       {t:'textarea', l:'Solution Statement', section:'description'}
     ],
     'After-Sales Support': [
+      {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category_aftersales', section:'details'},
       {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
       {t:'textarea', l:'Support provided', section:'description'}
     ]
@@ -3789,6 +3791,8 @@
     { key: 'presales:client_support_task', label: 'Pre-Sales Support — Client Support Task' },
     { key: 'postsales:work_type', label: 'Post-Sales Activity — Work Type' },
     { key: 'techsupport:problem_category', label: 'Technical Support (Installation) — Problem Category' },
+    { key: 'techsupport:problem_category_commissioning', label: 'Technical Support (Commissioning) — Problem Category' },
+    { key: 'techsupport:problem_category_aftersales', label: 'Technical Support (After-Sales) — Problem Category' },
     { key: 'techsupport:support_medium', label: 'Technical Support (all 3 sub-types) — Support Medium' },
     { key: 'production:work_type', label: 'Production Support — Work Type' },
     { key: 'requisition:requesting_dept', label: 'Departmental Requisition — Requesting Dept.' },
