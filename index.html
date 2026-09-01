@@ -466,6 +466,9 @@
   .kpi-spark div{width:7px; background:var(--accent); border-radius:2px 2px 0 0;}
  
   .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px;}
+  @media (min-width: 861px){
+    #chipOptionsPanel{ grid-template-columns:1fr 1fr; }
+  }
   .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:flex-start; }
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px;}
   .panel-title{font-size:13.5px; font-weight:600; margin-bottom:16px; color:var(--text-dim);}
@@ -1523,7 +1526,7 @@
     </div>
 
     <div class="block-head" id="chipOptionsBlock" style="display:none;"><div><div class="block-title">Category chip options</div><div class="block-sub">Superadmin only — manage the capsule/chip choices engineers pick from in every category's form. Removing one doesn't change past entries that already used it.</div></div></div>
-    <div class="split-grid" id="chipOptionsPanel" style="display:none; grid-template-columns:1fr 1fr; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="split-grid" id="chipOptionsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
