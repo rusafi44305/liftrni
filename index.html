@@ -677,13 +677,19 @@
        was short enough to fit both on one line, but sliding left/center
        unpredictably once a longer title or an extra button (Edit only
        shows for your own entries) pushed the metadata onto its own line.
-       Forcing an explicit column layout — title pinned left, metadata
-       pinned right via align-self — removes the ambiguity entirely,
-       rather than hoping width:100% and text-align alone behave the same
-       way for every row regardless of its content. */
-    .cat-log-row > div:first-child{ flex-direction:column !important; align-items:stretch !important; }
-    .cat-log-title-block{ align-self:flex-start; width:auto; margin-left:0 !important; }
-    .cat-log-meta-block{ align-self:flex-end; text-align:right; width:auto; margin-left:0 !important; }
+       A flex-direction:column approach was tried here before, but flex
+       alignment properties can still behave subtly differently across
+       browser engines in edge cases, leaving device-specific ambiguity.
+       This drops flexbox entirely for the mobile case: the title and the
+       metadata are both plain block-level elements at full width, one
+       explicitly text-align:left, the other explicitly text-align:right —
+       there's no interaction left to behave differently depending on
+       content length, button count, or browser. */
+    .cat-log-row > div:first-child{ display:block !important; }
+    .cat-log-title-block{ display:block !important; width:100% !important; text-align:left !important; margin:0 0 10px 0 !important; }
+    .cat-log-meta-block{ display:block !important; width:100% !important; text-align:right !important; margin:0 !important; }
+    .cat-log-meta-block > div{ text-align:right !important; }
+    .cat-log-meta-block > div[style*="display:flex"]{ display:flex !important; justify-content:flex-end !important; }
     /* Mobile always shows the thin, compact header — the same look
        desktop only switches into once you scroll down — since there's
        never enough room here for the full logo + two-line brand text. */
