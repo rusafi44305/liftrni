@@ -1772,11 +1772,35 @@
     const cat = document.getElementById('catSelect').value;
     let fields = taskForms[cat] || [];
 
-    // Any category using a Superadmin-managed dropdown (currently just Survey
-    // Report Issues) needs its options fetched before the <select> can be
-    // built. Fetched once and cached — this just re-renders after the first
-    // load completes, so switching back to this category later is instant.
-    if(fields.some(f => f.t === 'select') && !dynamicFieldOptionsLoaded){
+    // Technical Support's own chip fields live inside techSupportSubforms,
+    // concatenated in below — so the dynamic-options check has to happen
+    // after that concatenation, not before it, or it would never see them.
+    if(cat === 'techsupport'){
+      const subSelect = document.getElementById('techSupportType');
+      const subType = subSelect ? subSelect.value : 'Installation Support';
+      // Record the actual current choice on the field definition itself so
+      // innerFieldHTML can mark the matching <option> as selected when it
+      // rebuilds the dropdown — otherwise the rebuilt select always visually
+      // reset to its first option, regardless of what was really chosen.
+      const subField = fields.find(f => f.id === 'techSupportType');
+      if(subField) subField.currentValue = subType;
+      fields = fields.concat(techSupportSubforms[subType] || []);
+    }
+
+    // Any category using Superadmin-managed options — the "select" dropdowns
+    // in Survey Report Issues, or any "chips" field with a dynamic source —
+    // needs those options fetched before the field can be built. Fetched
+    // once and cached — this just re-renders after the first load completes,
+    // so switching back to this category later is instant.
+    //
+    // This used to only check for "select" fields, back when chip options
+    // were still hard-coded and had nothing to fetch. Once chips became
+    // Superadmin-managed too, they needed the exact same wait — without it,
+    // this fetch was never actually triggered for any category except
+    // Survey Report Issues, and only ever "worked" for Superadmin by
+    // accident, since opening the Admin panel happens to warm the same
+    // cache as a side effect. Everyone else always saw an empty list.
+    if(fields.some(f => f.t === 'select' || (f.t === 'chips' && f.source)) && !dynamicFieldOptionsLoaded){
       await loadDynamicFieldOptions();
     }
 
@@ -1806,18 +1830,6 @@
       });
       const performDateEl = document.getElementById('performDate');
       if(performDateEl) preservedPerformDate = performDateEl.value;
-    }
-
-    if(cat === 'techsupport'){
-      const subSelect = document.getElementById('techSupportType');
-      const subType = subSelect ? subSelect.value : 'Installation Support';
-      // Record the actual current choice on the field definition itself so
-      // innerFieldHTML can mark the matching <option> as selected when it
-      // rebuilds the dropdown — otherwise the rebuilt select always visually
-      // reset to its first option, regardless of what was really chosen.
-      const subField = fields.find(f => f.id === 'techSupportType');
-      if(subField) subField.currentValue = subType;
-      fields = fields.concat(techSupportSubforms[subType] || []);
     }
 
     const groups = {identity:[], details:[], description:[]};
