@@ -1337,6 +1337,7 @@
       <input type="month" id="dashToMonth" class="fselect" style="cursor:pointer;">
       <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
       <button class="queue-btn" onclick="loadDashboard()">Apply</button>
+      <button class="queue-btn" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
       <div id="dashKpiTriggerWrap" style="display:none;">
         <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team KPI from the latest logged tasks">↻ Recalculate team KPI</button>
       </div>
@@ -2872,6 +2873,30 @@
     const toVal = document.getElementById('catToMonth').value || 'all';
     XLSX.writeFile(wb, `${meta.name.replace(/\s+/g,'_')}_${fromVal}_to_${toVal}.xlsx`);
   }
+
+  function exportDashboardToExcel(){
+    if(!currentDashRows.length){ alert('No entries to export for this range.'); return; }
+    const flat = currentDashRows.map(row => {
+      const base = {
+        'Employee': row.profiles ? displayName(row.profiles) : '',
+        'Category': catMeta[row.category]?.name || row.category,
+        'Date': new Date(row.created_at).toLocaleDateString('en-GB'),
+        'Lift ID': row.lift_id || '',
+        'Project / Subject': row.project_name || '',
+      };
+      const details = row.details || {};
+      Object.entries(details).forEach(([k,v]) => { base[k] = Array.isArray(v) ? v.join(', ') : (v ?? ''); });
+      return base;
+    });
+    const ws = XLSX.utils.json_to_sheet(flat);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Team Dashboard');
+    const fromVal = document.getElementById('dashFromMonth').value || 'all';
+    const toVal = document.getElementById('dashToMonth').value || 'all';
+    const engineerId = document.getElementById('dashEngineerSelect').value;
+    const engineerLabel = engineerId ? (document.getElementById('dashEngineerSelect').selectedOptions[0]?.textContent || 'engineer').replace(/[^\w]+/g, '_') : 'whole_team';
+    XLSX.writeFile(wb, `Dashboard_${engineerLabel}_${fromVal}_to_${toVal}.xlsx`);
+  }
  
   // ============ EDIT TASK (own entries only, with history trail) ============
   let editingTaskRow = null;
@@ -4357,9 +4382,14 @@
     sel.dataset.loaded = '1';
   }
  
+  let currentDashRows = [];
   async function loadDashboard(){
-    await populateDashEngineerSelect();
-    await loadAppSettings();
+    // Defensive: if either pre-step fails (a network blip, anything), don't
+    // let it silently abort the whole function and leave the page stuck on
+    // "Loading…" forever — log it and continue straight to the main query,
+    // which is the part that actually matters for showing data by default.
+    try{ await populateDashEngineerSelect(); } catch(e){ console.error('populateDashEngineerSelect failed:', e); }
+    try{ await loadAppSettings(); } catch(e){ console.error('loadAppSettings failed:', e); }
     renderKpiTriggerButton();
     const fromVal = document.getElementById('dashFromMonth').value; // "2026-01"
     const toVal = document.getElementById('dashToMonth').value;
@@ -4379,6 +4409,7 @@
     if(error){ document.getElementById('dashCategoryBreakdown').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
  
     const rows = data || [];
+    currentDashRows = rows;
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
     const engineerSet = new Set(rows.map(r=>r.employee_id));
     const catCounts = {};
