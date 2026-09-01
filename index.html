@@ -672,6 +672,18 @@
     nav.tabs.dock button{ padding:10px; }
   }
   @media (max-width: 600px){
+    /* Every task card's title and its "who/when/buttons" block used to
+       align inconsistently on mobile — right-aligned neatly when the row
+       was short enough to fit both on one line, but sliding left/center
+       unpredictably once a longer title or an extra button (Edit only
+       shows for your own entries) pushed the metadata onto its own line.
+       Forcing an explicit column layout — title pinned left, metadata
+       pinned right via align-self — removes the ambiguity entirely,
+       rather than hoping width:100% and text-align alone behave the same
+       way for every row regardless of its content. */
+    .cat-log-row > div:first-child{ flex-direction:column !important; align-items:stretch !important; }
+    .cat-log-title-block{ align-self:flex-start; width:auto; margin-left:0 !important; }
+    .cat-log-meta-block{ align-self:flex-end; text-align:right; width:auto; margin-left:0 !important; }
     /* Mobile always shows the thin, compact header — the same look
        desktop only switches into once you scroll down — since there's
        never enough room here for the full logo + two-line brand text. */
@@ -2844,11 +2856,11 @@
         : '';
       return `<div class="panel cat-log-row" style="padding:14px 20px;" data-lift="${(row.lift_id||'').toLowerCase()}">
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-          <div>
+          <div class="cat-log-title-block">
             ${hasLift ? `<div class="mono" style="font-weight:700; font-size:14px; margin-bottom:2px;">Lift ${row.lift_id || '—'}</div>` : ''}
             <div style="font-weight:600;">${row.project_name || '(untitled)'}</div>
           </div>
-          <div style="text-align:right; font-size:12px; color:var(--text-faint);">
+          <div class="cat-log-meta-block" style="text-align:right; font-size:12px; color:var(--text-faint); margin-left:auto;">
             <div>${emp}</div>
             <div class="mono">${date}${row.edit_history && row.edit_history.length ? ' · edited' : ''}</div>
             <div style="margin-top:6px; display:flex; gap:4px; justify-content:flex-end;">
@@ -4497,11 +4509,11 @@
           : '';
         return `<div class="panel cat-log-row" style="padding:14px 20px;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-            <div>
+            <div class="cat-log-title-block">
               <span class="tag c-${r.category}">${catMeta[r.category]?.name || r.category}</span>
               <div style="font-weight:600; margin-top:6px;">${r.project_name || '(untitled)'}${r.lift_id ? ' — Lift <span class="mono">'+r.lift_id+'</span>' : ''}</div>
             </div>
-            <div style="text-align:right; font-size:12px; color:var(--text-faint);">
+            <div class="cat-log-meta-block" style="text-align:right; font-size:12px; color:var(--text-faint); margin-left:auto;">
               <div class="mono">${new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</div>
               <button class="btn view-details" style="padding:3px 10px; font-size:11px; margin-top:6px;" onclick="toggleSearchResultDetails(this)">View details</button>
             </div>
