@@ -1712,7 +1712,8 @@
   // matching the discipline the current user is assigned.
   const postsalesDisciplineFields = {
     mechanical: [
-      {t:'row2text', l1:'Door Type', l2:'Door Opening Width', ph1:'Center / Side Opening', ph2:'e.g. 800mm', section:'details'},
+      {t:'chipselect', l:'Door Type', req:true, source:'postsales:door_type', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Door Opening Width', req:true, source:'postsales:door_opening_width', placeholder:'Select…', section:'details'},
       {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', source:'postsales:work_type', section:'details'},
       {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
       {t:'textarea', l:'Remarks', section:'description'}
@@ -1810,9 +1811,12 @@
     postsales: [
       liftId(),
       {t:'text', l:'Project Name', req:true, section:'identity'},
-      {t:'row2text', l1:'Lift Type', l2:'Capacity', ph1:'MRL / MR / Hydraulic', ph2:'630 / 800 / 1000...', section:'details'},
-      {t:'row2text', l1:'Motor Origin/Model', l2:'F/S/O', ph1:'e.g. China / Italy / Local', ph2:'e.g. 7/7/7', section:'details'},
-      {t:'staticselect', l:'Sales Wing', id:'salesWingSelect', opts:['General Sales','CSD','Tender'], section:'details'},
+      {t:'chipselect', l:'Lift Type', req:true, source:'postsales:lift_type', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Capacity', req:true, source:'postsales:capacity', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Motor Origin', req:true, source:'postsales:motor_origin', placeholder:'Select…', section:'details'},
+      {t:'text', l:'Model', section:'details'},
+      {t:'text', l:'F/S/O', ph:'e.g. 7/7/7', section:'details'},
+      {t:'chipselect', l:'Sales Wing', req:true, source:'postsales:sales_wing', placeholder:'Select…', section:'details'},
       // Door fields, Work Type, and everything below are discipline-specific
       // — see postsalesDisciplineFields, concatenated in by renderTaskForm(),
       // including each discipline's own trailing Remarks field.
@@ -4085,6 +4089,12 @@
     { key: 'rni:status', label: 'R&I Activity — Status' },
     { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium' },
     { key: 'presales:client_support_task', label: 'Pre-Sales Support — Client Support Task' },
+    { key: 'postsales:lift_type', label: 'Post-Sales Activity — Lift Type' },
+    { key: 'postsales:capacity', label: 'Post-Sales Activity — Capacity' },
+    { key: 'postsales:motor_origin', label: 'Post-Sales Activity — Motor Origin' },
+    { key: 'postsales:sales_wing', label: 'Post-Sales Activity — Sales Wing' },
+    { key: 'postsales:door_type', label: 'Post-Sales Activity (Mechanical) — Door Type' },
+    { key: 'postsales:door_opening_width', label: 'Post-Sales Activity (Mechanical) — Door Opening Width' },
     { key: 'postsales:work_type', label: 'Post-Sales Activity (Mechanical) — Work Type' },
     { key: 'postsales:work_type_electrical', label: 'Post-Sales Activity (Electrical) — Work Type' },
     { key: 'techsupport:problem_category', label: 'Technical Support Mechanical (Installation) — Problem Category' },
