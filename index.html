@@ -1202,8 +1202,7 @@
  
       <!-- entry form -->
       <div class="panel" id="taskFormPanel">
-        <div class="panel-title">Log a task</div>
-        <div id="disciplineBanner" style="font-size:12px; font-weight:600; color:var(--accent); margin-bottom:14px;"></div>
+        <div class="panel-title">Log a task<span id="disciplineBanner" style="font-size:12px; font-weight:600; color:var(--accent);"></span></div>
  
         <div style="margin-bottom:16px;">
           <div class="field-label">Category</div>
@@ -1293,6 +1292,7 @@
       <div>
         <div class="p-name" id="profileName">—</div>
         <div class="p-role" id="profileRole">—</div>
+        <div class="p-role" id="profileDiscipline" style="opacity:0.75;">—</div>
         <div id="avatarUploadStatus" style="font-size:11.5px; color:var(--text-faint); margin-top:4px;"></div>
       </div>
     </div>
@@ -4572,8 +4572,8 @@
     const bannerEl = document.getElementById('disciplineBanner');
     if(bannerEl && currentProfile){
       bannerEl.textContent = currentProfile.discipline === 'electrical'
-        ? 'Log a task as an Electrical Engineer'
-        : 'Log a task as a Mechanical Engineer';
+        ? ' as an Electrical Engineer'
+        : ' as a Mechanical Engineer';
     }
     const { data, error } = await sb.from('tasks').select('*').eq('employee_id', currentUser.id).order('created_at', { ascending: false }).limit(30);
     if(error){ el.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
@@ -4622,6 +4622,8 @@
     document.getElementById('profileName').textContent = `${currentProfile.full_name} (${currentProfile.nickname})`;
     document.getElementById('profileRole').textContent =
       currentProfile.role === 'superadmin' ? 'Superadmin' : currentProfile.role === 'admin' ? 'Admin' : 'R&I Engineer';
+    document.getElementById('profileDiscipline').textContent =
+      currentProfile.discipline === 'electrical' ? 'Electrical Engineer' : 'Mechanical Engineer';
     document.getElementById('avatarUploadStatus').textContent = '';
  
     const now = new Date();
