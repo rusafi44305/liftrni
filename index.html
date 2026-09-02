@@ -374,9 +374,12 @@
  
   /* ---------- ACTIVITY FEED ---------- */
   .feed-item{
-    display:flex; gap:14px; padding:13px 4px; border-bottom:1px solid var(--border); margin-bottom:4px;
+    display:flex; gap:14px; padding:13px 16px; margin-bottom:10px;
+    background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow);
+    transition:transform .15s ease, border-color .15s ease;
   }
-  .feed-item:last-child{border-bottom:none; margin-bottom:0;}
+  .feed-item:last-of-type{margin-bottom:0;}
+  .feed-item:hover{ transform:translateY(-1px); border-color:color-mix(in srgb, var(--accent) 35%, var(--border)); }
   .tag{
     font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:6px; white-space:nowrap;
     height:fit-content; text-transform:uppercase; letter-spacing:.02em;
@@ -690,6 +693,13 @@
     nav.tabs.dock button{ padding:10px; }
   }
   @media (max-width: 600px){
+    /* The Home feed's tag-group and its "who logged what" text sit
+       side-by-side as two flex columns — on desktop that's fine, but on a
+       narrow phone screen flexbox stretches both columns to match
+       whichever is taller, leaving one side with an oddly large empty
+       gap. Stacking them vertically instead removes the mismatch
+       entirely, and reads more naturally on a narrow screen anyway. */
+    .feed-item{ flex-direction:column; gap:8px; }
     /* Every task card's title and its "who/when/buttons" block used to
        align inconsistently on mobile — right-aligned neatly when the row
        was short enough to fit both on one line, but sliding left/center
@@ -759,6 +769,13 @@
      equally-specific !important rules resolve by source order, and this
      needs to come second. */
   .mytask-item, .cat-log-row, .gantt-project-card, .proj-task-row{ border-radius:10px !important; }
+  .mytask-item, .cat-log-row, .t-card, .gantt-project-card, .proj-task-row{
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .mytask-item:hover, .cat-log-row:hover, .t-card:hover, .gantt-project-card:hover, .proj-task-row:hover{
+    transform:translateY(-1px);
+    border-color:color-mix(in srgb, var(--accent) 35%, var(--border)) !important;
+  }
   /* .indicator-panel is DELIBERATELY excluded above — it's a permanent dark card
      (like .kpi-card) with hardcoded light text, by design, in every theme. If it
      ever gets added back to the shared list above, its text goes invisible in
