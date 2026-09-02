@@ -1794,11 +1794,11 @@
 
   const taskForms = {
     rni: [
-      {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
-      {t:'chips', l:'Task Category', hint:'select all that apply', source:'rni:task_category', section:'details'},
-      {t:'row2text', l1:'Project Start Date', l2:'Project Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
+      {t:'text', l:'Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
+      {t:'chips', l:'Task Category', hint:'select all that apply', source:'rni:task_category_mechanical', section:'details'},
+      {t:'row2text', l1:'Task Start Date', l2:'Task Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
       {t:'text', l:'Duration (min) — for meetings/training', ph:'e.g. 90', section:'details'},
-      {t:'chips', l:'Status', source:'rni:status', section:'details'},
+      {t:'chips', l:'Status', source:'rni:status_mechanical', section:'details'},
       {t:'textarea', l:'Notes / Challenges / Achievements', section:'description'}
     ],
     presales: [
@@ -1943,6 +1943,16 @@
     const cat = document.getElementById('catSelect').value;
     let fields = taskForms[cat] || [];
     const discipline = (currentProfile && currentProfile.discipline === 'electrical') ? 'electrical' : 'mechanical';
+
+    // R&I Activity's fields are identical for both teams, but Task Category
+    // and Status are independently managed per team — same field, same
+    // label, but a completely separate Superadmin-managed list underneath.
+    if(cat === 'rni'){
+      const taskCatField = fields.find(f => f.l === 'Task Category');
+      const statusField = fields.find(f => f.l === 'Status');
+      if(taskCatField) taskCatField.source = `rni:task_category_${discipline}`;
+      if(statusField) statusField.source = `rni:status_${discipline}`;
+    }
 
     // Post-Sales' Door fields and Work Type differ by discipline —
     // concatenated in from postsalesDisciplineFields.
@@ -4085,8 +4095,10 @@
   // One generalized admin UI covers every chip field across every category
   // — built from this list rather than 8 hand-written near-duplicate panels.
   const CHIP_FIELD_GROUPS = [
-    { key: 'rni:task_category', label: 'R&I Activity — Task Category' },
-    { key: 'rni:status', label: 'R&I Activity — Status' },
+    { key: 'rni:task_category_mechanical', label: 'R&I Activity (Mechanical) — Task Category' },
+    { key: 'rni:task_category_electrical', label: 'R&I Activity (Electrical) — Task Category' },
+    { key: 'rni:status_mechanical', label: 'R&I Activity (Mechanical) — Status' },
+    { key: 'rni:status_electrical', label: 'R&I Activity (Electrical) — Status' },
     { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium' },
     { key: 'presales:client_support_task', label: 'Pre-Sales Support — Client Support Task' },
     { key: 'postsales:lift_type', label: 'Post-Sales Activity — Lift Type' },
