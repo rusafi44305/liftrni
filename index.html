@@ -693,6 +693,15 @@
     nav.tabs.dock button{ padding:10px; }
   }
   @media (max-width: 600px){
+    /* The KPI card's big number sits in a fixed-width flex row alongside
+       the "X tasks" note — at the same 40px font-size used on desktop, a
+       5-character number like "175.0" takes up enough width on a narrow
+       phone screen to crowd into that note, and the label below it
+       ("Monthly KPI (September 2026)") wraps awkwardly for the same
+       reason. Shrinking just the text — not the card itself, which stays
+       exactly the same size — gives both enough room to sit comfortably. */
+    .kpi-num{ font-size:28px; }
+    .kpi-lbl{ font-size:11.5px; }
     /* The Home feed's tag-group and its "who logged what" text sit
        side-by-side as two flex columns — on desktop that's fine, but on a
        narrow phone screen flexbox stretches both columns to match
