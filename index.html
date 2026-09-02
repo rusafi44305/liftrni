@@ -393,6 +393,7 @@
   .tag.c-commission{background:color-mix(in srgb, var(--c-commission) 10%, var(--surface)); color:var(--c-commission);}
   .tag.c-aftersales{background:color-mix(in srgb, var(--c-aftersales) 10%, var(--surface)); color:var(--c-aftersales);}
   .tag.c-production{background:color-mix(in srgb, var(--c-production) 10%, var(--surface)); color:var(--c-production);}
+  .tag.c-generalsupport{background:color-mix(in srgb, var(--c-production) 10%, var(--surface)); color:var(--c-production);}
   .tag.c-requisition{background:color-mix(in srgb, var(--c-requisition) 10%, var(--surface)); color:var(--c-requisition);}
   .tag.c-scm{background:color-mix(in srgb, var(--c-scm) 10%, var(--surface)); color:var(--c-scm);}
   .tag.c-existingdev{background:color-mix(in srgb, var(--c-existingdev) 10%, var(--surface)); color:var(--c-existingdev);}
@@ -1135,7 +1136,7 @@
         <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-bottom-row"><div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div><span class="cat-pct-badge" id="catPct-postsales">—%</span></div></div>
         <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-bottom-row"><div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-techsupport">—%</span></div></div>
         <div class="cat-tile cc-generalsupport" onclick="showCategoryLog('generalsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'generalsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-bottom-row"><div><div class="cat-name">General Support</div><div class="cat-count" id="catCount-generalsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-generalsupport">—%</span></div></div>
-        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
+        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">Reports</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
       </div>
     </section>
  
@@ -1212,7 +1213,7 @@
               <option value="postsales">Post-Sales Activity</option>
               <option value="techsupport">Technical Support</option>
               <option value="generalsupport">General Support</option>
-              <option value="surveyissues">Survey Report Issues</option>
+              <option value="surveyissues">Reports</option>
             </select>
           </div>
         </div>
@@ -1520,7 +1521,7 @@
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">KPI category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's KPI score</div></div></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
-    <div class="block-head" id="surveyOptionsBlock" style="display:none;"><div><div class="block-title">Survey Report Issues — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging an entry</div></div></div>
+    <div class="block-head" id="surveyOptionsBlock" style="display:none;"><div><div class="block-title">Reports — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging an entry</div></div></div>
     <div class="split-grid" id="surveyOptionsPanel" style="display:none; margin-bottom:32px;">
       <div class="panel">
         <div class="panel-title">Installation Wings</div>
@@ -1590,14 +1591,14 @@
   }
  
   // ---- Category Log: per-category metadata, mock entries, search-by-Lift-ID ----
-  const CAT_COLOR = {rni:'#6E4FD1', presales:'#1D6FD9', client:'#0E8F8F', postsales:'#188A5A', install:'#B3651B', commission:'#C25B00', aftersales:'#C23D74', production:'#4A50C9', requisition:'#0E8FA3', scm:'#6B8E00', existingdev:'#6B5B44'};
+  const CAT_COLOR = {rni:'#6E4FD1', presales:'#1D6FD9', client:'#0E8F8F', postsales:'#188A5A', install:'#B3651B', commission:'#C25B00', aftersales:'#C23D74', production:'#4A50C9', generalsupport:'#4A50C9', requisition:'#0E8FA3', scm:'#6B8E00', existingdev:'#6B5B44'};
   const catMeta = {
     rni:{name:'R&I Activity', hasLift:false},
     presales:{name:'Pre-Sales Support', hasLift:false},
     postsales:{name:'Post-Sales Activity', hasLift:true},
     techsupport:{name:'Technical Support', hasLift:true},
     generalsupport:{name:'General Support', hasLift:true},
-    surveyissues:{name:'Survey Report Issues', hasLift:true},
+    surveyissues:{name:'Reports', hasLift:true},
   };
   function logInThisCategory(){
     if(!currentCatKey) return;
