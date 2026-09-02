@@ -3708,7 +3708,7 @@
     const cat = catMeta[row.category]?.name || row.category;
     const who = displayName({ full_name: row.employee_full_name, nickname: row.employee_nickname });
     return `<div class="feed-item">
-      <span class="tag c-${row.category}">${cat}</span>${subLabelsHtml(row.details)}
+      <div style="display:flex; align-items:center; flex-wrap:wrap; flex-shrink:0;"><span class="tag c-${row.category}">${cat}</span>${subLabelsHtml(row.details)}</div>
       <div class="feed-text"><b>${who}</b> logged <i>${row.project_name || '(untitled)'}</i>${row.lift_id ? ' — Lift <span class="mono">'+row.lift_id+'</span>' : ''}
         <div class="feed-meta">${timeAgo(row.created_at)}</div>
       </div>
