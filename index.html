@@ -1624,24 +1624,56 @@
   // swaps in the right set of fields below it. renderTaskForm() appends
   // whichever of these arrays matches the current selection.
   const techSupportSubforms = {
-    'Installation Support': [
-      {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category', section:'details'},
-      {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
-      {t:'textarea', l:'Problem Statement', section:'description'},
-      {t:'textarea', l:'Solution Statement', section:'description'}
-    ],
-    'Commissioning Support': [
-      {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category_commissioning', section:'details'},
-      {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
-      {t:'textarea', l:'Problem Statement', section:'description'},
-      {t:'textarea', l:'Solution Statement', section:'description'}
-    ],
-    'After-Sales Support': [
-      {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category_aftersales', section:'details'},
-      {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
-      {t:'textarea', l:'Problem Statement', section:'description'},
-      {t:'textarea', l:'Support provided', section:'description'}
-    ]
+    mechanical: {
+      'Installation Support': [
+        {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category', section:'details'},
+        {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
+        {t:'textarea', l:'Problem Statement', section:'description'},
+        {t:'textarea', l:'Solution Statement', section:'description'}
+      ],
+      'Commissioning Support': [
+        {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category_commissioning', section:'details'},
+        {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
+        {t:'textarea', l:'Problem Statement', section:'description'},
+        {t:'textarea', l:'Solution Statement', section:'description'}
+      ],
+      'After-Sales Support': [
+        {t:'chips', l:'Problem Category', hint:'select all that apply', source:'techsupport:problem_category_aftersales', section:'details'},
+        {t:'chips', l:'Support Medium', hint:'select all that apply', source:'techsupport:support_medium', section:'details'},
+        {t:'textarea', l:'Problem Statement', section:'description'},
+        {t:'textarea', l:'Support provided', section:'description'}
+      ]
+    },
+    // Electrical's Control System list is independent per sub-type (3
+    // separate lists), but Problem Category is one shared list across all
+    // 3 — a deliberately different sharing rule than mechanical's version
+    // of Problem Category, confirmed explicitly rather than assumed.
+    electrical: {
+      'Installation Support': [
+        {t:'chipselect', l:'Control System', req:true, source:'techsupport:control_system_installation', placeholder:'Select…', section:'details'},
+        {t:'chipselect', l:'Problem Category', req:true, source:'techsupport:problem_category_electrical', hasOther:true, placeholder:'Select…', section:'details'},
+        {t:'text', l:'Other Problem (please specify)', showIf:{selectLabel:'Problem Category', value:'Other'}, section:'details'},
+        {t:'text', l:'Problem Details', req:true, section:'description'},
+        {t:'textarea', l:'Solution Statement', req:true, section:'description'},
+        {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Under observation','Not Solved','Pending'], section:'description'}
+      ],
+      'Commissioning Support': [
+        {t:'chipselect', l:'Control System', req:true, source:'techsupport:control_system_commissioning', placeholder:'Select…', section:'details'},
+        {t:'chipselect', l:'Problem Category', req:true, source:'techsupport:problem_category_electrical', hasOther:true, placeholder:'Select…', section:'details'},
+        {t:'text', l:'Other Problem (please specify)', showIf:{selectLabel:'Problem Category', value:'Other'}, section:'details'},
+        {t:'text', l:'Problem Details', req:true, section:'description'},
+        {t:'textarea', l:'Solution Statement', req:true, section:'description'},
+        {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Under observation','Not Solved','Pending'], section:'description'}
+      ],
+      'After-Sales Support': [
+        {t:'chipselect', l:'Control System', req:true, source:'techsupport:control_system_aftersales', placeholder:'Select…', section:'details'},
+        {t:'chipselect', l:'Problem Category', req:true, source:'techsupport:problem_category_electrical', hasOther:true, placeholder:'Select…', section:'details'},
+        {t:'text', l:'Other Problem (please specify)', showIf:{selectLabel:'Problem Category', value:'Other'}, section:'details'},
+        {t:'text', l:'Problem Details', req:true, section:'description'},
+        {t:'textarea', l:'Solution Statement', req:true, section:'description'},
+        {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Under observation','Not Solved','Pending'], section:'description'}
+      ]
+    }
   };
 
   // General Support merges what used to be two separate categories
@@ -1675,6 +1707,25 @@
     ]
   };
 
+  // Post-Sales Activity's Door fields and Work Type differ by discipline —
+  // concatenated onto the shared base fields above by renderTaskForm(),
+  // matching the discipline the current user is assigned.
+  const postsalesDisciplineFields = {
+    mechanical: [
+      {t:'row2text', l1:'Door Type', l2:'Door Opening Width', ph1:'Center / Side Opening', ph2:'e.g. 800mm', section:'details'},
+      {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', source:'postsales:work_type', section:'details'},
+      {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
+      {t:'textarea', l:'Remarks', section:'description'}
+    ],
+    electrical: [
+      {t:'chips', l:'Work Type', group:'Work Type Electrical', req:true, hint:'select all that apply', source:'postsales:work_type_electrical', section:'details'},
+      {t:'text', l:'Problem Details', req:true, section:'details'},
+      {t:'textarea', l:'Solution Statement', req:true, section:'details'},
+      {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Under observation','Not Solved','Pending'], section:'details'},
+      {t:'textarea', l:'Remarks', section:'description'}
+    ]
+  };
+
   const taskForms = {
     rni: [
       {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
@@ -1695,11 +1746,11 @@
       liftId(),
       {t:'text', l:'Project Name', req:true, section:'identity'},
       {t:'row2text', l1:'Lift Type', l2:'Capacity', ph1:'MRL / MR / Hydraulic', ph2:'630 / 800 / 1000...', section:'details'},
-      {t:'row2text', l1:'Model Number', l2:'F/S/O', ph1:'e.g. WL-MRL-630', ph2:'e.g. 7/7/7', section:'details'},
-      {t:'row2text', l1:'Door Type', l2:'Door Opening Width', ph1:'Center / Side Opening', ph2:'e.g. 800mm', section:'details'},
-      {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', source:'postsales:work_type', section:'details'},
-      {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
-      {t:'textarea', l:'Remarks', section:'description'}
+      {t:'row2text', l1:'Motor Origin/Model', l2:'F/S/O', ph1:'e.g. China / Italy / Local', ph2:'e.g. 7/7/7', section:'details'},
+      {t:'staticselect', l:'Sales Wing', id:'salesWingSelect', opts:['General Sales','CSD','Tender'], section:'details'},
+      // Door fields, Work Type, and everything below are discipline-specific
+      // — see postsalesDisciplineFields, concatenated in by renderTaskForm(),
+      // including each discipline's own trailing Remarks field.
     ],
     techsupport: [
       liftId(),
@@ -1766,6 +1817,17 @@
       const hasOpts = (dynamicFieldOptions[f.source] || []).length > 0;
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti">${f.placeholder ? `<option value="">${f.placeholder}</option>` : ''}${opts}</select>${!hasOpts ? `<div style="font-size:11px; color:var(--text-faint); margin-top:4px;">No options yet — a Superadmin can add some from the Admin panel.</div>` : ''}</div>`;
     }
+    if(f.t==='chipselect'){
+      // A single-select dropdown sourced from the same Superadmin-managed
+      // chip_options table as multi-select chip fields — used where the
+      // options need to be admin-editable but only one choice makes sense
+      // (e.g. Control System, or a long Problem Category list with "Other").
+      const chipRows = dynamicFieldOptions.chips[f.source] || [];
+      const opts = chipRows.map(o => `<option value="${o.label}">${o.label}</option>`).join('');
+      const otherOpt = f.hasOther ? `<option value="Other">Other</option>` : '';
+      const hasOpts = chipRows.length > 0;
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti" onchange="updateConditionals()">${f.placeholder ? `<option value="">${f.placeholder}</option>` : ''}${opts}${otherOpt}</select>${(!hasOpts && !f.hasOther) ? `<div style="font-size:11px; color:var(--text-faint); margin-top:4px;">No options yet — a Superadmin can add some from the Admin panel.</div>` : ''}</div>`;
+    }
     if(f.t==='staticselect'){
       // f.currentValue (set by renderTaskForm right before this runs) marks
       // which option should stay visually selected across a rebuild — without
@@ -1787,7 +1849,7 @@
     if(f.t==='chips'){
       const grp = f.group || f.l;
       const chipRows = f.source ? (dynamicFieldOptions.chips[f.source] || []) : (f.opts || []);
-      const chips = chipRows.map(o=>`<div class="chip-opt" data-group="${grp}" data-opt="${typeof o === 'string' ? o : o.label}" onclick="pickChip(this)">${typeof o === 'string' ? o : o.label}</div>`).join('');
+      const chips = chipRows.map(o=>`<div class="chip-opt" data-group="${grp}" data-opt="${typeof o === 'string' ? o : o.label}" ${f.single ? 'data-single="true"' : ''} onclick="pickChip(this)">${typeof o === 'string' ? o : o.label}</div>`).join('');
       const emptyNote = (f.source && !chipRows.length) ? `<div style="font-size:11px; color:var(--text-faint); margin-top:4px;">No options yet — a Superadmin can add some from the Admin panel.</div>` : '';
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}${f.hint?`<span class="chip-hint">(${f.hint})</span>`:''}</div><div class="chip-group">${chips}</div>${emptyNote}</div>`;
     }
@@ -1797,6 +1859,13 @@
   function fieldHTML(f){
     const inner = innerFieldHTML(f);
     if(f.showIf){
+      if(f.showIf.selectLabel){
+        // Triggered by a dropdown's value (e.g. "Other" in a Problem
+        // Category list) rather than a chip selection — same wrapper,
+        // different condition type, both handled together in
+        // updateConditionals().
+        return `<div class="conditional" data-condselect="${f.showIf.selectLabel}" data-condvalue="${f.showIf.value}" style="display:none;">${inner}</div>`;
+      }
       return `<div class="conditional" data-condgroup="${f.showIf.group}" data-condopt="${f.showIf.opt}" style="display:none;">${inner}</div>`;
     }
     return inner;
@@ -1811,6 +1880,13 @@
   async function renderTaskForm(preserveOnTypeChange){
     const cat = document.getElementById('catSelect').value;
     let fields = taskForms[cat] || [];
+    const discipline = (currentProfile && currentProfile.discipline === 'electrical') ? 'electrical' : 'mechanical';
+
+    // Post-Sales' Door fields and Work Type differ by discipline —
+    // concatenated in from postsalesDisciplineFields.
+    if(cat === 'postsales'){
+      fields = fields.concat(postsalesDisciplineFields[discipline] || []);
+    }
 
     // Technical Support's own chip fields live inside techSupportSubforms,
     // concatenated in below — so the dynamic-options check has to happen
@@ -1824,7 +1900,7 @@
       // reset to its first option, regardless of what was really chosen.
       const subField = fields.find(f => f.id === 'techSupportType');
       if(subField) subField.currentValue = subType;
-      fields = fields.concat(techSupportSubforms[subType] || []);
+      fields = fields.concat((techSupportSubforms[discipline] || {})[subType] || []);
     }
 
     // Same pattern as Technical Support above — General Support's fields
@@ -1851,7 +1927,7 @@
     // Survey Report Issues, and only ever "worked" for Superadmin by
     // accident, since opening the Admin panel happens to warm the same
     // cache as a side effect. Everyone else always saw an empty list.
-    if(fields.some(f => f.t === 'select' || (f.t === 'chips' && f.source)) && !dynamicFieldOptionsLoaded){
+    if(fields.some(f => f.t === 'select' || f.t === 'chipselect' || (f.t === 'chips' && f.source)) && !dynamicFieldOptionsLoaded){
       await loadDynamicFieldOptions();
     }
 
@@ -1938,6 +2014,13 @@
   }
 
   function pickChip(el){
+    // Some chip groups are single-select (e.g. Solution Status — a task can
+    // only be in one state at a time), marked via data-single on each chip
+    // in that group, unlike the normal multi-select chip groups elsewhere.
+    if(el.dataset.single === 'true'){
+      const group = el.dataset.group;
+      document.querySelectorAll(`#dynamicForm .chip-opt[data-group="${group}"]`).forEach(c => { if(c !== el) c.classList.remove('picked'); });
+    }
     el.classList.toggle('picked');
     updateConditionals();
   }
@@ -1960,6 +2043,17 @@
  
   function updateConditionals(){
     document.querySelectorAll('#dynamicForm .conditional').forEach(cf=>{
+      if(cf.dataset.condselect){
+        // Find the <select> whose field-label matches, then compare its
+        // current value against the condition.
+        const selectField = Array.from(document.querySelectorAll('#dynamicForm .form-field')).find(fe => {
+          const lab = fe.querySelector('.field-label');
+          return lab && lab.textContent.replace('*','').trim() === cf.dataset.condselect;
+        });
+        const sel = selectField ? selectField.querySelector('select.ti') : null;
+        cf.style.display = (sel && sel.value === cf.dataset.condvalue) ? 'block' : 'none';
+        return;
+      }
       const match = document.querySelector(`#dynamicForm .chip-opt.picked[data-group="${cf.dataset.condgroup}"][data-opt="${cf.dataset.condopt}"]`);
       cf.style.display = match ? 'block' : 'none';
     });
@@ -3913,11 +4007,16 @@
     { key: 'rni:status', label: 'R&I Activity — Status' },
     { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium' },
     { key: 'presales:client_support_task', label: 'Pre-Sales Support — Client Support Task' },
-    { key: 'postsales:work_type', label: 'Post-Sales Activity — Work Type' },
-    { key: 'techsupport:problem_category', label: 'Technical Support (Installation) — Problem Category' },
-    { key: 'techsupport:problem_category_commissioning', label: 'Technical Support (Commissioning) — Problem Category' },
-    { key: 'techsupport:problem_category_aftersales', label: 'Technical Support (After-Sales) — Problem Category' },
-    { key: 'techsupport:support_medium', label: 'Technical Support (all 3 sub-types) — Support Medium' },
+    { key: 'postsales:work_type', label: 'Post-Sales Activity (Mechanical) — Work Type' },
+    { key: 'postsales:work_type_electrical', label: 'Post-Sales Activity (Electrical) — Work Type' },
+    { key: 'techsupport:problem_category', label: 'Technical Support Mechanical (Installation) — Problem Category' },
+    { key: 'techsupport:problem_category_commissioning', label: 'Technical Support Mechanical (Commissioning) — Problem Category' },
+    { key: 'techsupport:problem_category_aftersales', label: 'Technical Support Mechanical (After-Sales) — Problem Category' },
+    { key: 'techsupport:support_medium', label: 'Technical Support Mechanical (all 3 sub-types) — Support Medium' },
+    { key: 'techsupport:control_system_installation', label: 'Technical Support Electrical (Installation) — Control System' },
+    { key: 'techsupport:control_system_commissioning', label: 'Technical Support Electrical (Commissioning) — Control System' },
+    { key: 'techsupport:control_system_aftersales', label: 'Technical Support Electrical (After-Sales) — Control System' },
+    { key: 'techsupport:problem_category_electrical', label: 'Technical Support Electrical (all 3 sub-types) — Problem Category' },
     { key: 'generalsupport:work_type_production', label: 'General Support (Production) — Work Type' },
     { key: 'generalsupport:work_type_scm', label: 'General Support (SCM) — Work Type' },
     { key: 'generalsupport:work_type_qc', label: 'General Support (QC) — Work Type' },
