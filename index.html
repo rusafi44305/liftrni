@@ -1334,20 +1334,20 @@
       <div class="kpi-card">
         <div>
           <div class="kpi-num" id="profileKpiMonthly">—</div>
-          <div class="kpi-lbl">Monthly KPI (<span id="profileKpiMonthLabel">this month</span>)</div>
+          <div class="kpi-lbl">Monthly Score (<span id="profileKpiMonthLabel">this month</span>)</div>
         </div>
         <div style="font-size:11.5px; color:var(--text-faint); max-width:150px; text-align:right;"><span id="profileTaskCountMonthly">—</span> tasks this month</div>
       </div>
       <div class="kpi-card">
         <div>
           <div class="kpi-num" id="profileKpiScore">—</div>
-          <div class="kpi-lbl" id="profileKpiLabel">Overall KPI</div>
+          <div class="kpi-lbl" id="profileKpiLabel">Overall Score</div>
         </div>
         <div style="font-size:11.5px; color:var(--text-faint); max-width:150px; text-align:right;"><span id="profileTaskCount">—</span> total tasks (all-time)</div>
       </div>
     </div>
     <div style="display:flex; justify-content:flex-end; margin:-14px 0 24px;">
-      <button class="queue-btn" onclick="loadProfile()">↻ Recalculate my KPI</button>
+      <button class="queue-btn" onclick="loadProfile()">↻ Recalculate my Score</button>
     </div>
  
     <div class="split-grid">
@@ -1392,7 +1392,7 @@
       <button class="queue-btn" onclick="loadDashboard()">Apply</button>
       <button class="queue-btn" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
       <div id="dashKpiTriggerWrap" style="display:none;">
-        <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team KPI from the latest logged tasks">↻ Recalculate team KPI</button>
+        <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate team Score</button>
       </div>
     </div>
  
@@ -1412,7 +1412,7 @@
       <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
       <div class="panel" style="padding:8px 20px;">
         <table class="data">
-          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th>KPI</th><th></th></tr></thead>
+          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th>Score</th><th></th></tr></thead>
           <tbody id="dashLeaderboardBody"><tr><td colspan="4" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
         </table>
       </div>
@@ -1538,7 +1538,7 @@
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
         <div class="role-name">User (Engineer)</div>
-        <div class="role-desc">Logs their own tasks across categories, and can view and add to the R&amp;I Project Manager. Views their own profile, KPI, and history. No access to other people's data or admin tools.</div>
+        <div class="role-desc">Logs their own tasks across categories, and can view and add to the R&amp;I Project Manager. Views their own profile, Score, and history. No access to other people's data or admin tools.</div>
       </div>
       <div class="role-card">
         <div class="role-icon" style="background:var(--accent-dim); color:var(--accent);">A</div>
@@ -1552,7 +1552,7 @@
       </div>
     </div>
  
-    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">KPI category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's KPI score</div></div></div>
+    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head" id="surveyOptionsBlock" style="display:none;"><div><div class="block-title">Reports — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging an entry</div></div></div>
@@ -3353,7 +3353,7 @@
 
   async function loadChatPeople(){
     if(chatPeopleLoaded) return;
-    const { data } = await sb.from('profiles').select('id, full_name, nickname').eq('status', 'active').order('full_name');
+    const { data } = await sb.from('profiles').select('id, full_name, nickname, avatar_url, role').eq('status', 'active').order('full_name');
     chatPeople = data || [];
     chatPeopleLoaded = true;
   }
@@ -3403,6 +3403,25 @@
     return chatPeople.find(p => p.id === id) || null;
   }
 
+  // A small set of muted colors, picked consistently per person (hashed
+  // from their id) so the same person always gets the same color, and
+  // different people in the same conversation are easy to tell apart at a
+  // glance — matching how Slack/iMessage-style group chats color initials.
+  const CHAT_AVATAR_COLORS = ['#6E4FD1','#1D6FD9','#188A5A','#B3651B','#C23D74','#0E8FA3','#6B8E00'];
+  function chatAvatarColor(id){
+    let hash = 0;
+    for(let i = 0; i < (id || '').length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+    return CHAT_AVATAR_COLORS[hash % CHAT_AVATAR_COLORS.length];
+  }
+  function chatAvatarHtml(sender, senderName){
+    const size = '34px';
+    if(sender && sender.avatar_url){
+      return `<img src="${sender.avatar_url}" alt="" style="width:${size}; height:${size}; border-radius:50%; object-fit:cover; flex-shrink:0;">`;
+    }
+    const color = chatAvatarColor(sender?.id || senderName);
+    return `<div style="width:${size}; height:${size}; border-radius:50%; background:${color}; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0;">${initials(senderName)}</div>`;
+  }
+
   function chatMessageHtml(m){
     const isMine = m.sender_id === currentUser?.id;
     const sender = chatPersonById(m.sender_id);
@@ -3420,13 +3439,18 @@
     // "edited" is visible to everyone reading the message, not just the
     // sender — same convention as WhatsApp/Messenger.
     const editedLabel = m.edited ? ' · <span style="font-style:italic;">edited</span>' : '';
-    return `<div class="chat-msg" data-id="${m.id}" style="align-self:${isMine ? 'flex-end' : 'flex-start'}; max-width:75%;">
-      <div style="font-size:11px; color:var(--text-faint); margin-bottom:3px; ${isMine ? 'text-align:right;' : ''}">${escapeHtml(senderName)} · ${time}${editedLabel}</div>
-      <div style="background:${isMine ? 'var(--accent)' : 'var(--surface-alt)'}; color:${isMine ? '#fff' : 'var(--text)'}; padding:9px 13px; border-radius:14px; ${isMine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'} font-size:13.5px; line-height:1.45; word-break:break-word; white-space:pre-wrap;">${escaped}</div>
-      ${isMine ? `<div style="text-align:right; margin-top:3px; display:flex; gap:10px; justify-content:flex-end;">
-        <span style="font-size:10.5px; color:var(--text-faint); cursor:pointer;" onclick='editChatMessage("${m.id}", ${JSON.stringify(m.message)})'>Edit</span>
-        <span style="font-size:10.5px; color:var(--red); cursor:pointer;" onclick="deleteChatMessage('${m.id}')">Delete</span>
-      </div>` : ''}
+    const avatar = chatAvatarHtml(sender, senderName);
+    const bubble = `<div style="max-width:100%;">
+        <div style="font-size:11px; color:var(--text-faint); margin-bottom:3px; ${isMine ? 'text-align:right;' : ''}">${escapeHtml(senderName)} · ${time}${editedLabel}</div>
+        <div style="background:${isMine ? 'var(--accent)' : 'var(--surface-alt)'}; color:${isMine ? '#fff' : 'var(--text)'}; padding:9px 13px; border-radius:16px; ${isMine ? 'border-bottom-right-radius:4px;' : 'border-bottom-left-radius:4px;'} font-size:13.5px; line-height:1.45; word-break:break-word; white-space:pre-wrap; box-shadow:0 1px 2px rgba(10,14,23,0.06);">${escaped}</div>
+        ${isMine ? `<div style="text-align:right; margin-top:3px; display:flex; gap:10px; justify-content:flex-end;">
+          <span style="font-size:10.5px; color:var(--text-faint); cursor:pointer;" onclick='editChatMessage("${m.id}", ${JSON.stringify(m.message)})'>Edit</span>
+          <span style="font-size:10.5px; color:var(--red); cursor:pointer;" onclick="deleteChatMessage('${m.id}')">Delete</span>
+        </div>` : ''}
+      </div>`;
+    return `<div class="chat-msg" data-id="${m.id}" style="align-self:${isMine ? 'flex-end' : 'flex-start'}; max-width:78%; display:flex; align-items:flex-end; gap:8px; flex-direction:${isMine ? 'row-reverse' : 'row'};">
+      ${avatar}
+      ${bubble}
     </div>`;
   }
 
@@ -4057,8 +4081,8 @@
       </div>`).join('') + `<button class="submit-btn" style="margin-top:14px;" onclick="saveKpiWeights()">Save weights</button>
       <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px;">
         <div>
-          <div style="font-size:13.5px; font-weight:600;">Let Admins see individual engineer KPIs</div>
-          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">When off, Admins still see team totals but individual KPI scores on the Dashboard leaderboard show a lock instead. Superadmins can always see everyone's.</div>
+          <div style="font-size:13.5px; font-weight:600;">Let Admins see individual engineer Scores</div>
+          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">When off, Admins still see team totals but individual Scores on the Dashboard leaderboard show a lock instead. Superadmins can always see everyone's.</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="adminsSeeKpiToggle" ${appSettings.admins_see_kpi ? 'checked' : ''} onchange="toggleAdminsSeeKpi(this)">
@@ -4067,8 +4091,8 @@
       </div>
       <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px;">
         <div>
-          <div style="font-size:13.5px; font-weight:600;">Let Admins trigger team KPI recalculation</div>
-          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">Every engineer can always recalculate their own KPI. This governs whether Admins can trigger a recalculation for the whole team from the Dashboard — Superadmins can always do this.</div>
+          <div style="font-size:13.5px; font-weight:600;">Let Admins trigger team Score recalculation</div>
+          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">Every engineer can always recalculate their own Score. This governs whether Admins can trigger a recalculation for the whole team from the Dashboard — Superadmins can always do this.</div>
         </div>
         <label class="switch">
           <input type="checkbox" id="adminsTriggerKpiToggle" ${appSettings.admins_trigger_kpi ? 'checked' : ''} onchange="toggleAdminsTriggerKpi(this)">
@@ -4081,7 +4105,7 @@
     const rows = Object.keys(catMeta).map(key => ({ category: key, weight: parseFloat(document.getElementById('kw_'+key).value) || 0 }));
     const { error } = await sb.from('kpi_weights').upsert(rows, { onConflict: 'category' });
     if(error){ alert('Could not save: ' + error.message); return; }
-    alert('KPI weights saved. Every engineer\'s KPI score now reflects these weights.');
+    alert('Score weights saved. Every engineer\'s Score now reflects these weights.');
   }
 
   // ============ SURVEY REPORT ISSUES — dropdown options (Superadmin only) ============
@@ -4682,7 +4706,7 @@
         : '';
       return `
       <div class="mytask-item">
-        <div class="mt-top"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span>${subLabelsHtml(t.details)}<span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</span></div>
+        <div class="mt-top"><div style="display:flex; align-items:center; flex-wrap:wrap;"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span>${subLabelsHtml(t.details)}</div><span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</span></div>
         <div class="mt-title">${t.project_name || '(untitled)'}${t.lift_id ? ' — Lift <span class="mono">'+t.lift_id+'</span>' : ''}</div>
         <div class="mt-desc">${t.notes || ''}</div>
         <div style="display:flex; gap:8px; margin-top:6px;">
@@ -4732,7 +4756,7 @@
     const overallScore = Object.entries(counts).reduce((sum, [cat,count]) => sum + count * (weightMap[cat] ?? 1), 0);
     const monthlyScore = Object.entries(monthlyCounts).reduce((sum, [cat,count]) => sum + count * (weightMap[cat] ?? 1), 0);
     document.getElementById('profileKpiScore').textContent = hasWeights ? overallScore.toFixed(1) : rows.length;
-    document.getElementById('profileKpiLabel').textContent = hasWeights ? 'Overall weighted KPI' : 'Overall — weights not set yet by a Superadmin';
+    document.getElementById('profileKpiLabel').textContent = hasWeights ? 'Overall weighted Score' : 'Overall — weights not set yet by a Superadmin';
     document.getElementById('profileKpiMonthly').textContent = hasWeights ? monthlyScore.toFixed(1) : monthlyRows.length;
  
     const max = Math.max(1, ...Object.values(counts));
