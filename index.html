@@ -1666,7 +1666,7 @@
       {t:'row2text', l1:'Model Number', l2:'F/S/O', ph1:'e.g. WL-MRL-630', ph2:'e.g. 7/7/7', section:'details'},
       {t:'row2text', l1:'Door Type', l2:'Door Opening Width', ph1:'Center / Side Opening', ph2:'e.g. 800mm', section:'details'},
       {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', source:'postsales:work_type', section:'details'},
-      {t:'text', l:'Projected Production Submission Date', showIf:{group:'Work Type', opt:'Pre-Production Checklist'}, ph:'dd/mm/yyyy — from the production sheet', section:'details'},
+      {t:'text', l:'Projected Production Submission Date', ph:'dd/mm/yyyy — from the production sheet', section:'details'},
       {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
       {t:'textarea', l:'Remarks', section:'description'}
     ],
@@ -2966,6 +2966,11 @@
     }
     const details = row.details || {};
     Object.entries(details).forEach(([k,v]) => {
+      // "Lift ID" is already shown above from the dedicated lift_id column —
+      // it's also separately recorded as a key inside details (that's just
+      // how collectFormData() saves it), which without this check rendered
+      // the exact same field a second time.
+      if(k === 'Lift ID') return;
       const val = Array.isArray(v) ? v.join(', ') : (v ?? '');
       fieldsHtml.push(`<div style="margin-bottom:12px;"><div class="field-label">${k}</div><input type="text" class="edit-detail-field" data-key="${k}" value="${String(val).replace(/"/g,'&quot;')}" style="width:100%; padding:9px 12px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></div>`);
     });
@@ -3492,25 +3497,38 @@
     const performDateEl = document.getElementById('performDate');
     if(performDateEl && performDateEl.value) details['Perform Date'] = performDateEl.value;
  
-    const textInputs = document.querySelectorAll('#dynamicForm .form-field');
-    let inputIndex = 0;
-    fields.forEach(f => {
-      if(f.t === 'text'){
-        const input = document.querySelectorAll('#dynamicForm input.ti:not([disabled])')[inputIndex++];
-        const val = input ? input.value.trim() : '';
-        details[f.l] = val;
-        if(f.l === 'Lift ID') liftId = val || null;
-        // Skip Lift ID specifically — every lift-traceable category lists it
-        // FIRST in the identity section, which meant this was picking the
-        // Lift ID as the "project name" for every one of those categories
-        // (Post-Sales, Installation, Commissioning, After-Sales, Production,
-        // Survey Report Issues) instead of the actual project name field.
-        if(!projectName && f.section === 'identity' && f.l !== 'Lift ID') projectName = val;
-      } else if(f.t === 'row2text'){
-        // row2text uses two inputs but they share the same querySelectorAll pool above only for type=text;
-      } else if(f.t === 'textarea'){
-        // handled below separately
-      }
+    // Plain text fields — matched by their own label, not by counting
+    // position through the DOM. Position-counting used to break the moment
+    // a row2text field (two inputs per field, sharing the same input.ti
+    // class) appeared before a later plain text field: the counter had no
+    // way to know two extra inputs had gone by, so every subsequent text
+    // field silently grabbed the wrong input's value. This is exactly how
+    // "Projected Production Submission Date" ended up storing "MR" — the
+    // actual value of "Lift Type", a row2text field several places earlier.
+    document.querySelectorAll('#dynamicForm .form-field').forEach(fieldEl => {
+      const input = fieldEl.querySelector('input.ti');
+      if(!input) return; // this .form-field wraps a chip group or select, not a plain text input — handled separately below
+      const labelEl = fieldEl.querySelector('.field-label');
+      if(!labelEl) return;
+      const label = labelEl.textContent.replace('*','').trim();
+
+      // A hidden conditional field (its "show if this chip is picked"
+      // condition currently isn't met) shouldn't have its value saved —
+      // it may hold stale text left over from an earlier, different chip
+      // selection that no longer applies.
+      const conditionalWrap = fieldEl.closest('.conditional');
+      if(conditionalWrap && conditionalWrap.style.display === 'none') return;
+
+      const val = input.value.trim();
+      details[label] = val;
+      if(label === 'Lift ID') liftId = val || null;
+      // Skip Lift ID specifically — every lift-traceable category lists it
+      // FIRST in the identity section, which meant this was picking the
+      // Lift ID as the "project name" for every one of those categories
+      // (Post-Sales, Installation, Commissioning, After-Sales, Production,
+      // Survey Report Issues) instead of the actual project name field.
+      const fieldDef = fields.find(f => f.l === label);
+      if(!projectName && fieldDef && fieldDef.section === 'identity' && label !== 'Lift ID') projectName = val;
     });
     // row2text + textarea values, matched by label via DOM order
     document.querySelectorAll('#dynamicForm .form-row-2').forEach(row => {
@@ -3519,7 +3537,10 @@
       labels.forEach((lab, i) => { if(inputs[i]) details[lab.textContent] = inputs[i].value.trim(); });
     });
     document.querySelectorAll('#dynamicForm textarea').forEach(ta => {
-      const label = ta.closest('.form-field').querySelector('.field-label').textContent.replace('*','');
+      const fieldEl = ta.closest('.form-field');
+      const conditionalWrap = fieldEl.closest('.conditional');
+      if(conditionalWrap && conditionalWrap.style.display === 'none') return;
+      const label = fieldEl.querySelector('.field-label').textContent.replace('*','');
       details[label] = ta.value.trim();
     });
     document.querySelectorAll('#dynamicForm .chip-group').forEach(group => {
