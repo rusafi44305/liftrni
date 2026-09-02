@@ -567,12 +567,15 @@
      selected category is unmistakable at a glance, on both desktop and
      mobile, matching how every other category-colored element in the app
      (tiles, tags) already uses that same color, just more vividly here. */
-  .cat-select.cc-rni select{ background-color:var(--c-rni); color:#2B1F5C; border-color:var(--c-rni); }
-  .cat-select.cc-presales select{ background-color:var(--c-presales); color:#0B2E56; border-color:var(--c-presales); }
-  .cat-select.cc-postsales select{ background-color:var(--c-postsales); color:#0B3B22; border-color:var(--c-postsales); }
-  .cat-select.cc-techsupport select{ background-color:var(--c-techsupport); color:#4A2C0A; border-color:var(--c-techsupport); }
-  .cat-select.cc-generalsupport select{ background-color:var(--c-production); color:#1A1A3D; border-color:var(--c-production); }
-  .cat-select.cc-surveyissues select{ background-color:var(--c-surveyissues); color:#5C1212; border-color:var(--c-surveyissues); }
+  .cat-select.cc-rni select{ background-color:var(--c-rni); color:#fff; border-color:var(--c-rni); }
+  .cat-select.cc-presales select{ background-color:var(--c-presales); color:#fff; border-color:var(--c-presales); }
+  .cat-select.cc-postsales select{ background-color:var(--c-postsales); color:#fff; border-color:var(--c-postsales); }
+  .cat-select.cc-techsupport select{ background-color:var(--c-techsupport); color:#fff; border-color:var(--c-techsupport); }
+  .cat-select.cc-generalsupport select{ background-color:var(--c-production); color:#fff; border-color:var(--c-production); }
+  .cat-select.cc-surveyissues select{ background-color:var(--c-surveyissues); color:#fff; border-color:var(--c-surveyissues); }
+  .cat-select.cc-rni select, .cat-select.cc-presales select, .cat-select.cc-postsales select, .cat-select.cc-techsupport select, .cat-select.cc-generalsupport select, .cat-select.cc-surveyissues select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='white' stroke-width='1.8' fill='none'/%3E%3C/svg%3E");
+  }
   .cat-select select option{ background:var(--surface); color:var(--text); font-weight:500; }
   #taskFormPanel{border-left:4px solid var(--accent-c, var(--accent)); transition:border-color .2s;}
   #devTaskPanel{border-left:4px solid var(--accent); transition:border-color .2s;}
