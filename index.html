@@ -309,7 +309,7 @@
   .link-more{font-size:13px; font-weight:600; color:var(--accent); cursor:pointer;}
  
   /* ---------- CATEGORY GRID ---------- */
-  .cat-grid{display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;}
+  .cat-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;}
   .cat-tile{
     background:var(--surface); border:1px solid var(--border);
     border-radius:14px; padding:16px; cursor:pointer; transition:all .18s ease;
@@ -1135,8 +1135,7 @@
         <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-bottom-row"><div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div><span class="cat-pct-badge" id="catPct-postsales">—%</span></div></div>
         <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-bottom-row"><div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-techsupport">—%</span></div></div>
         <div class="cat-tile cc-generalsupport" onclick="showCategoryLog('generalsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'generalsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-bottom-row"><div><div class="cat-name">General Support</div><div class="cat-count" id="catCount-generalsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-generalsupport">—%</span></div></div>
-        <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">Departmental Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div><span class="cat-pct-badge" id="catPct-requisition">—%</span></div></div>
-        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-bottom-row"><div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
+        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
       </div>
     </section>
  
@@ -1213,7 +1212,6 @@
               <option value="postsales">Post-Sales Activity</option>
               <option value="techsupport">Technical Support</option>
               <option value="generalsupport">General Support</option>
-              <option value="requisition">Departmental Requisition</option>
               <option value="surveyissues">Survey Report Issues</option>
             </select>
           </div>
@@ -1599,7 +1597,6 @@
     postsales:{name:'Post-Sales Activity', hasLift:true},
     techsupport:{name:'Technical Support', hasLift:true},
     generalsupport:{name:'General Support', hasLift:true},
-    requisition:{name:'Departmental Requisition', hasLift:false},
     surveyissues:{name:'Survey Report Issues', hasLift:true},
   };
   function logInThisCategory(){
@@ -1709,11 +1706,6 @@
     ],
     generalsupport: [
       {t:'staticselect', l:'Support Type', id:'generalSupportType', req:true, opts:['Production Support','SCM Support','QC Support','Other Support'], onchange:'renderTaskForm(true)', section:'identity'}
-    ],
-    requisition: [
-      {t:'text', l:'Requested By', req:true, section:'identity'},
-      {t:'chips', l:'Requesting Dept.', hint:'select all that apply', source:'requisition:requesting_dept', section:'details'},
-      {t:'textarea', l:'Task Description', section:'description'}
     ],
     surveyissues: [
       liftId(),
@@ -3914,7 +3906,6 @@
     { key: 'generalsupport:work_type_scm', label: 'General Support (SCM) — Work Type' },
     { key: 'generalsupport:work_type_qc', label: 'General Support (QC) — Work Type' },
     { key: 'generalsupport:work_type_other', label: 'General Support (Other) — Work Type' },
-    { key: 'requisition:requesting_dept', label: 'Departmental Requisition — Requesting Dept.' },
   ];
 
   function chipOptionRowHtml(row){
