@@ -1203,6 +1203,7 @@
       <!-- entry form -->
       <div class="panel" id="taskFormPanel">
         <div class="panel-title">Log a task</div>
+        <div id="disciplineBanner" style="font-size:12px; font-weight:600; color:var(--accent); margin-bottom:14px;"></div>
  
         <div style="margin-bottom:16px;">
           <div class="field-label">Category</div>
@@ -1550,12 +1551,12 @@
     <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div></div>
     <div class="panel" style="padding:8px 20px;">
       <table class="data">
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th></th></tr></thead>
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Discipline</th><th>Status</th><th></th></tr></thead>
         <tbody>
-          <tr><td class="rank-name">Hakim (57913)</td><td class="mono" style="font-size:12px;">hakim@gmail.com</td><td><span class="tag gray">Engineer</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Hakim (57913)', this)">Remove</button></td></tr>
-          <tr><td class="rank-name">Iftekhar (44154)</td><td class="mono" style="font-size:12px;">iftekhar@gmail.com</td><td><span class="tag gray">Engineer</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Iftekhar (44154)', this)">Remove</button></td></tr>
-          <tr><td class="rank-name">Mahabub (58150)</td><td class="mono" style="font-size:12px;">mahabub@gmail.com</td><td><span class="tag blue">Admin</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Mahabub (58150)', this)">Remove</button></td></tr>
-          <tr><td class="rank-name">Arun (66636)</td><td class="mono" style="font-size:12px;">arun@gmail.com</td><td><span class="tag gold">Superadmin</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Arun (66636)', this)">Remove</button></td></tr>
+          <tr><td class="rank-name">Hakim (57913)</td><td class="mono" style="font-size:12px;">hakim@gmail.com</td><td><span class="tag gray">Engineer</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Hakim (57913)', this)">Remove</button></td></tr>
+          <tr><td class="rank-name">Iftekhar (44154)</td><td class="mono" style="font-size:12px;">iftekhar@gmail.com</td><td><span class="tag gray">Engineer</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Iftekhar (44154)', this)">Remove</button></td></tr>
+          <tr><td class="rank-name">Mahabub (58150)</td><td class="mono" style="font-size:12px;">mahabub@gmail.com</td><td><span class="tag blue">Admin</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Mahabub (58150)', this)">Remove</button></td></tr>
+          <tr><td class="rank-name">Arun (66636)</td><td class="mono" style="font-size:12px;">arun@gmail.com</td><td><span class="tag gold">Superadmin</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" onclick="removeUser('Arun (66636)', this)">Remove</button></td></tr>
         </tbody>
       </table>
     </div>
@@ -3740,6 +3741,7 @@
             <div class="au-left"><div class="au-avatar">${initials(p.nickname||p.full_name||p.email)}</div><div><div class="au-name">${p.full_name||'(no name)'}${p.nickname ? ' ('+p.nickname+')' : ''}</div><div class="au-email">${p.email}</div></div></div>
             <div style="display:flex; align-items:center; gap:8px;">
               <select class="role-select" id="role-${p.id}"><option value="engineer">Engineer</option><option value="admin">Admin</option><option value="superadmin">Superadmin</option></select>
+              <select class="role-select" id="discipline-${p.id}" title="Discipline"><option value="mechanical">Mechanical</option><option value="electrical">Electrical</option></select>
               <button class="btn approve" onclick="approveUser('${p.id}')">Approve</button>
               <button class="btn reject" onclick="declineUser('${p.id}')">Decline</button>
             </div>
@@ -3753,6 +3755,9 @@
       tbody.innerHTML = (approved||[]).map(p => `
         <tr><td class="rank-name">${p.full_name||p.email} ${p.nickname ? '('+p.nickname+')' : ''}</td><td class="mono" style="font-size:12px;">${p.email}</td>
         <td><span class="tag ${p.role==='superadmin'?'gold':p.role==='admin'?'blue':'gray'}">${p.role}</span></td>
+        <td>${isSuperadmin
+          ? `<select class="role-select" style="font-size:11.5px; padding:3px 6px;" onchange="updateUserDiscipline('${p.id}', this.value)"><option value="mechanical" ${p.discipline==='mechanical'?'selected':''}>Mechanical</option><option value="electrical" ${p.discipline==='electrical'?'selected':''}>Electrical</option></select>`
+          : `<span class="tag gray">${p.discipline === 'electrical' ? 'Electrical' : 'Mechanical'}</span>`}</td>
         <td><span class="tag green">Active</span></td>
         <td>${isSuperadmin ? `<button class="btn remove" onclick="removeUser('${p.id}', this)">Remove</button>` : '<span style="color:var(--text-faint); font-size:12px;">—</span>'}</td></tr>`).join('');
     }
@@ -3761,7 +3766,9 @@
   async function approveUser(id){
     const roleSel = document.getElementById('role-'+id);
     const role = roleSel ? roleSel.value : 'engineer';
-    const { error } = await sb.from('profiles').update({ role, status: 'active' }).eq('id', id);
+    const disciplineSel = document.getElementById('discipline-'+id);
+    const discipline = disciplineSel ? disciplineSel.value : 'mechanical';
+    const { error } = await sb.from('profiles').update({ role, discipline, status: 'active' }).eq('id', id);
     if(error){ alert('Could not approve: ' + error.message); return; }
     loadAdminPanel();
   }
@@ -3776,6 +3783,14 @@
     const { error } = await sb.from('profiles').update({ status: 'pending' }).eq('id', id);
     if(error){ alert('Could not remove: ' + error.message); return; }
     loadAdminPanel();
+  }
+  async function updateUserDiscipline(id, discipline){
+    const { error } = await sb.from('profiles').update({ discipline }).eq('id', id);
+    if(error){ alert('Could not update discipline: ' + error.message); loadAdminPanel(); return; }
+    // If a Superadmin just changed their OWN discipline, refresh the local
+    // copy immediately so the "Log a task as..." banner updates without
+    // needing a full page reload.
+    if(id === currentUser?.id && currentProfile) currentProfile.discipline = discipline;
   }
  
   // ============ KPI WEIGHTS (Superadmin only) ============
@@ -4369,6 +4384,12 @@
   async function loadMyTasks(){
     const el = document.getElementById('myTasksList');
     if(!currentUser){ return; }
+    const bannerEl = document.getElementById('disciplineBanner');
+    if(bannerEl && currentProfile){
+      bannerEl.textContent = currentProfile.discipline === 'electrical'
+        ? 'Log a task as an Electrical Engineer'
+        : 'Log a task as a Mechanical Engineer';
+    }
     const { data, error } = await sb.from('tasks').select('*').eq('employee_id', currentUser.id).order('created_at', { ascending: false }).limit(30);
     if(error){ el.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
     myTasksRows = data || [];
