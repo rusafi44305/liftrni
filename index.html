@@ -1726,6 +1726,71 @@
     ]
   };
 
+  // Reports — 5 sub-types, discipline-filtered. Unlike Technical Support or
+  // General Support (where everyone sees the same sub-type dropdown, just
+  // different fields once picked), Reports needs the dropdown OPTIONS
+  // themselves to differ by discipline: Mechanical only ever sees 2
+  // choices, Electrical only sees the other 3 — handled in renderTaskForm().
+  const reportsSubforms = {
+    'Survey Data Mismatch Report': [
+      liftId(),
+      {t:'text', l:'Project Name', req:true, section:'identity'},
+      {t:'text', l:'Month', req:true, section:'identity'},
+      {t:'select', l:'Installation Wing', req:true, source:'installationWings', placeholder:'Select a wing…', section:'details'},
+      {t:'select', l:'Type of Data Missing', req:true, source:'dataIssueTypes', placeholder:'Select a type…', section:'details'},
+      {t:'text', l:'Short Description', req:true, ph:'What data is missing or wrong', section:'details'},
+      {t:'textarea', l:'Impact', ph:'What effect this had — rework, delay, cost, etc.', section:'description'},
+      {t:'textarea', l:'Remarks', section:'description'}
+    ],
+    'Mechanical Components Service Report': [
+      {t:'text', l:'Project Name', req:true, section:'identity'},
+      liftId(),
+      {t:'chipselect', l:'Damage Item Name', req:true, source:'surveyissues:damage_item_mechanical', placeholder:'Select…', section:'details'},
+      {t:'text', l:'Problem Details', req:true, section:'details'},
+      {t:'textarea', l:'Solution Statement', req:true, section:'details'},
+      {t:'text', l:'Service Complete Date', req:true, section:'details'},
+      {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Not Solved','Ongoing'], section:'details'},
+      {t:'text', l:'Root cause of problem', section:'description'},
+      {t:'text', l:'Remark', section:'description'}
+    ],
+    'Commissioning Damage Materials Report': [
+      {t:'text', l:'Project Name', req:true, section:'identity'},
+      liftId(),
+      {t:'chipselect', l:'Zone Engineer', req:true, source:'surveyissues:zone_engineer', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Control System', req:true, source:'surveyissues:control_system_commissioning_report', placeholder:'Select…', section:'details'},
+      {t:'chips', l:'Damage Components', req:true, hint:'select all that apply', source:'surveyissues:damage_components_commissioning', section:'details'},
+      {t:'text', l:'Other Component (please specify)', showIf:{group:'Damage Components', opt:'Other'}, section:'details'},
+      {t:'text', l:'Problem Details', req:true, section:'details'},
+      {t:'textarea', l:'Solution Statement', req:true, section:'details'},
+      {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Under observation','Not Solved','Pending'], section:'details'}
+    ],
+    'After Sales Damage Materials Report': [
+      {t:'text', l:'Project Name', req:true, section:'identity'},
+      liftId(),
+      {t:'chipselect', l:'Zone Engineer', req:true, source:'surveyissues:zone_engineer', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Control System', req:true, source:'surveyissues:control_system_aftersales_report', placeholder:'Select…', section:'details'},
+      {t:'chips', l:'Damage Components', req:true, hint:'select all that apply', source:'surveyissues:damage_components_aftersales', section:'details'},
+      {t:'text', l:'Other Component (please specify)', showIf:{group:'Damage Components', opt:'Other'}, section:'details'},
+      {t:'text', l:'Problem Details', req:true, section:'details'},
+      {t:'textarea', l:'Solution Statement', req:true, section:'details'},
+      {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Under observation','Not Solved','Pending'], section:'details'}
+    ],
+    'Electrical & Electronics Components Service Report': [
+      {t:'text', l:'Project Name', req:true, section:'identity'},
+      liftId(),
+      {t:'chipselect', l:'Control System Brand', req:true, source:'surveyissues:control_system_brand', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Damage Item Name', req:true, source:'surveyissues:damage_item_electrical', hasOther:true, placeholder:'Select…', section:'details'},
+      {t:'text', l:'Other Item (please specify)', showIf:{selectLabel:'Damage Item Name', value:'Other'}, section:'details'},
+      {t:'text', l:'Problem Details', req:true, section:'details'},
+      {t:'staticselect', l:'Material Source', id:'materialSourceSelect', req:true, opts:['Commissioning','After Sales','Production','Factory Maintenance'], section:'details'},
+      {t:'textarea', l:'Solution Statement', req:true, section:'details'},
+      {t:'text', l:'Service Complete Date', req:true, section:'details'},
+      {t:'chips', l:'Solution Status', req:true, single:true, opts:['Solved','Not Solved','Ongoing'], section:'details'},
+      {t:'text', l:'Root cause of problem', section:'description'},
+      {t:'text', l:'Remark', section:'description'}
+    ]
+  };
+
   const taskForms = {
     rni: [
       {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
@@ -1761,14 +1826,7 @@
       {t:'staticselect', l:'Support Type', id:'generalSupportType', req:true, opts:['Production Support','SCM Support','QC Support','Other Support'], onchange:'renderTaskForm(true)', section:'identity'}
     ],
     surveyissues: [
-      liftId(),
-      {t:'text', l:'Project Name', req:true, section:'identity'},
-      {t:'text', l:'Month', req:true, section:'identity'},
-      {t:'select', l:'Installation Wing', req:true, source:'installationWings', placeholder:'Select a wing…', section:'details'},
-      {t:'select', l:'Type of Data Missing', req:true, source:'dataIssueTypes', placeholder:'Select a type…', section:'details'},
-      {t:'text', l:'Short Description', req:true, ph:'What data is missing or wrong', section:'details'},
-      {t:'textarea', l:'Impact', ph:'What effect this had — rework, delay, cost, etc.', section:'description'},
-      {t:'textarea', l:'Remarks', section:'description'}
+      {t:'staticselect', l:'Report Type', id:'reportTypeSelect', req:true, opts:['Survey Data Mismatch Report'], onchange:'renderTaskForm(true)', section:'identity'}
     ],
   };
  
@@ -1912,6 +1970,26 @@
       const subField = fields.find(f => f.id === 'generalSupportType');
       if(subField) subField.currentValue = subType;
       fields = fields.concat(generalSupportSubforms[subType] || []);
+    }
+
+    // Reports — unlike every other sub-typed category, the dropdown OPTIONS
+    // themselves differ by discipline, not just the fields shown once one
+    // is picked. Mechanical only ever sees 2 report types, Electrical only
+    // sees the other 3.
+    if(cat === 'surveyissues'){
+      const reportOptions = discipline === 'electrical'
+        ? ['Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report']
+        : ['Survey Data Mismatch Report', 'Mechanical Components Service Report'];
+      const reportField = fields.find(f => f.id === 'reportTypeSelect');
+      if(reportField) reportField.opts = reportOptions;
+      const reportSelect = document.getElementById('reportTypeSelect');
+      // If discipline changed since the last render (or this is the first
+      // render), the previously-selected value might not be valid for this
+      // discipline's option list anymore — fall back to the first option
+      // rather than silently keeping an option that's no longer offered.
+      const reportType = (reportSelect && reportOptions.includes(reportSelect.value)) ? reportSelect.value : reportOptions[0];
+      if(reportField) reportField.currentValue = reportType;
+      fields = fields.concat(reportsSubforms[reportType] || []);
     }
 
     // Any category using Superadmin-managed options — the "select" dropdowns
@@ -4021,6 +4099,14 @@
     { key: 'generalsupport:work_type_scm', label: 'General Support (SCM) — Work Type' },
     { key: 'generalsupport:work_type_qc', label: 'General Support (QC) — Work Type' },
     { key: 'generalsupport:work_type_other', label: 'General Support (Other) — Work Type' },
+    { key: 'surveyissues:damage_item_mechanical', label: 'Reports — Mechanical Components Service: Damage Item Name' },
+    { key: 'surveyissues:zone_engineer', label: 'Reports — Zone Engineer (shared)' },
+    { key: 'surveyissues:control_system_commissioning_report', label: 'Reports — Commissioning Damage Materials: Control System' },
+    { key: 'surveyissues:damage_components_commissioning', label: 'Reports — Commissioning Damage Materials: Damage Components' },
+    { key: 'surveyissues:control_system_aftersales_report', label: 'Reports — After Sales Damage Materials: Control System' },
+    { key: 'surveyissues:damage_components_aftersales', label: 'Reports — After Sales Damage Materials: Damage Components' },
+    { key: 'surveyissues:control_system_brand', label: 'Reports — Electrical & Electronics Service: Control System Brand' },
+    { key: 'surveyissues:damage_item_electrical', label: 'Reports — Electrical & Electronics Service: Damage Item Name' },
   ];
 
   function chipOptionRowHtml(row){
