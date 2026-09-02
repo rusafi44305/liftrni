@@ -365,6 +365,7 @@
   .cc-commission{--accent-c:var(--c-commission); --accent-ic:var(--ic-commission);}
   .cc-aftersales{--accent-c:var(--c-aftersales); --accent-ic:var(--ic-aftersales);}
   .cc-production{--accent-c:var(--c-production); --accent-ic:var(--ic-production);}
+  .cc-generalsupport{--accent-c:var(--c-production); --accent-ic:var(--ic-production);}
   .cc-requisition{--accent-c:var(--c-requisition); --accent-ic:var(--ic-requisition);}
   .cc-scm{--accent-c:var(--c-scm); --accent-ic:var(--ic-scm);}
   .cc-existingdev{--accent-c:var(--c-existingdev); --accent-ic:var(--ic-existingdev);}
@@ -1133,10 +1134,9 @@
         <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-bottom-row"><div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div><span class="cat-pct-badge" id="catPct-presales">—%</span></div></div>
         <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-bottom-row"><div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div><span class="cat-pct-badge" id="catPct-postsales">—%</span></div></div>
         <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-bottom-row"><div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-techsupport">—%</span></div></div>
-        <div class="cat-tile cc-production" onclick="showCategoryLog('production')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'production')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-bottom-row"><div><div class="cat-name">Production Support</div><div class="cat-count" id="catCount-production">— logged</div></div><span class="cat-pct-badge" id="catPct-production">—%</span></div></div>
-        <div class="cat-tile cc-scm" onclick="showCategoryLog('scm')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'scm')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">SCM Support</div><div class="cat-count" id="catCount-scm">— logged</div></div><span class="cat-pct-badge" id="catPct-scm">—%</span></div></div>
-        <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-bottom-row"><div><div class="cat-name">Departmental Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div><span class="cat-pct-badge" id="catPct-requisition">—%</span></div></div>
-        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">08</div><div class="cat-bottom-row"><div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
+        <div class="cat-tile cc-generalsupport" onclick="showCategoryLog('generalsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'generalsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-bottom-row"><div><div class="cat-name">General Support</div><div class="cat-count" id="catCount-generalsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-generalsupport">—%</span></div></div>
+        <div class="cat-tile cc-requisition" onclick="showCategoryLog('requisition')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'requisition')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">Departmental Requisition</div><div class="cat-count" id="catCount-requisition">— logged</div></div><span class="cat-pct-badge" id="catPct-requisition">—%</span></div></div>
+        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">07</div><div class="cat-bottom-row"><div><div class="cat-name">Survey Report Issues</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
       </div>
     </section>
  
@@ -1212,8 +1212,7 @@
               <option value="presales">Pre-Sales Support</option>
               <option value="postsales">Post-Sales Activity</option>
               <option value="techsupport">Technical Support</option>
-              <option value="production">Production Support</option>
-              <option value="scm">SCM Support</option>
+              <option value="generalsupport">General Support</option>
               <option value="requisition">Departmental Requisition</option>
               <option value="surveyissues">Survey Report Issues</option>
             </select>
@@ -1599,8 +1598,7 @@
     presales:{name:'Pre-Sales Support', hasLift:false},
     postsales:{name:'Post-Sales Activity', hasLift:true},
     techsupport:{name:'Technical Support', hasLift:true},
-    production:{name:'Production Support', hasLift:true},
-    scm:{name:'SCM Support', hasLift:false},
+    generalsupport:{name:'General Support', hasLift:true},
     requisition:{name:'Departmental Requisition', hasLift:false},
     surveyissues:{name:'Survey Report Issues', hasLift:true},
   };
@@ -1616,6 +1614,10 @@
   // engineers often perform more than one work type in a single task, so exclusive picking was wrong.
   // section: 'identity' (what/where this task is), 'details' (categorical work info), 'description' (free text)
   const liftId = () => ({t:'text', l:'Lift ID', mono:true, req:true, numeric:true, ph:'Mandatory — required for lift tracing', section:'identity'});
+  // Used by General Support's sub-types — Lift ID is genuinely useful there
+  // but not every entry (e.g. a QC check or "other" task) is tied to one
+  // specific lift, so unlike most categories it's optional here.
+  const liftIdOptional = () => ({t:'text', l:'Lift ID', mono:true, numeric:true, ph:'Optional — leave blank if not tied to a specific lift', section:'identity'});
  
   // Technical Supports merges three previously-separate categories
   // (Installation, Commissioning, After-Sales) into one card, each kept
@@ -1643,6 +1645,37 @@
     ]
   };
 
+  // General Support merges what used to be two separate categories
+  // (Production Support, SCM Support) plus two brand new sub-types (QC
+  // Support, Other Support) — the same "one category, several sub-types"
+  // pattern as Technical Support above. Unlike Technical Support though,
+  // these sub-types don't share the same identity field: Production/QC/
+  // Other are all optionally tied to a Lift ID, while SCM Support is
+  // tied to a Supplier instead — so each sub-type defines its own complete
+  // set of fields rather than sharing a common base.
+  const generalSupportSubforms = {
+    'Production Support': [
+      liftIdOptional(),
+      {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_production', section:'details'},
+      {t:'textarea', l:'Notes', section:'description'}
+    ],
+    'SCM Support': [
+      {t:'text', l:'Supplier Name', req:true, section:'identity'},
+      {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_scm', section:'details'},
+      {t:'textarea', l:'Notes', section:'description'}
+    ],
+    'QC Support': [
+      liftIdOptional(),
+      {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_qc', section:'details'},
+      {t:'textarea', l:'Notes', section:'description'}
+    ],
+    'Other Support': [
+      liftIdOptional(),
+      {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_other', section:'details'},
+      {t:'textarea', l:'Notes', section:'description'}
+    ]
+  };
+
   const taskForms = {
     rni: [
       {t:'text', l:'Project / Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
@@ -1666,7 +1699,6 @@
       {t:'row2text', l1:'Model Number', l2:'F/S/O', ph1:'e.g. WL-MRL-630', ph2:'e.g. 7/7/7', section:'details'},
       {t:'row2text', l1:'Door Type', l2:'Door Opening Width', ph1:'Center / Side Opening', ph2:'e.g. 800mm', section:'details'},
       {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', source:'postsales:work_type', section:'details'},
-      {t:'text', l:'Projected Production Submission Date', ph:'dd/mm/yyyy — from the production sheet', section:'details'},
       {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
       {t:'textarea', l:'Remarks', section:'description'}
     ],
@@ -1675,20 +1707,13 @@
       {t:'text', l:'Project Name', req:true, section:'identity'},
       {t:'staticselect', l:'Support Type', id:'techSupportType', req:true, opts:['Installation Support','Commissioning Support','After-Sales Support'], onchange:'renderTaskForm(true)', section:'identity'}
     ],
-    production: [
-      liftId(),
-      {t:'chips', l:'Work Type', hint:'select all that apply', source:'production:work_type', section:'details'},
-      {t:'textarea', l:'Notes', section:'description'}
+    generalsupport: [
+      {t:'staticselect', l:'Support Type', id:'generalSupportType', req:true, opts:['Production Support','SCM Support','QC Support','Other Support'], onchange:'renderTaskForm(true)', section:'identity'}
     ],
     requisition: [
       {t:'text', l:'Requested By', req:true, section:'identity'},
       {t:'chips', l:'Requesting Dept.', hint:'select all that apply', source:'requisition:requesting_dept', section:'details'},
       {t:'textarea', l:'Task Description', section:'description'}
-    ],
-    scm: [
-      {t:'text', l:'Supplier Name', req:true, section:'identity'},
-      {t:'chips', l:'Work Type', hint:'select all that apply', source:'scm:work_type', section:'details'},
-      {t:'textarea', l:'Notes', section:'description'}
     ],
     surveyissues: [
       liftId(),
@@ -1806,6 +1831,17 @@
       const subField = fields.find(f => f.id === 'techSupportType');
       if(subField) subField.currentValue = subType;
       fields = fields.concat(techSupportSubforms[subType] || []);
+    }
+
+    // Same pattern as Technical Support above — General Support's fields
+    // live inside generalSupportSubforms, keyed by whichever of the 4
+    // sub-types is currently selected.
+    if(cat === 'generalsupport'){
+      const subSelect = document.getElementById('generalSupportType');
+      const subType = subSelect ? subSelect.value : 'Production Support';
+      const subField = fields.find(f => f.id === 'generalSupportType');
+      if(subField) subField.currentValue = subType;
+      fields = fields.concat(generalSupportSubforms[subType] || []);
     }
 
     // Any category using Superadmin-managed options — the "select" dropdowns
@@ -3874,9 +3910,11 @@
     { key: 'techsupport:problem_category_commissioning', label: 'Technical Support (Commissioning) — Problem Category' },
     { key: 'techsupport:problem_category_aftersales', label: 'Technical Support (After-Sales) — Problem Category' },
     { key: 'techsupport:support_medium', label: 'Technical Support (all 3 sub-types) — Support Medium' },
-    { key: 'production:work_type', label: 'Production Support — Work Type' },
+    { key: 'generalsupport:work_type_production', label: 'General Support (Production) — Work Type' },
+    { key: 'generalsupport:work_type_scm', label: 'General Support (SCM) — Work Type' },
+    { key: 'generalsupport:work_type_qc', label: 'General Support (QC) — Work Type' },
+    { key: 'generalsupport:work_type_other', label: 'General Support (Other) — Work Type' },
     { key: 'requisition:requesting_dept', label: 'Departmental Requisition — Requesting Dept.' },
-    { key: 'scm:work_type', label: 'SCM Support — Work Type' },
   ];
 
   function chipOptionRowHtml(row){
