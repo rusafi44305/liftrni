@@ -560,7 +560,20 @@
     background:var(--surface); cursor:pointer; appearance:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235B6472' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
     background-repeat:no-repeat; background-position:right 14px center;
+    transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
+  /* The selected category gets a genuinely bold, solid fill in its own
+     theme color — not just a subtle tint — specifically so the currently
+     selected category is unmistakable at a glance, on both desktop and
+     mobile, matching how every other category-colored element in the app
+     (tiles, tags) already uses that same color, just more vividly here. */
+  .cat-select.cc-rni select{ background-color:var(--c-rni); color:#2B1F5C; border-color:var(--c-rni); }
+  .cat-select.cc-presales select{ background-color:var(--c-presales); color:#0B2E56; border-color:var(--c-presales); }
+  .cat-select.cc-postsales select{ background-color:var(--c-postsales); color:#0B3B22; border-color:var(--c-postsales); }
+  .cat-select.cc-techsupport select{ background-color:var(--c-techsupport); color:#4A2C0A; border-color:var(--c-techsupport); }
+  .cat-select.cc-generalsupport select{ background-color:var(--c-production); color:#1A1A3D; border-color:var(--c-production); }
+  .cat-select.cc-surveyissues select{ background-color:var(--c-surveyissues); color:#5C1212; border-color:var(--c-surveyissues); }
+  .cat-select select option{ background:var(--surface); color:var(--text); font-weight:500; }
   #taskFormPanel{border-left:4px solid var(--accent-c, var(--accent)); transition:border-color .2s;}
   #devTaskPanel{border-left:4px solid var(--accent); transition:border-color .2s;}
   #devTaskPanel .section-label{color:var(--accent);}
@@ -754,7 +767,7 @@
     border-color:var(--accent) !important;
   }
   .chip-opt{ border-radius:999px !important; }
-  .queue-btn, .submit-btn, .fselect, select, input[type="text"], input[type="date"]:not(.trend-date-input), input[type="month"], input[type="number"]{
+  .queue-btn, .submit-btn, .fselect, select:not(.cat-select-input), input[type="text"], input[type="date"]:not(.trend-date-input), input[type="month"], input[type="number"]{
     background:var(--surface) !important;
   }
   .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details){
@@ -1207,7 +1220,7 @@
         <div style="margin-bottom:16px;">
           <div class="field-label">Category</div>
           <div class="cat-select">
-            <select id="catSelect" onchange="renderTaskForm()">
+            <select id="catSelect" class="cat-select-input" onchange="renderTaskForm()">
               <option value="rni">R&amp;I Activity</option>
               <option value="presales">Pre-Sales Support</option>
               <option value="postsales">Post-Sales Activity</option>
@@ -1943,6 +1956,14 @@
     const cat = document.getElementById('catSelect').value;
     let fields = taskForms[cat] || [];
     const discipline = (currentProfile && currentProfile.discipline === 'electrical') ? 'electrical' : 'mechanical';
+
+    // The category dropdown itself picks up that category's own bold theme
+    // color — removing every cc-* class first, since only one should ever
+    // apply at a time.
+    const catSelectWrap = document.querySelector('.cat-select');
+    if(catSelectWrap){
+      catSelectWrap.className = 'cat-select cc-' + cat;
+    }
 
     // R&I Activity's fields are identical for both teams, but Task Category
     // and Status are independently managed per team — same field, same
@@ -3080,7 +3101,7 @@
         <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
           <div class="cat-log-title-block">
             ${hasLift ? `<div class="mono" style="font-weight:700; font-size:14px; margin-bottom:2px;">Lift ${row.lift_id || '—'}</div>` : ''}
-            <div style="font-weight:600;">${row.project_name || '(untitled)'}</div>
+            <div style="font-weight:600;">${row.project_name || '(untitled)'}${subLabelsHtml(row.details)}</div>
           </div>
           <div class="cat-log-meta-block" style="text-align:right; font-size:12px; color:var(--text-faint); margin-left:auto;">
             <div>${emp}</div>
@@ -3288,6 +3309,20 @@
     const div = document.createElement('div');
     div.textContent = str ?? '';
     return div.innerHTML;
+  }
+
+  // Builds the small extra pills shown next to a task's category tag: which
+  // discipline it was logged under, and its sub-category (Support Type /
+  // Report Type) if that category actually has one. Shared across every
+  // place a task gets listed, so all of them stay consistent automatically.
+  function subLabelsHtml(details){
+    details = details || {};
+    const pills = [];
+    if(details['Discipline']) pills.push(details['Discipline']);
+    const subType = details['Support Type'] || details['Report Type'];
+    if(subType) pills.push(subType);
+    if(!pills.length) return '';
+    return pills.map(p => `<span style="display:inline-block; background:var(--surface-alt); color:var(--text-dim); font-size:10.5px; font-weight:600; padding:2px 9px; border-radius:999px; margin-left:5px;">${escapeHtml(p)}</span>`).join('');
   }
 
   // ============ TEAM CHAT ============
@@ -3670,7 +3705,7 @@
     const cat = catMeta[row.category]?.name || row.category;
     const who = displayName({ full_name: row.employee_full_name, nickname: row.employee_nickname });
     return `<div class="feed-item">
-      <span class="tag c-${row.category}">${cat}</span>
+      <span class="tag c-${row.category}">${cat}</span>${subLabelsHtml(row.details)}
       <div class="feed-text"><b>${who}</b> logged <i>${row.project_name || '(untitled)'}</i>${row.lift_id ? ' — Lift <span class="mono">'+row.lift_id+'</span>' : ''}
         <div class="feed-meta">${timeAgo(row.created_at)}</div>
       </div>
@@ -3712,6 +3747,12 @@
     // real-world clock time regardless of what's picked here.
     const performDateEl = document.getElementById('performDate');
     if(performDateEl && performDateEl.value) details['Perform Date'] = performDateEl.value;
+ 
+    // Records which discipline was actually in effect at the moment this
+    // was logged — not something re-derived later from the person's
+    // current discipline, since that could change afterward and would
+    // then misrepresent what was genuinely true when this was submitted.
+    if(currentProfile) details['Discipline'] = currentProfile.discipline === 'electrical' ? 'Electrical' : 'Mechanical';
  
     // Plain text fields — matched by their own label, not by counting
     // position through the DOM. Position-counting used to break the moment
@@ -4306,7 +4347,7 @@
             <div class="t-item">
               <div class="t-dot ${TIMELINE_DOT_COLORS[i % TIMELINE_DOT_COLORS.length]}"></div>
               <div class="t-card">
-                <div class="t-top"><div class="t-title">${row.project_name || '(untitled)'} <span class="tag c-${row.category}" style="margin-left:6px;">${catMeta[row.category]?.name || row.category}</span></div><div class="t-date">${new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</div></div>
+                <div class="t-top"><div class="t-title">${row.project_name || '(untitled)'} <span class="tag c-${row.category}" style="margin-left:6px;">${catMeta[row.category]?.name || row.category}</span>${subLabelsHtml(row.details)}</div><div class="t-date">${new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</div></div>
                 <div class="t-desc">${row.notes || ''}</div>
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; gap:10px;">
                   <div class="t-emp">Logged by ${row.profiles ? displayName(row.profiles) : '—'}</div>
@@ -4621,7 +4662,7 @@
         : '';
       return `
       <div class="mytask-item">
-        <div class="mt-top"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span><span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</span></div>
+        <div class="mt-top"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span>${subLabelsHtml(t.details)}<span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</span></div>
         <div class="mt-title">${t.project_name || '(untitled)'}${t.lift_id ? ' — Lift <span class="mono">'+t.lift_id+'</span>' : ''}</div>
         <div class="mt-desc">${t.notes || ''}</div>
         <div style="display:flex; gap:8px; margin-top:6px;">
@@ -4797,7 +4838,7 @@
         return `<div class="panel cat-log-row" style="padding:14px 20px;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
             <div class="cat-log-title-block">
-              <span class="tag c-${r.category}">${catMeta[r.category]?.name || r.category}</span>
+              <span class="tag c-${r.category}">${catMeta[r.category]?.name || r.category}</span>${subLabelsHtml(r.details)}
               <div style="font-weight:600; margin-top:6px;">${r.project_name || '(untitled)'}${r.lift_id ? ' — Lift <span class="mono">'+r.lift_id+'</span>' : ''}</div>
             </div>
             <div class="cat-log-meta-block" style="text-align:right; font-size:12px; color:var(--text-faint); margin-left:auto;">
