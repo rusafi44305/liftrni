@@ -1627,6 +1627,15 @@
   function onViewShown(name){
     if(name === 'admin' && typeof loadAdminPanel === 'function') loadAdminPanel();
     if(name === 'mytasks' && typeof loadMyTasks === 'function') loadMyTasks();
+    // The task-entry form only ever got built by the category dropdown's
+    // own onchange handler — nothing called it on a fresh visit to My
+    // Tasks itself. It happened to still appear correctly the first time
+    // because of an old page-load listener; that listener was removed
+    // earlier as apparent dead code, not realizing it was quietly doing
+    // this job. Rendering it explicitly here, every time this view
+    // becomes active, is more reliable than depending on a one-time
+    // page-load event anyway.
+    if(name === 'mytasks' && typeof renderTaskForm === 'function') renderTaskForm();
     if(name === 'profile' && typeof loadProfile === 'function') loadProfile();
     if(name === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
     if(name === 'gantt' && typeof loadDevDashboard === 'function') loadDevDashboard();
