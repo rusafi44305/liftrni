@@ -510,6 +510,7 @@
   .gantt-months .gm{font-size:11px; font-weight:600; color:var(--text-faint); text-align:center; padding-bottom:8px; border-bottom:1px solid var(--border);}
   .gantt-project-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden; }
   .gantt-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 20px; flex-wrap:wrap;}
+  .proj-gantt-task-row:hover{ background:var(--surface-alt); }
   .gt-name{font-size:14px; font-weight:600;}
   .gt-sub{font-size:12px; color:var(--text-faint); font-weight:400; margin-top:2px;}
   .status-capsule{font-size:11.5px; font-weight:600; padding:4px 12px; border-radius:999px; color:#fff; white-space:nowrap;}
@@ -799,7 +800,7 @@
   .queue-btn, .submit-btn, .fselect, select:not(.cat-select-input), input[type="text"], input[type="date"]:not(.trend-date-input), input[type="month"], input[type="number"]{
     background:var(--surface) !important;
   }
-  .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details):not(.status-active){
+  .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details){
     background:var(--surface) !important;
   }
   .kpi-card{
@@ -2426,27 +2427,17 @@
       const e = t.end_date ? new Date(t.end_date).getTime() : s;
       const left = Math.max(0, Math.round(((s - rangeStart) / span) * 100));
       const width = Math.max(3, Math.round(((e - s) / span) * 100));
-      // Quick-action buttons for the 3 most common status changes — the
-      // currently-active one shows filled/solid so it's obvious at a
-      // glance what a task's status already is, without needing to open
-      // the full edit form just to change it.
-      const quickBtn = (status, label) => {
-        const isActive = t.status === status;
-        const c = DEV_STATUS_COLOR[status];
-        return `<button class="btn${isActive ? ' status-active' : ''}" style="padding:3px 8px; font-size:10px; ${isActive ? `background:${c}; color:#fff; border-color:${c};` : ''}" ${isActive ? 'disabled' : ''} onclick="quickSetTaskStatus('${projectId}','${t.id}','${status}')">${label}</button>`;
-      };
-      return `<div style="display:flex; align-items:center; gap:10px; padding:8px 0; flex-wrap:wrap; border-bottom:1px solid var(--border);">
+      return `<div class="proj-gantt-task-row" style="display:flex; align-items:center; gap:10px; padding:10px 8px; flex-wrap:wrap; border-radius:10px; transition:background-color .15s ease;">
         <div style="width:170px; flex-shrink:0;">
           <div style="font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.task_name}</div>
-          <div style="font-size:11px; color:var(--text-faint);">${personLabel} · <span style="color:${color};">${t.status}</span></div>
+          <div style="font-size:11px; color:var(--text-faint); display:flex; align-items:center; gap:5px; margin-top:2px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${color}; flex-shrink:0;"></span>${personLabel} · ${t.status}</div>
         </div>
-        <div style="flex:1; position:relative; height:24px; background:var(--surface-alt); border-radius:6px; min-width:100px;">
-          <div style="position:absolute; left:${left}%; width:${width}%; height:100%; background:${color}; border-radius:6px; display:flex; align-items:center; padding:0 8px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden;" title="${fmtShort(s)} → ${fmtShort(e)}">${t.task_name}</div>
+        <div style="flex:1; position:relative; height:22px; background:var(--surface-alt); border-radius:999px; min-width:100px;">
+          <div style="position:absolute; left:${left}%; width:${width}%; height:100%; background:${color}; border-radius:999px; display:flex; align-items:center; padding:0 10px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden;" title="${fmtShort(s)} → ${fmtShort(e)}">${t.task_name}</div>
         </div>
-        ${canManageTasks ? `<div style="display:flex; gap:4px; flex-shrink:0; min-width:212px; justify-content:flex-end;">${quickBtn('Done', 'Done')}${quickBtn('In Progress', 'Ongoing')}${quickBtn('Cancelled', 'Cancelled')}</div>` : ''}
-        <div style="display:flex; gap:4px; flex-shrink:0; min-width:132px; justify-content:flex-end;">
-          ${canManageTasks ? `<button class="btn edit" style="padding:4px 9px; font-size:10.5px;" onclick="editProjectTask('${projectId}','${t.id}')">Edit</button>` : ''}
-          ${canManageTasks ? `<button class="btn remove" style="padding:4px 9px; font-size:10.5px;" onclick="deleteProjectTask('${projectId}','${t.id}')">Delete</button>` : ''}
+        <div style="display:flex; gap:6px; flex-shrink:0; min-width:132px; justify-content:flex-end;">
+          ${canManageTasks ? `<button class="btn edit" style="padding:5px 11px; font-size:10.5px; border-radius:8px;" onclick="editProjectTask('${projectId}','${t.id}')">Edit</button>` : ''}
+          ${canManageTasks ? `<button class="btn remove" style="padding:5px 11px; font-size:10.5px; border-radius:8px;" onclick="deleteProjectTask('${projectId}','${t.id}')">Delete</button>` : ''}
         </div>
       </div>`;
     };
@@ -2467,24 +2458,24 @@
     editingProjectTaskId = null;
     const formWrap = document.getElementById('projTaskAddFormWrap-' + projectId);
     formWrap.innerHTML = `
-      <div style="margin-bottom:12px; padding:12px; border:1px solid var(--border); border-radius:8px;">
-        <div class="form-row-2" style="margin-bottom:8px;">
-          <input type="text" id="ptName" placeholder="Task name" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
-          <select id="ptAssigned" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"><option value="">Unassigned</option>${devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('')}</select>
+      <div style="margin-bottom:14px; padding:16px; border-radius:14px; background:var(--surface-alt); border:1px solid var(--border);">
+        <div class="form-row-2" style="margin-bottom:10px;">
+          <input type="text" id="ptName" placeholder="Task name" style="padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;">
+          <select id="ptAssigned" style="padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;"><option value="">Unassigned</option>${devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('')}</select>
         </div>
-        <div class="form-row-2" style="margin-bottom:8px;">
-          <input type="date" id="ptStart" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
-          <input type="date" id="ptEnd" style="padding:8px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        <div class="form-row-2" style="margin-bottom:10px;">
+          <input type="date" id="ptStart" style="padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;">
+          <input type="date" id="ptEnd" style="padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;">
         </div>
-        <div class="chip-group" id="ptStatusChips" style="margin-bottom:10px;">
+        <div class="chip-group" id="ptStatusChips" style="margin-bottom:14px;">
           <div class="chip-opt picked-single" onclick="pickSingleChip(this)">In Progress</div>
           <div class="chip-opt" onclick="pickSingleChip(this)">Done</div>
           <div class="chip-opt" onclick="pickSingleChip(this)">On Hold</div>
           <div class="chip-opt" onclick="pickSingleChip(this)">Cancelled</div>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn" style="padding:6px 14px; font-size:12px;" onclick="document.getElementById('projTaskAddFormWrap-${projectId}').innerHTML='';">Cancel</button>
-          <button class="submit-btn" style="padding:6px 14px; font-size:12px; margin-top:0;" onclick="submitProjectTask('${projectId}')">Save task</button>
+          <button class="btn" style="padding:7px 16px; font-size:12.5px; border-radius:9px;" onclick="document.getElementById('projTaskAddFormWrap-${projectId}').innerHTML='';">Cancel</button>
+          <button class="submit-btn" style="padding:7px 16px; font-size:12.5px; margin-top:0; border-radius:9px;" onclick="submitProjectTask('${projectId}')">Save task</button>
         </div>
       </div>`;
   }
@@ -2537,24 +2528,6 @@
     const { error } = await sb.from('dev_project_tasks').delete().eq('id', id);
     if(error){ alert('Could not delete: ' + error.message); return; }
     loadProjectTasks(projectId);
-  }
-
-  // The 3 quick-action buttons beside each task bar (Done / Ongoing /
-  // Cancelled) update just that one task's status directly, without
-  // opening the full edit form. Updates both local caches in place rather
-  // than re-fetching everything — a full reload of the project list would
-  // collapse this project's (and every other expanded project's) Gantt
-  // view right at the moment someone wants to see it reflect the change
-  // and stay open.
-  async function quickSetTaskStatus(projectId, taskId, status){
-    const { error } = await sb.from('dev_project_tasks').update({ status }).eq('id', taskId);
-    if(error){ alert('Could not update status: ' + error.message); return; }
-    const detailTask = projectTasksCache.find(t => t.id === taskId);
-    if(detailTask) detailTask.status = status;
-    const summaryTask = allProjectTasksCache.find(t => t.id === taskId);
-    if(summaryTask) summaryTask.status = status;
-    renderProjectDetailInline(projectId);
-    updateProjectProgressBadge(projectId);
   }
 
   function updateProjectProgressBadge(projectId){
