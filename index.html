@@ -1755,7 +1755,8 @@
   const postsalesDisciplineFields = {
     mechanical: [
       {t:'chipselect', l:'Door Type', req:true, source:'postsales:door_type', placeholder:'Select…', section:'details'},
-      {t:'chipselect', l:'Door Opening Width', req:true, source:'postsales:door_opening_width', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Door Opening Width', req:true, source:'postsales:door_opening_width', hasOther:true, placeholder:'Select…', section:'details'},
+      {t:'text', l:'Other Door Opening Width (mm)', numeric:true, showIf:{selectLabel:'Door Opening Width', value:'Other'}, section:'details'},
       {t:'chips', l:'Work Type', group:'Work Type', req:true, hint:'select all that apply', source:'postsales:work_type', section:'details'},
       {t:'textarea', l:'Reason for Revision', showIf:{group:'Work Type', opt:'Revised Layout'}, ph:'What changed and why', section:'details'},
       {t:'textarea', l:'Remarks', section:'description'}
@@ -1855,7 +1856,8 @@
       liftId(),
       {t:'text', l:'Project Name', req:true, section:'identity'},
       {t:'chipselect', l:'Lift Type', req:true, source:'postsales:lift_type', placeholder:'Select…', section:'details'},
-      {t:'chipselect', l:'Capacity', req:true, source:'postsales:capacity', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Capacity', req:true, source:'postsales:capacity', hasOther:true, placeholder:'Select…', section:'details'},
+      {t:'text', l:'Other Capacity (kg)', numeric:true, showIf:{selectLabel:'Capacity', value:'Other'}, section:'details'},
       {t:'chipselect', l:'Motor Origin', req:true, source:'postsales:motor_origin', placeholder:'Select…', section:'details'},
       {t:'text', l:'Model', section:'details'},
       {t:'text', l:'F/S/O', ph:'e.g. 7/7/7', section:'details'},
@@ -4761,10 +4763,18 @@
     document.getElementById('profileKpiMonthLabel').textContent = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
  
-    const { data } = await sb.from('tasks').select('category, created_at').eq('employee_id', currentUser.id);
+    const { data } = await sb.from('tasks').select('category, created_at, details').eq('employee_id', currentUser.id);
     const rows = data || [];
     document.getElementById('profileTaskCount').textContent = rows.length;
-    const monthlyRows = rows.filter(r => r.created_at >= monthStart);
+    // Same rule as the Home page's Activity Trend chart — a task counts
+    // toward whichever month it was actually performed, not necessarily
+    // whichever month it happened to be logged in. Falls back to
+    // created_at for older entries from before Perform Date existed.
+    const monthlyRows = rows.filter(r => {
+      const performDate = r.details && r.details['Perform Date'];
+      const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(r.created_at);
+      return d >= new Date(monthStart);
+    });
     document.getElementById('profileTaskCountMonthly').textContent = monthlyRows.length;
  
     const counts = {};
