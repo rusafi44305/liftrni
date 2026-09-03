@@ -2411,9 +2411,6 @@
       return `<span>${fmtShort(t)}</span>`;
     }).join('');
 
-    const groups = { 'In Progress': [], 'Done': [], 'On Hold': [], 'Cancelled': [] };
-    projectTasksCache.forEach(t => { (groups[t.status] || groups['In Progress']).push(t); });
-
     // Managing this project's task breakdown — adding, editing, deleting —
     // is restricted to whoever actually owns this specific project (its
     // creator or its designated Lead). Not the individual task's creator,
@@ -2438,10 +2435,10 @@
         const c = DEV_STATUS_COLOR[status];
         return `<button class="btn${isActive ? ' status-active' : ''}" style="padding:3px 8px; font-size:10px; ${isActive ? `background:${c}; color:#fff; border-color:${c};` : ''}" ${isActive ? 'disabled' : ''} onclick="quickSetTaskStatus('${projectId}','${t.id}','${status}')">${label}</button>`;
       };
-      return `<div style="display:flex; align-items:center; gap:10px; padding:8px 0; flex-wrap:wrap;">
+      return `<div style="display:flex; align-items:center; gap:10px; padding:8px 0; flex-wrap:wrap; border-bottom:1px solid var(--border);">
         <div style="width:170px; flex-shrink:0;">
           <div style="font-size:12.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.task_name}</div>
-          <div style="font-size:11px; color:var(--text-faint);">${personLabel}</div>
+          <div style="font-size:11px; color:var(--text-faint);">${personLabel} · <span style="color:${color};">${t.status}</span></div>
         </div>
         <div style="flex:1; position:relative; height:24px; background:var(--surface-alt); border-radius:6px; min-width:100px;">
           <div style="position:absolute; left:${left}%; width:${width}%; height:100%; background:${color}; border-radius:6px; display:flex; align-items:center; padding:0 8px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden;" title="${fmtShort(s)} → ${fmtShort(e)}">${t.task_name}</div>
@@ -2454,22 +2451,13 @@
       </div>`;
     };
 
-    const groupHtml = (label, tasks) => tasks.length ? `
-      <div style="margin-top:10px;">
-        <div style="font-size:11.5px; font-weight:600; color:${DEV_STATUS_COLOR[label]}; margin-bottom:2px;">${label}</div>
-        ${tasks.map(rowHtml).join('<div style="border-bottom:1px solid var(--border);"></div>')}
-      </div>` : '';
-
     el.innerHTML = `
       <div style="display:flex; gap:10px; margin-bottom:4px;">
         <div style="width:170px; flex-shrink:0;"></div>
         <div style="flex:1; display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint);">${ticksHtml}</div>
         <div style="width:90px; flex-shrink:0;"></div>
       </div>
-      ${groupHtml('In Progress', groups['In Progress'])}
-      ${groupHtml('Done', groups['Done'])}
-      ${groupHtml('On Hold', groups['On Hold'])}
-      ${groupHtml('Cancelled', groups['Cancelled'])}
+      ${projectTasksCache.map(rowHtml).join('')}
     `;
   }
 
@@ -2574,13 +2562,21 @@
     if(!nameEl) return;
     const progress = projectProgressPercent(projectId);
     const badge = nameEl.querySelector('.progress-badge');
-    if(progress === null){ if(badge) badge.remove(); return; }
+    if(progress === null){
+      const text = 'No specific breakdown';
+      if(badge){ badge.textContent = text; badge.style.fontSize = '12px'; badge.style.fontWeight = '600'; badge.style.color = 'var(--text-faint)'; badge.style.fontStyle = 'italic'; }
+      else { nameEl.insertAdjacentHTML('beforeend', `<span class="progress-badge" style="font-size:12px; font-weight:600; color:var(--text-faint); margin-left:10px; font-style:italic;">${text}</span>`); }
+      return;
+    }
     const color = progress === 100 ? 'var(--green)' : 'var(--accent)';
     if(badge){
       badge.textContent = `${progress}%`;
       badge.style.color = color;
+      badge.style.fontSize = '17px';
+      badge.style.fontWeight = '700';
+      badge.style.fontStyle = 'normal';
     } else {
-      nameEl.insertAdjacentHTML('beforeend', `<span class="progress-badge" style="font-size:11.5px; font-weight:700; color:${color}; margin-left:8px;">${progress}%</span>`);
+      nameEl.insertAdjacentHTML('beforeend', `<span class="progress-badge" style="font-size:17px; font-weight:700; color:${color}; margin-left:10px;">${progress}%</span>`);
     }
   }
 
@@ -4573,8 +4569,8 @@
       const canDelete = canManageProject;
       const progress = projectProgressPercent(p.id);
       const progressBadge = progress !== null
-        ? `<span class="progress-badge" style="font-size:11.5px; font-weight:700; color:${progress === 100 ? 'var(--green)' : 'var(--accent)'}; margin-left:8px;">${progress}%</span>`
-        : '';
+        ? `<span class="progress-badge" style="font-size:17px; font-weight:700; color:${progress === 100 ? 'var(--green)' : 'var(--accent)'}; margin-left:10px;">${progress}%</span>`
+        : `<span class="progress-badge" style="font-size:12px; font-weight:600; color:var(--text-faint); margin-left:10px; font-style:italic;">No specific breakdown</span>`;
       return `<div class="gantt-project-card">
       <div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
