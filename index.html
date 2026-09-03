@@ -4436,7 +4436,7 @@
  
   async function loadDevDashboard(){
     await populateDevPeople();
-    const { data, error } = await sb.from('dev_projects').select('*').order('start_date', { ascending: true });
+    const { data, error } = await sb.from('dev_projects').select('*').order('start_date', { ascending: false });
     if(error){
       document.getElementById('devGanttRows').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the dev_projects table has been created (see setup SQL).</div>`;
       return;
@@ -4593,8 +4593,20 @@
     const fromDate = new Date(fromEl.value + 'T00:00:00');
     const toDate = new Date(toEl.value + 'T23:59:59');
 
+    // Tasks are plotted by Perform Date (when the work actually happened,
+    // editable at logging time) rather than created_at (when the row was
+    // inserted) — someone backfilling a task from last month should have
+    // it show up in last month's trend, not today's. Perform Date lives
+    // inside the flexible details field rather than its own column, so it
+    // isn't practical to filter for it precisely on the server the way a
+    // real column would be — fetched broadly instead and matched against
+    // the selected range here, which is fine at this app's data volume.
+    // Older entries logged before Perform Date existed don't have one, so
+    // they fall back to created_at rather than silently dropping off the
+    // chart. Project counts stay based on created_at regardless — a
+    // project doesn't have a "Perform Date" concept the way a task does.
     const [tasksRes, projectsRes] = await Promise.all([
-      sb.from('tasks').select('created_at, category').gte('created_at', fromEl.value).lte('created_at', toEl.value + 'T23:59:59'),
+      sb.from('tasks').select('created_at, category, details'),
       sb.from('dev_projects').select('created_at').gte('created_at', fromEl.value).lte('created_at', toEl.value + 'T23:59:59')
     ]);
     if(tasksRes.error){ console.error('activity trend:', tasksRes.error.message); return; }
@@ -4612,7 +4624,9 @@
       cursor.setMonth(cursor.getMonth() + 1);
     }
     (tasksRes.data || []).forEach(row => {
-      const d = new Date(row.created_at);
+      const performDate = row.details && row.details['Perform Date'];
+      const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(row.created_at);
+      if(d < fromDate || d > toDate) return;
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       const bucket = buckets.find(b => b.key === key);
       if(!bucket) return;
