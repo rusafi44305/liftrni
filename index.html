@@ -1761,6 +1761,7 @@
       {t:'textarea', l:'Remarks', section:'description'}
     ],
     electrical: [
+      {t:'chipselect', l:'Sales Wing', req:true, source:'postsales:sales_wing', placeholder:'Select…', section:'details'},
       {t:'chips', l:'Work Type', group:'Work Type Electrical', req:true, hint:'select all that apply', source:'postsales:work_type_electrical', section:'details'},
       {t:'text', l:'Problem Details', req:true, section:'details'},
       {t:'textarea', l:'Solution Statement', req:true, section:'details'},
@@ -1858,9 +1859,9 @@
       {t:'chipselect', l:'Motor Origin', req:true, source:'postsales:motor_origin', placeholder:'Select…', section:'details'},
       {t:'text', l:'Model', section:'details'},
       {t:'text', l:'F/S/O', ph:'e.g. 7/7/7', section:'details'},
-      {t:'chipselect', l:'Sales Wing', req:true, source:'postsales:sales_wing', placeholder:'Select…', section:'details'},
-      // Door fields, Work Type, and everything below are discipline-specific
-      // — see postsalesDisciplineFields, concatenated in by renderTaskForm(),
+      // Sales Wing lives only in the electrical section below — Mechanical
+      // doesn't use it — plus Door fields, Work Type, and everything else
+      // discipline-specific, all concatenated in by renderTaskForm().
       // including each discipline's own trailing Remarks field.
     ],
     techsupport: [
