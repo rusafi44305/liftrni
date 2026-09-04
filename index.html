@@ -4147,6 +4147,8 @@
       queuedTasks = [];
       renderQueue();
       renderTaskForm(); // no preserve flag — fields fully clear for the next entry
+      loadMyTasks(); // refresh "Submitted by me" so the new entry appears immediately, not only after a manual page reload
+      if(currentCatKey) showCategoryLog(currentCatKey); // also refresh a category log page if one happens to be open
     } finally {
       submitInProgress = false;
       if(btn){ btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; }
