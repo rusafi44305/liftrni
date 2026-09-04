@@ -699,6 +699,11 @@
   nav.tabs.dock button svg{ width:19px; height:19px; }
   nav.tabs.dock button.active{ background:var(--surface); color:var(--accent); box-shadow:var(--shadow); }
   nav.tabs.dock button:hover:not(.active){ color:var(--text); }
+  /* The dock's signature macOS touch — icons gently scale up on hover.
+     Only ever triggers on devices with real hover (a mouse), so this is
+     purely additive on touch/mobile, never interferes with tapping. */
+  nav.tabs.dock button svg{ transition:transform .15s cubic-bezier(.34,1.56,.64,1); }
+  nav.tabs.dock button:hover svg{ transform:scale(1.16); }
  
   /* ---------- RESPONSIVE OVERRIDES (kept last so they win the cascade) ---------- */
   @media (max-width: 860px){
