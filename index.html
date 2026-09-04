@@ -704,6 +704,11 @@
      purely additive on touch/mobile, never interferes with tapping. */
   nav.tabs.dock button svg{ transition:transform .15s cubic-bezier(.34,1.56,.64,1); }
   nav.tabs.dock button:hover svg{ transform:scale(1.16); }
+  /* :active triggers the instant a finger presses down, unlike :hover
+     which never fires on a touchscreen at all — this is the version of
+     the "icon responds to touch" feeling that's actually visible on
+     mobile, where hover effects alone would go completely unseen. */
+  nav.tabs.dock button:active svg{ transform:scale(0.85); transition:transform .08s ease; }
  
   /* ---------- RESPONSIVE OVERRIDES (kept last so they win the cascade) ---------- */
   @media (max-width: 860px){
@@ -1065,7 +1070,7 @@
         --
         <span id="avatarBadge" style="display:none; position:absolute; top:-2px; right:-2px; width:10px; height:10px; border-radius:50%; background:var(--red); border:2px solid var(--surface); pointer-events:none;"></span>
       </div>
-      <div id="accountMenu" style="display:none; position:absolute; right:0; top:calc(100% + 10px); background:color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%); border:1px solid color-mix(in srgb, var(--border) 45%, transparent); border-radius:16px; padding:6px; min-width:240px; z-index:200; box-shadow:0 20px 44px rgba(0,0,0,0.28), 0 3px 10px rgba(0,0,0,0.14);">
+      <div id="accountMenu" style="display:none; position:absolute; right:0; top:calc(100% + 10px); background:color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%); border:1px solid color-mix(in srgb, var(--border) 45%, transparent); border-radius:16px; padding:6px; min-width:240px; z-index:200; box-shadow:0 20px 44px rgba(0,0,0,0.28), 0 3px 10px rgba(0,0,0,0.14); opacity:0; transform:scale(0.92) translateY(-8px); transform-origin:top right; transition:opacity .16s ease, transform .16s cubic-bezier(.2,.9,.3,1.3);">
         <div id="accountMenuName" style="font-size:12.5px; font-weight:600; padding:10px 12px 10px; border-bottom:1px solid color-mix(in srgb, var(--border) 60%, transparent); margin-bottom:4px;">—</div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); showView('profile'); onViewShown('profile');">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -2728,15 +2733,33 @@
     const cleanUrl = window.location.origin + window.location.pathname;
     await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: cleanUrl } });
   }
+  function closeAccountMenu(){
+    const menu = document.getElementById('accountMenu');
+    if(menu.style.display !== 'block') return;
+    menu.style.opacity = '0';
+    menu.style.transform = 'scale(0.92) translateY(-8px)';
+    setTimeout(() => { if(menu.style.opacity === '0') menu.style.display = 'none'; }, 160);
+  }
   function toggleAccountMenu(){
     const menu = document.getElementById('accountMenu');
-    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    const isOpen = menu.style.display === 'block';
+    if(isOpen){
+      closeAccountMenu();
+    } else {
+      menu.style.display = 'block';
+      // Force a reflow so the browser registers the "closed" state above
+      // before flipping to "open" — otherwise both changes get batched
+      // into one frame and the transition never actually plays.
+      void menu.offsetHeight;
+      menu.style.opacity = '1';
+      menu.style.transform = 'scale(1) translateY(0)';
+    }
   }
   document.addEventListener('click', (e) => {
     const menu = document.getElementById('accountMenu');
     const avatar = document.getElementById('userAvatar');
     if(menu && menu.style.display === 'block' && !menu.contains(e.target) && !avatar.contains(e.target)){
-      menu.style.display = 'none';
+      closeAccountMenu();
     }
   });
 
