@@ -1095,6 +1095,25 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
           <span id="accountMenuPendingCount">0 pending accounts</span>
         </div>
+        <div id="accountMenuBackupSection" style="display:none; margin-top:4px; border-top:1px solid color-mix(in srgb, var(--border) 60%, transparent); padding-top:6px;">
+          <div style="padding:6px 12px 4px; font-size:10.5px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);">Safety &amp; backup</div>
+          <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); createBackup();">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            Create Backup
+          </div>
+          <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); openImportBackupModal();">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><path d="M21 8v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+            Import Backup
+          </div>
+          <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); downloadSchemaSql();">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M9 15l2 2 4-4"/></svg>
+            Download SQL Schema
+          </div>
+          <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); downloadRunningHtml();">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+            Download index.html
+          </div>
+        </div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; color:#e0665a; margin-top:4px; border-top:1px solid color-mix(in srgb, var(--border) 60%, transparent); padding-top:12px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="confirmSignOut()">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
           Log out
@@ -4087,6 +4106,102 @@
     }
   }
  
+  // ============ BACKUP / RESTORE (Superadmin only) ============
+  // Every live, active table in the app — deliberately excludes the old
+  // "_backup_before_merge" archive tables from earlier category merges,
+  // since those are already permanent, unchanging snapshots on their own
+  // and don't need to be re-backed-up every time.
+  const BACKUP_TABLES = ['profiles','tasks','activity_log','notifications','notebook_tasks','chat_messages',
+    'chip_options','installation_wings','data_issue_types','kpi_weights','app_settings','dev_projects','dev_project_tasks'];
+
+  function downloadTextFile(filename, text){
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadRunningHtml(){
+    // The whole app is a single HTML file already fully loaded in the
+    // browser right now — no server round-trip needed, just save exactly
+    // what's currently running.
+    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+    downloadTextFile(`index_backup_${new Date().toISOString().slice(0,10)}.html`, html);
+  }
+
+  async function downloadSchemaSql(){
+    if(!currentProfile || currentProfile.role !== 'superadmin') return;
+    const { data, error } = await sb.rpc('get_schema_snapshot_text');
+    if(error){ alert('Could not fetch schema: ' + error.message); return; }
+    downloadTextFile(`schema_snapshot_${new Date().toISOString().slice(0,10)}.txt`, data);
+  }
+
+  async function createBackup(){
+    if(!currentProfile || currentProfile.role !== 'superadmin') return;
+    if(!confirm('Create a backup of the full database right now?')) return;
+    const snapshot = {};
+    for(const table of BACKUP_TABLES){
+      const { data, error } = await sb.from(table).select('*');
+      if(error){ alert(`Could not read ${table}: ${error.message}. Backup cancelled — nothing was saved.`); return; }
+      snapshot[table] = data || [];
+    }
+    const label = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    const { error: insertError } = await sb.from('backups').insert({ created_by: currentUser.id, label, data: snapshot });
+    if(insertError){ alert('Could not save backup: ' + insertError.message); return; }
+    alert(`Backup created (${label}). Automatically deleted after 30 days.`);
+  }
+
+  async function openImportBackupModal(){
+    if(!currentProfile || currentProfile.role !== 'superadmin') return;
+    const { data, error } = await sb.from('backups').select('id, created_at, label').order('created_at', { ascending: false }).limit(3);
+    if(error){ alert('Could not load backups: ' + error.message); return; }
+    if(!data || !data.length){ alert('No backups yet — use "Create Backup" first.'); return; }
+
+    const rows = data.map(b => `
+      <div style="padding:12px 14px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:600; font-size:13.5px;">${b.label || new Date(b.created_at).toLocaleString()}</div>
+          <div style="font-size:11px; color:var(--text-faint);">${timeAgo(b.created_at)}</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="downloadBackupJson('${b.id}')">Download</button>
+          <button class="btn remove" style="padding:6px 12px; font-size:12px;" data-backup-id="${b.id}" data-backup-label="${escapeHtml(b.label || '')}" onclick="confirmRestoreBackup(this.dataset.backupId, this.dataset.backupLabel)">Restore</button>
+        </div>
+      </div>`).join('');
+
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:440px; width:100%;">
+        <div class="panel-title">Import Backup</div>
+        <div style="font-size:12.5px; color:var(--text-faint); margin-bottom:16px;">Your 3 most recent backups. Restoring rewinds your entire database to exactly how it was at that moment — anything created after that point will be lost.</div>
+        ${rows}
+        <button class="btn" style="width:100%; margin-top:6px;" onclick="this.closest('div[style*=fixed]').remove()">Close</button>
+      </div>`;
+    overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  }
+
+  async function downloadBackupJson(id){
+    const { data, error } = await sb.from('backups').select('*').eq('id', id).single();
+    if(error){ alert('Could not load backup: ' + error.message); return; }
+    downloadTextFile(`backup_${(data.label||id).replace(/[^a-z0-9]/gi,'_')}.json`, JSON.stringify(data.data, null, 2));
+  }
+
+  async function confirmRestoreBackup(id, label){
+    // Deliberately a text-typed confirmation, not just a click-through —
+    // this is the single most destructive action anywhere in this app,
+    // rewriting every table in the live database at once.
+    const typed = prompt(`This will completely replace your current database with the backup from "${label}". Anything created since then will be permanently lost. This cannot be undone.\n\nType RESTORE to confirm:`);
+    if(typed !== 'RESTORE') return;
+    const { error } = await sb.rpc('restore_backup', { backup_id: id });
+    if(error){ alert('Restore failed: ' + error.message); return; }
+    alert('Restore complete. Reloading the page now.');
+    location.reload();
+  }
+
   // ============ REAL ADMIN PANEL ============
   async function loadAdminPanel(){
     const { data: pending } = await sb.from('profiles').select('*').eq('status', 'pending');
@@ -4101,6 +4216,8 @@
  
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
     document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
+    const backupSection = document.getElementById('accountMenuBackupSection');
+    if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('surveyOptionsBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('surveyOptionsPanel').style.display = isSuperadmin ? 'grid' : 'none';
