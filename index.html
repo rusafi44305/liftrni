@@ -2077,6 +2077,15 @@
       fields = fields.concat(postsalesDisciplineFields[discipline] || []);
     }
 
+    // Pre-Sales' Sales Wing is Mechanical-only — Electrical doesn't use
+    // this field at all, so it's simply not added for that discipline
+    // rather than needing a whole separate fields object like Post-Sales.
+    if(cat === 'presales' && discipline === 'mechanical'){
+      fields = fields.concat([
+        {t:'chipselect', l:'Sales Wing', req:true, source:'presales:sales_wing', placeholder:'Select…', section:'details'}
+      ]);
+    }
+
     // Technical Support's own chip fields live inside techSupportSubforms,
     // concatenated in below — so the dynamic-options check has to happen
     // after that concatenation, not before it, or it would never see them.
@@ -4416,6 +4425,7 @@
     { key: 'rni:status_electrical', label: 'R&I Activity (Electrical) — Status' },
     { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium' },
     { key: 'presales:client_support_task', label: 'Pre-Sales Support — Client Support Task' },
+    { key: 'presales:sales_wing', label: 'Pre-Sales Support (Mechanical) — Sales Wing' },
     { key: 'postsales:lift_type', label: 'Post-Sales Activity — Lift Type' },
     { key: 'postsales:capacity', label: 'Post-Sales Activity — Capacity' },
     { key: 'postsales:motor_origin', label: 'Post-Sales Activity — Motor Origin' },
