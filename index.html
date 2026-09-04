@@ -2232,7 +2232,13 @@
     const details = card.querySelector('.search-result-details');
     const isOpen = details.style.display !== 'none';
     details.style.display = isOpen ? 'none' : 'block';
-    btn.textContent = isOpen ? 'View details' : 'Hide details';
+    // Only the accessible label changes — the icon itself stays the same
+    // eye icon regardless of state. Using textContent here would wipe out
+    // the icon entirely and replace it with plain text, which is exactly
+    // the bug this is fixing.
+    const label = isOpen ? 'View details' : 'Hide details';
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
   }
 
   function pickChip(el){
@@ -2372,6 +2378,16 @@
   let projectTasksCache = [];
   let openProjectDetailId = null;
 
+  // Only the accessible label (title/aria-label) changes when toggling
+  // open vs closed — the eye icon itself stays visually the same either
+  // way. Setting .textContent directly, as this used to, would wipe out
+  // the icon completely and replace it with plain text.
+  function setDetailsToggleLabel(btn, label){
+    if(!btn) return;
+    btn.title = label;
+    btn.setAttribute('aria-label', label);
+  }
+
   async function toggleProjectDetailsInline(projectId){
     const wrap = document.getElementById('projDetailWrap-' + projectId);
     if(!wrap) return;
@@ -2383,20 +2399,20 @@
       const prevWrap = document.getElementById('projDetailWrap-' + openProjectDetailId);
       const prevBtn = document.getElementById('ptToggleBtn-' + openProjectDetailId);
       if(prevWrap) prevWrap.style.display = 'none';
-      if(prevBtn) prevBtn.textContent = 'See details';
+      setDetailsToggleLabel(prevBtn, 'See details');
     }
 
     const isOpen = wrap.style.display !== 'none';
     const btn = document.getElementById('ptToggleBtn-' + projectId);
     if(isOpen){
       wrap.style.display = 'none';
-      if(btn) btn.textContent = 'See details';
+      setDetailsToggleLabel(btn, 'See details');
       openProjectDetailId = null;
       return;
     }
 
     openProjectDetailId = projectId;
-    if(btn) btn.textContent = 'Hide details';
+    setDetailsToggleLabel(btn, 'Hide details');
     wrap.style.display = 'block';
     await loadProjectTasks(projectId);
   }
@@ -3169,6 +3185,19 @@
     if(searchInput){ searchInput.value = val; filterCategoryLog(); }
   }
  
+  // Tracks which category log page is currently open, if any, so actions
+  // taken elsewhere (like deleting a task from My Tasks) know whether that
+  // page needs refreshing too. Declared here explicitly — it was
+  // previously only ever assigned, never declared, meaning it silently
+  // didn't exist at all until the first time a category log page was
+  // opened. Reading it any earlier than that (e.g. deleting a task
+  // immediately after opening My Tasks, without visiting a category log
+  // first) threw a ReferenceError that silently aborted the rest of the
+  // delete function — which is why the entry stayed visible until a
+  // manual refresh, even though the underlying delete had already
+  // succeeded.
+  let currentCatKey = null;
+
   async function showCategoryLog(key){
     currentCatKey = key;
     const meta = catMeta[key];
