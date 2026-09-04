@@ -610,6 +610,22 @@
     font-family:'Inter'; font-size:13.5px; color:var(--text); background:var(--surface);
   }
   .form-field input:focus, .form-field textarea:focus, .form-field select:focus{outline:none; border-color:var(--accent);}
+  /* A soft glowing focus ring — the same visual language Safari/macOS use
+     for focused fields — applied globally so every input in the app gets
+     it, not just fields inside .form-field specifically. */
+  input:focus, textarea:focus, select:focus{
+    outline:none; border-color:var(--accent) !important;
+    box-shadow:0 0 0 3.5px rgba(var(--accent-rgb), 0.22);
+  }
+  /* Thin, understated scrollbars matching macOS's overlay style, instead
+     of the thick default browser scrollbar — applied globally. Firefox
+     uses its own thin-scrollbar property since it doesn't support the
+     ::-webkit- pseudo-elements. */
+  * { scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background:transparent; }
+  ::-webkit-scrollbar-thumb{ background:var(--border); border-radius:999px; border:2.5px solid var(--bg); }
+  ::-webkit-scrollbar-thumb:hover{ background:var(--text-faint); }
   .form-field textarea{resize:vertical; min-height:64px; font-family:'Inter';}
   .form-row-2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
   .chip-group{display:flex; flex-wrap:wrap; gap:8px;}
