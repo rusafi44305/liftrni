@@ -1476,7 +1476,8 @@
     </div>
  
     <!-- new dev task input zone: full-width, organized as numbered cards -->
-    <div class="panel" id="devTaskPanel" style="margin-bottom:36px;">
+    <button class="submit-btn" id="showAddProjectBtn" style="margin-bottom:20px;" onclick="showAddProjectPanel()">+ Add a Project</button>
+    <div class="panel" id="devTaskPanel" style="display:none; margin-bottom:36px;">
       <div class="panel-title" id="devTaskPanelTitle">Add a development task</div>
  
       <div class="dev-form-grid">
@@ -1544,7 +1545,7 @@
       </div>
  
       <button class="submit-btn" id="devSubmitBtn" style="margin-top:18px;" onclick="submitDevProject()">Add project to Gantt</button>
-      <button class="btn" id="devCancelEditBtn" style="display:none; margin-top:18px; margin-left:8px;" onclick="cancelEditDevProject()">Cancel edit</button>
+      <button class="btn" id="devCancelEditBtn" style="display:none; margin-top:18px; margin-left:8px;" onclick="cancelEditDevProject()">Cancel</button>
     </div>
  
     <!-- gantt board -->
@@ -2599,6 +2600,12 @@
  
   let editingDevProjectId = null;
  
+  function showAddProjectPanel(){
+    document.getElementById('devTaskPanel').style.display = 'block';
+    document.getElementById('showAddProjectBtn').style.display = 'none';
+    document.getElementById('devCancelEditBtn').style.display = 'inline-block';
+    document.getElementById('devTaskPanel').scrollIntoView({ behavior:'smooth', block:'start' });
+  }
   function editDevProject(id){
     const project = devProjectsCache.find(p => p.id === id);
     if(!project) return;
@@ -2628,6 +2635,8 @@
     document.getElementById('devTaskPanelTitle').textContent = `Editing: ${project.name}`;
     document.getElementById('devSubmitBtn').textContent = 'Save changes';
     document.getElementById('devCancelEditBtn').style.display = 'inline-block';
+    document.getElementById('devTaskPanel').style.display = 'block';
+    document.getElementById('showAddProjectBtn').style.display = 'none';
     document.getElementById('devTaskPanel').scrollIntoView({ behavior:'smooth', block:'start' });
   }
  
@@ -2641,6 +2650,12 @@
     document.getElementById('devTaskPanelTitle').textContent = 'Add a development task';
     document.getElementById('devSubmitBtn').textContent = 'Add project to Gantt';
     document.getElementById('devCancelEditBtn').style.display = 'none';
+    // Collapses the form back down whether this was an explicit Cancel
+    // click, or the automatic cleanup submitDevProject() already runs
+    // after successfully saving — both cases mean there's no more reason
+    // for the form to stay open and take up space on the page.
+    document.getElementById('devTaskPanel').style.display = 'none';
+    document.getElementById('showAddProjectBtn').style.display = 'inline-block';
   }
  
   // exclusive single-pick chips (Status, Financial Outcome, Documentation in the dev task form)
