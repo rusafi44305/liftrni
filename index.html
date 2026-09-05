@@ -4629,19 +4629,29 @@ appears to allow.`;
     // in loadSurveyOptionsPanel() are all completely unchanged — this only
     // moves where their existing markup physically renders.
     const installationWingsCardHtml = `<div class="panel">
-      <div class="panel-title">Installation Wings</div>
-      <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
-      <div style="display:flex; gap:8px; margin-top:14px;">
-        <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
-        <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
+      <div class="panel-title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <span>Installation Wings</span>
+        <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleChipGroupVisibility('installationWingsBody', this)">Show options</button>
+      </div>
+      <div id="installationWingsBody" style="display:none; margin-top:10px;">
+        <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
+          <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
+        </div>
       </div>
     </div>`;
     const dataIssueTypesCardHtml = `<div class="panel">
-      <div class="panel-title">Types of Data Missing</div>
-      <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
-      <div style="display:flex; gap:8px; margin-top:14px;">
-        <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
-        <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
+      <div class="panel-title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <span>Types of Data Missing</span>
+        <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleChipGroupVisibility('dataIssueTypesBody', this)">Show options</button>
+      </div>
+      <div id="dataIssueTypesBody" style="display:none; margin-top:10px;">
+        <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
+          <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
+        </div>
       </div>
     </div>`;
 
