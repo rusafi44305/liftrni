@@ -1961,14 +1961,16 @@
   // panel — none of these lists live in the code anymore. Loaded once and
   // cached; loadDynamicFieldOptions() re-fetches on demand (e.g. right
   // after a Superadmin adds/removes one in the Admin panel).
-  let dynamicFieldOptions = { installationWings: [], dataIssueTypes: [], chips: {} };
+  let dynamicFieldOptions = { installationWings: [], dataIssueTypes: [], chips: {}, customSubtypes: {}, customFields: {} };
   let dynamicFieldOptionsLoaded = false;
   async function loadDynamicFieldOptions(force){
     if(dynamicFieldOptionsLoaded && !force) return;
-    const [{ data: wings, error: wingsErr }, { data: types, error: typesErr }, { data: chipRows, error: chipErr }] = await Promise.all([
+    const [{ data: wings, error: wingsErr }, { data: types, error: typesErr }, { data: chipRows, error: chipErr }, { data: subtypeRows, error: subtypeErr }, { data: customFieldRows, error: customFieldErr }] = await Promise.all([
       sb.from('installation_wings').select('*').order('name'),
       sb.from('data_issue_types').select('*').order('name'),
-      sb.from('chip_options').select('*').order('sort_order')
+      sb.from('chip_options').select('*').order('sort_order'),
+      sb.from('custom_subtypes').select('*').order('sort_order'),
+      sb.from('custom_fields').select('*').eq('is_builtin', false).order('sort_order')
     ]);
     dynamicFieldOptions.installationWings = wings || [];
     dynamicFieldOptions.dataIssueTypes = types || [];
@@ -1978,11 +1980,30 @@
       (chipGroups[key] = chipGroups[key] || []).push(row);
     });
     dynamicFieldOptions.chips = chipGroups;
-    // Only mark this as "successfully loaded" if all three queries actually
+    // Sub-categories a Superadmin has created beyond the built-in ones —
+    // keyed by category, so the real "Support Type" dropdown can append
+    // them after its existing, hardcoded options without touching those
+    // at all.
+    const subtypesByCategory = {};
+    (subtypeRows || []).forEach(row => {
+      (subtypesByCategory[row.category] = subtypesByCategory[row.category] || []).push(row);
+    });
+    dynamicFieldOptions.customSubtypes = subtypesByCategory;
+    // Every Superadmin-created field (never built-in ones — those already
+    // render via the existing, unchanged hardcoded logic), keyed by
+    // category+subtype+zone so the real form can look up exactly which
+    // ones to append for whatever's currently selected.
+    const customFieldsByGroup = {};
+    (customFieldRows || []).forEach(row => {
+      const key = `${row.category}|${row.sub_type || ''}|${row.zone}`;
+      (customFieldsByGroup[key] = customFieldsByGroup[key] || []).push(row);
+    });
+    dynamicFieldOptions.customFields = customFieldsByGroup;
+    // Only mark this as "successfully loaded" if every query actually
     // succeeded. If any failed (a network blip, a timing hiccup — anything),
     // leave the flag false so the NEXT time this form is opened, it tries
     // fetching again instead of permanently trusting an empty result.
-    if(!wingsErr && !typesErr && !chipErr) dynamicFieldOptionsLoaded = true;
+    if(!wingsErr && !typesErr && !chipErr && !subtypeErr && !customFieldErr) dynamicFieldOptionsLoaded = true;
   }
 
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
@@ -1995,6 +2016,12 @@
       const numericAttrs = f.numeric ? `inputmode="numeric" oninput="filterNumericInput(this)"` : '';
       const numericWarning = f.numeric ? `<div class="field-warning" style="display:none;">Only numbers are allowed here — letters were removed.</div>` : '';
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${inputType}" class="ti" placeholder="${(isDate||isMonth)?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}" ${numericAttrs}>${numericWarning}</div>`;
+    }
+    if(f.t==='number'){
+      // A genuine number input (browser-native stepper, decimal support)
+      // rather than a text field with digit-filtering bolted on — for
+      // Superadmin-created fields specifically asking for a number type.
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="number" class="ti" placeholder="${f.ph||''}" step="any"></div>`;
     }
     if(f.t==='select'){
       const opts = (dynamicFieldOptions[f.source] || []).map(o => `<option value="${o.id}">${o.name}</option>`).join('');
@@ -2117,13 +2144,20 @@
     // concatenated in below — so the dynamic-options check has to happen
     // after that concatenation, not before it, or it would never see them.
     if(cat === 'techsupport'){
+      const subField = fields.find(f => f.id === 'techSupportType');
+      // Any Superadmin-created sub-categories get appended AFTER the 3
+      // built-in ones, in the order they were created — the built-in list
+      // itself is never reordered or touched, so nothing about how
+      // Installation/Commissioning/After-Sales Support already work can
+      // be affected by this.
+      const extraSubtypes = (dynamicFieldOptions.customSubtypes['techsupport'] || []).map(s => s.name);
+      if(subField) subField.opts = ['Installation Support','Commissioning Support','After-Sales Support', ...extraSubtypes];
       const subSelect = document.getElementById('techSupportType');
       const subType = subSelect ? subSelect.value : 'Installation Support';
       // Record the actual current choice on the field definition itself so
       // innerFieldHTML can mark the matching <option> as selected when it
       // rebuilds the dropdown — otherwise the rebuilt select always visually
       // reset to its first option, regardless of what was really chosen.
-      const subField = fields.find(f => f.id === 'techSupportType');
       if(subField) subField.currentValue = subType;
       fields = fields.concat((techSupportSubforms[discipline] || {})[subType] || []);
     }
@@ -2132,11 +2166,39 @@
     // live inside generalSupportSubforms, keyed by whichever of the 4
     // sub-types is currently selected.
     if(cat === 'generalsupport'){
+      const subField = fields.find(f => f.id === 'generalSupportType');
+      const extraSubtypes = (dynamicFieldOptions.customSubtypes['generalsupport'] || []).map(s => s.name);
+      if(subField) subField.opts = ['Production Support','SCM Support','QC Support','Other Support', ...extraSubtypes];
       const subSelect = document.getElementById('generalSupportType');
       const subType = subSelect ? subSelect.value : 'Production Support';
-      const subField = fields.find(f => f.id === 'generalSupportType');
       if(subField) subField.currentValue = subType;
       fields = fields.concat(generalSupportSubforms[subType] || []);
+    }
+
+    // Every Superadmin-created custom field gets appended here, for
+    // whichever category/sub-type/zone combination is currently in
+    // effect — common-zone ones plus whichever of Mechanical/Electrical
+    // actually applies to this person. This never touches or reorders
+    // anything already assembled above; it only adds to the end, so
+    // nothing already working can be affected by a field that doesn't
+    // exist for this exact combination.
+    if(cat !== 'surveyissues'){
+      const currentSubType = (cat === 'techsupport' || cat === 'generalsupport')
+        ? (fields.find(f => f.id === 'techSupportType' || f.id === 'generalSupportType')?.currentValue || null)
+        : null;
+      const subKey = currentSubType || '';
+      const commonCustom = dynamicFieldOptions.customFields[`${cat}|${subKey}|common`] || [];
+      const disciplineCustom = dynamicFieldOptions.customFields[`${cat}|${subKey}|${discipline}`] || [];
+      const customToAppend = [...commonCustom, ...disciplineCustom].map(cf => ({
+        t: cf.field_type, l: cf.label, req: cf.required, section: cf.section, isCustomField: true,
+        // Chips/Dropdown custom fields' actual options live in
+        // chip_options under this exact key — the same convention
+        // already established by the "Options" button in the Task
+        // fields catalog, so there's only ever one place these values
+        // are stored and read from.
+        source: (cf.field_type === 'chips' || cf.field_type === 'chipselect') ? `customfield:${cf.id}` : undefined
+      }));
+      fields = fields.concat(customToAppend);
     }
 
     // Reports — unlike every other sub-typed category, the dropdown OPTIONS
@@ -4669,6 +4731,11 @@ appears to allow.`;
   // mode too — if any of them change, the field is simply re-placed at
   // the end of wherever it ends up, same rule as a brand new field,
   // since fine-grained positioning is Stage 3's job, not this one.
+  // Categories that support sub-categories at all — only these two ever
+  // show the "New Sub-category" choice, since the other 3 have no
+  // sub-type concept whatsoever.
+  const SUBCATEGORY_CAPABLE = ['techsupport', 'generalsupport'];
+
   function openAddFieldModal(fieldId){
     editingFieldId = fieldId || null;
     const existing = fieldId ? customFieldsCache.find(f => f.id === fieldId) : null;
@@ -4678,8 +4745,81 @@ appears to allow.`;
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
       <div class="panel" style="max-width:440px; width:100%;">
-        <div class="panel-title">${existing ? 'Edit field' : 'Add a new field'}</div>
-        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">${existing ? 'Changes here only affect the catalog above' : 'This adds the field to the catalog above'} — it won't yet appear on the real task-entry form, and ${existing ? 'moving it to a different group places it at the end there' : 'it lands at the end of its group rather than a specific position'}. Both come in a later update.</div>
+        <div class="panel-title">${existing ? 'Edit field' : 'Add new'}</div>
+        ${existing ? '' : `
+        <div class="form-field">
+          <div class="field-label">What are you adding?</div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" id="addChoiceFieldBtn" class="submit-btn" style="flex:1; margin-top:0;" onclick="setAddFieldChoice('field')">A Field</button>
+            <button type="button" id="addChoiceSubcatBtn" class="btn" style="flex:1;" onclick="setAddFieldChoice('subcategory')">A Sub-category</button>
+          </div>
+        </div>`}
+        <div id="addFieldFormBody"></div>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="submit-btn" id="addFieldSubmitBtn" style="flex:1; margin-top:0;" onclick="submitNewCustomField()">${existing ? 'Save changes' : 'Add Field'}</button>
+          <button class="btn" onclick="closeAddFieldModal()">Cancel</button>
+        </div>
+      </div>`;
+    overlay.onclick = (e) => { if(e.target === overlay) closeAddFieldModal(); };
+    document.body.appendChild(overlay);
+
+    // Always build the body through setAddFieldChoice, even on first
+    // open — so there's exactly one place this HTML is written, never two
+    // copies that could quietly drift out of sync with each other.
+    addFieldChoice = 'field';
+    setAddFieldChoice('field');
+
+    if(existing){
+      document.getElementById('newFieldCategory').value = existing.category;
+      document.getElementById('newFieldZone').value = existing.zone;
+      document.getElementById('newFieldLabel').value = existing.label;
+      document.getElementById('newFieldType').value = existing.field_type;
+      document.getElementById('newFieldRequired').checked = existing.required;
+      updateNewFieldSubTypeOptions(existing.sub_type);
+      document.getElementById('addFieldSubmitBtn').textContent = 'Save changes';
+    }
+  }
+
+  // Switches the modal between "adding a field" (the existing full form)
+  // and "adding a sub-category" (just a category picker restricted to
+  // the 2 categories that actually have sub-categories, plus a name).
+  // Nothing about the field form itself changes between the two modes —
+  // this only swaps which body is shown and what the submit button does.
+  let addFieldChoice = 'field';
+  function setAddFieldChoice(choice){
+    addFieldChoice = choice;
+    // These buttons only exist in "Add" mode, not "Edit" mode (editing an
+    // existing field never offers a sub-category choice at all) — skip
+    // gracefully rather than erroring when they're not present.
+    const fieldBtn = document.getElementById('addChoiceFieldBtn');
+    const subcatBtn = document.getElementById('addChoiceSubcatBtn');
+    if(fieldBtn && subcatBtn){
+      fieldBtn.className = choice === 'field' ? 'submit-btn' : 'btn';
+      subcatBtn.className = choice === 'subcategory' ? 'submit-btn' : 'btn';
+      fieldBtn.style.cssText = choice === 'field' ? 'flex:1; margin-top:0;' : 'flex:1;';
+      subcatBtn.style.cssText = choice === 'subcategory' ? 'flex:1; margin-top:0;' : 'flex:1;';
+    }
+
+    const body = document.getElementById('addFieldFormBody');
+    const submitBtn = document.getElementById('addFieldSubmitBtn');
+    if(choice === 'subcategory'){
+      body.innerHTML = `
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">Creates a new sub-category, immediately selectable on the real form — even before any fields have been added to it yet. Only Technical Support and General Support have sub-categories at all.</div>
+        <div class="form-field">
+          <div class="field-label">Category<span class="required-star">*</span></div>
+          <select id="newSubcatCategory" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            ${CUSTOM_FIELD_CATEGORY_META.filter(c => SUBCATEGORY_CAPABLE.includes(c.key)).map(c => `<option value="${c.key}">${c.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-field">
+          <div class="field-label">Sub-category name<span class="required-star">*</span></div>
+          <input type="text" id="newSubcatName" placeholder="e.g. Warranty Support" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>`;
+      submitBtn.textContent = 'Add Sub-category';
+      submitBtn.setAttribute('onclick', 'submitNewSubcategory()');
+    } else {
+      body.innerHTML = `
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">This adds the field to the catalog above — it won't yet appear on the real task-entry form for existing sub-categories yet, and it lands at the end of its group rather than a specific position.</div>
         <div class="form-field">
           <div class="field-label">Category<span class="required-star">*</span></div>
           <select id="newFieldCategory" onchange="updateNewFieldSubTypeOptions()" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
@@ -4707,31 +4847,30 @@ appears to allow.`;
           <select id="newFieldType" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
             <option value="text">Free text (single line)</option>
             <option value="textarea">Free text (paragraph)</option>
+            <option value="number">Number</option>
             <option value="chips">Chips (multi-select)</option>
             <option value="chipselect">Dropdown (single-select)</option>
           </select>
         </div>
         <label style="display:flex; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
           <input type="checkbox" id="newFieldRequired"> Required
-        </label>
-        <div style="display:flex; gap:8px; margin-top:6px;">
-          <button class="submit-btn" style="flex:1; margin-top:0;" onclick="submitNewCustomField()">${existing ? 'Save changes' : 'Add Field'}</button>
-          <button class="btn" onclick="closeAddFieldModal()">Cancel</button>
-        </div>
-      </div>`;
-    overlay.onclick = (e) => { if(e.target === overlay) closeAddFieldModal(); };
-    document.body.appendChild(overlay);
-
-    if(existing){
-      document.getElementById('newFieldCategory').value = existing.category;
-      document.getElementById('newFieldZone').value = existing.zone;
-      document.getElementById('newFieldLabel').value = existing.label;
-      document.getElementById('newFieldType').value = existing.field_type;
-      document.getElementById('newFieldRequired').checked = existing.required;
-      updateNewFieldSubTypeOptions(existing.sub_type);
-    } else {
+        </label>`;
+      submitBtn.textContent = 'Add Field';
+      submitBtn.setAttribute('onclick', 'submitNewCustomField()');
       updateNewFieldSubTypeOptions();
     }
+  }
+
+  async function submitNewSubcategory(){
+    const category = document.getElementById('newSubcatCategory').value;
+    const name = document.getElementById('newSubcatName').value.trim();
+    if(!name){ alert('Please enter a name for this sub-category.'); return; }
+    const { count } = await sb.from('custom_subtypes').select('*', { count: 'exact', head: true }).eq('category', category);
+    const { error } = await sb.from('custom_subtypes').insert({ category, name, sort_order: count || 0 });
+    if(error){ alert('Could not add: ' + error.message); return; }
+    closeAddFieldModal();
+    loadDynamicFieldOptions(true); // so the real "Support Type" dropdown picks this up immediately, not just after a page refresh
+    loadCustomFieldsPanel();
   }
 
   function updateNewFieldSubTypeOptions(preselect){
@@ -4741,8 +4880,12 @@ appears to allow.`;
     const select = document.getElementById('newFieldSubType');
     if(meta.subTypes){
       wrap.style.display = 'block';
-      select.innerHTML = meta.subTypes.map(s => `<option value="${s}">${s}</option>`).join('');
-      if(preselect && meta.subTypes.includes(preselect)) select.value = preselect;
+      // Built-in sub-types first, then any Superadmin-created ones — a
+      // field can be added to either kind exactly the same way.
+      const extraSubtypes = (dynamicFieldOptions.customSubtypes[catKey] || []).map(s => s.name);
+      const allSubtypes = [...meta.subTypes, ...extraSubtypes];
+      select.innerHTML = allSubtypes.map(s => `<option value="${s}">${s}</option>`).join('');
+      if(preselect && allSubtypes.includes(preselect)) select.value = preselect;
     } else {
       wrap.style.display = 'none';
       select.innerHTML = '';
