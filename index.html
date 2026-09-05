@@ -1631,37 +1631,13 @@
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head" id="customFieldsBlock" style="display:none;">
-      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical, including each field's dropdown options in the same place. Reports isn't part of this system. New fields land at the end of their group for now — drag-and-drop reordering comes in a later update, and a new field doesn't yet appear on the real task-entry form until that update either.</div></div>
+      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical, including each field's dropdown options in the same place — plus Reports' own dropdown options (Installation Wings, Types of Data Missing, and its chip-based fields) at the end. Reports doesn't support adding/editing/deleting fields like the other 5 do. New fields land at the end of their group for now, and a new field doesn't yet appear on the real task-entry form until a later update.</div></div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
         <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
       </div>
     </div>
     <div id="customFieldsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
-
-    <div class="block-head" id="surveyOptionsBlock" style="display:none;">
-      <div><div class="block-title">Reports — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging a Survey Data Mismatch Report. Reports isn't part of the Task fields system above.</div></div>
-      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleSurveyOptionsVisibility(this)">Show section</button>
-    </div>
-    <div class="split-grid" id="surveyOptionsPanel" style="display:none; margin-bottom:12px;">
-      <div class="panel">
-        <div class="panel-title">Installation Wings</div>
-        <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
-          <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-title">Types of Data Missing</div>
-        <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
-          <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
-        </div>
-      </div>
-    </div>
-    <div id="reportsChipGroupsContainer" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
@@ -4413,12 +4389,14 @@ appears to allow.`;
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('surveyOptionsBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    // customFieldsPanel and surveyOptionsPanel both deliberately stay
-    // hidden by default too, each gated by its own "Show section" toggle
-    // — only actually fetched the first time someone opens that section,
-    // not on every single Admin panel visit.
-    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); loadSurveyOptionsPanel(); }
+    // customFieldsPanel deliberately stays hidden by default too, gated
+    // by its own "Show section" toggle — Reports' Installation Wings,
+    // Data Issue Types, and chip groups now render as part of this same
+    // panel's own content (see loadCustomFieldsPanel), so
+    // loadSurveyOptionsPanel/loadReportsChipGroupsPanel are only called
+    // from there now, after that HTML actually exists — not eagerly here,
+    // since their target elements wouldn't exist yet otherwise.
+    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); }
  
     const pendWrap = document.getElementById('pendingSigninsPanel');
     if(pendWrap){
@@ -4661,23 +4639,6 @@ appears to allow.`;
     panel.style.display = isHidden ? 'block' : 'none';
     btn.textContent = isHidden ? 'Hide section' : 'Show section';
     if(isHidden) loadCustomFieldsPanel();
-  }
-
-  // Reports isn't part of the Task fields system at all — Installation
-  // Wings and Data Issue Types get their own small, separate section
-  // instead, same as before "Category chip options" (now merged into
-  // Task fields) briefly absorbed them. Reports' own chip-type fields
-  // (Damage Item Name, Control System, etc.) render alongside them here
-  // too, in reportsChipGroupsContainer, lazy-loaded on first open.
-  function toggleSurveyOptionsVisibility(btn){
-    const panel = document.getElementById('surveyOptionsPanel');
-    const chipContainer = document.getElementById('reportsChipGroupsContainer');
-    if(!panel) return;
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'grid' : 'none';
-    if(chipContainer) chipContainer.style.display = isHidden ? 'block' : 'none';
-    btn.textContent = isHidden ? 'Hide section' : 'Show section';
-    if(isHidden) loadReportsChipGroupsPanel();
   }
 
   // Stage 2: lets a Superadmin create a genuinely new field. It's saved
@@ -5021,6 +4982,42 @@ appears to allow.`;
         ${subTypeHtml}
       </div>`;
     }).join('');
+
+    // Reports isn't part of the dynamic field system (no Edit/Delete/drag
+    // for it — its own report sub-types and Error Report scoring make it
+    // more complex than the other 5), but its dropdown options still need
+    // a Superadmin-managed home, so they render here too, as their own
+    // section within this same panel rather than a separate one.
+    panel.innerHTML += `<div class="panel" style="margin-bottom:18px;">
+      <div class="panel-title">Reports</div>
+      <div style="font-size:11.5px; color:var(--text-faint); margin:-6px 0 14px;">Dropdown options only — Reports doesn't support adding, editing, or deleting fields like the 5 categories above.</div>
+      <div class="split-grid" id="surveyOptionsPanel" style="margin-bottom:12px;">
+        <div class="panel">
+          <div class="panel-title">Installation Wings</div>
+          <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
+            <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Types of Data Missing</div>
+          <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
+            <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
+          </div>
+        </div>
+      </div>
+      <div id="reportsChipGroupsContainer"><div class="placeholder-note">Loading…</div></div>
+    </div>`;
+
+    // Both of these populate elements that only exist now that the HTML
+    // above has actually been written — calling them any earlier (e.g.
+    // eagerly in loadAdminPanel) would try to update elements that don't
+    // exist yet, the same race condition already fixed once before.
+    loadSurveyOptionsPanel();
+    loadReportsChipGroupsPanel();
   }
 
   // Drag-and-drop reordering — deliberately scoped to within one exact
