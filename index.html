@@ -479,7 +479,7 @@
  
   .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px;}
   @media (min-width: 861px){
-    #chipOptionsPanel{ grid-template-columns:1fr 1fr; }
+    #chipOptionsPanel .split-grid{ grid-template-columns:1fr 1fr; }
   }
   .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:flex-start; }
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow);}
@@ -1623,31 +1623,11 @@
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
-    <div class="block-head" id="chipOptionsBlock" style="display:none;"><div><div class="block-title">Category chip options</div><div class="block-sub">Superadmin only — manage the capsule/chip choices engineers pick from in every category's form. Removing one doesn't change past entries that already used it.</div></div></div>
-    <div class="split-grid" id="chipOptionsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
-
-    <div class="block-head" id="surveyOptionsBlock" style="display:none;">
-      <div><div class="block-title">Reports — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging an entry</div></div>
-      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleSurveyOptionsVisibility(this)">Show section</button>
+    <div class="block-head" id="chipOptionsBlock" style="display:none;">
+      <div><div class="block-title">Category chip options</div><div class="block-sub">Superadmin only — manage the capsule/chip choices engineers pick from in every category's form, organized by Common, Mechanical, and Electrical. Removing one doesn't change past entries that already used it.</div></div>
+      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleChipOptionsSectionVisibility(this)">Show section</button>
     </div>
-    <div class="split-grid" id="surveyOptionsPanel" style="display:none; margin-bottom:32px;">
-      <div class="panel">
-        <div class="panel-title">Installation Wings</div>
-        <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
-          <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-title">Types of Data Missing</div>
-        <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
-          <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
-        </div>
-      </div>
-    </div>
+    <div id="chipOptionsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
@@ -4344,14 +4324,19 @@ appears to allow.`;
     const backupSection = document.getElementById('accountMenuBackupSection');
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
-    document.getElementById('surveyOptionsBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    // surveyOptionsPanel itself deliberately stays hidden here regardless
-    // of role — it's now gated by the single "Show section" toggle in the
-    // block header above, not shown automatically just because someone's
-    // a Superadmin.
-    document.getElementById('chipOptionsBlock').style.display = isSuperadmin ? 'block' : 'none';
-    document.getElementById('chipOptionsPanel').style.display = isSuperadmin ? 'grid' : 'none';
-    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); loadSurveyOptionsPanel(); loadChipOptionsPanel(); }
+    document.getElementById('chipOptionsBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    // chipOptionsPanel itself deliberately stays hidden here regardless of
+    // role — it's now gated by the single "Show section" toggle in the
+    // block header above (Installation Wings and Data Issue Types moved
+    // in under this same section too, inside its Mechanical zone), not
+    // shown automatically just because someone's a Superadmin.
+    // loadChipOptionsPanel must finish building its HTML before
+    // loadSurveyOptionsPanel runs — Installation Wings and Data Issue
+    // Types now render inside that dynamically-generated markup (in the
+    // Mechanical zone) rather than as static HTML that's always present
+    // from the start, so calling them the other way around would try to
+    // update elements that don't exist in the DOM yet.
+    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); await loadChipOptionsPanel(); loadSurveyOptionsPanel(); }
  
     const pendWrap = document.getElementById('pendingSigninsPanel');
     if(pendWrap){
@@ -4532,41 +4517,41 @@ appears to allow.`;
   // One generalized admin UI covers every chip field across every category
   // — built from this list rather than 8 hand-written near-duplicate panels.
   const CHIP_FIELD_GROUPS = [
-    { key: 'rni:task_category_mechanical', label: 'R&I Activity (Mechanical) — Task Category' },
-    { key: 'rni:task_category_electrical', label: 'R&I Activity (Electrical) — Task Category' },
-    { key: 'rni:status_mechanical', label: 'R&I Activity (Mechanical) — Status' },
-    { key: 'rni:status_electrical', label: 'R&I Activity (Electrical) — Status' },
-    { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium' },
-    { key: 'presales:client_support_task', label: 'Pre-Sales Support — Support Type' },
-    { key: 'presales:sales_wing', label: 'Pre-Sales Support (Mechanical) — Sales Wing' },
-    { key: 'postsales:lift_type', label: 'Post-Sales Activity — Lift Type' },
-    { key: 'postsales:capacity', label: 'Post-Sales Activity — Capacity' },
-    { key: 'postsales:motor_origin', label: 'Post-Sales Activity — Motor Origin' },
-    { key: 'postsales:sales_wing', label: 'Post-Sales Activity — Sales Wing' },
-    { key: 'postsales:door_type', label: 'Post-Sales Activity (Mechanical) — Door Type' },
-    { key: 'postsales:door_opening_width', label: 'Post-Sales Activity (Mechanical) — Door Opening Width' },
-    { key: 'postsales:work_type', label: 'Post-Sales Activity (Mechanical) — Work Type' },
-    { key: 'postsales:work_type_electrical', label: 'Post-Sales Activity (Electrical) — Work Type' },
-    { key: 'techsupport:problem_category', label: 'Technical Support Mechanical (Installation) — Problem Category' },
-    { key: 'techsupport:problem_category_commissioning', label: 'Technical Support Mechanical (Commissioning) — Problem Category' },
-    { key: 'techsupport:problem_category_aftersales', label: 'Technical Support Mechanical (After-Sales) — Problem Category' },
-    { key: 'techsupport:support_medium', label: 'Technical Support Mechanical (all 3 sub-types) — Support Medium' },
-    { key: 'techsupport:control_system_installation', label: 'Technical Support Electrical (Installation) — Control System' },
-    { key: 'techsupport:control_system_commissioning', label: 'Technical Support Electrical (Commissioning) — Control System' },
-    { key: 'techsupport:control_system_aftersales', label: 'Technical Support Electrical (After-Sales) — Control System' },
-    { key: 'techsupport:problem_category_electrical', label: 'Technical Support Electrical (all 3 sub-types) — Problem Category' },
-    { key: 'generalsupport:work_type_production', label: 'General Support (Production) — Work Type' },
-    { key: 'generalsupport:work_type_scm', label: 'General Support (SCM) — Work Type' },
-    { key: 'generalsupport:work_type_qc', label: 'General Support (QC) — Work Type' },
-    { key: 'generalsupport:work_type_other', label: 'General Support (Other) — Work Type' },
-    { key: 'surveyissues:damage_item_mechanical', label: 'Reports — Mechanical Components Service: Damage Item Name' },
-    { key: 'surveyissues:zone_engineer', label: 'Reports — Zone Engineer (shared)' },
-    { key: 'surveyissues:control_system_commissioning_report', label: 'Reports — Commissioning Damage Materials: Control System' },
-    { key: 'surveyissues:damage_components_commissioning', label: 'Reports — Commissioning Damage Materials: Damage Components' },
-    { key: 'surveyissues:control_system_aftersales_report', label: 'Reports — After Sales Damage Materials: Control System' },
-    { key: 'surveyissues:damage_components_aftersales', label: 'Reports — After Sales Damage Materials: Damage Components' },
-    { key: 'surveyissues:control_system_brand', label: 'Reports — Electrical & Electronics Service: Control System Brand' },
-    { key: 'surveyissues:damage_item_electrical', label: 'Reports — Electrical & Electronics Service: Damage Item Name' },
+    { key: 'rni:task_category_mechanical', label: 'R&I Activity (Mechanical) — Task Category', zone: 'mechanical' },
+    { key: 'rni:task_category_electrical', label: 'R&I Activity (Electrical) — Task Category', zone: 'electrical' },
+    { key: 'rni:status_mechanical', label: 'R&I Activity (Mechanical) — Status', zone: 'mechanical' },
+    { key: 'rni:status_electrical', label: 'R&I Activity (Electrical) — Status', zone: 'electrical' },
+    { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium', zone: 'common' },
+    { key: 'presales:client_support_task', label: 'Pre-Sales Support — Support Type', zone: 'common' },
+    { key: 'presales:sales_wing', label: 'Pre-Sales Support (Mechanical) — Sales Wing', zone: 'mechanical' },
+    { key: 'postsales:lift_type', label: 'Post-Sales Activity — Lift Type', zone: 'common' },
+    { key: 'postsales:capacity', label: 'Post-Sales Activity — Capacity', zone: 'common' },
+    { key: 'postsales:motor_origin', label: 'Post-Sales Activity — Motor Origin', zone: 'common' },
+    { key: 'postsales:sales_wing', label: 'Post-Sales Activity — Sales Wing', zone: 'common' },
+    { key: 'postsales:door_type', label: 'Post-Sales Activity (Mechanical) — Door Type', zone: 'mechanical' },
+    { key: 'postsales:door_opening_width', label: 'Post-Sales Activity (Mechanical) — Door Opening Width', zone: 'mechanical' },
+    { key: 'postsales:work_type', label: 'Post-Sales Activity (Mechanical) — Work Type', zone: 'mechanical' },
+    { key: 'postsales:work_type_electrical', label: 'Post-Sales Activity (Electrical) — Work Type', zone: 'electrical' },
+    { key: 'techsupport:problem_category', label: 'Technical Support Mechanical (Installation) — Problem Category', zone: 'mechanical' },
+    { key: 'techsupport:problem_category_commissioning', label: 'Technical Support Mechanical (Commissioning) — Problem Category', zone: 'mechanical' },
+    { key: 'techsupport:problem_category_aftersales', label: 'Technical Support Mechanical (After-Sales) — Problem Category', zone: 'mechanical' },
+    { key: 'techsupport:support_medium', label: 'Technical Support Mechanical (all 3 sub-types) — Support Medium', zone: 'mechanical' },
+    { key: 'techsupport:control_system_installation', label: 'Technical Support Electrical (Installation) — Control System', zone: 'electrical' },
+    { key: 'techsupport:control_system_commissioning', label: 'Technical Support Electrical (Commissioning) — Control System', zone: 'electrical' },
+    { key: 'techsupport:control_system_aftersales', label: 'Technical Support Electrical (After-Sales) — Control System', zone: 'electrical' },
+    { key: 'techsupport:problem_category_electrical', label: 'Technical Support Electrical (all 3 sub-types) — Problem Category', zone: 'electrical' },
+    { key: 'generalsupport:work_type_production', label: 'General Support (Production) — Work Type', zone: 'common' },
+    { key: 'generalsupport:work_type_scm', label: 'General Support (SCM) — Work Type', zone: 'common' },
+    { key: 'generalsupport:work_type_qc', label: 'General Support (QC) — Work Type', zone: 'common' },
+    { key: 'generalsupport:work_type_other', label: 'General Support (Other) — Work Type', zone: 'common' },
+    { key: 'surveyissues:damage_item_mechanical', label: 'Reports — Mechanical Components Service: Damage Item Name', zone: 'mechanical' },
+    { key: 'surveyissues:zone_engineer', label: 'Reports — Zone Engineer (shared)', zone: 'electrical' },
+    { key: 'surveyissues:control_system_commissioning_report', label: 'Reports — Commissioning Damage Materials: Control System', zone: 'electrical' },
+    { key: 'surveyissues:damage_components_commissioning', label: 'Reports — Commissioning Damage Materials: Damage Components', zone: 'electrical' },
+    { key: 'surveyissues:control_system_aftersales_report', label: 'Reports — After Sales Damage Materials: Control System', zone: 'electrical' },
+    { key: 'surveyissues:damage_components_aftersales', label: 'Reports — After Sales Damage Materials: Damage Components', zone: 'electrical' },
+    { key: 'surveyissues:control_system_brand', label: 'Reports — Electrical & Electronics Service: Control System Brand', zone: 'electrical' },
+    { key: 'surveyissues:damage_item_electrical', label: 'Reports — Electrical & Electronics Service: Damage Item Name', zone: 'electrical' },
   ];
 
   function chipOptionRowHtml(row){
@@ -4576,21 +4561,17 @@ appears to allow.`;
     </div>`;
   }
 
-  // Every chip group used to render its full option list open by
-  // default — fine for short lists, but some groups (the Reports
-  // category especially) have dozens of options, making the whole Admin
-  // panel long and cluttered even when nobody needs to look at most of
-  // them right now. Collapsed by default; expand only the ones actually
-  // being worked on.
-  // A single toggle for the whole "Reports — dropdown options" section
-  // (Installation Wings + Issue Types together) — previously this entire
-  // section rendered open by default for every Superadmin, taking up
-  // space even when nobody needed to look at it right now.
-  function toggleSurveyOptionsVisibility(btn){
-    const panel = document.getElementById('surveyOptionsPanel');
+  // A single toggle for the entire "Category chip options" section — every
+  // dropdown/chip group in the app, organized into Common, Mechanical, and
+  // Electrical zones below. Installation Wings and Data Issue Types now
+  // live inside this same section too (in the Mechanical zone, since the
+  // Survey Data Mismatch Report that uses them is Mechanical-only),
+  // instead of their own separate "Reports — dropdown options" block.
+  function toggleChipOptionsSectionVisibility(btn){
+    const panel = document.getElementById('chipOptionsPanel');
     if(!panel) return;
     const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'grid' : 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
     btn.textContent = isHidden ? 'Hide section' : 'Show section';
   }
 
@@ -4602,6 +4583,10 @@ appears to allow.`;
     btn.textContent = isHidden ? 'Hide options' : 'Show options';
   }
 
+  // Each chip group's own option list stays collapsed by default too —
+  // some groups (Reports especially) have dozens of options, and even
+  // with the master section toggle above, showing every group's full
+  // list at once the moment the section opens would still be cluttered.
   async function loadChipOptionsPanel(){
     const panel = document.getElementById('chipOptionsPanel');
     const { data, error } = await sb.from('chip_options').select('*').order('sort_order');
@@ -4614,7 +4599,8 @@ appears to allow.`;
       const key = `${row.category}:${row.field_key}`;
       (byGroup[key] = byGroup[key] || []).push(row);
     });
-    panel.innerHTML = CHIP_FIELD_GROUPS.map(g => {
+
+    const chipGroupCardHtml = g => {
       const rows = byGroup[g.key] || [];
       const rowsHtml = rows.length ? rows.map(chipOptionRowHtml).join('') : '<div class="placeholder-note">No options yet.</div>';
       const inputId = `newChipInput-${g.key.replace(':', '-')}`;
@@ -4631,6 +4617,46 @@ appears to allow.`;
             <button class="queue-btn" onclick="addChipOption('${g.key}', '${inputId}')">+ Add</button>
           </div>
         </div>
+      </div>`;
+    };
+
+    // Installation Wings and Data Issue Types aren't chip_options rows at
+    // all — they're their own dedicated tables — but they're rendered as
+    // two more cards here, in the Mechanical zone, since that's the only
+    // discipline whose Reports form (Survey Data Mismatch Report) actually
+    // uses them. addInstallationWing()/addDataIssueType()/
+    // deleteInstallationWing()/deleteDataIssueType() and the loading logic
+    // in loadSurveyOptionsPanel() are all completely unchanged — this only
+    // moves where their existing markup physically renders.
+    const installationWingsCardHtml = `<div class="panel">
+      <div class="panel-title">Installation Wings</div>
+      <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
+        <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
+      </div>
+    </div>`;
+    const dataIssueTypesCardHtml = `<div class="panel">
+      <div class="panel-title">Types of Data Missing</div>
+      <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
+      <div style="display:flex; gap:8px; margin-top:14px;">
+        <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
+        <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
+      </div>
+    </div>`;
+
+    const zones = [
+      { key: 'common', label: 'Common — shared by both teams' },
+      { key: 'mechanical', label: 'Mechanical' },
+      { key: 'electrical', label: 'Electrical' },
+    ];
+    panel.innerHTML = zones.map(zone => {
+      const groups = CHIP_FIELD_GROUPS.filter(g => g.zone === zone.key);
+      let cardsHtml = groups.map(chipGroupCardHtml).join('');
+      if(zone.key === 'mechanical') cardsHtml += installationWingsCardHtml + dataIssueTypesCardHtml;
+      return `<div style="margin-bottom:24px;">
+        <div style="font-size:12px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin-bottom:10px;">${zone.label}</div>
+        <div class="split-grid">${cardsHtml}</div>
       </div>`;
     }).join('');
 
