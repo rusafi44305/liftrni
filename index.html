@@ -1444,6 +1444,11 @@
         </div>
       </div>
     </div>
+    <div class="panel" style="margin-top:20px;">
+      <div class="panel-title">Error Reports — your own record</div>
+      <div class="block-sub" style="margin-top:-6px; margin-bottom:12px;">For your own awareness only — this is never shown to anyone else without a Superadmin's approval, and never affects how your overall Score number is displayed to others.</div>
+      <div id="profileErrorReports"><div class="placeholder-note">Loading…</div></div>
+    </div>
   </div>
  
   <!-- ============ DASHBOARD ============ -->
@@ -1479,8 +1484,8 @@
       <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
       <div class="panel" style="padding:8px 20px;">
         <table class="data">
-          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th>Score</th><th></th></tr></thead>
-          <tbody id="dashLeaderboardBody"><tr><td colspan="4" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
+          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th>Score</th><th>Error Reports</th><th></th></tr></thead>
+          <tbody id="dashLeaderboardBody"><tr><td colspan="5" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -1838,6 +1843,22 @@
       {t:'textarea', l:'Impact', ph:'What effect this had — rework, delay, cost, etc.', section:'description'},
       {t:'textarea', l:'Remarks', section:'description'}
     ],
+    // Shared by both disciplines, unlike every other report type here —
+    // flags a mistake found in another category's work. "Error Category"
+    // is a fixed list of the app's other 5 categories (built directly from
+    // catMeta, not a Superadmin-managed dropdown, since these category
+    // names are structural, not something that needs adding or removing).
+    // Deliberately contributes negatively to that category's Score — see
+    // computeMonthlyScorePercents().
+    'Error Report': [
+      {t:'staticselect', l:'Error Category', req:true, placeholder:'Select…',
+        opts:Object.keys(catMeta).filter(k => k !== 'surveyissues').map(k => catMeta[k].name), section:'identity'},
+      liftId(),
+      {t:'textarea', l:'Error Statement', req:true, section:'details'},
+      {t:'starrating', l:'Impact', req:true, section:'details'},
+      {t:'textarea', l:'Solving Statement', req:true, section:'details'},
+      {t:'textarea', l:'Remarks', section:'description'}
+    ],
     'Mechanical Components Service Report': [
       {t:'text', l:'Project Name', req:true, section:'identity'},
       liftId(),
@@ -1997,6 +2018,20 @@
     if(f.t==='textarea'){
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><textarea placeholder="${f.ph||''}"></textarea></div>`;
     }
+    if(f.t==='starrating'){
+      // Used for Error Report's "Impact" — a 1-5 star rating standing in
+      // for financial impact, rather than free text, so it can be turned
+      // into a consistent, comparable penalty weight for scoring instead
+      // of something that would need to be manually judged per entry.
+      const stars = [1,2,3,4,5].map(n => `<span class="star-pick" data-star="${n}" onclick="setStarRating(this, ${n})" style="cursor:pointer; font-size:26px; color:var(--border); transition:color .1s ease;">★</span>`).join('');
+      return `<div class="form-field">
+        <div class="field-label">${f.l}${reqStar(f)}</div>
+        <div class="star-rating-group" data-value="0">${stars}</div>
+        <div style="font-size:11px; color:var(--text-faint); margin-top:6px; line-height:1.6;">
+          ★☆☆☆☆ Under ৳5,000 &nbsp;·&nbsp; ★★☆☆☆ ৳5,000–10,000 &nbsp;·&nbsp; ★★★☆☆ ৳10,001–15,000 &nbsp;·&nbsp; ★★★★☆ ৳15,001–20,000 &nbsp;·&nbsp; ★★★★★ Over ৳20,000
+        </div>
+      </div>`;
+    }
     if(f.t==='row2text'){
       const isDate1 = /date/i.test(f.l1), isDate2 = /date/i.test(f.l2);
       return `<div class="form-field"><div class="form-row-2">
@@ -2102,11 +2137,13 @@
     // Reports — unlike every other sub-typed category, the dropdown OPTIONS
     // themselves differ by discipline, not just the fields shown once one
     // is picked. Mechanical only ever sees 2 report types, Electrical only
-    // sees the other 3.
+    // sees the other 3 — Error Report is the one exception, shared by both
+    // teams, since either discipline can flag a mistake in any category's
+    // work.
     if(cat === 'surveyissues'){
       const reportOptions = discipline === 'electrical'
-        ? ['Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report']
-        : ['Survey Data Mismatch Report', 'Mechanical Components Service Report'];
+        ? ['Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report', 'Error Report']
+        : ['Survey Data Mismatch Report', 'Mechanical Components Service Report', 'Error Report'];
       const reportField = fields.find(f => f.id === 'reportTypeSelect');
       if(reportField) reportField.opts = reportOptions;
       const reportSelect = document.getElementById('reportTypeSelect');
@@ -2699,6 +2736,18 @@
   function pickSingleChip(el){
     Array.from(el.parentElement.children).forEach(c => c.classList.remove('picked-single'));
     el.classList.add('picked-single');
+  }
+
+  // Fills in stars 1 through the clicked one, greys out the rest, and
+  // stores the plain numeric rating on the group's own data-value —
+  // collectFormData() reads that directly rather than trying to count
+  // filled stars back out of their color.
+  function setStarRating(starEl, value){
+    const group = starEl.closest('.star-rating-group');
+    group.dataset.value = value;
+    Array.from(group.querySelectorAll('.star-pick')).forEach(s => {
+      s.style.color = parseInt(s.dataset.star) <= value ? 'var(--amber)' : 'var(--border)';
+    });
   }
  
   // floor indicator tick-up animation on load
@@ -3983,6 +4032,14 @@
       const opt = sel.options[sel.selectedIndex];
       details[label] = (opt && opt.value) ? opt.textContent.trim() : '';
     });
+    // Star rating fields (currently just Error Report's Impact) — store
+    // the plain 1-5 number as a string, same as every other detail value,
+    // so computeMonthlyScorePercents() can parse it straight back out for
+    // the penalty calculation.
+    document.querySelectorAll('#dynamicForm .star-rating-group').forEach(group => {
+      const label = group.closest('.form-field').querySelector('.field-label').textContent.replace('*','').trim();
+      details[label] = group.dataset.value || '0';
+    });
  
     return { category: cat, lift_id: liftId, project_name: projectName || '(untitled)', details };
   }
@@ -4001,11 +4058,13 @@
       const select = fieldEl.querySelector('select.ti');
       const textarea = fieldEl.querySelector('textarea');
       const chipGroup = fieldEl.querySelector('.chip-group');
+      const starGroup = fieldEl.querySelector('.star-rating-group');
       let filled = true;
       if(input) filled = input.value.trim() !== '';
       else if(select) filled = select.value !== '';
       else if(textarea) filled = textarea.value.trim() !== '';
       else if(chipGroup) filled = chipGroup.querySelectorAll('.chip-opt.picked').length > 0;
+      else if(starGroup) filled = parseInt(starGroup.dataset.value || '0') > 0;
       if(!filled) missing.push(label);
     });
     return missing;
@@ -4411,11 +4470,25 @@ appears to allow.`;
     }
     const weightMap = {};
     (data||[]).forEach(w => weightMap[w.category] = w.weight);
-    el.innerHTML = Object.keys(catMeta).map(key => `
+    // Reports is deliberately excluded here — it no longer contributes to
+    // Score at all, whether positively or as a settable weight. Its one
+    // exception, Error Report, still affects Score, but always as a
+    // penalty using the weight of whichever OTHER category was picked as
+    // the error's category — never its own separate weight.
+    const scorableKeys = Object.keys(catMeta).filter(k => k !== 'surveyissues');
+    el.innerHTML = scorableKeys.map(key => `
       <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
         <span style="font-size:13.5px;">${catMeta[key].name}</span>
         <input type="number" step="0.1" min="0" id="kw_${key}" value="${weightMap[key] ?? 1}" style="width:80px; padding:6px 10px; border-radius:7px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); text-align:right;">
       </div>`).join('') + `<button class="submit-btn" style="margin-top:14px;" onclick="saveKpiWeights()">Save weights</button>
+      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+        <div style="font-size:13.5px; font-weight:600;">Monthly target</div>
+        <div style="font-size:11.5px; color:var(--text-faint); max-width:420px; margin-bottom:10px;">The weighted-points value that counts as 100% for the month. Monthly Score is capped at 100 — going past this target doesn't push the number any higher. Overall Score is the average of every month's already-capped percentage, so it can never exceed 100 either.</div>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <input type="number" step="0.1" min="0.1" id="monthlyScoreTargetInput" value="${appSettings.monthly_score_target ?? 20}" style="width:100px; padding:6px 10px; border-radius:7px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); text-align:right;">
+          <button class="submit-btn" style="margin-top:0;" onclick="saveMonthlyScoreTarget()">Save target</button>
+        </div>
+      </div>
       <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px;">
         <div>
           <div style="font-size:13.5px; font-weight:600;">Let Admins see individual engineer Scores</div>
@@ -4423,6 +4496,16 @@ appears to allow.`;
         </div>
         <label class="switch">
           <input type="checkbox" id="adminsSeeKpiToggle" ${appSettings.admins_see_kpi ? 'checked' : ''} onchange="toggleAdminsSeeKpi(this)">
+          <span class="switch-track"></span>
+        </label>
+      </div>
+      <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px;">
+        <div>
+          <div style="font-size:13.5px; font-weight:600;">Let Admins see Error Report detail</div>
+          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">Separate from Score visibility above — this controls whether Admins can see how many Error Reports an engineer has and their point impact on the Dashboard leaderboard. Everyone can always see their own, on their own Profile page. Superadmins can always see everyone's.</div>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="adminsSeeErrorReportsToggle" ${appSettings.admins_see_error_reports ? 'checked' : ''} onchange="toggleAdminsSeeErrorReports(this)">
           <span class="switch-track"></span>
         </label>
       </div>
@@ -4439,10 +4522,20 @@ appears to allow.`;
   }
  
   async function saveKpiWeights(){
-    const rows = Object.keys(catMeta).map(key => ({ category: key, weight: parseFloat(document.getElementById('kw_'+key).value) || 0 }));
+    const scorableKeys = Object.keys(catMeta).filter(k => k !== 'surveyissues');
+    const rows = scorableKeys.map(key => ({ category: key, weight: parseFloat(document.getElementById('kw_'+key).value) || 0 }));
     const { error } = await sb.from('kpi_weights').upsert(rows, { onConflict: 'category' });
     if(error){ alert('Could not save: ' + error.message); return; }
     alert('Score weights saved. Every engineer\'s Score now reflects these weights.');
+  }
+
+  async function saveMonthlyScoreTarget(){
+    const value = parseFloat(document.getElementById('monthlyScoreTargetInput').value);
+    if(!value || value <= 0){ alert('Target must be a number greater than 0.'); return; }
+    const { error } = await sb.from('app_settings').update({ monthly_score_target: value }).eq('id', 1);
+    if(error){ alert('Could not save: ' + error.message); return; }
+    appSettings.monthly_score_target = value;
+    alert('Monthly target saved. Every engineer\'s Score now reflects this target.');
   }
 
   // ============ SURVEY REPORT ISSUES — dropdown options (Superadmin only) ============
@@ -5179,8 +5272,65 @@ appears to allow.`;
   }
  
   // ============ PROFILE (real data) ============
+  // Reverse lookup from a category's display name (e.g. "R&I Activity")
+  // back to its key (e.g. "rni") — needed because Error Report stores the
+  // category someone picked as its display name (what the dropdown shows),
+  // but weights are keyed by the short internal category key.
+  const catNameToKey = {};
+  Object.keys(catMeta).forEach(k => { catNameToKey[catMeta[k].name] = k; });
+
+  // Shared by both the Profile page and the Dashboard leaderboard — takes
+  // a list of task rows (needs category, details, created_at) plus the
+  // category weight map and the monthly target, and returns a Map of
+  // "YYYY-M" → that month's capped-at-100 percentage (no lower floor — a
+  // month with enough Error Reports can legitimately go negative). A task
+  // counts toward whichever month it was actually performed (Perform
+  // Date), falling back to created_at only for older entries logged
+  // before that field existed — matching the same rule as the Activity
+  // Trend chart.
+  //
+  // Scoring rules:
+  //   - Any of the 5 normal categories (R&I Activity, Pre-Sales,
+  //     Post-Sales, Technical Support, General Support): +weight[category]
+  //   - Reports → Error Report specifically: -(weight[the category the
+  //     error was logged against] × (impact stars ÷ 5)) — a 5-star (most
+  //     costly) error costs the FULL category weight; a 1-star error
+  //     costs only a fifth of it. Deliberately scaled by severity rather
+  //     than a flat penalty regardless of how minor or costly the mistake
+  //     actually was.
+  //   - Reports → any other report type: contributes 0 either way
+  function computeMonthlyScorePercents(rows, weightMap, target){
+    const sumsByMonth = {};
+    rows.forEach(r => {
+      const performDate = r.details && r.details['Perform Date'];
+      const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(r.created_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}`;
+      let points = 0;
+      if(r.category === 'surveyissues'){
+        if(r.details && r.details['Report Type'] === 'Error Report'){
+          const errorCatKey = catNameToKey[r.details['Error Category']];
+          const stars = parseInt(r.details['Impact']) || 0;
+          points = -((weightMap[errorCatKey] ?? 1) * (stars / 5));
+        }
+        // any other Reports sub-type: points stays 0
+      } else {
+        points = weightMap[r.category] ?? 1;
+      }
+      sumsByMonth[key] = (sumsByMonth[key] || 0) + points;
+    });
+    const percentsByMonth = {};
+    Object.entries(sumsByMonth).forEach(([key, sum]) => {
+      // Capped at 100 on the upper end only — deliberately no lower floor,
+      // so a month weighed down by enough Error Reports can go negative.
+      percentsByMonth[key] = Math.min(100, (sum / target) * 100);
+    });
+    return percentsByMonth;
+  }
+
+
   async function loadProfile(){
     if(!currentProfile) return;
+    await loadAppSettings(); // every user needs the current monthly_score_target for their own Score, not just Admins/Superadmins — appSettingsLoaded guards against fetching it twice if it's already loaded
     renderAvatar(document.getElementById('profileAvatar'), currentProfile);
     document.getElementById('profileName').textContent = `${currentProfile.full_name} (${currentProfile.nickname})`;
     document.getElementById('profileRole').textContent =
@@ -5191,8 +5341,8 @@ appears to allow.`;
  
     const now = new Date();
     document.getElementById('profileKpiMonthLabel').textContent = now.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
- 
+    const thisMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+
     const { data } = await sb.from('tasks').select('category, created_at, details').eq('employee_id', currentUser.id);
     const rows = data || [];
     document.getElementById('profileTaskCount').textContent = rows.length;
@@ -5203,25 +5353,46 @@ appears to allow.`;
     const monthlyRows = rows.filter(r => {
       const performDate = r.details && r.details['Perform Date'];
       const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(r.created_at);
-      return d >= new Date(monthStart);
+      return `${d.getFullYear()}-${d.getMonth()}` === thisMonthKey;
     });
     document.getElementById('profileTaskCountMonthly').textContent = monthlyRows.length;
- 
-    const counts = {};
-    rows.forEach(r => { counts[r.category] = (counts[r.category]||0) + 1; });
-    const monthlyCounts = {};
-    monthlyRows.forEach(r => { monthlyCounts[r.category] = (monthlyCounts[r.category]||0) + 1; });
- 
+
     const { data: weightData } = await sb.from('kpi_weights').select('*');
     const weightMap = {};
     (weightData||[]).forEach(w => weightMap[w.category] = w.weight);
-    const hasWeights = weightData && weightData.length;
- 
-    const overallScore = Object.entries(counts).reduce((sum, [cat,count]) => sum + count * (weightMap[cat] ?? 1), 0);
-    const monthlyScore = Object.entries(monthlyCounts).reduce((sum, [cat,count]) => sum + count * (weightMap[cat] ?? 1), 0);
-    document.getElementById('profileKpiScore').textContent = hasWeights ? overallScore.toFixed(1) : rows.length;
-    document.getElementById('profileKpiLabel').textContent = hasWeights ? 'Overall weighted Score' : 'Overall — weights not set yet by a Superadmin';
-    document.getElementById('profileKpiMonthly').textContent = hasWeights ? monthlyScore.toFixed(1) : monthlyRows.length;
+    const target = appSettings.monthly_score_target ?? 20;
+
+    // Monthly Score is simply this month's capped percentage. Overall
+    // Score is the average of every month's already-capped percentage —
+    // since none of those individual months can exceed 100, their average
+    // can't either, with no separate cap needed for Overall at all.
+    const percentsByMonth = computeMonthlyScorePercents(rows, weightMap, target);
+    const monthlyScore = percentsByMonth[thisMonthKey] ?? 0;
+    const monthKeys = Object.keys(percentsByMonth);
+    const overallScore = monthKeys.length ? monthKeys.reduce((sum, k) => sum + percentsByMonth[k], 0) / monthKeys.length : 0;
+
+    document.getElementById('profileKpiScore').textContent = overallScore.toFixed(1);
+    document.getElementById('profileKpiLabel').textContent = 'Overall Score — average of every performed month';
+    document.getElementById('profileKpiMonthly').textContent = monthlyScore.toFixed(1);
+
+    // Error Reports — always visible to the person themselves, on their
+    // own Profile page, regardless of role or the Admin-visibility
+    // toggle. That toggle only controls whether OTHER people (Admins)
+    // can see this same detail about someone else, on the Dashboard.
+    const errorRows = rows.filter(r => r.category === 'surveyissues' && r.details && r.details['Report Type'] === 'Error Report');
+    const errorImpact = errorRows.reduce((sum, r) => sum - ((weightMap[catNameToKey[r.details['Error Category']]] ?? 1) * ((parseInt(r.details['Impact']) || 0) / 5)), 0);
+    const errEl = document.getElementById('profileErrorReports');
+    if(errEl){
+      errEl.innerHTML = errorRows.length
+        ? `<div style="display:flex; gap:24px; flex-wrap:wrap;">
+             <div><div style="font-size:22px; font-weight:700;">${errorRows.length}</div><div style="font-size:11.5px; color:var(--text-faint);">Error Report${errorRows.length===1?'':'s'} logged (all-time)</div></div>
+             <div><div style="font-size:22px; font-weight:700; color:var(--red);">${errorImpact.toFixed(1)}</div><div style="font-size:11.5px; color:var(--text-faint);">Total point impact on your Score</div></div>
+           </div>`
+        : `<div class="placeholder-note">No Error Reports logged against you — nothing affecting your Score here.</div>`;
+    }
+
+    const counts = {};
+    rows.forEach(r => { counts[r.category] = (counts[r.category]||0) + 1; });
  
     const max = Math.max(1, ...Object.values(counts));
     const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
@@ -5295,25 +5466,45 @@ appears to allow.`;
     const weightMap = {};
     (weightData||[]).forEach(w => weightMap[w.category] = w.weight);
     const canSeeIndividualKpi = currentProfile.role === 'superadmin' || (currentProfile.role === 'admin' && appSettings.admins_see_kpi);
- 
+    // Separate from Score visibility above — an Admin might be allowed to
+    // see the overall Score number but not the Error Report detail behind
+    // it, or vice versa, depending on what a Superadmin has configured.
+    const canSeeErrorReports = currentProfile.role === 'superadmin' || (currentProfile.role === 'admin' && appSettings.admins_see_error_reports);
+    const target = appSettings.monthly_score_target ?? 20;
+
     const byEngineer = {};
     rows.forEach(r => {
       const id = r.employee_id;
-      if(!byEngineer[id]) byEngineer[id] = { name: r.profiles ? displayName(r.profiles) : '—', total: 0, cats: {}, kpi: 0 };
+      if(!byEngineer[id]) byEngineer[id] = { name: r.profiles ? displayName(r.profiles) : '—', total: 0, cats: {}, rows: [] };
       byEngineer[id].total++;
       byEngineer[id].cats[r.category] = (byEngineer[id].cats[r.category]||0) + 1;
-      byEngineer[id].kpi += (weightMap[r.category] ?? 1);
+      byEngineer[id].rows.push(r);
+    });
+    // Same rule as the Profile page — each engineer's Score here is the
+    // average of every month's already-capped percentage across whatever
+    // rows fall within the selected date range, so it can never exceed
+    // 100 no matter how active someone was.
+    Object.values(byEngineer).forEach(e => {
+      const percentsByMonth = computeMonthlyScorePercents(e.rows, weightMap, target);
+      const monthKeys = Object.keys(percentsByMonth);
+      e.kpi = monthKeys.length ? monthKeys.reduce((sum, k) => sum + percentsByMonth[k], 0) / monthKeys.length : 0;
+      const errorRows = e.rows.filter(r => r.category === 'surveyissues' && r.details && r.details['Report Type'] === 'Error Report');
+      e.errorCount = errorRows.length;
+      e.errorImpact = errorRows.reduce((sum, r) => sum - ((weightMap[catNameToKey[r.details['Error Category']]] ?? 1) * ((parseInt(r.details['Impact']) || 0) / 5)), 0);
     });
     const leaderboard = Object.entries(byEngineer).sort((a,b) => b[1].total - a[1].total);
     const lbBody = document.getElementById('dashLeaderboardBody');
     lbBody.innerHTML = leaderboard.length ? leaderboard.map(([id, e]) => {
       const topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0];
       const kpiCell = canSeeIndividualKpi ? e.kpi.toFixed(1) : '<span title="Restricted by Superadmin" style="color:var(--text-faint);">🔒</span>';
+      const errorCell = !canSeeErrorReports
+        ? '<span title="Restricted by Superadmin" style="color:var(--text-faint);">🔒</span>'
+        : (e.errorCount ? `${e.errorCount} <span style="color:var(--red); font-size:11px;">(${e.errorImpact.toFixed(1)})</span>` : '—');
       return `<tr style="cursor:pointer;" onclick="document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">
-        <td><div class="rank-name">${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td>${kpiCell}</td>
+        <td><div class="rank-name">${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td>${kpiCell}</td><td>${errorCell}</td>
         <td><button class="btn inspect" style="padding:4px 12px; font-size:11.5px;" onclick="event.stopPropagation(); document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">Inspect</button></td>
       </tr>`;
-    }).join('') : '<tr><td colspan="5" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
+    }).join('') : '<tr><td colspan="6" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
 
     // Inspecting a specific engineer also surfaces their real individual
     // entries below — not just re-shown summary numbers the dropdown filter
@@ -5367,13 +5558,13 @@ appears to allow.`;
   }
  
   // ============ APP SETTINGS (KPI visibility + trigger control, Superadmin only) ============
-  let appSettings = { admins_see_kpi: true, admins_trigger_kpi: false };
+  let appSettings = { admins_see_kpi: true, admins_trigger_kpi: false, monthly_score_target: 20, admins_see_error_reports: false };
   let appSettingsLoaded = false;
  
   async function loadAppSettings(){
     if(appSettingsLoaded) return;
     const { data, error } = await sb.from('app_settings').select('*').eq('id', 1).single();
-    if(!error && data) appSettings = { admins_trigger_kpi: false, ...data };
+    if(!error && data) appSettings = { admins_trigger_kpi: false, monthly_score_target: 20, ...data };
     appSettingsLoaded = true;
   }
  
@@ -5381,6 +5572,12 @@ appears to allow.`;
     const { error } = await sb.from('app_settings').update({ admins_see_kpi: checkbox.checked }).eq('id', 1);
     if(error){ alert('Could not save: ' + error.message); checkbox.checked = !checkbox.checked; return; }
     appSettings.admins_see_kpi = checkbox.checked;
+  }
+
+  async function toggleAdminsSeeErrorReports(checkbox){
+    const { error } = await sb.from('app_settings').update({ admins_see_error_reports: checkbox.checked }).eq('id', 1);
+    if(error){ alert('Could not save: ' + error.message); checkbox.checked = !checkbox.checked; return; }
+    appSettings.admins_see_error_reports = checkbox.checked;
   }
  
   async function toggleAdminsTriggerKpi(checkbox){
