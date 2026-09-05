@@ -1916,7 +1916,7 @@
     presales: [
       {t:'text', l:'Client / Project Name', req:true, section:'identity'},
       {t:'chips', l:'Support Medium', hint:'select all that apply', source:'presales:support_medium', section:'details'},
-      {t:'chips', l:'Client Support Task', hint:'select all that apply', source:'presales:client_support_task', section:'details'},
+      {t:'chips', l:'Support Type', hint:'select all that apply', source:'presales:client_support_task', section:'details'},
       {t:'text', l:'Deployed Time (min)', ph:'e.g. 60', section:'details'},
       {t:'textarea', l:'Summary of support provided', section:'description'}
     ],
@@ -4531,7 +4531,7 @@ appears to allow.`;
     { key: 'rni:status_mechanical', label: 'R&I Activity (Mechanical) — Status' },
     { key: 'rni:status_electrical', label: 'R&I Activity (Electrical) — Status' },
     { key: 'presales:support_medium', label: 'Pre-Sales Support — Support Medium' },
-    { key: 'presales:client_support_task', label: 'Pre-Sales Support — Client Support Task' },
+    { key: 'presales:client_support_task', label: 'Pre-Sales Support — Support Type' },
     { key: 'presales:sales_wing', label: 'Pre-Sales Support (Mechanical) — Sales Wing' },
     { key: 'postsales:lift_type', label: 'Post-Sales Activity — Lift Type' },
     { key: 'postsales:capacity', label: 'Post-Sales Activity — Capacity' },
@@ -4570,6 +4570,20 @@ appears to allow.`;
     </div>`;
   }
 
+  // Every chip group used to render its full option list open by
+  // default — fine for short lists, but some groups (the Reports
+  // category especially) have dozens of options, making the whole Admin
+  // panel long and cluttered even when nobody needs to look at most of
+  // them right now. Collapsed by default; expand only the ones actually
+  // being worked on.
+  function toggleChipGroupVisibility(bodyId, btn){
+    const body = document.getElementById(bodyId);
+    if(!body) return;
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? 'Hide options' : 'Show options';
+  }
+
   async function loadChipOptionsPanel(){
     const panel = document.getElementById('chipOptionsPanel');
     const { data, error } = await sb.from('chip_options').select('*').order('sort_order');
@@ -4586,12 +4600,18 @@ appears to allow.`;
       const rows = byGroup[g.key] || [];
       const rowsHtml = rows.length ? rows.map(chipOptionRowHtml).join('') : '<div class="placeholder-note">No options yet.</div>';
       const inputId = `newChipInput-${g.key.replace(':', '-')}`;
+      const bodyId = `chipGroupBody-${g.key.replace(':', '-')}`;
       return `<div class="panel">
-        <div class="panel-title">${g.label}</div>
-        <div>${rowsHtml}</div>
-        <div style="display:flex; gap:8px; margin-top:14px;">
-          <input type="text" id="${inputId}" placeholder="e.g. New option" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addChipOption('${g.key}', '${inputId}');">
-          <button class="queue-btn" onclick="addChipOption('${g.key}', '${inputId}')">+ Add</button>
+        <div class="panel-title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <span>${g.label}</span>
+          <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleChipGroupVisibility('${bodyId}', this)">Show options</button>
+        </div>
+        <div id="${bodyId}" style="display:none; margin-top:10px;">
+          <div>${rowsHtml}</div>
+          <div style="display:flex; gap:8px; margin-top:14px;">
+            <input type="text" id="${inputId}" placeholder="e.g. New option" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addChipOption('${g.key}', '${inputId}');">
+            <button class="queue-btn" onclick="addChipOption('${g.key}', '${inputId}')">+ Add</button>
+          </div>
         </div>
       </div>`;
     }).join('');
