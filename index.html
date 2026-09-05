@@ -1635,8 +1635,11 @@
     <div id="chipOptionsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head" id="customFieldsBlock" style="display:none;">
-      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical. Reports is managed separately above and isn't part of this. Foundation view for now — adding new fields and reordering come in a later update.</div></div>
-      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
+      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical. Reports is managed separately above and isn't part of this. New fields land at the end of their group for now — drag-and-drop reordering comes in a later update, and a new field doesn't yet appear on the real task-entry form until that update either.</div></div>
+      <div style="display:flex; gap:8px; flex-shrink:0;">
+        <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
+        <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
+      </div>
     </div>
     <div id="customFieldsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
  
@@ -4686,6 +4689,119 @@ appears to allow.`;
     panel.style.display = isHidden ? 'block' : 'none';
     btn.textContent = isHidden ? 'Hide section' : 'Show section';
     if(isHidden) loadCustomFieldsPanel();
+  }
+
+  // Stage 2: lets a Superadmin create a genuinely new field. It's saved
+  // with is_builtin:false and lands at the END of its own exact group
+  // (same category + sub-type + zone) — never interleaved among existing
+  // fields yet. It also does NOT yet appear on the real task-entry form;
+  // both of those come in later stages, once reordering exists and this
+  // foundation has been used safely for a while.
+  const CUSTOM_FIELD_CATEGORY_META = [
+    { key: 'rni', label: 'R&I Activity', subTypes: null },
+    { key: 'presales', label: 'Pre-Sales Support', subTypes: null },
+    { key: 'postsales', label: 'Post-Sales Activity', subTypes: null },
+    { key: 'techsupport', label: 'Technical Support', subTypes: ['Installation Support', 'Commissioning Support', 'After-Sales Support'] },
+    { key: 'generalsupport', label: 'General Support', subTypes: ['Production Support', 'SCM Support', 'QC Support', 'Other Support'] },
+  ];
+
+  function closeAddFieldModal(){
+    const overlay = document.getElementById('addFieldModalOverlay');
+    if(overlay) overlay.remove();
+  }
+
+  function openAddFieldModal(){
+    const overlay = document.createElement('div');
+    overlay.id = 'addFieldModalOverlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:440px; width:100%;">
+        <div class="panel-title">Add a new field</div>
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">This adds the field to the catalog above. It won't yet appear on the real task-entry form, and it lands at the end of its group rather than a specific position — both come in a later update.</div>
+        <div class="form-field">
+          <div class="field-label">Category<span class="required-star">*</span></div>
+          <select id="newFieldCategory" onchange="updateNewFieldSubTypeOptions()" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            ${CUSTOM_FIELD_CATEGORY_META.map(c => `<option value="${c.key}">${c.label}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-field" id="newFieldSubTypeWrap" style="display:none;">
+          <div class="field-label">Sub-type<span class="required-star">*</span></div>
+          <select id="newFieldSubType" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></select>
+        </div>
+        <div class="form-field">
+          <div class="field-label">Zone<span class="required-star">*</span></div>
+          <select id="newFieldZone" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <option value="common">Common — shared by both teams</option>
+            <option value="mechanical">Mechanical</option>
+            <option value="electrical">Electrical</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <div class="field-label">Label<span class="required-star">*</span></div>
+          <input type="text" id="newFieldLabel" placeholder="e.g. Client Reference Number" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>
+        <div class="form-field">
+          <div class="field-label">Field type<span class="required-star">*</span></div>
+          <select id="newFieldType" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <option value="text">Free text (single line)</option>
+            <option value="textarea">Free text (paragraph)</option>
+            <option value="chips">Chips (multi-select)</option>
+            <option value="chipselect">Dropdown (single-select)</option>
+          </select>
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
+          <input type="checkbox" id="newFieldRequired"> Required
+        </label>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="submit-btn" style="flex:1; margin-top:0;" onclick="submitNewCustomField()">Add Field</button>
+          <button class="btn" onclick="closeAddFieldModal()">Cancel</button>
+        </div>
+      </div>`;
+    overlay.onclick = (e) => { if(e.target === overlay) closeAddFieldModal(); };
+    document.body.appendChild(overlay);
+    updateNewFieldSubTypeOptions();
+  }
+
+  function updateNewFieldSubTypeOptions(){
+    const catKey = document.getElementById('newFieldCategory').value;
+    const meta = CUSTOM_FIELD_CATEGORY_META.find(c => c.key === catKey);
+    const wrap = document.getElementById('newFieldSubTypeWrap');
+    const select = document.getElementById('newFieldSubType');
+    if(meta.subTypes){
+      wrap.style.display = 'block';
+      select.innerHTML = meta.subTypes.map(s => `<option value="${s}">${s}</option>`).join('');
+    } else {
+      wrap.style.display = 'none';
+      select.innerHTML = '';
+    }
+  }
+
+  async function submitNewCustomField(){
+    const category = document.getElementById('newFieldCategory').value;
+    const meta = CUSTOM_FIELD_CATEGORY_META.find(c => c.key === category);
+    const subType = meta.subTypes ? document.getElementById('newFieldSubType').value : null;
+    const zone = document.getElementById('newFieldZone').value;
+    const label = document.getElementById('newFieldLabel').value.trim();
+    const fieldType = document.getElementById('newFieldType').value;
+    const required = document.getElementById('newFieldRequired').checked;
+
+    if(!label){ alert('Please enter a label for this field.'); return; }
+
+    // Lands at the end of its own exact group (same category + sub-type +
+    // zone) — find the current highest sort_order there and add 10, so
+    // the new field never collides with an existing position.
+    let query = sb.from('custom_fields').select('sort_order').eq('category', category).eq('zone', zone);
+    query = subType ? query.eq('sub_type', subType) : query.is('sub_type', null);
+    const { data: existing } = await query.order('sort_order', { ascending: false }).limit(1);
+    const nextOrder = (existing && existing.length ? existing[0].sort_order : 0) + 10;
+
+    const { error } = await sb.from('custom_fields').insert({
+      category, sub_type: subType, zone, label, field_type: fieldType, required, is_builtin: false, sort_order: nextOrder
+    });
+    if(error){ alert('Could not add field: ' + error.message); return; }
+
+    closeAddFieldModal();
+    loadCustomFieldsPanel();
   }
 
   // Stage 1 (foundation): read-only catalog of every field across the 5
