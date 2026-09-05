@@ -1633,6 +1633,12 @@
       <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleChipOptionsSectionVisibility(this)">Show section</button>
     </div>
     <div id="chipOptionsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+
+    <div class="block-head" id="customFieldsBlock" style="display:none;">
+      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical. Reports is managed separately above and isn't part of this. Foundation view for now — adding new fields and reordering come in a later update.</div></div>
+      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
+    </div>
+    <div id="customFieldsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
@@ -4384,6 +4390,11 @@ appears to allow.`;
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('chipOptionsBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    // customFieldsPanel itself deliberately stays hidden by default too,
+    // gated by its own "Show section" toggle — only actually fetched
+    // (loadCustomFieldsPanel) the first time someone opens it, not on
+    // every single Admin panel visit.
     // chipOptionsPanel itself deliberately stays hidden here regardless of
     // role — it's now gated by the single "Show section" toggle in the
     // block header above (Installation Wings and Data Issue Types moved
@@ -4666,6 +4677,71 @@ appears to allow.`;
     const isHidden = panel.style.display === 'none';
     panel.style.display = isHidden ? 'block' : 'none';
     btn.textContent = isHidden ? 'Hide section' : 'Show section';
+  }
+
+  function toggleCustomFieldsSectionVisibility(btn){
+    const panel = document.getElementById('customFieldsPanel');
+    if(!panel) return;
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? 'Hide section' : 'Show section';
+    if(isHidden) loadCustomFieldsPanel();
+  }
+
+  // Stage 1 (foundation): read-only catalog of every field across the 5
+  // non-Reports categories — both the app's existing built-in fields and
+  // any new ones a Superadmin creates later. Grouped by category, then
+  // sub-type where one exists (Technical Support, General Support), then
+  // by Common/Mechanical/Electrical zone within that. Adding new fields
+  // and drag-and-drop reordering land in a later stage, once this
+  // foundation is confirmed to accurately reflect what already exists.
+  async function loadCustomFieldsPanel(){
+    const panel = document.getElementById('customFieldsPanel');
+    const { data, error } = await sb.from('custom_fields').select('*').order('category').order('sub_type').order('zone').order('sort_order');
+    if(error){
+      panel.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the custom_fields table has been created (see setup SQL).</div>`;
+      return;
+    }
+    const rows = data || [];
+    const categoryOrder = ['rni','presales','postsales','techsupport','generalsupport'];
+    const zoneLabel = { common: 'Common', mechanical: 'Mechanical', electrical: 'Electrical' };
+
+    const fieldRowHtml = f => `
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
+        <div>
+          <span style="font-size:13.5px; font-weight:600;">${f.label}</span>
+          ${f.required ? '<span class="required-star">*</span>' : ''}
+          <span style="font-size:11px; color:var(--text-faint); margin-left:8px;">${f.field_type}</span>
+        </div>
+        <span style="font-size:11px; color:var(--text-faint);">${f.is_builtin ? 'Built-in' : 'Custom'}</span>
+      </div>`;
+
+    panel.innerHTML = categoryOrder.map(catKey => {
+      const catRows = rows.filter(r => r.category === catKey);
+      if(!catRows.length) return '';
+      // Group by sub_type (null groups together for categories with none),
+      // then by zone within that.
+      const subTypes = [...new Set(catRows.map(r => r.sub_type))];
+      const subTypeHtml = subTypes.map(subType => {
+        const subRows = catRows.filter(r => r.sub_type === subType);
+        const zoneHtml = ['common','mechanical','electrical'].map(zoneKey => {
+          const zoneRows = subRows.filter(r => r.zone === zoneKey);
+          if(!zoneRows.length) return '';
+          return `<div style="margin-bottom:14px;">
+            <div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px;">${zoneLabel[zoneKey]}</div>
+            ${zoneRows.map(fieldRowHtml).join('')}
+          </div>`;
+        }).join('');
+        return `<div style="margin-bottom:18px;">
+          ${subType ? `<div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:8px;">${subType}</div>` : ''}
+          ${zoneHtml}
+        </div>`;
+      }).join('');
+      return `<div class="panel" style="margin-bottom:18px;">
+        <div class="panel-title">${catMeta[catKey]?.name || catKey}</div>
+        ${subTypeHtml}
+      </div>`;
+    }).join('');
   }
 
   function toggleChipGroupVisibility(bodyId, btn){
