@@ -4697,6 +4697,8 @@ appears to allow.`;
   // fields yet. It also does NOT yet appear on the real task-entry form;
   // both of those come in later stages, once reordering exists and this
   // foundation has been used safely for a while.
+  let customFieldsCache = [];
+  let editingFieldId = null;
   const CUSTOM_FIELD_CATEGORY_META = [
     { key: 'rni', label: 'R&I Activity', subTypes: null },
     { key: 'presales', label: 'Pre-Sales Support', subTypes: null },
@@ -4708,16 +4710,26 @@ appears to allow.`;
   function closeAddFieldModal(){
     const overlay = document.getElementById('addFieldModalOverlay');
     if(overlay) overlay.remove();
+    editingFieldId = null;
   }
 
-  function openAddFieldModal(){
+  // fieldId omitted → Add mode (new field, lands at the end of its
+  // group). fieldId provided → Edit mode, pre-filled with that field's
+  // current values. Category/Sub-type/Zone can all be changed in Edit
+  // mode too — if any of them change, the field is simply re-placed at
+  // the end of wherever it ends up, same rule as a brand new field,
+  // since fine-grained positioning is Stage 3's job, not this one.
+  function openAddFieldModal(fieldId){
+    editingFieldId = fieldId || null;
+    const existing = fieldId ? customFieldsCache.find(f => f.id === fieldId) : null;
+
     const overlay = document.createElement('div');
     overlay.id = 'addFieldModalOverlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
       <div class="panel" style="max-width:440px; width:100%;">
-        <div class="panel-title">Add a new field</div>
-        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">This adds the field to the catalog above. It won't yet appear on the real task-entry form, and it lands at the end of its group rather than a specific position — both come in a later update.</div>
+        <div class="panel-title">${existing ? 'Edit field' : 'Add a new field'}</div>
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">${existing ? 'Changes here only affect the catalog above' : 'This adds the field to the catalog above'} — it won't yet appear on the real task-entry form, and ${existing ? 'moving it to a different group places it at the end there' : 'it lands at the end of its group rather than a specific position'}. Both come in a later update.</div>
         <div class="form-field">
           <div class="field-label">Category<span class="required-star">*</span></div>
           <select id="newFieldCategory" onchange="updateNewFieldSubTypeOptions()" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
@@ -4753,16 +4765,26 @@ appears to allow.`;
           <input type="checkbox" id="newFieldRequired"> Required
         </label>
         <div style="display:flex; gap:8px; margin-top:6px;">
-          <button class="submit-btn" style="flex:1; margin-top:0;" onclick="submitNewCustomField()">Add Field</button>
+          <button class="submit-btn" style="flex:1; margin-top:0;" onclick="submitNewCustomField()">${existing ? 'Save changes' : 'Add Field'}</button>
           <button class="btn" onclick="closeAddFieldModal()">Cancel</button>
         </div>
       </div>`;
     overlay.onclick = (e) => { if(e.target === overlay) closeAddFieldModal(); };
     document.body.appendChild(overlay);
-    updateNewFieldSubTypeOptions();
+
+    if(existing){
+      document.getElementById('newFieldCategory').value = existing.category;
+      document.getElementById('newFieldZone').value = existing.zone;
+      document.getElementById('newFieldLabel').value = existing.label;
+      document.getElementById('newFieldType').value = existing.field_type;
+      document.getElementById('newFieldRequired').checked = existing.required;
+      updateNewFieldSubTypeOptions(existing.sub_type);
+    } else {
+      updateNewFieldSubTypeOptions();
+    }
   }
 
-  function updateNewFieldSubTypeOptions(){
+  function updateNewFieldSubTypeOptions(preselect){
     const catKey = document.getElementById('newFieldCategory').value;
     const meta = CUSTOM_FIELD_CATEGORY_META.find(c => c.key === catKey);
     const wrap = document.getElementById('newFieldSubTypeWrap');
@@ -4770,6 +4792,7 @@ appears to allow.`;
     if(meta.subTypes){
       wrap.style.display = 'block';
       select.innerHTML = meta.subTypes.map(s => `<option value="${s}">${s}</option>`).join('');
+      if(preselect && meta.subTypes.includes(preselect)) select.value = preselect;
     } else {
       wrap.style.display = 'none';
       select.innerHTML = '';
@@ -4787,22 +4810,116 @@ appears to allow.`;
 
     if(!label){ alert('Please enter a label for this field.'); return; }
 
-    // Lands at the end of its own exact group (same category + sub-type +
-    // zone) — find the current highest sort_order there and add 10, so
-    // the new field never collides with an existing position.
-    let query = sb.from('custom_fields').select('sort_order').eq('category', category).eq('zone', zone);
-    query = subType ? query.eq('sub_type', subType) : query.is('sub_type', null);
-    const { data: existing } = await query.order('sort_order', { ascending: false }).limit(1);
-    const nextOrder = (existing && existing.length ? existing[0].sort_order : 0) + 10;
+    const existing = editingFieldId ? customFieldsCache.find(f => f.id === editingFieldId) : null;
+    // If editing and nothing about the field's group (category/sub-type/
+    // zone) actually changed, keep its current position exactly as-is —
+    // only recalculate a fresh "end of group" position when it's a brand
+    // new field, or an edit that actually moves it somewhere else.
+    const unchangedGroup = existing && existing.category === category && existing.sub_type === subType && existing.zone === zone;
 
-    const { error } = await sb.from('custom_fields').insert({
-      category, sub_type: subType, zone, label, field_type: fieldType, required, is_builtin: false, sort_order: nextOrder
-    });
-    if(error){ alert('Could not add field: ' + error.message); return; }
+    let sortOrder = existing ? existing.sort_order : 0;
+    if(!unchangedGroup){
+      let query = sb.from('custom_fields').select('sort_order').eq('category', category).eq('zone', zone);
+      query = subType ? query.eq('sub_type', subType) : query.is('sub_type', null);
+      const { data: groupRows } = await query.order('sort_order', { ascending: false }).limit(1);
+      sortOrder = (groupRows && groupRows.length ? groupRows[0].sort_order : 0) + 10;
+    }
+
+    const payload = { category, sub_type: subType, zone, label, field_type: fieldType, required, sort_order: sortOrder };
+
+    if(existing){
+      const { error } = await sb.from('custom_fields').update(payload).eq('id', existing.id);
+      if(error){ alert('Could not save changes: ' + error.message); return; }
+    } else {
+      const { error } = await sb.from('custom_fields').insert({ ...payload, is_builtin: false });
+      if(error){ alert('Could not add field: ' + error.message); return; }
+    }
 
     closeAddFieldModal();
     loadCustomFieldsPanel();
   }
+
+  async function deleteCustomField(id){
+    const field = customFieldsCache.find(f => f.id === id);
+    const label = field ? field.label : 'this field';
+    if(!confirm(`Delete "${label}" from the catalog? This cannot be undone.${field && (field.field_type === 'chips' || field.field_type === 'chipselect') ? ' Its dropdown options will be removed too.' : ''}`)) return;
+    // Clean up any options this field owns before removing the field
+    // itself, so a chips/dropdown field's options table never ends up
+    // with orphaned rows nothing can see or manage anymore.
+    await sb.from('chip_options').delete().eq('category', 'customfield').eq('field_key', id);
+    const { error } = await sb.from('custom_fields').delete().eq('id', id);
+    if(error){ alert('Could not delete: ' + error.message); return; }
+    loadCustomFieldsPanel();
+  }
+
+  // Options management for a custom Chips/Dropdown field — reuses the
+  // exact same chip_options table every other dropdown in this app
+  // already uses, rather than inventing a separate storage mechanism.
+  // category is always the fixed literal 'customfield' here (distinct
+  // from real category keys like 'rni'), with field_key set to the
+  // custom_fields row's own id — guaranteed unique, and ties an option
+  // list to one specific field regardless of what it's labeled.
+  function closeFieldOptionsModal(){
+    const overlay = document.getElementById('fieldOptionsModalOverlay');
+    if(overlay) overlay.remove();
+  }
+
+  async function openFieldOptionsModal(fieldId){
+    const field = customFieldsCache.find(f => f.id === fieldId);
+    if(!field) return;
+    await renderFieldOptionsModal(field);
+  }
+
+  async function renderFieldOptionsModal(field){
+    const { data, error } = await sb.from('chip_options').select('*').eq('category', 'customfield').eq('field_key', field.id).order('sort_order');
+    const rows = data || [];
+    const rowsHtml = rows.length
+      ? rows.map(r => `<div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border);">
+          <span style="font-size:13.5px;">${escapeHtml(r.label)}</span>
+          <button class="btn remove" style="padding:6px;" onclick="deleteFieldOptionRow('${r.id}', '${field.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        </div>`).join('')
+      : '<div class="placeholder-note">No options yet.</div>';
+
+    let overlay = document.getElementById('fieldOptionsModalOverlay');
+    if(!overlay){
+      overlay = document.createElement('div');
+      overlay.id = 'fieldOptionsModalOverlay';
+      overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
+      overlay.onclick = (e) => { if(e.target === overlay) closeFieldOptionsModal(); };
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:420px; width:100%;">
+        <div class="panel-title">Options for "${field.label}"</div>
+        <div>${rowsHtml}</div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <input type="text" id="newFieldOptionInput" placeholder="e.g. New option" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addFieldOption('${field.id}');">
+          <button class="queue-btn" onclick="addFieldOption('${field.id}')">+ Add</button>
+        </div>
+        <button class="btn" style="width:100%; margin-top:14px;" onclick="closeFieldOptionsModal()">Close</button>
+      </div>`;
+  }
+
+  async function addFieldOption(fieldId){
+    const input = document.getElementById('newFieldOptionInput');
+    const label = input.value.trim();
+    if(!label) return;
+    const { count } = await sb.from('chip_options').select('*', { count: 'exact', head: true }).eq('category', 'customfield').eq('field_key', fieldId);
+    const { error } = await sb.from('chip_options').insert({ category: 'customfield', field_key: fieldId, label, sort_order: count || 0 });
+    if(error){ alert('Could not add: ' + error.message); return; }
+    const field = customFieldsCache.find(f => f.id === fieldId);
+    if(field) renderFieldOptionsModal(field);
+  }
+
+  async function deleteFieldOptionRow(optionId, fieldId){
+    if(!confirm('Remove this option? Past entries that used it keep their recorded value — only the choice goes away for future entries.')) return;
+    const { error } = await sb.from('chip_options').delete().eq('id', optionId);
+    if(error){ alert('Could not remove: ' + error.message); return; }
+    const field = customFieldsCache.find(f => f.id === fieldId);
+    if(field) renderFieldOptionsModal(field);
+  }
+
+
 
   // Stage 1 (foundation): read-only catalog of every field across the 5
   // non-Reports categories — both the app's existing built-in fields and
@@ -4819,17 +4936,28 @@ appears to allow.`;
       return;
     }
     const rows = data || [];
+    // Cached so Edit/Delete/Options handlers can look a field up by its
+    // (safe, quote-free) id rather than passing the whole object — with
+    // labels being arbitrary free text a Superadmin types in, embedding
+    // one directly inside an inline onclick risks the exact same
+    // quote-escaping breakage caught earlier with the restore button.
+    customFieldsCache = rows;
     const categoryOrder = ['rni','presales','postsales','techsupport','generalsupport'];
     const zoneLabel = { common: 'Common', mechanical: 'Mechanical', electrical: 'Electrical' };
 
     const fieldRowHtml = f => `
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
-        <div>
+      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:10px;">
+        <div style="min-width:0;">
           <span style="font-size:13.5px; font-weight:600;">${f.label}</span>
           ${f.required ? '<span class="required-star">*</span>' : ''}
           <span style="font-size:11px; color:var(--text-faint); margin-left:8px;">${f.field_type}</span>
         </div>
-        <span style="font-size:11px; color:var(--text-faint);">${f.is_builtin ? 'Built-in' : 'Custom'}</span>
+        <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+          <span style="font-size:11px; color:var(--text-faint);">${f.is_builtin ? 'Built-in' : 'Custom'}</span>
+          ${(f.field_type === 'chips' || f.field_type === 'chipselect') ? `<button class="btn" style="padding:5px 10px; font-size:11px;" onclick="openFieldOptionsModal('${f.id}')">Options</button>` : ''}
+          <button class="btn edit" style="padding:6px;" onclick="openAddFieldModal('${f.id}')" title="Edit" aria-label="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
+          <button class="btn remove" style="padding:6px;" onclick="deleteCustomField('${f.id}')" title="Delete" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        </div>
       </div>`;
 
     panel.innerHTML = categoryOrder.map(catKey => {
