@@ -478,6 +478,8 @@
   .kpi-spark div{width:7px; background:var(--accent); border-radius:2px 2px 0 0;}
  
   .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px;}
+  .is-dragging-field{opacity:0.4;}
+  .draggable-field-row:hover{background:var(--surface-alt); border-radius:6px;}
   @media (min-width: 861px){
     #customFieldsPanel .split-grid{ grid-template-columns:1fr 1fr; }
   }
@@ -4967,11 +4969,14 @@ appears to allow.`;
     const fieldRowHtml = f => {
       const hasOptions = f.field_type === 'chips' || f.field_type === 'chipselect';
       return `
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:10px;">
-        <div style="min-width:0;">
-          <span style="font-size:13.5px; font-weight:600;">${f.label}</span>
-          ${f.required ? '<span class="required-star">*</span>' : ''}
-          <span style="font-size:11px; color:var(--text-faint); margin-left:8px;">${f.field_type}</span>
+      <div class="draggable-field-row" data-field-id="${f.id}" draggable="true" ondragstart="handleFieldDragStart(event, '${f.id}')" ondragend="handleFieldDragEnd(event)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:10px; cursor:grab;">
+        <div style="display:flex; align-items:center; gap:8px; min-width:0;">
+          <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" style="color:var(--text-faint); flex-shrink:0;" aria-hidden="true"><circle cx="3" cy="2" r="1.4"/><circle cx="9" cy="2" r="1.4"/><circle cx="3" cy="8" r="1.4"/><circle cx="9" cy="8" r="1.4"/><circle cx="3" cy="14" r="1.4"/><circle cx="9" cy="14" r="1.4"/></svg>
+          <div style="min-width:0;">
+            <span style="font-size:13.5px; font-weight:600;">${f.label}</span>
+            ${f.required ? '<span class="required-star">*</span>' : ''}
+            <span style="font-size:11px; color:var(--text-faint); margin-left:8px;">${f.field_type}</span>
+          </div>
         </div>
         <div style="display:flex; align-items:center; gap:6px; flex-shrink:0; flex-wrap:wrap; justify-content:flex-end;">
           <span style="font-size:11px; color:var(--text-faint);">${f.is_builtin ? 'Built-in' : 'Custom'}</span>
@@ -4993,9 +4998,17 @@ appears to allow.`;
         const zoneHtml = ['common','mechanical','electrical'].map(zoneKey => {
           const zoneRows = subRows.filter(r => r.zone === zoneKey);
           if(!zoneRows.length) return '';
+          // Each of these keys is exactly the boundary dragging is allowed
+          // within — same category, same sub-type (or none), same zone.
+          // Dragging a field to a DIFFERENT group is deliberately blocked
+          // in handleFieldDrop below; moving a field's group is Edit's
+          // job, not drag-and-drop's.
+          const groupKey = `${catKey}|${subType || ''}|${zoneKey}`;
           return `<div style="margin-bottom:14px;">
             <div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px;">${zoneLabel[zoneKey]}</div>
-            ${zoneRows.map(fieldRowHtml).join('')}
+            <div data-group-key="${groupKey}" ondragover="handleFieldDragOver(event)" ondrop="handleFieldDrop(event, '${groupKey}')">
+              ${zoneRows.map(fieldRowHtml).join('')}
+            </div>
           </div>`;
         }).join('');
         return `<div style="margin-bottom:18px;">
@@ -5008,6 +5021,62 @@ appears to allow.`;
         ${subTypeHtml}
       </div>`;
     }).join('');
+  }
+
+  // Drag-and-drop reordering — deliberately scoped to within one exact
+  // group (same category + sub-type + zone) only. draggedFieldGroupKey is
+  // captured at drag-start and checked again at drop time; if they don't
+  // match, the drop is silently ignored rather than moving the field
+  // somewhere else — changing a field's group is Edit's job, this is
+  // purely about ordering within where it already is.
+  let draggedFieldId = null;
+  let draggedFieldGroupKey = null;
+
+  function handleFieldDragStart(e, fieldId){
+    draggedFieldId = fieldId;
+    draggedFieldGroupKey = e.target.closest('[data-group-key]')?.dataset.groupKey || null;
+    e.target.classList.add('is-dragging-field');
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function handleFieldDragEnd(e){
+    e.target.classList.remove('is-dragging-field');
+    draggedFieldId = null;
+    draggedFieldGroupKey = null;
+  }
+
+  function handleFieldDragOver(e){
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  }
+
+  function dragAfterElement(container, y){
+    const rows = Array.from(container.querySelectorAll('.draggable-field-row:not(.is-dragging-field)'));
+    return rows.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if(offset < 0 && offset > closest.offset) return { offset, element: child };
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  }
+
+  async function handleFieldDrop(e, groupKey){
+    e.preventDefault();
+    if(!draggedFieldId || draggedFieldGroupKey !== groupKey) return; // different group — blocked, exactly as intended
+    const container = document.querySelector(`[data-group-key="${groupKey}"]`);
+    const draggedEl = document.querySelector(`[data-field-id="${draggedFieldId}"]`);
+    if(!container || !draggedEl) return;
+
+    const afterElement = dragAfterElement(container, e.clientY);
+    if(afterElement) container.insertBefore(draggedEl, afterElement);
+    else container.appendChild(draggedEl);
+
+    // Persist the new order: read every row's field id in its NEW visual
+    // order within this group, and save fresh, evenly-spaced sort_order
+    // values for all of them.
+    const orderedIds = Array.from(container.querySelectorAll('[data-field-id]')).map(el => el.dataset.fieldId);
+    await Promise.all(orderedIds.map((id, idx) => sb.from('custom_fields').update({ sort_order: (idx + 1) * 10 }).eq('id', id)));
+    loadCustomFieldsPanel();
   }
 
   function toggleChipGroupVisibility(bodyId, btn){
