@@ -1623,7 +1623,13 @@
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
-    <div class="block-head" id="surveyOptionsBlock" style="display:none;"><div><div class="block-title">Reports — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging an entry</div></div></div>
+    <div class="block-head" id="chipOptionsBlock" style="display:none;"><div><div class="block-title">Category chip options</div><div class="block-sub">Superadmin only — manage the capsule/chip choices engineers pick from in every category's form. Removing one doesn't change past entries that already used it.</div></div></div>
+    <div class="split-grid" id="chipOptionsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+
+    <div class="block-head" id="surveyOptionsBlock" style="display:none;">
+      <div><div class="block-title">Reports — dropdown options</div><div class="block-sub">Superadmin only — manage the Installation Wings and Issue Types engineers pick from when logging an entry</div></div>
+      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleSurveyOptionsVisibility(this)">Show section</button>
+    </div>
     <div class="split-grid" id="surveyOptionsPanel" style="display:none; margin-bottom:32px;">
       <div class="panel">
         <div class="panel-title">Installation Wings</div>
@@ -1642,9 +1648,6 @@
         </div>
       </div>
     </div>
-
-    <div class="block-head" id="chipOptionsBlock" style="display:none;"><div><div class="block-title">Category chip options</div><div class="block-sub">Superadmin only — manage the capsule/chip choices engineers pick from in every category's form. Removing one doesn't change past entries that already used it.</div></div></div>
-    <div class="split-grid" id="chipOptionsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
@@ -4341,8 +4344,11 @@ appears to allow.`;
     const backupSection = document.getElementById('accountMenuBackupSection');
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
-    document.getElementById('surveyOptionsBlock').style.display = isSuperadmin ? 'block' : 'none';
-    document.getElementById('surveyOptionsPanel').style.display = isSuperadmin ? 'grid' : 'none';
+    document.getElementById('surveyOptionsBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    // surveyOptionsPanel itself deliberately stays hidden here regardless
+    // of role — it's now gated by the single "Show section" toggle in the
+    // block header above, not shown automatically just because someone's
+    // a Superadmin.
     document.getElementById('chipOptionsBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('chipOptionsPanel').style.display = isSuperadmin ? 'grid' : 'none';
     if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); loadSurveyOptionsPanel(); loadChipOptionsPanel(); }
@@ -4576,6 +4582,18 @@ appears to allow.`;
   // panel long and cluttered even when nobody needs to look at most of
   // them right now. Collapsed by default; expand only the ones actually
   // being worked on.
+  // A single toggle for the whole "Reports — dropdown options" section
+  // (Installation Wings + Issue Types together) — previously this entire
+  // section rendered open by default for every Superadmin, taking up
+  // space even when nobody needed to look at it right now.
+  function toggleSurveyOptionsVisibility(btn){
+    const panel = document.getElementById('surveyOptionsPanel');
+    if(!panel) return;
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'grid' : 'none';
+    btn.textContent = isHidden ? 'Hide section' : 'Show section';
+  }
+
   function toggleChipGroupVisibility(bodyId, btn){
     const body = document.getElementById(bodyId);
     if(!body) return;
