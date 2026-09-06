@@ -16,10 +16,10 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <style>
   :root{
-    --bg:#EEF0F4;
-    --surface:#FFFFFF;
-    --surface-alt:#E4E8EF;
-    --border:#CFD5E0;
+    --bg:#E3E4E8;
+    --surface:#F7F7F9;
+    --surface-alt:#EBECF0;
+    --border:#DADBE0;
     --text:#0A0E17;
     --text-dim:#454E5E;
     --text-faint:#646C7B;
@@ -32,10 +32,6 @@
     --radius:14px;
     --shadow:0 1px 3px rgba(10,14,23,0.06), 0 10px 26px -12px rgba(10,14,23,0.16);
     --header-bg:#EEF0F4;
-    /* macOS "traffic light" window-control colors — decorative only. */
-    --mac-red:#FF5F57;
-    --mac-yellow:#FEBC2E;
-    --mac-green:#28C840;
  
     /* dim tints auto-derive from the solid color + current surface, so every theme gets a correct tint for free */
     --accent-dim:color-mix(in srgb, var(--accent) 14%, var(--surface));
@@ -73,7 +69,7 @@
   /* "dark" is a standard mid-gray dark mode (closer to macOS/iOS dark). "midnight" is a much
      deeper near-black OLED tier — the two should feel clearly different in brightness. */
   html[data-theme="dark"]{
-    --bg:#202329; --surface:#2B2F39; --surface-alt:#363C47; --border:#484F5D;
+    --bg:#202329; --surface:#262A32; --surface-alt:#2E323C; --border:#31353F;
     --text:#F5F6F8; --text-dim:#B8BFCC; --text-faint:#8F98A7; --bg-anim-ink:#8B96B8;
     --accent:#6C9BFF; --accent-rgb:108,155,255; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
@@ -83,7 +79,7 @@
     --header-bg:#202329;
   }
   html[data-theme="midnight"]{
-    --bg:#05070D; --surface:#0B0F19; --surface-alt:#141A26; --border:#242C3D;
+    --bg:#05070D; --surface:#080B13; --surface-alt:#0D111C; --border:#10141F;
     --text:#F5F7FB; --text-dim:#9CA5B8; --text-faint:#737D91; --bg-anim-ink:#7482A6;
     --accent:#5B8DEF; --accent-rgb:91,141,239; --amber:#E0A23D; --green:#34D399; --red:#F0685C;
     --c-rni:#9A82F0; --c-presales:#5C97F5; --c-client:#3FC2C2; --c-postsales:#3FCF8E;
@@ -98,7 +94,7 @@
      every card/panel reads as a clearly separate layer sitting on top of
      the background, matching how a real macOS window sits on the desktop. */
   html[data-theme="midnightblue"]{
-    --bg:#0A0F1E; --surface:#141D33; --surface-alt:#1D2A47; --border:#2E3F63;
+    --bg:#0A0F1E; --surface:#0F1526; --surface-alt:#141C31; --border:#182034;
     --text:#F0F4FF; --text-dim:#A9B8DD; --text-faint:#7C8CB5; --bg-anim-ink:#5E7AC7;
     --accent:#4A90FF; --accent-rgb:74,144,255; --amber:#E5A23D; --green:#38D6A0; --red:#F0685C;
     --c-rni:#A08CF5; --c-presales:#6BA6FF; --c-client:#4DD4D4; --c-postsales:#4EDCA0;
@@ -111,7 +107,7 @@
      how every other theme option here works) rather than a light mode.
      Surface again clearly lighter than bg for the same reason as above. */
   html[data-theme="sunset"]{
-    --bg:#1C130B; --surface:#2D1F13; --surface-alt:#3F2C1A; --border:#5A3E22;
+    --bg:#1C130B; --surface:#221810; --surface-alt:#2A1E14; --border:#2E2117;
     --text:#FFF4E2; --text-dim:#E3C6A0; --text-faint:#B4936C; --bg-anim-ink:#C99354;
     --accent:#FF9F1C; --accent-rgb:255,159,28; --amber:#FFB648; --green:#5FD068; --red:#FF6B5C;
     --c-rni:#C9A6F5; --c-presales:#7FB8FF; --c-client:#5FD6C4; --c-postsales:#7BDE8E;
@@ -138,10 +134,10 @@
     position:sticky; top:0; z-index:50;
     display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
     padding:8px 24px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, var(--header-bg) 78%), color-mix(in srgb, var(--header-bg) 58%, transparent));
-    backdrop-filter: blur(32px) saturate(200%);
-    -webkit-backdrop-filter: blur(32px) saturate(200%);
-    border-bottom:1px solid color-mix(in srgb, var(--accent) 30%, var(--border) 70%);
+    background: color-mix(in srgb, var(--header-bg) 72%, transparent);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    border-bottom:1px solid color-mix(in srgb, var(--border) 70%, transparent);
     transition: grid-template-columns 0.3s ease, padding 0.25s ease;
   }
   header.topnav.scrolled{
@@ -721,16 +717,6 @@
  
   /* ---------- HEADER: left / center / right grid ---------- */
   .nav-left{display:flex; align-items:center; gap:10px;}
-  /* Decorative macOS "traffic light" window controls — purely visual,
-     not wired to any close/minimize/zoom behavior. */
-  .traffic-lights{ display:flex; align-items:center; gap:8px; margin-right:2px; flex-shrink:0; }
-  .traffic-lights span{
-    width:12px; height:12px; border-radius:50%; display:inline-block;
-    box-shadow: inset 0 0.5px 1px rgba(255,255,255,0.5), 0 0.5px 1px rgba(0,0,0,0.25);
-  }
-  .traffic-lights span:nth-child(1){ background:var(--mac-red); }
-  .traffic-lights span:nth-child(2){ background:var(--mac-yellow); }
-  .traffic-lights span:nth-child(3){ background:var(--mac-green); }
   .hamburger{ display:none; }
  
   /* ---------- FLOATING BOTTOM DOCK (always-on primary nav) ---------- */
@@ -1124,7 +1110,6 @@
 <div id="appShell" style="display:none;">
 <header class="topnav">
   <div class="nav-left">
-    <span class="traffic-lights" aria-hidden="true"><span title="Close"></span><span title="Minimize"></span><span title="Zoom"></span></span>
     <div class="brand-mark"><img src="logo.png" alt="Walton Lift logo"></div>
   </div>
  
@@ -1167,7 +1152,7 @@
             Theme
           </span>
           <div class="theme-switch" style="margin:0;">
-            <button class="theme-dot" data-theme-name="white" style="background:#EEF0F4;" onclick="setTheme('white', this)" title="Light"></button>
+            <button class="theme-dot" data-theme-name="white" style="background:#E3E4E8;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
             <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
@@ -1511,7 +1496,7 @@
             <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, Midnight (OLED), Midnight Blue, or Sunset</div>
           </div>
           <div class="theme-switch">
-            <button class="theme-dot" data-theme-name="white" style="background:#EEF0F4;" onclick="setTheme('white', this)" title="Light"></button>
+            <button class="theme-dot" data-theme-name="white" style="background:#E3E4E8;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
             <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
