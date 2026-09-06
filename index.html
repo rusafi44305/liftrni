@@ -2334,9 +2334,22 @@
     // selected (reportField.currentValue) to look up the right custom
     // fields for it — moved here from after it for exactly that reason.
     if(cat === 'surveyissues'){
-      const reportOptions = discipline === 'electrical'
+      const builtinReportOptions = discipline === 'electrical'
         ? ['Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report', 'Error Report']
         : ['Survey Data Mismatch Report', 'Mechanical Components Service Report', 'Error Report'];
+      // Any Superadmin-created Reports sub-categories get appended AFTER
+      // the built-in ones, filtered the same way every other custom
+      // sub-category is — common-zone ones plus whichever of Mechanical/
+      // Electrical actually applies to this person. A new one here has no
+      // built-in fields or scoring behavior of its own (reportsSubforms
+      // below simply has no entry for it, so it starts empty) — only
+      // whatever custom fields get added to it directly, and it never
+      // contributes to Score either way, since computeMonthlyScorePercents
+      // only ever checks for the literal name "Error Report".
+      const extraReportSubtypes = (dynamicFieldOptions.customSubtypes['surveyissues'] || [])
+        .filter(s => s.zone === 'common' || s.zone === discipline)
+        .map(s => s.name);
+      const reportOptions = [...builtinReportOptions, ...extraReportSubtypes];
       const reportField = fields.find(f => f.id === 'reportTypeSelect');
       if(reportField) reportField.opts = reportOptions;
       const reportSelect = document.getElementById('reportTypeSelect');
@@ -5045,13 +5058,15 @@ appears to allow.`;
   // Categories that support sub-categories at all — only these two ever
   // show the "New Sub-category" choice, since the other 3 have no
   // sub-type concept whatsoever.
-  // All 5 non-Reports categories now support sub-categories — including
-  // Team Activity, Pre-Sales, and Post-Sales, which never had this concept
-  // before. The real form only actually shows a "Sub-category" selector
-  // for those 3 once at least one sub-category genuinely exists for that
-  // category — see renderTaskForm — so nothing changes for anyone until
-  // a Superadmin deliberately adds one.
-  const SUBCATEGORY_CAPABLE = ['rni', 'presales', 'postsales', 'techsupport', 'generalsupport'];
+  // All 6 categories now support sub-categories — including Reports,
+  // which was excluded for a while since its 6 existing report types each
+  // have their own built-in behavior (Error Report especially feeds
+  // directly into scoring). A brand-new Reports sub-category has none of
+  // that — it contributes zero points either way, positive or negative,
+  // exactly like every Reports type other than Error Report already does
+  // — see computeMonthlyScorePercents, which only ever checks for the
+  // literal name "Error Report" and treats anything else as 0.
+  const SUBCATEGORY_CAPABLE = ['rni', 'presales', 'postsales', 'techsupport', 'generalsupport', 'surveyissues'];
 
   function openAddFieldModal(fieldId){
     editingFieldId = fieldId || null;
