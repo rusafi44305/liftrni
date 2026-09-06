@@ -1274,7 +1274,7 @@
         <svg id="trendChart" viewBox="0 0 560 150" class="trend-svg"></svg>
         <div id="trendChartLabels" class="trend-labels-row"></div>
         <div class="trend-legend-row">
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#4CE0FF; box-shadow:0 0 6px #4CE0FF;"></span>R&amp;I Activity</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#4CE0FF; box-shadow:0 0 6px #4CE0FF;"></span>Team Activity</div>
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#FFDD33; box-shadow:0 0 6px #FFDD33;"></span>R&amp;I Projects</div>
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#7C8AAE;"></span>All other categories</div>
         </div>
@@ -1297,7 +1297,7 @@
         <div class="link-more" onclick="showView('dashboard')">View breakdown →</div>
       </div>
       <div class="cat-grid">
-        <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-bottom-row"><div><div class="cat-name">R&amp;I Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div><span class="cat-pct-badge" id="catPct-rni">—%</span></div></div>
+        <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-bottom-row"><div><div class="cat-name">Team Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div><span class="cat-pct-badge" id="catPct-rni">—%</span></div></div>
         <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-bottom-row"><div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div><span class="cat-pct-badge" id="catPct-presales">—%</span></div></div>
         <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-bottom-row"><div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div><span class="cat-pct-badge" id="catPct-postsales">—%</span></div></div>
         <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-bottom-row"><div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-techsupport">—%</span></div></div>
@@ -1374,7 +1374,7 @@
           <div class="field-label">Category</div>
           <div class="cat-select">
             <select id="catSelect" class="cat-select-input" onchange="renderTaskForm()">
-              <option value="rni">R&amp;I Activity</option>
+              <option value="rni">Team Activity</option>
               <option value="presales">Pre-Sales Support</option>
               <option value="postsales">Post-Sales Activity</option>
               <option value="techsupport">Technical Support</option>
@@ -1814,7 +1814,7 @@
   // ---- Category Log: per-category metadata, mock entries, search-by-Lift-ID ----
   const CAT_COLOR = {rni:'#6E4FD1', presales:'#1D6FD9', client:'#0E8F8F', postsales:'#188A5A', install:'#B3651B', commission:'#C25B00', aftersales:'#C23D74', production:'#4A50C9', generalsupport:'#4A50C9', requisition:'#0E8FA3', scm:'#6B8E00', existingdev:'#6B5B44'};
   const catMeta = {
-    rni:{name:'R&I Activity', hasLift:false},
+    rni:{name:'Team Activity', hasLift:false},
     presales:{name:'Pre-Sales Support', hasLift:false},
     postsales:{name:'Post-Sales Activity', hasLift:true},
     techsupport:{name:'Technical Support', hasLift:true},
@@ -2240,7 +2240,7 @@
       catSelectWrap.className = 'cat-select cc-' + cat;
     }
 
-    // R&I Activity's fields are identical for both teams, but Task Category
+    // Team Activity's fields are identical for both teams, but Task Category
     // and Status are independently managed per team — same field, same
     // label, but a completely separate Superadmin-managed list underneath.
     if(cat === 'rni'){
@@ -2300,7 +2300,7 @@
       fields = fields.concat(generalSupportSubforms[subType] || []);
     }
 
-    // R&I Activity, Pre-Sales, and Post-Sales never had a sub-category
+    // Team Activity, Pre-Sales, and Post-Sales never had a sub-category
     // concept before this — so unlike Technical Support/General Support
     // above (which always show their selector, since they've always had
     // one), this selector only appears at all once a Superadmin has
@@ -4489,7 +4489,7 @@ Generated: ${new Date().toLocaleString('en-GB')}
 
 WHAT THIS IS
 A single-page web app for Walton Hi-Tech Industries PLC's Lift R&I
-division. Engineers log tasks across categories (R&I Activity, Pre-Sales
+division. Engineers log tasks across categories (Team Activity, Pre-Sales
 Support, Post-Sales Activity, Technical Support, General Support,
 Reports), track lifts by ID, manage internal R&I projects on a Gantt-style
 timeline, and Superadmins manage everything from chip-based dropdown
@@ -4524,7 +4524,7 @@ HOW UPDATES WORK
      not the night before
 
 KEY SYSTEM DESIGNS WORTH KNOWING ABOUT
-  - Mechanical vs Electrical: many categories (R&I Activity, Post-Sales,
+  - Mechanical vs Electrical: many categories (Team Activity, Post-Sales,
     Technical Support, Pre-Sales' Sales Wing) show different fields or
     dropdown lists depending on the logged-in engineer's discipline
   - Chip options: nearly every dropdown/chip list in the app is
@@ -4810,7 +4810,7 @@ appears to allow.`;
   let customFieldsCache = [];
   let editingFieldId = null;
   const CUSTOM_FIELD_CATEGORY_META = [
-    { key: 'rni', label: 'R&I Activity', subTypes: null },
+    { key: 'rni', label: 'Team Activity', subTypes: null },
     { key: 'presales', label: 'Pre-Sales Support', subTypes: null },
     { key: 'postsales', label: 'Post-Sales Activity', subTypes: null },
     { key: 'techsupport', label: 'Technical Support', subTypes: ['Installation Support', 'Commissioning Support', 'After-Sales Support'] },
@@ -5046,7 +5046,7 @@ appears to allow.`;
   // show the "New Sub-category" choice, since the other 3 have no
   // sub-type concept whatsoever.
   // All 5 non-Reports categories now support sub-categories — including
-  // R&I Activity, Pre-Sales, and Post-Sales, which never had this concept
+  // Team Activity, Pre-Sales, and Post-Sales, which never had this concept
   // before. The real form only actually shows a "Sub-category" selector
   // for those 3 once at least one sub-category genuinely exists for that
   // category — see renderTaskForm — so nothing changes for anyone until
@@ -5128,7 +5128,7 @@ appears to allow.`;
     const submitBtn = document.getElementById('addFieldSubmitBtn');
     if(choice === 'subcategory'){
       body.innerHTML = `
-        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">Creates a new sub-category, immediately selectable on the real form — even before any fields have been added to it yet. For R&amp;I Activity, Pre-Sales, and Post-Sales, a "Sub-category" selector only appears on the real form once at least one exists — nobody sees anything new until you add one here.</div>
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">Creates a new sub-category, immediately selectable on the real form — even before any fields have been added to it yet. For Team Activity, Pre-Sales, and Post-Sales, a "Sub-category" selector only appears on the real form once at least one exists — nobody sees anything new until you add one here.</div>
         <div class="form-field">
           <div class="field-label">Category<span class="required-star">*</span></div>
           <select id="newSubcatCategory" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
@@ -5424,7 +5424,7 @@ appears to allow.`;
   }
 
   function fieldOptionKeys(field){
-    // Task Category / Status in R&I Activity: one field, two separate
+    // Task Category / Status in Team Activity: one field, two separate
     // discipline-specific option lists underneath.
     if(field.chip_split_by_discipline){
       return [
@@ -6028,7 +6028,7 @@ appears to allow.`;
 
     // Build one bucket per calendar month spanning the selected range, even
     // for months with zero activity, so the lines don't skip gaps. Every
-    // task category except R&I Activity is combined into one "other" total;
+    // task category except Team Activity is combined into one "other" total;
     // projects created in R&I Project Manager get their own separate count.
     const buckets = [];
     const cursor = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
@@ -6082,7 +6082,7 @@ appears to allow.`;
     const projectsLine = buildLine('projects');
     const gridLines = [0.25,0.5,0.75].map(f => `<line x1="0" y1="${h - h*f}" x2="${w}" y2="${h - h*f}" stroke="#1E2A40" stroke-width="1" stroke-dasharray="4 4"/>`).join('');
 
-    // Both R&I Activity and R&I Projects get a genuine glow — a blurred
+    // Both Team Activity and R&I Projects get a genuine glow — a blurred
     // duplicate of the same line sitting behind the crisp one, the classic
     // sci-fi HUD technique — using two different colors so they stay
     // distinguishable from each other, not just from the muted "other"
@@ -6160,7 +6160,7 @@ appears to allow.`;
   }
  
   // ============ PROFILE (real data) ============
-  // Reverse lookup from a category's display name (e.g. "R&I Activity")
+  // Reverse lookup from a category's display name (e.g. "Team Activity")
   // back to its key (e.g. "rni") — needed because Error Report stores the
   // category someone picked as its display name (what the dropdown shows),
   // but weights are keyed by the short internal category key.
@@ -6178,7 +6178,7 @@ appears to allow.`;
   // Trend chart.
   //
   // Scoring rules:
-  //   - Any of the 5 normal categories (R&I Activity, Pre-Sales,
+  //   - Any of the 5 normal categories (Team Activity, Pre-Sales,
   //     Post-Sales, Technical Support, General Support): +weight[category]
   //   - Reports → Error Report specifically: -(weight[the category the
   //     error was logged against] × (impact stars ÷ 5)) — a 5-star (most
