@@ -4769,6 +4769,212 @@ appears to allow.`;
     { key: 'generalsupport', label: 'General Support', subTypes: ['Production Support', 'SCM Support', 'QC Support', 'Other Support'] },
   ];
 
+  // ============ QUICK ADD — the simplified, contextual entry points ============
+  // These are the new, primary way to add a field or sub-category —
+  // launched directly from a specific zone card or category in the
+  // catalog, so Category/Sub-type/Zone are already known and never asked
+  // again. The original, more detailed modal (openAddFieldModal) still
+  // exists unchanged underneath — it's what Edit still opens, since an
+  // existing field may need its group changed, which this simpler flow
+  // deliberately doesn't offer.
+  function closeQuickAddModal(){
+    const overlay = document.getElementById('quickAddModalOverlay');
+    if(overlay) overlay.remove();
+  }
+
+  function openQuickAddSubcategoryModal(category){
+    const meta = CUSTOM_FIELD_CATEGORY_META.find(c => c.key === category);
+    const overlay = document.createElement('div');
+    overlay.id = 'quickAddModalOverlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:380px; width:100%;">
+        <div class="panel-title">Add sub-category — ${meta.label}</div>
+        <div class="form-field">
+          <div class="field-label">Name<span class="required-star">*</span></div>
+          <input type="text" id="qaSubcatName" placeholder="e.g. Warranty Support" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>
+        <div class="form-field">
+          <div class="field-label">Team</div>
+          <select id="qaSubcatZone" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <option value="common">Common — both teams</option>
+            <option value="mechanical">Mechanical</option>
+            <option value="electrical">Electrical</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button class="submit-btn" style="flex:1; margin-top:0;" onclick="submitQuickAddSubcategory('${category}')">Add</button>
+          <button class="btn" onclick="closeQuickAddModal()">Cancel</button>
+        </div>
+      </div>`;
+    overlay.onclick = (e) => { if(e.target === overlay) closeQuickAddModal(); };
+    document.body.appendChild(overlay);
+  }
+
+  async function submitQuickAddSubcategory(category){
+    const name = document.getElementById('qaSubcatName').value.trim();
+    const zone = document.getElementById('qaSubcatZone').value;
+    if(!name){ alert('Please enter a name.'); return; }
+    const { count } = await sb.from('custom_subtypes').select('*', { count: 'exact', head: true }).eq('category', category);
+    const { error } = await sb.from('custom_subtypes').insert({ category, name, zone, sort_order: count || 0 });
+    if(error){ alert('Could not add: ' + error.message); return; }
+    closeQuickAddModal();
+    loadDynamicFieldOptions(true); // real form's Support Type/Sub-category dropdown picks this up immediately
+    loadCustomFieldsPanel();
+  }
+
+  // Only Chips/Dropdown need this — start with 2 blank option rows (same
+  // as Google Forms' own default), each with its own small "+" to add
+  // another and "×" to remove it. Nothing is saved until the whole field
+  // is submitted.
+  function quickAddOptionRowHtml(value){
+    return `<div class="qa-option-row" style="display:flex; gap:6px; margin-bottom:6px; align-items:center;">
+      <input type="text" class="qa-option-input" value="${escapeHtml(value || '')}" placeholder="Option" style="flex:1; padding:7px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;">
+      <button type="button" class="btn remove" style="padding:5px;" onclick="this.closest('.qa-option-row').remove()" title="Remove" aria-label="Remove option"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+    </div>`;
+  }
+  function quickAddAnotherOption(){
+    document.getElementById('qaOptionsList').insertAdjacentHTML('beforeend', quickAddOptionRowHtml(''));
+  }
+
+  function openQuickAddFieldModal(category, subType, zone){
+    const meta = CUSTOM_FIELD_CATEGORY_META.find(c => c.key === category);
+    const zoneLabel = { common: 'Common', mechanical: 'Mechanical', electrical: 'Electrical' };
+    const overlay = document.createElement('div');
+    overlay.id = 'quickAddModalOverlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:420px; width:100%; max-height:85vh; overflow-y:auto;">
+        <div class="panel-title">Add field</div>
+        <div style="font-size:11.5px; color:var(--text-faint); margin-bottom:14px;">${meta.label}${subType ? ' — ' + subType : ''} — ${zoneLabel[zone]}</div>
+        <div class="form-field">
+          <div class="field-label">Question<span class="required-star">*</span></div>
+          <input type="text" id="qaLabel" placeholder="e.g. Client Reference Number" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>
+        <div class="form-field">
+          <div class="field-label">Type</div>
+          <select id="qaType" onchange="updateQuickAddConditionals()" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <option value="text">Short answer</option>
+            <option value="textarea">Paragraph</option>
+            <option value="number">Number</option>
+            <option value="date">Date</option>
+            <option value="chips">Checkboxes (pick any)</option>
+            <option value="chipselect">Dropdown (pick one)</option>
+          </select>
+        </div>
+        <div class="form-field" id="qaOptionsWrap" style="display:none;">
+          <div class="field-label">Options</div>
+          <div id="qaOptionsList">${quickAddOptionRowHtml('')}${quickAddOptionRowHtml('')}</div>
+          <button type="button" class="btn" style="padding:5px 12px; font-size:12px;" onclick="quickAddAnotherOption()">+ Add option</button>
+        </div>
+        <label style="display:flex; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
+          <input type="checkbox" id="qaRequired"> Required
+        </label>
+        <div style="border-top:1px solid var(--border); padding-top:10px; margin-top:4px;">
+          <div style="font-size:12.5px; color:var(--accent); cursor:pointer; user-select:none;" onclick="toggleQuickAddAdvanced()">
+            <span id="qaAdvancedToggleText">More options ▾</span>
+          </div>
+          <div id="qaAdvancedBody" style="display:none; margin-top:12px;">
+            <div class="form-field">
+              <div class="field-label">Section</div>
+              <select id="qaSection" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+                <option value="identity">Task Identity</option>
+                <option value="details" selected>Work Details</option>
+                <option value="description">Description</option>
+              </select>
+            </div>
+            <div class="form-field" id="qaPlaceholderWrap">
+              <div class="field-label">Placeholder text</div>
+              <input type="text" id="qaPlaceholder" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            </div>
+            <div class="form-field" id="qaHintWrap">
+              <div class="field-label">Hint text</div>
+              <input type="text" id="qaHint" placeholder="e.g. select all that apply" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            </div>
+            <label id="qaMonospaceWrap" style="display:flex; align-items:center; gap:8px; margin:10px 0; font-size:13px;">
+              <input type="checkbox" id="qaMonospace"> Monospace styling (for code-like values)
+            </label>
+            <label id="qaNumericWrap" style="display:flex; align-items:center; gap:8px; margin:10px 0; font-size:13px;">
+              <input type="checkbox" id="qaNumeric"> Numbers only
+            </label>
+            <label id="qaHasOtherWrap" style="display:none; align-items:center; gap:8px; margin:10px 0; font-size:13px;">
+              <input type="checkbox" id="qaHasOther"> Include an "Other" option
+            </label>
+          </div>
+        </div>
+        <div style="display:flex; gap:8px; margin-top:14px;">
+          <button class="submit-btn" style="flex:1; margin-top:0;" onclick="submitQuickAddField('${category}', ${subType ? `'${subType}'` : 'null'}, '${zone}')">Add Field</button>
+          <button class="btn" onclick="closeQuickAddModal()">Cancel</button>
+        </div>
+      </div>`;
+    overlay.onclick = (e) => { if(e.target === overlay) closeQuickAddModal(); };
+    document.body.appendChild(overlay);
+    updateQuickAddConditionals();
+  }
+
+  function toggleQuickAddAdvanced(){
+    const body = document.getElementById('qaAdvancedBody');
+    const isHidden = body.style.display === 'none';
+    body.style.display = isHidden ? 'block' : 'none';
+    document.getElementById('qaAdvancedToggleText').textContent = isHidden ? 'More options ▴' : 'More options ▾';
+  }
+
+  // Same rule as the full Add Field modal — only show what a given type
+  // actually uses, so nothing is ever set and silently ignored.
+  function updateQuickAddConditionals(){
+    const type = document.getElementById('qaType').value;
+    document.getElementById('qaOptionsWrap').style.display = (type === 'chips' || type === 'chipselect') ? 'block' : 'none';
+    document.getElementById('qaPlaceholderWrap').style.display = ['text','textarea','number','chipselect'].includes(type) ? 'block' : 'none';
+    document.getElementById('qaHintWrap').style.display = type === 'chips' ? 'block' : 'none';
+    document.getElementById('qaMonospaceWrap').style.display = type === 'text' ? 'flex' : 'none';
+    document.getElementById('qaNumericWrap').style.display = type === 'text' ? 'flex' : 'none';
+    document.getElementById('qaHasOtherWrap').style.display = type === 'chipselect' ? 'flex' : 'none';
+  }
+
+  async function submitQuickAddField(category, subType, zone){
+    const label = document.getElementById('qaLabel').value.trim();
+    if(!label){ alert('Please enter a question.'); return; }
+    const fieldType = document.getElementById('qaType').value;
+    const required = document.getElementById('qaRequired').checked;
+    const section = document.getElementById('qaSection').value;
+    const placeholder = document.getElementById('qaPlaceholder').value.trim() || null;
+    const hint = document.getElementById('qaHint').value.trim() || null;
+    const isMonospace = document.getElementById('qaMonospace').checked;
+    const isNumeric = document.getElementById('qaNumeric').checked;
+    const hasOther = document.getElementById('qaHasOther').checked;
+
+    // Lands at the end of this exact group — same rule as every other
+    // field creation path.
+    let query = sb.from('custom_fields').select('sort_order').eq('category', category).eq('zone', zone);
+    query = subType ? query.eq('sub_type', subType) : query.is('sub_type', null);
+    const { data: groupRows } = await query.order('sort_order', { ascending: false }).limit(1);
+    const sortOrder = (groupRows && groupRows.length ? groupRows[0].sort_order : 0) + 10;
+
+    const payload = {
+      category, sub_type: subType, zone, label, field_type: fieldType, required, section, sort_order: sortOrder,
+      placeholder, hint, is_monospace: isMonospace, is_numeric: isNumeric, has_other: hasOther, is_builtin: false
+    };
+    // .select().single() specifically so the newly-created row's id comes
+    // straight back — needed immediately below to save this field's own
+    // options against it, without a second round-trip to look it up.
+    const { data: inserted, error } = await sb.from('custom_fields').insert(payload).select().single();
+    if(error){ alert('Could not add field: ' + error.message); return; }
+
+    if(fieldType === 'chips' || fieldType === 'chipselect'){
+      const optionValues = Array.from(document.querySelectorAll('#qaOptionsList .qa-option-input'))
+        .map(inp => inp.value.trim()).filter(v => v);
+      if(optionValues.length){
+        await sb.from('chip_options').insert(
+          optionValues.map((label, idx) => ({ category: 'customfield', field_key: inserted.id, label, sort_order: idx }))
+        );
+      }
+    }
+
+    closeQuickAddModal();
+    loadDynamicFieldOptions(true); // the real form's cached custom fields/options pick this up immediately
+    loadCustomFieldsPanel();
+  }
+
   function closeAddFieldModal(){
     const overlay = document.getElementById('addFieldModalOverlay');
     if(overlay) overlay.remove();
@@ -5224,25 +5430,29 @@ appears to allow.`;
 
     panel.innerHTML = categoryOrder.map(catKey => {
       const catRows = rows.filter(r => r.category === catKey);
-      if(!catRows.length) return '';
-      // Group by sub_type (null groups together for categories with none),
-      // then by zone within that.
-      const subTypes = [...new Set(catRows.map(r => r.sub_type))];
-      const subTypeHtml = subTypes.map(subType => {
+      const catMetaInfo = CUSTOM_FIELD_CATEGORY_META.find(c => c.key === catKey);
+      // Every sub-type that could possibly exist for this category — the
+      // built-in ones plus any Superadmin-created ones — shown even if it
+      // has zero fields yet, so there's always somewhere to click "+ Add
+      // field" for it. null represents "no sub-type" — either the
+      // shared/common group for categories that DO have sub-types, or the
+      // entire category for ones that don't have the concept at all.
+      const builtinSubtypes = catMetaInfo?.subTypes || [];
+      const extraSubtypes = (dynamicFieldOptions.customSubtypes[catKey] || []).map(s => s.name);
+      const allSubtypes = [null, ...builtinSubtypes, ...extraSubtypes];
+
+      const subTypeHtml = allSubtypes.map(subType => {
         const subRows = catRows.filter(r => r.sub_type === subType);
         const zoneHtml = ['common','mechanical','electrical'].map(zoneKey => {
           const zoneRows = subRows.filter(r => r.zone === zoneKey);
-          if(!zoneRows.length) return '';
-          // Each of these keys is exactly the boundary dragging is allowed
-          // within — same category, same sub-type (or none), same zone.
-          // Dragging a field to a DIFFERENT group is deliberately blocked
-          // in handleFieldDrop below; moving a field's group is Edit's
-          // job, not drag-and-drop's.
           const groupKey = `${catKey}|${subType || ''}|${zoneKey}`;
           return `<div style="margin-bottom:14px;">
-            <div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px;">${zoneLabel[zoneKey]}</div>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+              <div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);">${zoneLabel[zoneKey]}</div>
+              <button class="queue-btn" style="padding:3px 10px; font-size:11px;" onclick="openQuickAddFieldModal('${catKey}', ${subType ? `'${subType}'` : 'null'}, '${zoneKey}')">+ Add field</button>
+            </div>
             <div data-group-key="${groupKey}" ondragover="handleFieldDragOver(event)" ondrop="handleFieldDrop(event, '${groupKey}')">
-              ${zoneRows.map(fieldRowHtml).join('')}
+              ${zoneRows.length ? zoneRows.map(fieldRowHtml).join('') : '<div style="font-size:12px; color:var(--text-faint); padding:6px 0;">No fields yet.</div>'}
             </div>
           </div>`;
         }).join('');
@@ -5251,8 +5461,14 @@ appears to allow.`;
           ${zoneHtml}
         </div>`;
       }).join('');
+      const addSubcatBtn = SUBCATEGORY_CAPABLE.includes(catKey)
+        ? `<button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="openQuickAddSubcategoryModal('${catKey}')">+ Add sub-category</button>`
+        : '';
       return `<div class="panel" style="margin-bottom:18px;">
-        <div class="panel-title">${catMeta[catKey]?.name || catKey}</div>
+        <div class="panel-title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <span>${catMeta[catKey]?.name || catKey}</span>
+          ${addSubcatBtn}
+        </div>
         ${subTypeHtml}
       </div>`;
     }).join('');
