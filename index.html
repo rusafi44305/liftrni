@@ -32,6 +32,10 @@
     --radius:14px;
     --shadow:0 1px 3px rgba(10,14,23,0.06), 0 10px 26px -12px rgba(10,14,23,0.16);
     --header-bg:#EEF0F4;
+    /* macOS "traffic light" window-control colors — decorative only. */
+    --mac-red:#FF5F57;
+    --mac-yellow:#FEBC2E;
+    --mac-green:#28C840;
  
     /* dim tints auto-derive from the solid color + current surface, so every theme gets a correct tint for free */
     --accent-dim:color-mix(in srgb, var(--accent) 14%, var(--surface));
@@ -87,6 +91,34 @@
     --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A; --c-surveyissues:#F47171;
     --shadow:0 1px 3px rgba(0,0,0,0.5), 0 14px 34px -14px rgba(0,0,0,0.7);
     --header-bg:#05070D;
+  }
+  /* "Midnight Blue" — a genuinely blue-cast dark theme, distinct from the
+     neutral-gray "dark" and the near-black "midnight" above it. Surface is
+     deliberately several steps lighter than bg (not just a subtle tint) so
+     every card/panel reads as a clearly separate layer sitting on top of
+     the background, matching how a real macOS window sits on the desktop. */
+  html[data-theme="midnightblue"]{
+    --bg:#0A0F1E; --surface:#141D33; --surface-alt:#1D2A47; --border:#2E3F63;
+    --text:#F0F4FF; --text-dim:#A9B8DD; --text-faint:#7C8CB5; --bg-anim-ink:#5E7AC7;
+    --accent:#4A90FF; --accent-rgb:74,144,255; --amber:#E5A23D; --green:#38D6A0; --red:#F0685C;
+    --c-rni:#A08CF5; --c-presales:#6BA6FF; --c-client:#4DD4D4; --c-postsales:#4EDCA0;
+    --c-install:#EAAE6A; --c-commission:#F4A05E; --c-aftersales:#F480B0; --c-production:#96A0FF; --c-techsupport:#EAAE6A;
+    --c-requisition:#4CCEE8; --c-scm:#BEE85A; --c-existingdev:#CFC2A6; --c-surveyissues:#FF7A7A;
+    --shadow:0 1px 3px rgba(3,8,22,0.55), 0 16px 38px -16px rgba(6,16,42,0.75);
+    --header-bg:#0A0F1E;
+  }
+  /* "Sunset" — a warm, amber/gold-cast theme (still dark-based, matching
+     how every other theme option here works) rather than a light mode.
+     Surface again clearly lighter than bg for the same reason as above. */
+  html[data-theme="sunset"]{
+    --bg:#1C130B; --surface:#2D1F13; --surface-alt:#3F2C1A; --border:#5A3E22;
+    --text:#FFF4E2; --text-dim:#E3C6A0; --text-faint:#B4936C; --bg-anim-ink:#C99354;
+    --accent:#FF9F1C; --accent-rgb:255,159,28; --amber:#FFB648; --green:#5FD068; --red:#FF6B5C;
+    --c-rni:#C9A6F5; --c-presales:#7FB8FF; --c-client:#5FD6C4; --c-postsales:#7BDE8E;
+    --c-install:#FFB65E; --c-commission:#FFA255; --c-aftersales:#FF8FAE; --c-production:#B2A6FF; --c-techsupport:#FFB65E;
+    --c-requisition:#5FD0DE; --c-scm:#D8E85A; --c-existingdev:#E0C89E; --c-surveyissues:#FF8570;
+    --shadow:0 1px 3px rgba(20,10,2,0.5), 0 16px 38px -16px rgba(30,15,4,0.72);
+    --header-bg:#1C130B;
   }
   html{transition:background .2s ease;}
   body{transition:background-color .2s ease, color .2s ease;}
@@ -680,6 +712,16 @@
  
   /* ---------- HEADER: left / center / right grid ---------- */
   .nav-left{display:flex; align-items:center; gap:10px;}
+  /* Decorative macOS "traffic light" window controls — purely visual,
+     not wired to any close/minimize/zoom behavior. */
+  .traffic-lights{ display:flex; align-items:center; gap:8px; margin-right:2px; flex-shrink:0; }
+  .traffic-lights span{
+    width:12px; height:12px; border-radius:50%; display:inline-block;
+    box-shadow: inset 0 0.5px 1px rgba(255,255,255,0.5), 0 0.5px 1px rgba(0,0,0,0.25);
+  }
+  .traffic-lights span:nth-child(1){ background:var(--mac-red); }
+  .traffic-lights span:nth-child(2){ background:var(--mac-yellow); }
+  .traffic-lights span:nth-child(3){ background:var(--mac-green); }
   .hamburger{ display:none; }
  
   /* ---------- FLOATING BOTTOM DOCK (always-on primary nav) ---------- */
@@ -873,6 +915,63 @@
   input[type="text"], input[type="date"], input[type="month"], input[type="number"], textarea, select{
     border-radius:12px !important;
   }
+
+  /* ============================================================
+     MACOS VIBRANCY POLISH — frosted-glass "material" surfaces,
+     matching Sonoma/Sequoia's translucent panel language, applied
+     consistently across every card-like surface in the app.
+  ============================================================ */
+  .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #accountMenu, #editModal .panel,
+  .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
+  .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
+    background:color-mix(in srgb, var(--surface) 82%, transparent) !important;
+    backdrop-filter:blur(26px) saturate(170%);
+    -webkit-backdrop-filter:blur(26px) saturate(170%);
+    border:1px solid color-mix(in srgb, var(--border) 65%, transparent) !important;
+    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
+    border-radius:16px !important;
+  }
+  /* These render dense, list-like task cards in several different views
+     (category log, dashboard inspect, My Tasks) — the shared 16px radius
+     above reads as too round for this specific content, so it's tightened
+     just for these, placed after the shared rule so it wins the cascade. */
+  .mytask-item, .cat-log-row, .gantt-project-card, .proj-task-row{ border-radius:10px !important; }
+  .mytask-item, .cat-log-row, .t-card, .gantt-project-card, .proj-task-row{
+    transition:transform .15s ease, border-color .15s ease;
+  }
+  .mytask-item:hover, .cat-log-row:hover, .t-card:hover, .gantt-project-card:hover, .proj-task-row:hover{
+    transform:translateY(-1px);
+    border-color:color-mix(in srgb, var(--accent) 35%, var(--border)) !important;
+  }
+  /* .indicator-panel and .kpi-card are DELIBERATELY excluded above — both
+     are permanent dark cards with hardcoded light text, by design, in
+     every theme (including the new light-on-dark Sunset/Midnight Blue
+     ones). Adding them to the vibrancy list would make their text
+     unreadable against their own fixed dark background. */
+  .kpi-card{
+    background:linear-gradient(135deg, #0E1420, #1B2745) !important;
+    box-shadow:var(--shadow);
+    border-radius:18px !important;
+    color:#fff !important;
+  }
+  .kpi-card .kpi-num, .kpi-card .kpi-lbl, .kpi-card *{ color:#fff !important; }
+  .kpi-card .kpi-lbl{ color:#C7D0E8 !important; opacity:1; }
+  .clock-pill, .pending-pill, .chip-opt{ border-radius:999px !important; }
+  .chip-opt.picked-single, .chip-opt.picked{
+    background:var(--accent) !important;
+    color:#fff !important;
+    border-color:var(--accent) !important;
+  }
+  /* Real macOS (Ventura/Sonoma) push buttons use a rounded-rect shape,
+     not a full pill — pill shape stays reserved for chips/tags/segmented
+     controls above, which genuinely are pill-shaped on macOS too. */
+  .queue-btn, .btn, .submit-btn, .fselect{
+    border-radius:9px !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.35);
+  }
+  .queue-btn, .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details):not(.inspect), .fselect{
+    background:color-mix(in srgb, var(--surface) 92%, transparent) !important;
+  }
 </style>
 </head>
 <body>
@@ -887,7 +986,7 @@
 <style>
   #bgAnim{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
   #bgAnim svg{ position:absolute; opacity:0.13; }
-  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg{ opacity:0.08; }
+  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg, html[data-theme="midnightblue"] #bgAnim svg, html[data-theme="sunset"] #bgAnim svg{ opacity:0.08; }
   #bgAnim svg *{ stroke:var(--bg-anim-ink, var(--text-faint)); }
   #bgAnim svg .bg-fill{ fill:var(--bg-anim-ink, var(--text-faint)); stroke:none; }
 
@@ -1048,6 +1147,7 @@
 <div id="appShell" style="display:none;">
 <header class="topnav">
   <div class="nav-left">
+    <span class="traffic-lights" aria-hidden="true"><span title="Close"></span><span title="Minimize"></span><span title="Zoom"></span></span>
     <div class="brand-mark"><img src="logo.png" alt="Walton Lift logo"></div>
   </div>
  
@@ -1093,6 +1193,8 @@
             <button class="theme-dot" data-theme-name="white" style="background:#EEF0F4;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:#202329;" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:#05070D;" onclick="setTheme('midnight', this)" title="Midnight"></button>
+            <button class="theme-dot" data-theme-name="midnightblue" style="background:#0A0F1E;" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
+            <button class="theme-dot" data-theme-name="sunset" style="background:#1C130B;" onclick="setTheme('sunset', this)" title="Sunset"></button>
           </div>
         </div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="openTutorial()">
@@ -1429,12 +1531,14 @@
         <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
           <div>
             <div style="font-size:13.5px; font-weight:600;">Theme</div>
-            <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, or Midnight (OLED)</div>
+            <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, Midnight (OLED), Midnight Blue, or Sunset</div>
           </div>
           <div class="theme-switch">
             <button class="theme-dot" data-theme-name="white" style="background:#EEF0F4;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:#202329;" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:#05070D;" onclick="setTheme('midnight', this)" title="Midnight"></button>
+            <button class="theme-dot" data-theme-name="midnightblue" style="background:#0A0F1E;" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
+            <button class="theme-dot" data-theme-name="sunset" style="background:#1C130B;" onclick="setTheme('sunset', this)" title="Sunset"></button>
           </div>
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0 8px; border-top:1px solid var(--border); margin-top:8px;">
