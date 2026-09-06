@@ -4644,11 +4644,9 @@ appears to allow.`;
     document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
     // customFieldsPanel deliberately stays hidden by default too, gated
-    // by its own "Show section" toggle — Installation Wings/Data Issue
-    // Types render as part of this same panel's own content (see
-    // loadCustomFieldsPanel), so loadSurveyOptionsPanel is only called
-    // from there now, after that HTML actually exists — not eagerly here,
-    // since its target elements wouldn't exist yet otherwise.
+    // by its own "Show section" toggle — only actually fetched
+    // (loadCustomFieldsPanel) the first time someone opens it, not on
+    // every single Admin panel visit.
     if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); }
  
     const pendWrap = document.getElementById('pendingSigninsPanel');
@@ -4790,74 +4788,6 @@ appears to allow.`;
     if(error){ alert('Could not save: ' + error.message); return; }
     appSettings.monthly_score_target = value;
     alert('Monthly target saved. Every engineer\'s Score now reflects this target.');
-  }
-
-  // ============ SURVEY REPORT ISSUES — dropdown options (Superadmin only) ============
-  // Both lists work the same way: read-only for everyone (so the dropdown on
-  // the task form can populate), add/delete restricted to Superadmin by RLS
-  // on the database side. This panel is just the admin UI for managing them.
-  function wingOrTypeRowHtml(row, deleteFn){
-    return `
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
-        <span style="font-size:13.5px;">${row.name}</span>
-        <button class="btn remove" style="padding:6px; font-size:11.5px;" onclick="${deleteFn}('${row.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
-      </div>`;
-  }
-
-  async function loadSurveyOptionsPanel(){
-    const wingsEl = document.getElementById('installationWingsList');
-    const typesEl = document.getElementById('dataIssueTypesList');
-    const { data: wings, error: wingsErr } = await sb.from('installation_wings').select('*').order('name');
-    wingsEl.innerHTML = wingsErr
-      ? `<div class="placeholder-note">Could not load: ${wingsErr.message}. Make sure the installation_wings table has been created (see setup SQL).</div>`
-      : (wings && wings.length ? wings.map(w => wingOrTypeRowHtml(w, 'deleteInstallationWing')).join('') : '<div class="placeholder-note">No wings yet.</div>');
-
-    const { data: types, error: typesErr } = await sb.from('data_issue_types').select('*').order('name');
-    typesEl.innerHTML = typesErr
-      ? `<div class="placeholder-note">Could not load: ${typesErr.message}. Make sure the data_issue_types table has been created (see setup SQL).</div>`
-      : (types && types.length ? types.map(t => wingOrTypeRowHtml(t, 'deleteDataIssueType')).join('') : '<div class="placeholder-note">No types yet.</div>');
-
-    // Keep the task-entry form's cached dropdown options in sync with whatever
-    // a Superadmin just changed here, so switching to Survey Report Issues
-    // right after adding/removing one reflects it immediately. Same rule as
-    // loadDynamicFieldOptions(): only trust this as "loaded" if both queries
-    // actually succeeded, so a failed background fetch here never poisons the
-    // My Tasks form's cache into showing "no options" when real data exists.
-    dynamicFieldOptions.installationWings = wings || [];
-    dynamicFieldOptions.dataIssueTypes = types || [];
-    if(!wingsErr && !typesErr) dynamicFieldOptionsLoaded = true;
-  }
-
-  async function addInstallationWing(){
-    const input = document.getElementById('newWingInput');
-    const name = input.value.trim();
-    if(!name) return;
-    const { error } = await sb.from('installation_wings').insert({ name });
-    if(error){ alert('Could not add: ' + error.message); return; }
-    input.value = '';
-    loadSurveyOptionsPanel();
-  }
-  async function deleteInstallationWing(id){
-    if(!confirm('Remove this installation wing? Past entries that used it keep their recorded value — only the dropdown option goes away.')) return;
-    const { error } = await sb.from('installation_wings').delete().eq('id', id);
-    if(error){ alert('Could not remove: ' + error.message); return; }
-    loadSurveyOptionsPanel();
-  }
-
-  async function addDataIssueType(){
-    const input = document.getElementById('newIssueTypeInput');
-    const name = input.value.trim();
-    if(!name) return;
-    const { error } = await sb.from('data_issue_types').insert({ name });
-    if(error){ alert('Could not add: ' + error.message); return; }
-    input.value = '';
-    loadSurveyOptionsPanel();
-  }
-  async function deleteDataIssueType(id){
-    if(!confirm('Remove this issue type? Past entries that used it keep their recorded value — only the dropdown option goes away.')) return;
-    const { error } = await sb.from('data_issue_types').delete().eq('id', id);
-    if(error){ alert('Could not remove: ' + error.message); return; }
-    loadSurveyOptionsPanel();
   }
 
   // ============ REPORTS — DROPDOWN OPTIONS (Superadmin-managed) ============
@@ -5444,7 +5374,68 @@ appears to allow.`;
   async function openFieldOptionsModal(fieldId){
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(!field) return;
+    if(field.chip_category === 'dedicated_table'){
+      await renderDedicatedTableOptionsModal(field);
+      return;
+    }
     await renderFieldOptionsModal(field);
+  }
+
+  // Installation Wing / Type of Data Missing use their own separate
+  // tables (installation_wings / data_issue_types) rather than
+  // chip_options — same modal look as every other field's Options
+  // button, just reading from and writing to a different table
+  // underneath, based on which of the two this field's chip_field_key
+  // marks it as.
+  async function renderDedicatedTableOptionsModal(field){
+    const tableName = field.chip_field_key === 'installation_wings' ? 'installation_wings' : 'data_issue_types';
+    const { data } = await sb.from(tableName).select('*').order('name');
+    const rows = data || [];
+    const rowsHtml = rows.length
+      ? rows.map(r => `<div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border);">
+          <span style="font-size:13.5px;">${escapeHtml(r.name)}</span>
+          <button class="btn remove" style="padding:6px;" onclick="deleteDedicatedTableOptionRow('${tableName}', '${r.id}', '${field.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        </div>`).join('')
+      : '<div class="placeholder-note">No options yet.</div>';
+
+    let overlay = document.getElementById('fieldOptionsModalOverlay');
+    if(!overlay){
+      overlay = document.createElement('div');
+      overlay.id = 'fieldOptionsModalOverlay';
+      overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
+      overlay.onclick = (e) => { if(e.target === overlay) closeFieldOptionsModal(); };
+      document.body.appendChild(overlay);
+    }
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:420px; width:100%; max-height:80vh; overflow-y:auto;">
+        <div class="panel-title">Options for "${field.label}"</div>
+        <div>${rowsHtml}</div>
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <input type="text" id="newDedicatedTableOptionInput" placeholder="e.g. New option" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDedicatedTableOptionRow('${tableName}', '${field.id}');">
+          <button class="queue-btn" onclick="addDedicatedTableOptionRow('${tableName}', '${field.id}')">+ Add</button>
+        </div>
+        <button class="btn" style="width:100%; margin-top:14px;" onclick="closeFieldOptionsModal()">Close</button>
+      </div>`;
+  }
+
+  async function addDedicatedTableOptionRow(tableName, fieldId){
+    const input = document.getElementById('newDedicatedTableOptionInput');
+    const name = input.value.trim();
+    if(!name) return;
+    const { error } = await sb.from(tableName).insert({ name });
+    if(error){ alert('Could not add: ' + error.message); return; }
+    const field = customFieldsCache.find(f => f.id === fieldId);
+    if(field) renderDedicatedTableOptionsModal(field);
+    loadDynamicFieldOptions(true); // keep the real form's cached options in sync immediately
+  }
+
+  async function deleteDedicatedTableOptionRow(tableName, rowId, fieldId){
+    if(!confirm('Remove this option? Past entries that used it keep their recorded value — only the choice goes away for future entries.')) return;
+    const { error } = await sb.from(tableName).delete().eq('id', rowId);
+    if(error){ alert('Could not remove: ' + error.message); return; }
+    const field = customFieldsCache.find(f => f.id === fieldId);
+    if(field) renderDedicatedTableOptionsModal(field);
+    loadDynamicFieldOptions(true);
   }
 
   function fieldOptionKeys(field){
@@ -5552,38 +5543,11 @@ appears to allow.`;
     // content INSIDE the same "Reports" card the main loop below already
     // builds (since Reports is a normal category in that loop now too),
     // rather than as a separate card the way it worked before Reports
-    // supported adding/editing/deleting fields.
-    // Installation Wing and Type of Data Missing use dedicated tables
-    // (installation_wings/data_issue_types), not chip_options — that's a
-    // genuinely different mechanism from every other field's inline
-    // "Options" button above, so these two stay as their own small
-    // section here rather than trying to force them into that same
-    // pattern. Every OTHER Reports dropdown (Control System, Damage
-    // Components, Zone Engineer, etc.) is now a real row above instead,
-    // each with its own inline Options button — nothing separate left
-    // for those anymore.
-    const reportsExtrasHtml = `
-      <div style="margin-top:22px; padding-top:18px; border-top:1px solid var(--border);">
-        <div style="font-size:13px; font-weight:600; margin-bottom:10px;">Installation Wing / Type of Data Missing</div>
-        <div class="split-grid" id="surveyOptionsPanel" style="margin-bottom:12px;">
-          <div class="panel">
-            <div class="panel-title">Installation Wings</div>
-            <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
-            <div style="display:flex; gap:8px; margin-top:14px;">
-              <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
-              <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
-            </div>
-          </div>
-          <div class="panel">
-            <div class="panel-title">Types of Data Missing</div>
-            <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
-            <div style="display:flex; gap:8px; margin-top:14px;">
-              <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
-              <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
-            </div>
-          </div>
-        </div>
-      </div>`;
+    // supported adding/editing/deleting fields. Installation Wing and
+    // Type of Data Missing now also have their own inline Options
+    // buttons like every other field — see the 'dedicated_table' handling
+    // in openFieldOptionsModal — so there's no separate section left for
+    // Reports at all anymore; every dropdown manages the same way.
 
     const fieldRowHtml = f => {
       // Only actually show "Options" when there's something real to
@@ -5595,7 +5559,15 @@ appears to allow.`;
       // showing "Options" for those would open an empty, disconnected
       // list that could never actually affect the real form.
       const isChipType = f.field_type === 'chips' || f.field_type === 'chipselect';
-      const hasOptions = isChipType && (!f.is_builtin || (f.chip_category && f.chip_field_key));
+      // Installation Wing / Type of Data Missing are 'select' fields
+      // backed by their own dedicated tables (installation_wings /
+      // data_issue_types), not chip_options — marked via this same
+      // chip_category/chip_field_key pair for consistency, just with the
+      // fixed marker 'dedicated_table' instead of a real chip_options
+      // category. openFieldOptionsModal below routes to the right place
+      // for each based on this same flag.
+      const isDedicatedTableField = f.field_type === 'select' && f.chip_category === 'dedicated_table';
+      const hasOptions = (isChipType && (!f.is_builtin || (f.chip_category && f.chip_field_key))) || isDedicatedTableField;
       return `
       <div class="draggable-field-row" data-field-id="${f.id}" draggable="true" ondragstart="handleFieldDragStart(event, '${f.id}')" ondragend="handleFieldDragEnd(event)" style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); gap:10px; cursor:grab;">
         <div style="display:flex; align-items:center; gap:8px; min-width:0;">
@@ -5657,16 +5629,8 @@ appears to allow.`;
           ${addSubcatBtn}
         </div>
         ${subTypeHtml}
-        ${catKey === 'surveyissues' ? reportsExtrasHtml : ''}
       </div>`;
     }).join('');
-
-    // installationWingsList/dataIssueTypesList only exist now that the
-    // Reports card above has actually been written — calling this any
-    // earlier would try to update elements that don't exist yet, the
-    // same race condition already fixed once before when this was a
-    // separate card.
-    loadSurveyOptionsPanel();
   }
 
   // Drag-and-drop reordering — deliberately scoped to within one exact
