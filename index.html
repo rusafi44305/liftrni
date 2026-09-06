@@ -4874,7 +4874,7 @@ appears to allow.`;
     const { error } = await sb.from('custom_subtypes').insert({ category, name, zone, sort_order: count || 0 });
     if(error){ alert('Could not add: ' + error.message); return; }
     closeQuickAddModal();
-    loadDynamicFieldOptions(true); // real form's Support Type/Sub-category dropdown picks this up immediately
+    await loadDynamicFieldOptions(true); // real form's Support Type/Sub-category dropdown picks this up immediately
     loadCustomFieldsPanel();
   }
 
@@ -5026,7 +5026,7 @@ appears to allow.`;
     }
 
     closeQuickAddModal();
-    loadDynamicFieldOptions(true); // the real form's cached custom fields/options pick this up immediately
+    await loadDynamicFieldOptions(true); // the real form's cached custom fields/options pick this up immediately
     loadCustomFieldsPanel();
   }
 
@@ -5252,7 +5252,7 @@ appears to allow.`;
     const { error } = await sb.from('custom_subtypes').insert({ category, name, zone, sort_order: count || 0 });
     if(error){ alert('Could not add: ' + error.message); return; }
     closeAddFieldModal();
-    loadDynamicFieldOptions(true); // so the real "Support Type"/"Sub-category" dropdown picks this up immediately, not just after a page refresh
+    await loadDynamicFieldOptions(true); // so the real "Support Type"/"Sub-category" dropdown picks this up immediately, not just after a page refresh
     loadCustomFieldsPanel();
   }
 
@@ -5411,7 +5411,7 @@ appears to allow.`;
     if(error){ alert('Could not add: ' + error.message); return; }
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(field) renderDedicatedTableOptionsModal(field);
-    loadDynamicFieldOptions(true); // keep the real form's cached options in sync immediately
+    await loadDynamicFieldOptions(true); // keep the real form's cached options in sync immediately
   }
 
   async function deleteDedicatedTableOptionRow(tableName, rowId, fieldId){
@@ -5420,7 +5420,7 @@ appears to allow.`;
     if(error){ alert('Could not remove: ' + error.message); return; }
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(field) renderDedicatedTableOptionsModal(field);
-    loadDynamicFieldOptions(true);
+    await loadDynamicFieldOptions(true);
   }
 
   function fieldOptionKeys(field){
@@ -5485,7 +5485,7 @@ appears to allow.`;
     if(error){ alert('Could not add: ' + error.message); return; }
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(field) renderFieldOptionsModal(field);
-    loadDynamicFieldOptions(true); // keep the real form's cached options in sync immediately, for built-in fields
+    await loadDynamicFieldOptions(true); // keep the real form's cached options in sync immediately, for built-in fields
   }
 
   async function deleteFieldOptionRow(optionId, fieldId){
@@ -5494,7 +5494,7 @@ appears to allow.`;
     if(error){ alert('Could not remove: ' + error.message); return; }
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(field) renderFieldOptionsModal(field);
-    loadDynamicFieldOptions(true);
+    await loadDynamicFieldOptions(true);
   }
 
 
@@ -5590,18 +5590,33 @@ appears to allow.`;
         const zoneHtml = ['common','mechanical','electrical'].map(zoneKey => {
           const zoneRows = subRows.filter(r => r.zone === zoneKey);
           const groupKey = `${catKey}|${subType || ''}|${zoneKey}`;
+          // Empty zones collapse to one compact line — just the zone name
+          // and its "+ Add field" button, no separate "No fields yet."
+          // message taking up its own line. With most zone/sub-type
+          // combinations starting out empty, showing the full block for
+          // every single one made the catalog look repetitive and
+          // cluttered, especially for a category with several
+          // sub-types — this keeps every zone reachable without the
+          // visual noise. A zone that already has fields still shows
+          // its full list exactly as before.
+          if(!zoneRows.length){
+            return `<div style="display:flex; align-items:center; justify-content:space-between; padding:4px 0; margin-bottom:4px;">
+              <div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);">${zoneLabel[zoneKey]} <span style="text-transform:none; font-weight:400; letter-spacing:0;">— no fields yet</span></div>
+              <button class="queue-btn" style="padding:3px 10px; font-size:11px;" onclick="openQuickAddFieldModal('${catKey}', ${subType ? `'${subType}'` : 'null'}, '${zoneKey}')">+ Add field</button>
+            </div>`;
+          }
           return `<div style="margin-bottom:14px;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
               <div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint);">${zoneLabel[zoneKey]}</div>
               <button class="queue-btn" style="padding:3px 10px; font-size:11px;" onclick="openQuickAddFieldModal('${catKey}', ${subType ? `'${subType}'` : 'null'}, '${zoneKey}')">+ Add field</button>
             </div>
             <div data-group-key="${groupKey}" ondragover="handleFieldDragOver(event)" ondrop="handleFieldDrop(event, '${groupKey}')">
-              ${zoneRows.length ? zoneRows.map(fieldRowHtml).join('') : '<div style="font-size:12px; color:var(--text-faint); padding:6px 0;">No fields yet.</div>'}
+              ${zoneRows.map(fieldRowHtml).join('')}
             </div>
           </div>`;
         }).join('');
-        return `<div style="margin-bottom:18px;">
-          ${subType ? `<div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:8px;">${subType}</div>` : ''}
+        return `<div style="margin-bottom:18px; padding:12px 14px; border-radius:10px; background:var(--surface-alt);">
+          ${allSubtypes.length > 1 ? `<div style="font-size:13px; font-weight:600; color:var(--accent); margin-bottom:10px;">${subType || 'Shared across all sub-categories'}</div>` : ''}
           ${zoneHtml}
         </div>`;
       }).join('');
