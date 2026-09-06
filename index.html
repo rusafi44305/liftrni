@@ -1630,8 +1630,59 @@
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
 
+    <div class="block-head" id="fieldGuideBlock" style="display:none;">
+      <div><div class="block-title">How to add a field or sub-category</div><div class="block-sub">Superadmin only — a short guide for the "Task fields" section below</div></div>
+      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleFieldGuideVisibility(this)">Show guide</button>
+    </div>
+    <div class="panel" id="fieldGuidePanel" style="display:none; margin-bottom:32px;">
+      <div style="font-size:13.5px; line-height:1.7;">
+        <div style="font-weight:700; margin-bottom:6px;">Adding a field</div>
+        <ol style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+          <li>Open <b style="color:var(--text);">Task fields</b> below and find the category (and sub-category, if it has one) you want to add to.</li>
+          <li>Each card is labeled <b style="color:var(--text);">Common</b>, <b style="color:var(--text);">Mechanical</b>, or <b style="color:var(--text);">Electrical</b> — pick the one whose team should actually see this field. Common means both teams see it.</li>
+          <li>Click <b style="color:var(--text);">+ Add field</b> on that card. The category, sub-category, and team are already set by which card you clicked — nothing more to choose there.</li>
+          <li>Fill in a <b style="color:var(--text);">Field name</b> (what it's called on the form) and pick a <b style="color:var(--text);">Type</b>:
+            <ul style="margin:6px 0 0 20px;">
+              <li><b style="color:var(--text);">Short answer</b> — a single line of free text (e.g. a name, a reference number)</li>
+              <li><b style="color:var(--text);">Paragraph</b> — a multi-line text box, for longer notes or descriptions</li>
+              <li><b style="color:var(--text);">Number</b> — only accepts numeric values, with a proper number input</li>
+              <li><b style="color:var(--text);">Date</b> — a real date picker</li>
+              <li><b style="color:var(--text);">Checkboxes</b> — pick any number of options (type them in right there, one per box)</li>
+              <li><b style="color:var(--text);">Dropdown</b> — pick exactly one option from a list (type them in the same way)</li>
+            </ul>
+          </li>
+          <li>Tick <b style="color:var(--text);">Required</b> if the field must be filled in before submitting.</li>
+          <li>Open <b style="color:var(--text);">More options</b> only if you need it — it's all optional:
+            <ul style="margin:6px 0 0 20px;">
+              <li><b style="color:var(--text);">Section</b> — where it appears on the form: Task Identity (top), Work Details (middle), or Description (bottom)</li>
+              <li><b style="color:var(--text);">Placeholder text</b> — grey example text shown inside an empty field</li>
+              <li><b style="color:var(--text);">Hint text</b> — a small note under a Checkboxes field, like "select all that apply"</li>
+              <li><b style="color:var(--text);">Monospace styling</b> — for code-like values (e.g. a Lift ID), so they're easy to read</li>
+              <li><b style="color:var(--text);">Numbers only</b> — for a Short answer field that should only ever contain digits</li>
+              <li><b style="color:var(--text);">Include an "Other" option</b> — adds an "Other" choice to a Dropdown</li>
+            </ul>
+          </li>
+          <li>Click <b style="color:var(--text);">Add Field</b>. It appears on the real form immediately — no separate step needed.</li>
+        </ol>
+        <div style="font-weight:700; margin-bottom:6px;">Adding a sub-category</div>
+        <ol style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+          <li>Click <b style="color:var(--text);">+ Add sub-category</b> at the top of a category's card.</li>
+          <li>Give it a name and pick which team it's for (or Common, for both).</li>
+          <li>It's immediately selectable on the real form — even before you've added any fields to it. Add fields to it afterward exactly the same way as above.</li>
+        </ol>
+        <div style="font-weight:700; margin-bottom:6px;">Managing an existing field</div>
+        <ul style="margin:0 0 4px 20px; padding:0; color:var(--text-faint);">
+          <li>The pencil icon <b style="color:var(--text);">edits</b> a field — including moving it to a different category, sub-category, or team.</li>
+          <li>The trash icon <b style="color:var(--text);">deletes</b> a field — only ever available for fields you've created. Fields the app already came with can be edited, but not deleted, since they still exist on the real form regardless.</li>
+          <li><b style="color:var(--text);">Options</b> lets you add or remove the choices on a Checkboxes or Dropdown field, any time — for both built-in and your own fields.</li>
+          <li>Drag the <span style="color:var(--text-faint);">⋮⋮</span> handle on any field to reorder it within its own card — dragging between different cards isn't allowed, since that would silently change which team or category it belongs to.</li>
+        </ul>
+        <div style="font-size:11.5px; color:var(--text-faint); margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">Reports isn't part of this system — its dropdown options are still Superadmin-managed, just in their own section, since its report types and Error Report scoring make it more complex than the other 5 categories.</div>
+      </div>
+    </div>
+
     <div class="block-head" id="customFieldsBlock" style="display:none;">
-      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical, including each field's dropdown options in the same place — plus Reports' own dropdown options (Installation Wings, Types of Data Missing, and its chip-based fields) at the end. Reports doesn't support adding/editing/deleting fields like the other 5 do. New fields land at the end of their group for now, and a new field doesn't yet appear on the real task-entry form until a later update.</div></div>
+      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical, including each field's dropdown options in the same place — plus Reports' own dropdown options (Installation Wings, Types of Data Missing, and its chip-based fields) at the end. New fields appear on the real task-entry form immediately.</div></div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
         <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
@@ -4500,6 +4551,7 @@ appears to allow.`;
     const backupSection = document.getElementById('accountMenuBackupSection');
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
     // customFieldsPanel deliberately stays hidden by default too, gated
     // by its own "Show section" toggle — Reports' Installation Wings,
@@ -4744,6 +4796,14 @@ appears to allow.`;
     </div>`;
   }
 
+  function toggleFieldGuideVisibility(btn){
+    const panel = document.getElementById('fieldGuidePanel');
+    if(!panel) return;
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? 'Hide guide' : 'Show guide';
+  }
+
   function toggleCustomFieldsSectionVisibility(btn){
     const panel = document.getElementById('customFieldsPanel');
     if(!panel) return;
@@ -4848,7 +4908,7 @@ appears to allow.`;
         <div class="panel-title">Add field</div>
         <div style="font-size:11.5px; color:var(--text-faint); margin-bottom:14px;">${meta.label}${subType ? ' — ' + subType : ''} — ${zoneLabel[zone]}</div>
         <div class="form-field">
-          <div class="field-label">Question<span class="required-star">*</span></div>
+          <div class="field-label">Field name<span class="required-star">*</span></div>
           <input type="text" id="qaLabel" placeholder="e.g. Client Reference Number" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
         </div>
         <div class="form-field">
