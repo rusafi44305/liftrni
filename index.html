@@ -2023,6 +2023,14 @@
       // Superadmin-created fields specifically asking for a number type.
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="number" class="ti" placeholder="${f.ph||''}" step="any"></div>`;
     }
+    if(f.t==='date'){
+      // An explicit Date type for Superadmin-created fields — the
+      // existing 'text' type auto-detects "date" from a label containing
+      // that word, but a genuinely new field might be named anything
+      // (e.g. "Warranty Expiry"), so this gives a direct way to ask for
+      // a real date picker regardless of what the field is called.
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="date" class="ti"></div>`;
+    }
     if(f.t==='select'){
       const opts = (dynamicFieldOptions[f.source] || []).map(o => `<option value="${o.id}">${o.name}</option>`).join('');
       const hasOpts = (dynamicFieldOptions[f.source] || []).length > 0;
@@ -2175,6 +2183,30 @@
       fields = fields.concat(generalSupportSubforms[subType] || []);
     }
 
+    // R&I Activity, Pre-Sales, and Post-Sales never had a sub-category
+    // concept before this — so unlike Technical Support/General Support
+    // above (which always show their selector, since they've always had
+    // one), this selector only appears at all once a Superadmin has
+    // actually created at least one zone-appropriate sub-category for
+    // this specific category. Until then, these 3 forms look and behave
+    // exactly as they always have — nobody sees anything new. It's also
+    // deliberately optional (not required) even once it does appear, so
+    // existing workflows are never forced into picking one.
+    let newSubcatFieldId = null;
+    if(['rni','presales','postsales'].includes(cat)){
+      const available = (dynamicFieldOptions.customSubtypes[cat] || []).filter(s => s.zone === 'common' || s.zone === discipline);
+      if(available.length){
+        newSubcatFieldId = 'newSubcatSelect_' + cat;
+        const selectEl = document.getElementById(newSubcatFieldId);
+        const currentVal = selectEl ? selectEl.value : '— None —';
+        fields = [{
+          t:'staticselect', l:'Sub-category', id:newSubcatFieldId, req:false,
+          opts:['— None —', ...available.map(s => s.name)],
+          currentValue: currentVal, onchange:'renderTaskForm(true)', section:'identity'
+        }, ...fields];
+      }
+    }
+
     // Every Superadmin-created custom field gets appended here, for
     // whichever category/sub-type/zone combination is currently in
     // effect — common-zone ones plus whichever of Mechanical/Electrical
@@ -2185,12 +2217,30 @@
     if(cat !== 'surveyissues'){
       const currentSubType = (cat === 'techsupport' || cat === 'generalsupport')
         ? (fields.find(f => f.id === 'techSupportType' || f.id === 'generalSupportType')?.currentValue || null)
-        : null;
+        : (newSubcatFieldId ? (() => {
+            const val = fields.find(f => f.id === newSubcatFieldId)?.currentValue;
+            return (val && val !== '— None —') ? val : null;
+          })() : null);
       const subKey = currentSubType || '';
       const commonCustom = dynamicFieldOptions.customFields[`${cat}|${subKey}|common`] || [];
       const disciplineCustom = dynamicFieldOptions.customFields[`${cat}|${subKey}|${discipline}`] || [];
       const customToAppend = [...commonCustom, ...disciplineCustom].map(cf => ({
         t: cf.field_type, l: cf.label, req: cf.required, section: cf.section, isCustomField: true,
+        // These map directly to the same properties innerFieldHTML
+        // already reads for every built-in field — a Superadmin-created
+        // field behaves identically to a built-in one wherever these are
+        // set, since it's the exact same rendering code either way.
+        // Placeholder is set under BOTH property names deliberately —
+        // text/textarea/number read f.ph, but Dropdown (chipselect)
+        // separately reads f.placeholder for its own "Select…" text;
+        // only one of the two is ever actually read for any given type,
+        // so setting both is harmless and correct either way.
+        ph: cf.placeholder || undefined,
+        placeholder: cf.placeholder || undefined,
+        hint: cf.hint || undefined,
+        mono: cf.is_monospace || undefined,
+        numeric: cf.is_numeric || undefined,
+        hasOther: cf.has_other || undefined,
         // Chips/Dropdown custom fields' actual options live in
         // chip_options under this exact key — the same convention
         // already established by the "Options" button in the Task
@@ -4734,7 +4784,13 @@ appears to allow.`;
   // Categories that support sub-categories at all — only these two ever
   // show the "New Sub-category" choice, since the other 3 have no
   // sub-type concept whatsoever.
-  const SUBCATEGORY_CAPABLE = ['techsupport', 'generalsupport'];
+  // All 5 non-Reports categories now support sub-categories — including
+  // R&I Activity, Pre-Sales, and Post-Sales, which never had this concept
+  // before. The real form only actually shows a "Sub-category" selector
+  // for those 3 once at least one sub-category genuinely exists for that
+  // category — see renderTaskForm — so nothing changes for anyone until
+  // a Superadmin deliberately adds one.
+  const SUBCATEGORY_CAPABLE = ['rni', 'presales', 'postsales', 'techsupport', 'generalsupport'];
 
   function openAddFieldModal(fieldId){
     editingFieldId = fieldId || null;
@@ -4772,10 +4828,17 @@ appears to allow.`;
     if(existing){
       document.getElementById('newFieldCategory').value = existing.category;
       document.getElementById('newFieldZone').value = existing.zone;
+      document.getElementById('newFieldSection').value = existing.section || 'details';
       document.getElementById('newFieldLabel').value = existing.label;
       document.getElementById('newFieldType').value = existing.field_type;
       document.getElementById('newFieldRequired').checked = existing.required;
+      document.getElementById('newFieldPlaceholder').value = existing.placeholder || '';
+      document.getElementById('newFieldHint').value = existing.hint || '';
+      document.getElementById('newFieldMonospace').checked = !!existing.is_monospace;
+      document.getElementById('newFieldNumeric').checked = !!existing.is_numeric;
+      document.getElementById('newFieldHasOther').checked = !!existing.has_other;
       updateNewFieldSubTypeOptions(existing.sub_type);
+      updateNewFieldTypeConditionals();
       document.getElementById('addFieldSubmitBtn').textContent = 'Save changes';
     }
   }
@@ -4804,7 +4867,7 @@ appears to allow.`;
     const submitBtn = document.getElementById('addFieldSubmitBtn');
     if(choice === 'subcategory'){
       body.innerHTML = `
-        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">Creates a new sub-category, immediately selectable on the real form — even before any fields have been added to it yet. Only Technical Support and General Support have sub-categories at all.</div>
+        <div style="font-size:12px; color:var(--text-faint); margin-bottom:16px;">Creates a new sub-category, immediately selectable on the real form — even before any fields have been added to it yet. For R&amp;I Activity, Pre-Sales, and Post-Sales, a "Sub-category" selector only appears on the real form once at least one exists — nobody sees anything new until you add one here.</div>
         <div class="form-field">
           <div class="field-label">Category<span class="required-star">*</span></div>
           <select id="newSubcatCategory" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
@@ -4814,6 +4877,14 @@ appears to allow.`;
         <div class="form-field">
           <div class="field-label">Sub-category name<span class="required-star">*</span></div>
           <input type="text" id="newSubcatName" placeholder="e.g. Warranty Support" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>
+        <div class="form-field">
+          <div class="field-label">Zone<span class="required-star">*</span></div>
+          <select id="newSubcatZone" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <option value="common">Common — shared by both teams</option>
+            <option value="mechanical">Mechanical</option>
+            <option value="electrical">Electrical</option>
+          </select>
         </div>`;
       submitBtn.textContent = 'Add Sub-category';
       submitBtn.setAttribute('onclick', 'submitNewSubcategory()');
@@ -4831,6 +4902,14 @@ appears to allow.`;
           <select id="newFieldSubType" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);"></select>
         </div>
         <div class="form-field">
+          <div class="field-label">Section<span class="required-star">*</span></div>
+          <select id="newFieldSection" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+            <option value="identity">Task Identity</option>
+            <option value="details">Work Details</option>
+            <option value="description">Description</option>
+          </select>
+        </div>
+        <div class="form-field">
           <div class="field-label">Zone<span class="required-star">*</span></div>
           <select id="newFieldZone" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
             <option value="common">Common — shared by both teams</option>
@@ -4844,32 +4923,75 @@ appears to allow.`;
         </div>
         <div class="form-field">
           <div class="field-label">Field type<span class="required-star">*</span></div>
-          <select id="newFieldType" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+          <select id="newFieldType" onchange="updateNewFieldTypeConditionals()" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
             <option value="text">Free text (single line)</option>
             <option value="textarea">Free text (paragraph)</option>
             <option value="number">Number</option>
+            <option value="date">Date</option>
             <option value="chips">Chips (multi-select)</option>
             <option value="chipselect">Dropdown (single-select)</option>
           </select>
         </div>
+        <div class="form-field" id="newFieldPlaceholderWrap">
+          <div class="field-label">Placeholder text</div>
+          <input type="text" id="newFieldPlaceholder" placeholder="e.g. e.g. Fire exit door — UL test study" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>
+        <div class="form-field" id="newFieldHintWrap">
+          <div class="field-label">Hint text</div>
+          <input type="text" id="newFieldHint" placeholder="e.g. select all that apply" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        </div>
         <label style="display:flex; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
           <input type="checkbox" id="newFieldRequired"> Required
+        </label>
+        <label id="newFieldMonospaceWrap" style="display:flex; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
+          <input type="checkbox" id="newFieldMonospace"> Monospace styling (for code-like values, e.g. Lift ID)
+        </label>
+        <label id="newFieldNumericWrap" style="display:flex; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
+          <input type="checkbox" id="newFieldNumeric"> Numbers only
+        </label>
+        <label id="newFieldHasOtherWrap" style="display:none; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
+          <input type="checkbox" id="newFieldHasOther"> Include an "Other" option
         </label>`;
       submitBtn.textContent = 'Add Field';
       submitBtn.setAttribute('onclick', 'submitNewCustomField()');
       updateNewFieldSubTypeOptions();
+      updateNewFieldTypeConditionals();
     }
+  }
+
+  // Placeholder/Hint only make sense for text-like fields; Numbers-only
+  // only for a plain text field (Number fields are already numeric by
+  // definition); "Other" option only for a single-select Dropdown. Shows
+  // and hides these rather than removing them, so a value already typed
+  // into one isn't lost if someone changes the type and changes it back.
+  // Hint specifically only shows for Chips — that's the only field type
+  // that actually displays it; every other type would silently ignore
+  // a hint if one were set, so it's kept hidden rather than accepted and
+  // quietly dropped.
+  function updateNewFieldTypeConditionals(){
+    const type = document.getElementById('newFieldType').value;
+    const showPlaceholder = ['text','textarea','number','chipselect'].includes(type);
+    const showHint = type === 'chips';
+    const showMonospace = type === 'text';
+    const showNumeric = type === 'text';
+    const showHasOther = type === 'chipselect';
+    document.getElementById('newFieldPlaceholderWrap').style.display = showPlaceholder ? 'block' : 'none';
+    document.getElementById('newFieldHintWrap').style.display = showHint ? 'block' : 'none';
+    document.getElementById('newFieldMonospaceWrap').style.display = showMonospace ? 'flex' : 'none';
+    document.getElementById('newFieldNumericWrap').style.display = showNumeric ? 'flex' : 'none';
+    document.getElementById('newFieldHasOtherWrap').style.display = showHasOther ? 'flex' : 'none';
   }
 
   async function submitNewSubcategory(){
     const category = document.getElementById('newSubcatCategory').value;
     const name = document.getElementById('newSubcatName').value.trim();
+    const zone = document.getElementById('newSubcatZone').value;
     if(!name){ alert('Please enter a name for this sub-category.'); return; }
     const { count } = await sb.from('custom_subtypes').select('*', { count: 'exact', head: true }).eq('category', category);
-    const { error } = await sb.from('custom_subtypes').insert({ category, name, sort_order: count || 0 });
+    const { error } = await sb.from('custom_subtypes').insert({ category, name, zone, sort_order: count || 0 });
     if(error){ alert('Could not add: ' + error.message); return; }
     closeAddFieldModal();
-    loadDynamicFieldOptions(true); // so the real "Support Type" dropdown picks this up immediately, not just after a page refresh
+    loadDynamicFieldOptions(true); // so the real "Support Type"/"Sub-category" dropdown picks this up immediately, not just after a page refresh
     loadCustomFieldsPanel();
   }
 
@@ -4896,10 +5018,16 @@ appears to allow.`;
     const category = document.getElementById('newFieldCategory').value;
     const meta = CUSTOM_FIELD_CATEGORY_META.find(c => c.key === category);
     const subType = meta.subTypes ? document.getElementById('newFieldSubType').value : null;
+    const section = document.getElementById('newFieldSection').value;
     const zone = document.getElementById('newFieldZone').value;
     const label = document.getElementById('newFieldLabel').value.trim();
     const fieldType = document.getElementById('newFieldType').value;
     const required = document.getElementById('newFieldRequired').checked;
+    const placeholder = document.getElementById('newFieldPlaceholder').value.trim() || null;
+    const hint = document.getElementById('newFieldHint').value.trim() || null;
+    const isMonospace = document.getElementById('newFieldMonospace').checked;
+    const isNumeric = document.getElementById('newFieldNumeric').checked;
+    const hasOther = document.getElementById('newFieldHasOther').checked;
 
     if(!label){ alert('Please enter a label for this field.'); return; }
 
@@ -4918,7 +5046,10 @@ appears to allow.`;
       sortOrder = (groupRows && groupRows.length ? groupRows[0].sort_order : 0) + 10;
     }
 
-    const payload = { category, sub_type: subType, zone, label, field_type: fieldType, required, sort_order: sortOrder };
+    const payload = {
+      category, sub_type: subType, zone, label, field_type: fieldType, required, section, sort_order: sortOrder,
+      placeholder, hint, is_monospace: isMonospace, is_numeric: isNumeric, has_other: hasOther
+    };
 
     if(existing){
       const { error } = await sb.from('custom_fields').update(payload).eq('id', existing.id);
