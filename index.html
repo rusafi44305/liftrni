@@ -623,6 +623,15 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='white' stroke-width='1.8' fill='none'/%3E%3C/svg%3E");
   }
   .cat-select select option{ background:var(--surface); color:var(--text); font-weight:500; }
+  /* Every OTHER <select> in the app (role assignments, dashboard filters,
+     Task fields modals, etc.) had no equivalent rule — their dropdown
+     option lists were falling back to the browser's own native rendering
+     (typically a plain white background with black text) regardless of
+     the current theme, since browsers don't automatically theme a
+     <select>'s popup list from its closed-state CSS alone. This one
+     rule, plus color-scheme set dynamically in setTheme()/initTheme(),
+     covers all of them at once. */
+  select option{ background:var(--surface); color:var(--text); }
   #taskFormPanel{border-left:4px solid var(--accent-c, var(--accent)); transition:border-color .2s;}
   #devTaskPanel{border-left:4px solid var(--accent); transition:border-color .2s;}
   #devTaskPanel .section-label{color:var(--accent);}
@@ -680,7 +689,7 @@
     background:var(--accent); color:#fff; border:none; padding:12px;
     border-radius:10px; font-weight:600; font-size:14px; cursor:pointer; margin-top:6px;
   }
-  .submit-btn:hover{background:#254CBE;}
+  .submit-btn:hover{background:color-mix(in srgb, var(--accent) 80%, black 20%);}
   .queue-btn{
     background:var(--surface); color:var(--accent); border:1.5px dashed var(--accent);
     padding:12px 16px; border-radius:10px; font-weight:600; font-size:13px; cursor:pointer;
@@ -725,6 +734,10 @@
   .hamburger{ display:none; }
  
   /* ---------- FLOATING BOTTOM DOCK (always-on primary nav) ---------- */
+  /* iOS tab-bar style: a flat, neutral frosted blur — no gradient, no
+     accent-color tint mixed into the background or border. A real iOS
+     tab bar's material is uniform regardless of the app's own accent
+     color, which is what this now matches. */
   nav.tabs.dock{
     display:flex; align-items:center;
     position:fixed; left:50%; bottom:18px; top:auto;
@@ -732,10 +745,10 @@
     z-index:150;
     max-width:96vw; overflow-x:auto;
     gap:2px; padding:6px 8px;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 24%, var(--surface) 76%), color-mix(in srgb, var(--surface) 60%, transparent));
-    backdrop-filter: blur(32px) saturate(200%);
-    -webkit-backdrop-filter: blur(32px) saturate(200%);
-    border:1px solid color-mix(in srgb, var(--accent) 30%, var(--border) 70%);
+    background: color-mix(in srgb, var(--surface) 72%, transparent);
+    backdrop-filter: blur(32px) saturate(180%);
+    -webkit-backdrop-filter: blur(32px) saturate(180%);
+    border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
     border-radius:999px;
     box-shadow:var(--shadow);
   }
@@ -1191,10 +1204,10 @@
           </span>
           <div class="theme-switch" style="margin:0;">
             <button class="theme-dot" data-theme-name="white" style="background:#EEF0F4;" onclick="setTheme('white', this)" title="Light"></button>
-            <button class="theme-dot" data-theme-name="dark" style="background:#202329;" onclick="setTheme('dark', this)" title="Dark"></button>
-            <button class="theme-dot" data-theme-name="midnight" style="background:#05070D;" onclick="setTheme('midnight', this)" title="Midnight"></button>
-            <button class="theme-dot" data-theme-name="midnightblue" style="background:#0A0F1E;" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
-            <button class="theme-dot" data-theme-name="sunset" style="background:#1C130B;" onclick="setTheme('sunset', this)" title="Sunset"></button>
+            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
+            <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
+            <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
+            <button class="theme-dot" data-theme-name="sunset" style="background:linear-gradient(135deg, #1C130B, #FF9F1C);" onclick="setTheme('sunset', this)" title="Sunset"></button>
           </div>
         </div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="openTutorial()">
@@ -1535,10 +1548,10 @@
           </div>
           <div class="theme-switch">
             <button class="theme-dot" data-theme-name="white" style="background:#EEF0F4;" onclick="setTheme('white', this)" title="Light"></button>
-            <button class="theme-dot" data-theme-name="dark" style="background:#202329;" onclick="setTheme('dark', this)" title="Dark"></button>
-            <button class="theme-dot" data-theme-name="midnight" style="background:#05070D;" onclick="setTheme('midnight', this)" title="Midnight"></button>
-            <button class="theme-dot" data-theme-name="midnightblue" style="background:#0A0F1E;" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
-            <button class="theme-dot" data-theme-name="sunset" style="background:#1C130B;" onclick="setTheme('sunset', this)" title="Sunset"></button>
+            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
+            <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
+            <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
+            <button class="theme-dot" data-theme-name="sunset" style="background:linear-gradient(135deg, #1C130B, #FF9F1C);" onclick="setTheme('sunset', this)" title="Sunset"></button>
           </div>
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0 8px; border-top:1px solid var(--border); margin-top:8px;">
@@ -2595,6 +2608,11 @@
   function setTheme(name, el){
     if(name === 'white'){ document.documentElement.removeAttribute('data-theme'); }
     else{ document.documentElement.setAttribute('data-theme', name); }
+    // Lets the browser's own native chrome (form-control internals CSS
+    // can't fully reach, scrollbar buttons on some browsers, etc.) pick
+    // light or dark rendering to match — 'white' is the only genuinely
+    // light theme here, every other option is dark-based.
+    document.documentElement.style.colorScheme = name === 'white' ? 'light' : 'dark';
     try{ localStorage.setItem('waltonLiftTheme', name); }catch(e){}
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
     document.querySelectorAll(`.theme-dot[data-theme-name="${name}"]`).forEach(d => d.classList.add('active'));
@@ -2604,6 +2622,7 @@
     try{ saved = localStorage.getItem('waltonLiftTheme') || 'white'; }catch(e){}
     if(saved === 'white'){ document.documentElement.removeAttribute('data-theme'); }
     else{ document.documentElement.setAttribute('data-theme', saved); }
+    document.documentElement.style.colorScheme = saved === 'white' ? 'light' : 'dark';
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
     document.querySelectorAll(`.theme-dot[data-theme-name="${saved}"]`).forEach(d => d.classList.add('active'));
   }
