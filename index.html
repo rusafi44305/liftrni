@@ -850,58 +850,12 @@
   }
  
   /* ============================================================
-     SOLID UI POLISH — flat, opaque surfaces (no blur/translucency).
+     Small, standalone macOS touches not otherwise covered by the
+     vibrancy block below (this used to duplicate several of that
+     block's own rules with the opposite, conflicting intent — solid
+     opaque vs. translucent — which is why opacity fixes kept fighting
+     themselves; only the genuinely unique rules remain here now).
   ============================================================ */
-  .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #accountMenu, #editModal .panel,
-  .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
-  .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
-    background:var(--surface) !important;
-    border:1px solid var(--border) !important;
-    box-shadow:var(--shadow);
-    border-radius:18px !important;
-  }
-  /* These three render the same kind of task-entry card in three different
-     views (My Tasks, category log, and search results). The shared rule
-     just above gives .panel/.mytask-item an 18px radius app-wide, which
-     reads as too round for this dense, list-like content specifically —
-     tightening just these, without touching the many other things that
-     still use the shared 18px look intentionally (KPI panels, forms, etc).
-     Placed AFTER that shared rule so it actually wins the cascade — two
-     equally-specific !important rules resolve by source order, and this
-     needs to come second. */
-  .mytask-item, .cat-log-row, .gantt-project-card, .proj-task-row{ border-radius:10px !important; }
-  .mytask-item, .cat-log-row, .t-card, .gantt-project-card, .proj-task-row{
-    transition:transform .15s ease, border-color .15s ease;
-  }
-  .mytask-item:hover, .cat-log-row:hover, .t-card:hover, .gantt-project-card:hover, .proj-task-row:hover{
-    transform:translateY(-1px);
-    border-color:color-mix(in srgb, var(--accent) 35%, var(--border)) !important;
-  }
-  /* .indicator-panel is DELIBERATELY excluded above — it's a permanent dark card
-     (like .kpi-card) with hardcoded light text, by design, in every theme. If it
-     ever gets added back to the shared list above, its text goes invisible in
-     light mode again. */
-  .clock-pill, .pending-pill{ border-radius:999px !important; }
-  .chip-opt.picked-single, .chip-opt.picked{
-    background:var(--accent) !important;
-    color:#fff !important;
-    border-color:var(--accent) !important;
-  }
-  .chip-opt{ border-radius:999px !important; }
-  .queue-btn, .submit-btn, .fselect, select:not(.cat-select-input), input[type="text"], input[type="date"]:not(.trend-date-input), input[type="month"], input[type="number"]{
-    background:var(--surface) !important;
-  }
-  .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details):not(.inspect){
-    background:var(--surface) !important;
-  }
-  .kpi-card{
-    background:linear-gradient(135deg, #0E1420, #1B2745) !important;
-    box-shadow:var(--shadow);
-    border-radius:18px !important;
-    color:#fff !important;
-  }
-  .kpi-card .kpi-num, .kpi-card .kpi-lbl, .kpi-card *{ color:#fff !important; }
-  .kpi-card .kpi-lbl{ color:#C7D0E8 !important; opacity:1; }
   .avatar{
     background:linear-gradient(145deg, color-mix(in srgb, var(--accent) 85%, white 15%), var(--accent));
     border-radius:50%;
@@ -909,9 +863,13 @@
     transition:transform 0.15s ease;
   }
   .avatar:hover{ transform:scale(1.05); }
-  .queue-btn, .btn, .submit-btn, .fselect{
-    border-radius:999px !important;
-    transition:transform .15s ease, box-shadow .15s ease;
+  .brand-mark{border-radius:12px;}
+  input[type="text"], input[type="date"], input[type="month"], input[type="number"], textarea, select{
+    border-radius:12px !important;
+  }
+  nav.tabs button{border-radius:999px !important;}
+  nav.tabs button.active{
+    background:var(--accent-dim) !important;
   }
   .queue-btn:hover, .btn:hover, .submit-btn:hover{
     transform:translateY(-1px);
@@ -920,27 +878,33 @@
   .submit-btn{
     background:linear-gradient(145deg, color-mix(in srgb, var(--accent) 92%, white 8%), var(--accent)) !important;
   }
-  nav.tabs button{border-radius:999px !important;}
-  nav.tabs button.active{
-    background:var(--accent-dim) !important;
-  }
-  .brand-mark{border-radius:12px;}
-  input[type="text"], input[type="date"], input[type="month"], input[type="number"], textarea, select{
-    border-radius:12px !important;
-  }
 
   /* ============================================================
      MACOS VIBRANCY POLISH — frosted-glass "material" surfaces,
      matching Sonoma/Sequoia's translucent panel language, applied
      consistently across every card-like surface in the app.
   ============================================================ */
-  .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #accountMenu, #editModal .panel,
+  .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #editModal .panel,
   .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
     background:color-mix(in srgb, var(--surface) 82%, transparent) !important;
     backdrop-filter:blur(26px) saturate(170%);
     -webkit-backdrop-filter:blur(26px) saturate(170%);
     border:1px solid color-mix(in srgb, var(--border) 65%, transparent) !important;
+    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
+    border-radius:16px !important;
+  }
+  /* The account menu specifically needs to stay near-opaque rather than
+     following the lighter translucency every other card above uses —
+     text sitting behind it (nav bar, page content) was legible through
+     it at the shared 82% level, which defeats the point of a dropdown
+     menu. Kept as its own rule, deliberately more solid, rather than
+     raising the opacity for every other panel too. */
+  #accountMenu{
+    background:color-mix(in srgb, var(--surface) 96%, transparent) !important;
+    backdrop-filter:blur(30px) saturate(180%);
+    -webkit-backdrop-filter:blur(30px) saturate(180%);
+    border:1px solid color-mix(in srgb, var(--border) 60%, transparent) !important;
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
     border-radius:16px !important;
   }
@@ -1191,7 +1155,7 @@
         --
         <span id="avatarBadge" style="display:none; position:absolute; top:-2px; right:-2px; width:10px; height:10px; border-radius:50%; background:var(--red); border:2px solid var(--surface); pointer-events:none;"></span>
       </div>
-      <div id="accountMenu" style="display:none; position:absolute; right:0; top:calc(100% + 10px); background:color-mix(in srgb, var(--surface) 78%, transparent); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%); border:1px solid color-mix(in srgb, var(--border) 45%, transparent); border-radius:16px; padding:6px; min-width:240px; z-index:200; box-shadow:0 20px 44px rgba(0,0,0,0.28), 0 3px 10px rgba(0,0,0,0.14); opacity:0; transform:scale(0.92) translateY(-8px); transform-origin:top right; transition:opacity .16s ease, transform .16s cubic-bezier(.2,.9,.3,1.3);">
+      <div id="accountMenu" style="display:none; position:absolute; right:0; top:calc(100% + 10px); background:color-mix(in srgb, var(--surface) 96%, transparent); backdrop-filter:blur(30px) saturate(180%); -webkit-backdrop-filter:blur(30px) saturate(180%); border:1px solid color-mix(in srgb, var(--border) 60%, transparent); border-radius:16px; padding:6px; min-width:240px; z-index:200; box-shadow:0 20px 44px rgba(0,0,0,0.28), 0 3px 10px rgba(0,0,0,0.14); opacity:0; transform:scale(0.92) translateY(-8px); transform-origin:top right; transition:opacity .16s ease, transform .16s cubic-bezier(.2,.9,.3,1.3);">
         <div id="accountMenuName" style="font-size:12.5px; font-weight:600; padding:10px 12px 10px; border-bottom:1px solid color-mix(in srgb, var(--border) 60%, transparent); margin-bottom:4px;">—</div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); showView('profile'); onViewShown('profile');">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>
@@ -1794,12 +1758,12 @@
           <li><b style="color:var(--text);">Options</b> lets you add or remove the choices on a Checkboxes or Dropdown field, any time — for both built-in and your own fields.</li>
           <li>Drag the <span style="color:var(--text-faint);">⋮⋮</span> handle on any field to reorder it within its own card — dragging between different cards isn't allowed, since that would silently change which team or category it belongs to.</li>
         </ul>
-        <div style="font-size:11.5px; color:var(--text-faint); margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">Reports isn't part of this system — its dropdown options are still Superadmin-managed, just in their own section, since its report types and Error Report scoring make it more complex than the other 5 categories.</div>
+        <div style="font-size:11.5px; color:var(--text-faint); margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">Reports can now have fields added, edited, and deleted the same way as the other 5 categories, for any of its 6 report types. New sub-categories still can't be added to Reports though — each of its 6 types has its own built-in scoring and structure (Error Report especially), so a brand-new one wouldn't have any real behavior behind it.</div>
       </div>
     </div>
 
     <div class="block-head" id="customFieldsBlock" style="display:none;">
-      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across R&amp;I Activity, Pre-Sales, Post-Sales, Technical Support, and General Support, organized by Common, Mechanical, and Electrical, including each field's dropdown options in the same place — plus Reports' own dropdown options (Installation Wings, Types of Data Missing, and its chip-based fields) at the end. New fields appear on the real task-entry form immediately.</div></div>
+      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across all 6 categories, organized by Common, Mechanical, and Electrical, including each field's dropdown options in the same place. New fields appear on the real task-entry form immediately. Reports supports adding, editing, and deleting fields on any of its 6 report types, same as the other 5 categories — it just can't have a brand-new report type added, since each existing one has its own built-in behavior.</div></div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
         <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
@@ -2375,6 +2339,31 @@
       }
     }
 
+    // Reports — unlike every other sub-typed category, the dropdown OPTIONS
+    // themselves differ by discipline, not just the fields shown once one
+    // is picked. Mechanical only ever sees 2 report types, Electrical only
+    // sees the other 3 — Error Report is the one exception, shared by both
+    // teams, since either discipline can flag a mistake in any category's
+    // work. This has to run BEFORE the custom-field append block below,
+    // since that block needs to know which report type is actually
+    // selected (reportField.currentValue) to look up the right custom
+    // fields for it — moved here from after it for exactly that reason.
+    if(cat === 'surveyissues'){
+      const reportOptions = discipline === 'electrical'
+        ? ['Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report', 'Error Report']
+        : ['Survey Data Mismatch Report', 'Mechanical Components Service Report', 'Error Report'];
+      const reportField = fields.find(f => f.id === 'reportTypeSelect');
+      if(reportField) reportField.opts = reportOptions;
+      const reportSelect = document.getElementById('reportTypeSelect');
+      // If discipline changed since the last render (or this is the first
+      // render), the previously-selected value might not be valid for this
+      // discipline's option list anymore — fall back to the first option
+      // rather than silently keeping an option that's no longer offered.
+      const reportType = (reportSelect && reportOptions.includes(reportSelect.value)) ? reportSelect.value : reportOptions[0];
+      if(reportField) reportField.currentValue = reportType;
+      fields = fields.concat(reportsSubforms[reportType] || []);
+    }
+
     // Every Superadmin-created custom field gets appended here, for
     // whichever category/sub-type/zone combination is currently in
     // effect — common-zone ones plus whichever of Mechanical/Electrical
@@ -2382,9 +2371,9 @@
     // anything already assembled above; it only adds to the end, so
     // nothing already working can be affected by a field that doesn't
     // exist for this exact combination.
-    if(cat !== 'surveyissues'){
-      const currentSubType = (cat === 'techsupport' || cat === 'generalsupport')
-        ? (fields.find(f => f.id === 'techSupportType' || f.id === 'generalSupportType')?.currentValue || null)
+    {
+      const currentSubType = (cat === 'techsupport' || cat === 'generalsupport' || cat === 'surveyissues')
+        ? (fields.find(f => f.id === 'techSupportType' || f.id === 'generalSupportType' || f.id === 'reportTypeSelect')?.currentValue || null)
         : (newSubcatFieldId ? (() => {
             const val = fields.find(f => f.id === newSubcatFieldId)?.currentValue;
             return (val && val !== '— None —') ? val : null;
@@ -2417,28 +2406,6 @@
         source: (cf.field_type === 'chips' || cf.field_type === 'chipselect') ? `customfield:${cf.id}` : undefined
       }));
       fields = fields.concat(customToAppend);
-    }
-
-    // Reports — unlike every other sub-typed category, the dropdown OPTIONS
-    // themselves differ by discipline, not just the fields shown once one
-    // is picked. Mechanical only ever sees 2 report types, Electrical only
-    // sees the other 3 — Error Report is the one exception, shared by both
-    // teams, since either discipline can flag a mistake in any category's
-    // work.
-    if(cat === 'surveyissues'){
-      const reportOptions = discipline === 'electrical'
-        ? ['Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report', 'Error Report']
-        : ['Survey Data Mismatch Report', 'Mechanical Components Service Report', 'Error Report'];
-      const reportField = fields.find(f => f.id === 'reportTypeSelect');
-      if(reportField) reportField.opts = reportOptions;
-      const reportSelect = document.getElementById('reportTypeSelect');
-      // If discipline changed since the last render (or this is the first
-      // render), the previously-selected value might not be valid for this
-      // discipline's option list anymore — fall back to the first option
-      // rather than silently keeping an option that's no longer offered.
-      const reportType = (reportSelect && reportOptions.includes(reportSelect.value)) ? reportSelect.value : reportOptions[0];
-      if(reportField) reportField.currentValue = reportType;
-      fields = fields.concat(reportsSubforms[reportType] || []);
     }
 
     // Any category using Superadmin-managed options — the "select" dropdowns
@@ -4950,6 +4917,13 @@ appears to allow.`;
     { key: 'postsales', label: 'Post-Sales Activity', subTypes: null },
     { key: 'techsupport', label: 'Technical Support', subTypes: ['Installation Support', 'Commissioning Support', 'After-Sales Support'] },
     { key: 'generalsupport', label: 'General Support', subTypes: ['Production Support', 'SCM Support', 'QC Support', 'Other Support'] },
+    // Reports' 6 report types are fixed — each one has its own hardcoded
+    // form and (for Error Report specifically) its own scoring logic, so
+    // unlike the other categories with sub-types, Superadmins can add
+    // fields to any of these 6, but can't create a brand-new 7th one —
+    // it wouldn't have any real behavior behind it. That's why
+    // 'surveyissues' is deliberately left out of SUBCATEGORY_CAPABLE below.
+    { key: 'surveyissues', label: 'Reports', subTypes: ['Survey Data Mismatch Report', 'Error Report', 'Mechanical Components Service Report', 'Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report'] },
   ];
 
   // ============ QUICK ADD — the simplified, contextual entry points ============
@@ -5587,8 +5561,38 @@ appears to allow.`;
     // one directly inside an inline onclick risks the exact same
     // quote-escaping breakage caught earlier with the restore button.
     customFieldsCache = rows;
-    const categoryOrder = ['rni','presales','postsales','techsupport','generalsupport'];
+    const categoryOrder = ['rni','presales','postsales','techsupport','generalsupport','surveyissues'];
     const zoneLabel = { common: 'Common', mechanical: 'Mechanical', electrical: 'Electrical' };
+
+    // Reports' own dropdown-options section (Installation Wings, Types of
+    // Data Missing, and its chip-based fields) — now appended as extra
+    // content INSIDE the same "Reports" card the main loop below already
+    // builds (since Reports is a normal category in that loop now too),
+    // rather than as a separate card the way it worked before Reports
+    // supported adding/editing/deleting fields.
+    const reportsExtrasHtml = `
+      <div style="margin-top:22px; padding-top:18px; border-top:1px solid var(--border);">
+        <div style="font-size:13px; font-weight:600; margin-bottom:10px;">Reports' own dropdown options</div>
+        <div class="split-grid" id="surveyOptionsPanel" style="margin-bottom:12px;">
+          <div class="panel">
+            <div class="panel-title">Installation Wings</div>
+            <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
+              <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-title">Types of Data Missing</div>
+            <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
+            <div style="display:flex; gap:8px; margin-top:14px;">
+              <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
+              <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
+            </div>
+          </div>
+        </div>
+        <div id="reportsChipGroupsContainer"><div class="placeholder-note">Loading…</div></div>
+      </div>`;
 
     const fieldRowHtml = f => {
       const hasOptions = f.field_type === 'chips' || f.field_type === 'chipselect';
@@ -5653,42 +5657,14 @@ appears to allow.`;
           ${addSubcatBtn}
         </div>
         ${subTypeHtml}
+        ${catKey === 'surveyissues' ? reportsExtrasHtml : ''}
       </div>`;
     }).join('');
 
-    // Reports isn't part of the dynamic field system (no Edit/Delete/drag
-    // for it — its own report sub-types and Error Report scoring make it
-    // more complex than the other 5), but its dropdown options still need
-    // a Superadmin-managed home, so they render here too, as their own
-    // section within this same panel rather than a separate one.
-    panel.innerHTML += `<div class="panel" style="margin-bottom:18px;">
-      <div class="panel-title">Reports</div>
-      <div style="font-size:11.5px; color:var(--text-faint); margin:-6px 0 14px;">Dropdown options only — Reports doesn't support adding, editing, or deleting fields like the 5 categories above.</div>
-      <div class="split-grid" id="surveyOptionsPanel" style="margin-bottom:12px;">
-        <div class="panel">
-          <div class="panel-title">Installation Wings</div>
-          <div id="installationWingsList"><div class="placeholder-note">Loading…</div></div>
-          <div style="display:flex; gap:8px; margin-top:14px;">
-            <input type="text" id="newWingInput" placeholder="e.g. Md. Joynul Abedin" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addInstallationWing();">
-            <button class="queue-btn" onclick="addInstallationWing()">+ Add</button>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="panel-title">Types of Data Missing</div>
-          <div id="dataIssueTypesList"><div class="placeholder-note">Loading…</div></div>
-          <div style="display:flex; gap:8px; margin-top:14px;">
-            <input type="text" id="newIssueTypeInput" placeholder="e.g. Wrong Data" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDataIssueType();">
-            <button class="queue-btn" onclick="addDataIssueType()">+ Add</button>
-          </div>
-        </div>
-      </div>
-      <div id="reportsChipGroupsContainer"><div class="placeholder-note">Loading…</div></div>
-    </div>`;
-
-    // Both of these populate elements that only exist now that the HTML
-    // above has actually been written — calling them any earlier (e.g.
-    // eagerly in loadAdminPanel) would try to update elements that don't
-    // exist yet, the same race condition already fixed once before.
+    // Both of these populate elements that only exist now that the Reports
+    // card above has actually been written — calling them any earlier
+    // would try to update elements that don't exist yet, the same race
+    // condition already fixed once before when this was a separate card.
     loadSurveyOptionsPanel();
     loadReportsChipGroupsPanel();
   }
