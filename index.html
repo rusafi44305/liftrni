@@ -604,26 +604,27 @@
  
   .field-label{font-size:12px; font-weight:600; color:var(--text-dim); margin-bottom:6px;}
   .cat-select select{
-    width:100%; padding:11px 14px 11px 18px; border-radius:9px; border:1.5px solid var(--border);
+    width:100%; padding:11px 14px; border-radius:9px; border:1.5px solid var(--border);
     font-family:'Inter'; font-size:13.5px; font-weight:600; color:var(--text);
     background:var(--surface); cursor:pointer; appearance:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235B6472' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
     background-repeat:no-repeat; background-position:right 14px center;
     transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
-  /* macOS-style popup button: a plain, bordered control with a slim
-     colored accent stripe down the left edge, rather than a solid,
-     fully-saturated fill. Still unmistakable which category is selected
-     at a glance — the color's just carried by the stripe and border
-     now, the way a native macOS control would use color sparingly,
-     instead of by painting the entire control that color. */
-  .cat-select select{ border-left-width:4px; }
-  .cat-select.cc-rni select{ border-left-color:var(--c-rni); }
-  .cat-select.cc-presales select{ border-left-color:var(--c-presales); }
-  .cat-select.cc-postsales select{ border-left-color:var(--c-postsales); }
-  .cat-select.cc-techsupport select{ border-left-color:var(--c-techsupport); }
-  .cat-select.cc-generalsupport select{ border-left-color:var(--c-production); }
-  .cat-select.cc-surveyissues select{ border-left-color:var(--c-surveyissues); }
+  /* Back to a full, solid fill in the category's own color — the subtler
+     left-stripe-only version read as too quiet; the whole control being
+     colored is what actually made the selected category unmistakable at
+     a glance, which matters more here than sticking strictly to a native
+     macOS popup button's usual restraint with color. */
+  .cat-select.cc-rni select{ background-color:var(--c-rni); color:#fff; border-color:var(--c-rni); }
+  .cat-select.cc-presales select{ background-color:var(--c-presales); color:#fff; border-color:var(--c-presales); }
+  .cat-select.cc-postsales select{ background-color:var(--c-postsales); color:#fff; border-color:var(--c-postsales); }
+  .cat-select.cc-techsupport select{ background-color:var(--c-techsupport); color:#fff; border-color:var(--c-techsupport); }
+  .cat-select.cc-generalsupport select{ background-color:var(--c-production); color:#fff; border-color:var(--c-production); }
+  .cat-select.cc-surveyissues select{ background-color:var(--c-surveyissues); color:#fff; border-color:var(--c-surveyissues); }
+  .cat-select.cc-rni select, .cat-select.cc-presales select, .cat-select.cc-postsales select, .cat-select.cc-techsupport select, .cat-select.cc-generalsupport select, .cat-select.cc-surveyissues select{
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='white' stroke-width='1.8' fill='none'/%3E%3C/svg%3E");
+  }
   .cat-select select option{ background:var(--surface); color:var(--text); font-weight:500; }
   /* Every OTHER <select> in the app (role assignments, dashboard filters,
      Task fields modals, etc.) had no equivalent rule — their dropdown
