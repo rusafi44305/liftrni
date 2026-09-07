@@ -16,7 +16,7 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <style>
   :root{
-    --bg:#C7C9CF;
+    --bg:#DDDEE3;
     --surface:#FFFFFF;
     --surface-alt:#EEEFF2;
     --border:#DCDDE2;
@@ -69,8 +69,8 @@
   /* "dark" is a standard mid-gray dark mode (closer to macOS/iOS dark). "midnight" is a much
      deeper near-black OLED tier — the two should feel clearly different in brightness. */
   html[data-theme="dark"]{
-    --bg:#202329; --surface:#454B58; --surface-alt:#4F5663; --border:#565D69;
-    --text:#F5F6F8; --text-dim:#B8BFCC; --text-faint:#8F98A7; --bg-anim-ink:#8B96B8;
+    --bg:#202329; --surface:#454B58; --surface-alt:#4F5663; --border:#6B7280;
+    --text:#F5F6F8; --text-dim:#C7CDD9; --text-faint:#A3ACBC; --bg-anim-ink:#8B96B8;
     --accent:#6C9BFF; --accent-rgb:108,155,255; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
     --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5; --c-techsupport:#E8AD6C;
@@ -79,8 +79,8 @@
     --header-bg:#202329;
   }
   html[data-theme="midnight"]{
-    --bg:#05070D; --surface:#1A2233; --surface-alt:#212B3F; --border:#28324A;
-    --text:#F5F7FB; --text-dim:#9CA5B8; --text-faint:#737D91; --bg-anim-ink:#7482A6;
+    --bg:#05070D; --surface:#1A2233; --surface-alt:#212B3F; --border:#384260;
+    --text:#F5F7FB; --text-dim:#ABB4C7; --text-faint:#8790A5; --bg-anim-ink:#7482A6;
     --accent:#5B8DEF; --accent-rgb:91,141,239; --amber:#E0A23D; --green:#34D399; --red:#F0685C;
     --c-rni:#9A82F0; --c-presales:#5C97F5; --c-client:#3FC2C2; --c-postsales:#3FCF8E;
     --c-install:#E3A25B; --c-commission:#F0954D; --c-aftersales:#F06FA0; --c-production:#8890F0; --c-techsupport:#E3A25B;
@@ -94,8 +94,8 @@
      every card/panel reads as a clearly separate layer sitting on top of
      the background, matching how a real macOS window sits on the desktop. */
   html[data-theme="midnightblue"]{
-    --bg:#0A0F1E; --surface:#212E4D; --surface-alt:#293A5C; --border:#304368;
-    --text:#F0F4FF; --text-dim:#A9B8DD; --text-faint:#7C8CB5; --bg-anim-ink:#5E7AC7;
+    --bg:#0A0F1E; --surface:#212E4D; --surface-alt:#293A5C; --border:#3E5480;
+    --text:#F0F4FF; --text-dim:#B8C5E5; --text-faint:#8FA0C4; --bg-anim-ink:#5E7AC7;
     --accent:#4A90FF; --accent-rgb:74,144,255; --amber:#E5A23D; --green:#38D6A0; --red:#F0685C;
     --c-rni:#A08CF5; --c-presales:#6BA6FF; --c-client:#4DD4D4; --c-postsales:#4EDCA0;
     --c-install:#EAAE6A; --c-commission:#F4A05E; --c-aftersales:#F480B0; --c-production:#96A0FF; --c-techsupport:#EAAE6A;
@@ -107,8 +107,8 @@
      how every other theme option here works) rather than a light mode.
      Surface again clearly lighter than bg for the same reason as above. */
   html[data-theme="sunset"]{
-    --bg:#1C130B; --surface:#46331F; --surface-alt:#503A24; --border:#59422A;
-    --text:#FFF4E2; --text-dim:#E3C6A0; --text-faint:#B4936C; --bg-anim-ink:#C99354;
+    --bg:#1C130B; --surface:#46331F; --surface-alt:#503A24; --border:#6E5335;
+    --text:#FFF4E2; --text-dim:#EAD3B3; --text-faint:#C3A67E; --bg-anim-ink:#C99354;
     --accent:#FF9F1C; --accent-rgb:255,159,28; --amber:#FFB648; --green:#5FD068; --red:#FF6B5C;
     --c-rni:#C9A6F5; --c-presales:#7FB8FF; --c-client:#5FD6C4; --c-postsales:#7BDE8E;
     --c-install:#FFB65E; --c-commission:#FFA255; --c-aftersales:#FF8FAE; --c-production:#B2A6FF; --c-techsupport:#FFB65E;
@@ -969,8 +969,8 @@
 ============================================================ -->
 <style>
   #bgAnim{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
-  #bgAnim svg{ position:absolute; opacity:0.13; }
-  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg, html[data-theme="midnightblue"] #bgAnim svg, html[data-theme="sunset"] #bgAnim svg{ opacity:0.08; }
+  #bgAnim svg{ position:absolute; opacity:0.19; }
+  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg, html[data-theme="midnightblue"] #bgAnim svg, html[data-theme="sunset"] #bgAnim svg{ opacity:0.13; }
   #bgAnim svg *{ stroke:var(--bg-anim-ink, var(--text-faint)); }
   #bgAnim svg .bg-fill{ fill:var(--bg-anim-ink, var(--text-faint)); stroke:none; }
 
@@ -1052,9 +1052,9 @@
      never apply otherwise. Kept a notch fainter than the edge pieces
      since these sit directly behind real text and cards, not empty
      space. */
-  #bgAnim svg.bg-center-svg{ opacity:0.09; }
+  #bgAnim svg.bg-center-svg{ opacity:0.13; }
   html[data-theme="dark"] #bgAnim svg.bg-center-svg, html[data-theme="midnight"] #bgAnim svg.bg-center-svg,
-  html[data-theme="midnightblue"] #bgAnim svg.bg-center-svg, html[data-theme="sunset"] #bgAnim svg.bg-center-svg{ opacity:0.055; }
+  html[data-theme="midnightblue"] #bgAnim svg.bg-center-svg, html[data-theme="sunset"] #bgAnim svg.bg-center-svg{ opacity:0.09; }
   .bg-bolt-1{ left:38vw; top:12vh; width:56px; height:56px; animation:bgGearCW 46s linear infinite; transform-box:fill-box; transform-origin:center; }
   .bg-bolt-2{ left:62vw; top:52vh; width:38px; height:38px; animation:bgGearCCW 32s linear infinite; transform-box:fill-box; transform-origin:center; }
   .bg-circuit-svg{ left:44vw; top:32vh; width:180px; height:120px; }
