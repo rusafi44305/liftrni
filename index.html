@@ -604,27 +604,26 @@
  
   .field-label{font-size:12px; font-weight:600; color:var(--text-dim); margin-bottom:6px;}
   .cat-select select{
-    width:100%; padding:11px 14px; border-radius:9px; border:1.5px solid var(--border);
+    width:100%; padding:11px 14px 11px 18px; border-radius:9px; border:1.5px solid var(--border);
     font-family:'Inter'; font-size:13.5px; font-weight:600; color:var(--text);
     background:var(--surface); cursor:pointer; appearance:none;
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235B6472' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
     background-repeat:no-repeat; background-position:right 14px center;
     transition:background-color .15s ease, border-color .15s ease, color .15s ease;
   }
-  /* The selected category gets a genuinely bold, solid fill in its own
-     theme color — not just a subtle tint — specifically so the currently
-     selected category is unmistakable at a glance, on both desktop and
-     mobile, matching how every other category-colored element in the app
-     (tiles, tags) already uses that same color, just more vividly here. */
-  .cat-select.cc-rni select{ background-color:var(--c-rni); color:#fff; border-color:var(--c-rni); }
-  .cat-select.cc-presales select{ background-color:var(--c-presales); color:#fff; border-color:var(--c-presales); }
-  .cat-select.cc-postsales select{ background-color:var(--c-postsales); color:#fff; border-color:var(--c-postsales); }
-  .cat-select.cc-techsupport select{ background-color:var(--c-techsupport); color:#fff; border-color:var(--c-techsupport); }
-  .cat-select.cc-generalsupport select{ background-color:var(--c-production); color:#fff; border-color:var(--c-production); }
-  .cat-select.cc-surveyissues select{ background-color:var(--c-surveyissues); color:#fff; border-color:var(--c-surveyissues); }
-  .cat-select.cc-rni select, .cat-select.cc-presales select, .cat-select.cc-postsales select, .cat-select.cc-techsupport select, .cat-select.cc-generalsupport select, .cat-select.cc-surveyissues select{
-    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='white' stroke-width='1.8' fill='none'/%3E%3C/svg%3E");
-  }
+  /* macOS-style popup button: a plain, bordered control with a slim
+     colored accent stripe down the left edge, rather than a solid,
+     fully-saturated fill. Still unmistakable which category is selected
+     at a glance — the color's just carried by the stripe and border
+     now, the way a native macOS control would use color sparingly,
+     instead of by painting the entire control that color. */
+  .cat-select select{ border-left-width:4px; }
+  .cat-select.cc-rni select{ border-left-color:var(--c-rni); }
+  .cat-select.cc-presales select{ border-left-color:var(--c-presales); }
+  .cat-select.cc-postsales select{ border-left-color:var(--c-postsales); }
+  .cat-select.cc-techsupport select{ border-left-color:var(--c-techsupport); }
+  .cat-select.cc-generalsupport select{ border-left-color:var(--c-production); }
+  .cat-select.cc-surveyissues select{ border-left-color:var(--c-surveyissues); }
   .cat-select select option{ background:var(--surface); color:var(--text); font-weight:500; }
   /* Every OTHER <select> in the app (role assignments, dashboard filters,
      Task fields modals, etc.) had no equivalent rule — their dropdown
@@ -637,7 +636,6 @@
   select option{ background:var(--surface); color:var(--text); }
   #taskFormPanel{border-left:4px solid var(--accent-c, var(--accent)); transition:border-color .2s;}
   #devTaskPanel{border-left:4px solid var(--accent); transition:border-color .2s;}
-  #devTaskPanel .section-label{color:var(--accent);}
   .dev-form-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;}
   .form-card{background:var(--surface-alt); border:1px solid var(--border); border-radius:14px; padding:18px;}
   .form-card.span-2{grid-column:1 / -1;}
@@ -651,9 +649,14 @@
   .form-card .form-field:last-child{margin-bottom:0;}
   .form-section{padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid var(--border);}
   .form-section:last-child{border-bottom:none; padding-bottom:0; margin-bottom:0;}
+  /* macOS convention for these is a quiet, muted gray — the same as a
+     System Settings group header — not a bright accent color. Kept the
+     uppercase/letter-spacing treatment (macOS does use that in places
+     like Mail's sidebar), just toned down the color and weight to match
+     how understated the real thing actually is. */
   .section-label{
-    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.06em;
-    color:var(--accent-c, var(--accent)); margin-bottom:13px;
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em;
+    color:var(--text-faint); margin-bottom:13px;
   }
   .form-field{margin-bottom:14px;}
   .form-field:last-child{margin-bottom:0;}
