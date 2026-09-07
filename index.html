@@ -756,6 +756,11 @@
     transition:all .15s ease; white-space:nowrap; flex-shrink:0;
   }
   nav.tabs.dock button svg{ width:19px; height:19px; }
+  /* These two specifically read a little cramped at the shared 19px —
+     the notebook/pencil composition and the checklist rows both have
+     more internal detail than the simpler single-glyph icons around
+     them, so they need slightly more room to stay clear at this size. */
+  nav.tabs.dock button[data-view="notebook"] svg, nav.tabs.dock button[data-view="mytasks"] svg{ width:22px; height:22px; }
   nav.tabs.dock button.active{ background:var(--surface); color:var(--accent); box-shadow:var(--shadow); }
   nav.tabs.dock button:hover:not(.active){ color:var(--text); }
   /* The dock's signature macOS touch — icons gently scale up on hover.
@@ -890,6 +895,42 @@
     border-top-color:color-mix(in srgb, white 45%, var(--border) 55%) !important;
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.04) !important;
     border-radius:16px !important;
+    position:relative;
+  }
+  /* A moving light reflection along each card's own border — like light
+     catching the edge of real glass as you tilt it. --shine-pos is kept
+     updated (in the scroll handler in the script below) as the page
+     scrolls, and this gradient's position follows it, so the highlight
+     visibly sweeps along the border while scrolling rather than sitting
+     static in one place. Confined to just the border ring itself (not
+     the card's face) via the mask/composite trick below: it paints the
+     full box then subtracts everything inside the border's inner edge,
+     leaving only the ring visible. `content:''` and pointer-events:none
+     keep it purely decorative — never intercepts clicks meant for the
+     card underneath. */
+  .panel::before, .stat-card::before, .mytask-item::before, .feed-item::before, .approve-row::before,
+  .form-card::before, .role-card::before, #editModal .panel::before, .cat-tile::before, .t-card::before,
+  .lift-header::before, .queued-item::before, .gantt-wrap::before, .searchbar::before, .mt-desc-wrap::before,
+  .devDetailPanel::before{
+    content:'';
+    position:absolute; inset:0; border-radius:inherit;
+    padding:1.5px;
+    background:linear-gradient(115deg,
+      transparent calc(var(--shine-pos, 20%) - 22%),
+      rgba(255,255,255,0.85) var(--shine-pos, 20%),
+      transparent calc(var(--shine-pos, 20%) + 22%));
+    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;
+    mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask-composite:exclude;
+    pointer-events:none;
+    opacity:0.8;
+  }
+  html[data-theme="dark"] .panel::before, html[data-theme="midnight"] .panel::before, html[data-theme="midnightblue"] .panel::before, html[data-theme="sunset"] .panel::before,
+  html[data-theme="dark"] .stat-card::before, html[data-theme="midnight"] .stat-card::before, html[data-theme="midnightblue"] .stat-card::before, html[data-theme="sunset"] .stat-card::before,
+  html[data-theme="dark"] .mytask-item::before, html[data-theme="midnight"] .mytask-item::before, html[data-theme="midnightblue"] .mytask-item::before, html[data-theme="sunset"] .mytask-item::before,
+  html[data-theme="dark"] .feed-item::before, html[data-theme="midnight"] .feed-item::before, html[data-theme="midnightblue"] .feed-item::before, html[data-theme="sunset"] .feed-item::before{
+    opacity:0.5;
   }
   /* The account menu specifically needs to stay near-opaque rather than
      following the lighter translucency every other card above uses —
@@ -1406,7 +1447,7 @@
     <span>Dashboard</span>
   </button>
   <button data-view="notebook" title="Notebook" style="position:relative;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="12" height="16" rx="1.5"/><path d="M20.5 4.5a1.7 1.7 0 0 1 0 2.4L13 14.5l-3 1 1-3 7.5-7.5a1.7 1.7 0 0 1 2.4 0Z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="11" height="16" rx="1.5"/><path d="M15 19l6-14"/><path d="M15 19l1-3.5 3.5-1"/></svg>
     <span>Notebook</span>
   </button>
   <button data-view="gantt" title="R&amp;I Project Manager">
@@ -2797,6 +2838,27 @@
     document.querySelectorAll(`.theme-dot[data-theme-name="${saved}"]`).forEach(d => d.classList.add('active'));
   }
   initTheme();
+
+  // Moves the border-shine gradient (see the .panel::before rule in
+  // <style>) as the page scrolls, so the reflection visibly sweeps along
+  // every card's edge instead of sitting in one fixed spot. Wraps
+  // smoothly with modulo so it keeps sweeping and repeating on long
+  // scrolls rather than running once and stopping. Throttled to at most
+  // once per animation frame — scroll fires far more often than the
+  // screen can actually repaint, so anything heavier here would be
+  // wasted work, not smoother motion.
+  let shineScrollTicking = false;
+  function updateBorderShine(){
+    const pos = ((window.scrollY / 3) % 140) - 20;
+    document.documentElement.style.setProperty('--shine-pos', pos + '%');
+    shineScrollTicking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if(!shineScrollTicking){
+      requestAnimationFrame(updateBorderShine);
+      shineScrollTicking = true;
+    }
+  }, { passive: true });
  
   function openTutorial(){
     // Point this at wherever the tutorial PDF is hosted in this repo/site,
