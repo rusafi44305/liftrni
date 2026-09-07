@@ -2260,6 +2260,22 @@
     return `<div class="form-section"><div class="section-label">${SECTION_LABELS[key]}</div>${fieldsArr.map(fieldHTML).join('')}</div>`;
   }
  
+  // collectFormData() (defined later) needs to know, for every field
+  // currently on screen, whether it belongs to the "identity" section —
+  // used to pick out a sensible title (the project name, or similar) for
+  // the feed and log. It used to rebuild its own copy of this list from
+  // scratch (just taskForms[cat]), which never matched what's actually
+  // rendered: it missed every category with extra assembly logic
+  // (Post-Sales' discipline-specific fields, Technical/General Support's
+  // sub-type fields, every Reports type, and any Superadmin-added custom
+  // field on any category) — for every single one of those, this lookup
+  // silently failed, so entries under any of them showed as "(untitled)"
+  // in the feed and log. Set once here, right after renderTaskForm has
+  // finished assembling the real, final field list — this is the exact
+  // same array actually used to build what's on screen, not a
+  // reconstruction of it.
+  let currentFormFields = [];
+
   async function renderTaskForm(preserveOnTypeChange){
     const cat = document.getElementById('catSelect').value;
     let fields = taskForms[cat] || [];
@@ -2486,6 +2502,12 @@
 
     const groups = {identity:[], details:[], description:[]};
     fields.forEach(f => groups[f.section || 'details'].push(f));
+    // Now that every append above (discipline, sub-type, custom fields)
+    // has actually happened, this is the true, final field list — shared
+    // with collectFormData so it reads the exact same thing, instead of
+    // trying to reconstruct it and getting it wrong for every category
+    // with any of that extra assembly logic.
+    currentFormFields = fields;
  
     const panel = document.getElementById('taskFormPanel');
     panel.className = 'panel cc-' + cat;
@@ -4244,7 +4266,12 @@
   // Collect every field the person filled in #dynamicForm into one details object
   function collectFormData(){
     const cat = document.getElementById('catSelect').value;
-    const fields = taskForms[cat] || [];
+    // Was: taskForms[cat] || [] — its own reconstruction of the field
+    // list, which never matched what renderTaskForm actually built for
+    // any category with extra assembly logic (see the comment on
+    // currentFormFields itself for the full explanation). Using the
+    // real, already-assembled list directly instead.
+    const fields = currentFormFields;
     const details = {};
     let liftId = null;
     let projectName = null;
@@ -4292,8 +4319,11 @@
       // Lift ID as the "project name" for every one of those categories
       // (Post-Sales, Installation, Commissioning, After-Sales, Production,
       // Survey Report Issues) instead of the actual project name field.
+      // Also skip the sub-type selectors themselves (Support Type/Report
+      // Type) — see the matching skip in the select loop below for why.
       const fieldDef = fields.find(f => f.l === label);
-      if(!projectName && fieldDef && fieldDef.section === 'identity' && label !== 'Lift ID') projectName = val;
+      const isSubtypeSelector = fieldDef && ['techSupportType','generalSupportType','reportTypeSelect'].includes(fieldDef.id);
+      if(!projectName && fieldDef && fieldDef.section === 'identity' && label !== 'Lift ID' && !isSubtypeSelector) projectName = val;
     });
     // row2text + textarea values, matched by label via DOM order
     document.querySelectorAll('#dynamicForm .form-row-2').forEach(row => {
@@ -4319,7 +4349,30 @@
     document.querySelectorAll('#dynamicForm select.ti').forEach(sel => {
       const label = sel.closest('.form-field').querySelector('.field-label').textContent.replace('*','').trim();
       const opt = sel.options[sel.selectedIndex];
-      details[label] = (opt && opt.value) ? opt.textContent.trim() : '';
+      const val = (opt && opt.value) ? opt.textContent.trim() : '';
+      details[label] = val;
+      // Same "project name" capture as the plain-text loop above, just for
+      // dropdown fields (select/staticselect) instead — Error Report's
+      // "Error Category" is exactly this kind of field, and was being
+      // missed entirely here, which is why every Error Report entry was
+      // showing as "(untitled)" in the feed and log: its only other
+      // identity-section field is Lift ID, which is deliberately excluded
+      // from being used as the title (see the comment on that loop).
+      //
+      // That fix wasn't quite complete, though: "Report Type"/"Support
+      // Type" are ALSO marked as identity-section fields (so the "Sub-
+      // category" concept works generically), and they render before the
+      // category's own real identity field in the DOM. Since this loop
+      // takes whichever identity field it finds FIRST, "Report Type"
+      // itself kept winning that race for Error Report and any Reports
+      // sub-category whose real identity field isn't a plain text
+      // input — showing the report type's own name repeated back as the
+      // "title" instead of anything actually meaningful. Excluding these
+      // 3 selector fields by id (the same way Lift ID is excluded by
+      // label above) lets the loop keep going to find the real one.
+      const fieldDef = fields.find(f => f.l === label);
+      const isSubtypeSelector = fieldDef && ['techSupportType','generalSupportType','reportTypeSelect'].includes(fieldDef.id);
+      if(!projectName && fieldDef && fieldDef.section === 'identity' && label !== 'Lift ID' && !isSubtypeSelector) projectName = val;
     });
     // Star rating fields (currently just Error Report's Impact) — store
     // the plain 1-5 number as a string, same as every other detail value,
