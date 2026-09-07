@@ -992,6 +992,46 @@
   @keyframes bgGearCW{ from{ transform:rotate(0deg);} to{ transform:rotate(360deg);} }
   @keyframes bgGearCCW{ from{ transform:rotate(0deg);} to{ transform:rotate(-360deg);} }
 
+  /* ============================================================
+     "Smart Shaft" — the same lift sketch above, given a lighter,
+     more modern/monitored feel: signal pulses along the rails, a
+     tick-mark sensor ring in place of a literal gear, softly
+     pulsing floor nodes, and a slow ambient scan line. Everything
+     here stays at the same very low opacity as the rest of #bgAnim
+     (inherited from the shared #bgAnim svg rule) and uses the same
+     --bg-anim-ink color, so it automatically matches every theme.
+  ============================================================ */
+  .bg-signal{
+    fill:var(--bg-anim-ink, var(--text-faint));
+    opacity:0;
+  }
+  .bg-signal-car{ animation:bgSignalCar 3.5s linear infinite; }
+  .bg-signal-cw{ animation:bgSignalCw 3.5s linear infinite; animation-delay:1.75s; }
+  @keyframes bgSignalCar{
+    0%{ transform:translateY(0); opacity:0; }
+    8%{ opacity:0.9; }
+    92%{ opacity:0.9; }
+    100%{ transform:translateY(615px); opacity:0; }
+  }
+  @keyframes bgSignalCw{
+    0%{ transform:translateY(0); opacity:0; }
+    8%{ opacity:0.9; }
+    92%{ opacity:0.9; }
+    100%{ transform:translateY(615px); opacity:0; }
+  }
+  .bg-floor-node{ fill:var(--bg-anim-ink, var(--text-faint)); animation:bgFloorPulse 4s ease-in-out infinite; }
+  @keyframes bgFloorPulse{ 0%,100%{ opacity:0.25; transform:scale(1); } 50%{ opacity:0.9; transform:scale(1.6); } }
+  .bg-scan-line{ stroke:var(--bg-anim-ink, var(--text-faint)); stroke-width:1; opacity:0; animation:bgScanLine 22s ease-in-out infinite; }
+  @keyframes bgScanLine{
+    0%{ transform:translateY(0); opacity:0; }
+    10%{ opacity:0.55; }
+    50%{ opacity:0.55; }
+    90%{ opacity:0; }
+    100%{ transform:translateY(615px); opacity:0; }
+  }
+  .bg-sensor-ring{ transform-box:fill-box; transform-origin:center; animation:bgGearCW 40s linear infinite; }
+  .bg-sensor-ring-inner{ transform-box:fill-box; transform-origin:center; animation:bgGearCCW 28s linear infinite; }
+
   @media (max-width: 700px){
     .bg-lift-svg{ width:clamp(70px, 20vw, 120px); }
     .bg-gears-svg{ width:clamp(130px, 44vw, 220px); bottom:80px; }
@@ -1055,26 +1095,61 @@
       <circle class="bg-fill" cx="155" cy="165" r="4"/>
       <circle class="bg-fill" cx="195" cy="165" r="4"/>
     </g>
+    <!-- "Smart Shaft" additions: a soft signal pulse traveling down each
+         rail (continuous, independent of the car/counterweight's own
+         slow back-and-forth), a quiet pulsing node at each floor
+         landing, and a faint ambient scan line drifting the shaft's
+         full height — the same lift, read as a monitored system. -->
+    <circle class="bg-signal bg-signal-car" cx="20" cy="65" r="3.2"/>
+    <circle class="bg-signal bg-signal-cw" cx="200" cy="65" r="3.2"/>
+    <g>
+      <circle class="bg-floor-node" cx="210" cy="160" r="3" style="animation-delay:0s;"/>
+      <circle class="bg-floor-node" cx="210" cy="265" r="3" style="animation-delay:0.8s;"/>
+      <circle class="bg-floor-node" cx="210" cy="370" r="3" style="animation-delay:1.6s;"/>
+      <circle class="bg-floor-node" cx="210" cy="475" r="3" style="animation-delay:2.4s;"/>
+      <circle class="bg-floor-node" cx="210" cy="580" r="3" style="animation-delay:3.2s;"/>
+    </g>
+    <line class="bg-scan-line" x1="5" y1="65" x2="215" y2="65"/>
   </svg>
 
-  <!-- Two real spur gears — rectangular radial teeth rising from a rim
-       circle, the way an actual gear is drawn, meshing and spinning in
-       opposite directions. -->
+  <!-- "Smart Shaft" sensor ring — replaces the literal mechanical gears
+       with two concentric rings of tick marks (like a scanner/loading
+       ring), rotating in opposite directions. Same two-speed CW/CCW
+       animation as before, just a more "monitored system" read than
+       "machinery". -->
   <svg class="bg-gears-svg" viewBox="0 0 340 270" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <polygon class="bg-gear-big" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="181.7,144.2 199.6,142.5 199.6,157.5 181.7,155.8 181.0,161.2 179.8,166.4 178.1,171.5 195.0,177.8 188.5,191.3 173.1,182.0 170.1,186.5 166.8,190.7 163.0,194.6 175.5,207.6 163.8,217.0 153.9,201.9 149.3,204.6 144.5,207.0 139.4,208.9 145.1,226.0 130.4,229.3 128.0,211.5 122.7,211.9 117.3,211.9 112.0,211.5 109.6,229.3 94.9,226.0 100.6,208.9 95.5,207.0 90.7,204.6 86.1,201.9 76.2,217.0 64.5,207.6 77.0,194.6 73.2,190.7 69.9,186.5 66.9,182.0 51.5,191.3 45.0,177.8 61.9,171.5 60.2,166.4 59.0,161.2 58.3,155.8 40.4,157.5 40.4,142.5 58.3,144.2 59.0,138.8 60.2,133.6 61.9,128.5 45.0,122.2 51.5,108.7 66.9,118.0 69.9,113.5 73.2,109.3 77.0,105.4 64.5,92.4 76.2,83.0 86.1,98.1 90.7,95.4 95.5,93.0 100.6,91.1 94.9,74.0 109.6,70.7 112.0,88.5 117.3,88.1 122.7,88.1 128.0,88.5 130.4,70.7 145.1,74.0 139.4,91.1 144.5,93.0 149.3,95.4 153.9,98.1 163.8,83.0 175.5,92.4 163.0,105.4 166.8,109.3 170.1,113.5 173.1,118.0 188.5,108.7 195.0,122.2 178.1,128.5 179.8,133.6 181.0,138.8"/>
-    <circle class="bg-gear-big" cx="120" cy="150" r="20" stroke-width="2.5"/>
-    <g class="bg-gear-big bg-fill">
-      <circle cx="151.9" cy="102.2" r="4.2"/><circle cx="88.1" cy="102.2" r="4.2"/>
-      <circle cx="66.7" cy="163.2" r="4.2"/><circle cx="120" cy="203.2" r="4.2"/>
-      <circle cx="173.3" cy="163.2" r="4.2"/>
+    <g class="bg-sensor-ring">
+      <circle cx="170" cy="140" r="62" stroke-width="1.5" opacity="0.6"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(0 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(22.5 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(45 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(67.5 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(90 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(112.5 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(135 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(157.5 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(180 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(202.5 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(225 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(247.5 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(270 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(292.5 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(315 170 140)"/>
+      <line x1="170" y1="78" x2="170" y2="90" stroke-width="2.5" transform="rotate(337.5 170 140)"/>
     </g>
-
-    <polygon class="bg-gear-small" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="296.6,112.5 309.5,110.8 309.5,125.2 296.6,123.5 295.7,128.5 294.1,133.4 291.9,138.0 303.4,144.2 294.9,155.9 285.4,146.9 281.7,150.4 277.6,153.4 273.1,155.9 278.7,167.6 265.0,172.1 262.6,159.3 257.5,159.9 252.5,159.9 247.4,159.3 245.0,172.1 231.3,167.6 236.9,155.9 232.4,153.4 228.3,150.4 224.6,146.9 215.1,155.9 206.6,144.2 218.1,138.0 215.9,133.4 214.3,128.5 213.4,123.5 200.5,125.2 200.5,110.8 213.4,112.5 214.3,107.5 215.9,102.6 218.1,98.0 206.6,91.8 215.1,80.1 224.6,89.1 228.3,85.6 232.4,82.6 236.9,80.1 231.3,68.4 245.0,63.9 247.4,76.7 252.5,76.1 257.5,76.1 262.6,76.7 265.0,63.9 278.7,68.4 273.1,80.1 277.6,82.6 281.7,85.6 285.4,89.1 294.9,80.1 303.4,91.8 291.9,98.0 294.1,102.6 295.7,107.5"/>
-    <circle class="bg-gear-small" cx="255" cy="118" r="13.5" stroke-width="2.5"/>
-    <g class="bg-gear-small bg-fill">
-      <circle cx="280.5" cy="82.7" r="3.6"/><circle cx="229.5" cy="82.7" r="3.6"/>
-      <circle cx="212.7" cy="128.9" r="3.6"/><circle cx="255" cy="160.1" r="3.6"/>
-      <circle cx="297.3" cy="128.9" r="3.6"/>
+    <g class="bg-sensor-ring-inner">
+      <circle cx="170" cy="140" r="34" stroke-width="1.5" opacity="0.7"/>
+      <circle class="bg-fill" cx="170" cy="140" r="3.5"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(0 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(36 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(72 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(108 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(144 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(180 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(216 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(252 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(288 170 140)"/>
+      <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(324 170 140)"/>
     </g>
   </svg>
 </div>
