@@ -4934,7 +4934,10 @@ it saved correctly.`;
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
       <div class="panel" style="max-width:440px; width:100%; max-height:85vh; overflow-y:auto;">
-        <div class="panel-title">Import Backup</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="panel-title" style="margin:0;">Import Backup</div>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="this.closest('div[style*=fixed]').remove()">✕</span>
+        </div>
         <div style="font-size:12.5px; color:var(--text-faint); margin-bottom:16px;">Your 3 most recent backups. Restoring rewinds your entire database to exactly how it was at that moment — anything created after that point will be lost.</div>
         ${rows}
         <button class="btn" style="width:100%; margin-top:6px;" onclick="this.closest('div[style*=fixed]').remove()">Close</button>
@@ -5196,7 +5199,10 @@ it saved correctly.`;
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
       <div class="panel" style="max-width:380px; width:100%; max-height:85vh; overflow-y:auto;">
-        <div class="panel-title">Add sub-category — ${meta.label}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="panel-title" style="margin:0;">Add sub-category — ${meta.label}</div>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="closeQuickAddModal()">✕</span>
+        </div>
         <div class="form-field">
           <div class="field-label">Name<span class="required-star">*</span></div>
           <input type="text" id="qaSubcatName" placeholder="e.g. Warranty Support" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
@@ -5253,7 +5259,10 @@ it saved correctly.`;
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
       <div class="panel" style="max-width:420px; width:100%; max-height:85vh; overflow-y:auto;">
-        <div class="panel-title">Add field</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+          <div class="panel-title" style="margin:0;">Add field</div>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="closeQuickAddModal()">✕</span>
+        </div>
         <div style="font-size:11.5px; color:var(--text-faint); margin-bottom:14px;">${meta.label}${subType ? ' — ' + subType : ''} — ${zoneLabel[zone]}</div>
         <div class="form-field">
           <div class="field-label">Field name<span class="required-star">*</span></div>
@@ -5418,7 +5427,10 @@ it saved correctly.`;
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
       <div class="panel" style="max-width:440px; width:100%; max-height:85vh; overflow-y:auto;">
-        <div class="panel-title">${existing ? 'Edit field' : 'Add new'}</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="panel-title" style="margin:0;">${existing ? 'Edit field' : 'Add new'}</div>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="closeAddFieldModal()">✕</span>
+        </div>
         ${existing ? '' : `
         <div class="form-field">
           <div class="field-label">What are you adding?</div>
@@ -5777,8 +5789,11 @@ it saved correctly.`;
       document.body.appendChild(overlay);
     }
     overlay.innerHTML = `
-      <div class="panel" style="max-width:420px; width:100%; max-height:80vh; overflow-y:auto;">
-        <div class="panel-title">Options for "${field.label}"</div>
+      <div class="panel" style="max-width:420px; width:100%; max-height:85vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="panel-title" style="margin:0;">Options for "${field.label}"</div>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="closeFieldOptionsModal()">✕</span>
+        </div>
         <div>${rowsHtml}</div>
         <div style="display:flex; gap:8px; margin-top:10px;">
           <input type="text" id="newDedicatedTableOptionInput" placeholder="e.g. New option" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addDedicatedTableOptionRow('${tableName}', '${field.id}');">
@@ -5855,8 +5870,11 @@ it saved correctly.`;
       document.body.appendChild(overlay);
     }
     overlay.innerHTML = `
-      <div class="panel" style="max-width:420px; width:100%; max-height:80vh; overflow-y:auto;">
-        <div class="panel-title">Options for "${field.label}"</div>
+      <div class="panel" style="max-width:420px; width:100%; max-height:85vh; overflow-y:auto;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+          <div class="panel-title" style="margin:0;">Options for "${field.label}"</div>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="closeFieldOptionsModal()">✕</span>
+        </div>
         ${sections.join('')}
         <button class="btn" style="width:100%; margin-top:6px;" onclick="closeFieldOptionsModal()">Close</button>
       </div>`;
