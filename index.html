@@ -4627,7 +4627,7 @@ appears to allow.`;
     const overlay = document.createElement('div');
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
-      <div class="panel" style="max-width:440px; width:100%;">
+      <div class="panel" style="max-width:440px; width:100%; max-height:85vh; overflow-y:auto;">
         <div class="panel-title">Import Backup</div>
         <div style="font-size:12.5px; color:var(--text-faint); margin-bottom:16px;">Your 3 most recent backups. Restoring rewinds your entire database to exactly how it was at that moment — anything created after that point will be lost.</div>
         ${rows}
@@ -4889,7 +4889,7 @@ appears to allow.`;
     overlay.id = 'quickAddModalOverlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
-      <div class="panel" style="max-width:380px; width:100%;">
+      <div class="panel" style="max-width:380px; width:100%; max-height:85vh; overflow-y:auto;">
         <div class="panel-title">Add sub-category — ${meta.label}</div>
         <div class="form-field">
           <div class="field-label">Name<span class="required-star">*</span></div>
@@ -5111,7 +5111,7 @@ appears to allow.`;
     overlay.id = 'addFieldModalOverlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
-      <div class="panel" style="max-width:440px; width:100%;">
+      <div class="panel" style="max-width:440px; width:100%; max-height:85vh; overflow-y:auto;">
         <div class="panel-title">${existing ? 'Edit field' : 'Add new'}</div>
         ${existing ? '' : `
         <div class="form-field">
