@@ -4733,11 +4733,18 @@
   }
 
   function downloadRunningHtml(){
-    // The whole app is a single HTML file already fully loaded in the
-    // browser right now — no server round-trip needed, just save exactly
-    // what's currently running.
-    const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
-    downloadTextFile(`index_backup_${new Date().toISOString().slice(0,10)}.html`, html);
+    // Deliberately NOT document.documentElement.outerHTML — that
+    // captures the live, currently-rendered page, which means whatever
+    // real data happens to be on screen at that moment (task rows,
+    // names, chat messages) gets baked directly into the downloaded
+    // file as static HTML. This happened once already in this project.
+    // Re-fetching the page's own URL instead gets the clean, original
+    // source exactly as the server delivers it — no live data, no
+    // matter what's currently showing on screen.
+    fetch(window.location.href, { cache: 'no-store' })
+      .then(r => r.text())
+      .then(html => downloadTextFile(`index_backup_${new Date().toISOString().slice(0,10)}.html`, html))
+      .catch(err => alert('Could not download: ' + err.message + '. Try saving the page from your browser\'s own menu instead (Ctrl/Cmd+S).'));
   }
 
   async function downloadSchemaSql(){
@@ -4749,10 +4756,11 @@
 
   // A plain-language project summary — meant to be handed to a future AI
   // assistant (or read by yourself after time away) alongside index.html
-  // and a fresh schema snapshot, so a new conversation can pick this
-  // project back up with full context instead of starting blind. This is
-  // a static, hand-written summary — it won't automatically reflect
-  // future changes the way the schema download does, so it's worth
+  // and a fresh schema snapshot, so a new conversation — on any AI
+  // platform, not just this one — can pick this project back up with
+  // full context instead of starting blind. This is a static,
+  // hand-written summary — it won't automatically reflect future
+  // changes the way the schema download does, so it's worth
   // regenerating occasionally after major changes.
   function downloadProjectBriefing(){
     if(!currentProfile || currentProfile.role !== 'superadmin') return;
@@ -4762,25 +4770,29 @@ Generated: ${new Date().toLocaleString('en-GB')}
 
 WHAT THIS IS
 A single-page web app for Walton Hi-Tech Industries PLC's Lift R&I
-division. Engineers log tasks across categories (Team Activity, Pre-Sales
-Support, Post-Sales Activity, Technical Support, General Support,
-Reports), track lifts by ID, manage internal R&I projects on a Gantt-style
-timeline, and Superadmins manage everything from chip-based dropdown
+division. Engineers log tasks across 6 categories (Team Activity,
+Pre-Sales Support, Post-Sales Activity, Technical Support, General
+Support, Reports), track lifts by ID, manage internal R&I projects on a
+Gantt-style timeline, and Superadmins manage everything from dropdown
 options to team scoring.
 
-HOW TO CONTINUE THIS PROJECT IN A NEW CONVERSATION
-Bring exactly 3 things to a fresh chat with any AI assistant:
-  1. This briefing (for context and history)
-  2. index.html — downloaded from this same Backup menu, or your own
-     latest saved copy — this is the ENTIRE app: all HTML, CSS, and
-     JavaScript in one file
+HOW TO CONTINUE THIS PROJECT IN A NEW CONVERSATION (ANY AI PLATFORM)
+Bring exactly 3 things to a fresh chat:
+  1. This briefing (context and history)
+  2. index.html — downloaded from this same Backup menu (fetches the
+     clean, currently-deployed source — safe to share, never contains
+     live data), or your own latest saved copy — this is the ENTIRE
+     app: all HTML, CSS, and JavaScript in one file
   3. A fresh SQL schema snapshot — download it from this same menu
      ("Download SQL Schema") right before the conversation, not an old
      one, since it reflects your database's live, current state exactly
 
 Neither file contains your actual data (tasks, profiles, messages) —
 just structure and code. Your real data stays safely in Supabase and
-never needs to be shared to continue development.
+never needs to be shared to continue development. Ask whichever
+assistant you're working with to read through index.html and the schema
+before making changes — it's one large file, and it needs a moment to
+find its way around before it can work in it safely.
 
 INFRASTRUCTURE
   Frontend: single index.html file, hosted on GitHub Pages
@@ -4796,13 +4808,54 @@ HOW UPDATES WORK
      AFTER that backup — always back up immediately before updating,
      not the night before
 
+VISUAL DESIGN / THEMES
+  5 themes: White (default, light), Dark, Midnight (OLED-black), Midnight
+  Blue, Sunset — switchable from the account menu or Profile page.
+  UI style is a macOS/iOS-inspired "liquid glass": cards use translucent,
+  blurred backgrounds (backdrop-filter) with a bright top-edge highlight
+  for a reflective look, over an animated SVG background ("Smart Shaft"
+  — a lift shaft sketch with signal pulses, a sensor ring, pulsing floor
+  nodes, plus a couple of bolt/circuit-trace shapes near screen center).
+  The animation is deliberately trimmed on mobile (narrow screens) —
+  several pieces are hidden outright there since screen space is far
+  more contested on a phone.
+
+TASK FIELDS — DYNAMIC FIELD SYSTEM (Admin panel)
+  All 6 categories (including Reports) support Superadmin-managed
+  fields, sub-categories, and dropdown/chip options, added live from
+  Admin → Task fields — no code changes needed for these.
+  IMPORTANT LIMITATION: built-in fields' actual labels are hardcoded in
+  JavaScript (the taskForms / reportsSubforms objects), not read from
+  the database. The catalog UI technically allows editing a built-in
+  field's name, but doing so only changes the catalog's own record —
+  it has NO effect on the real form, which still shows the original,
+  hardcoded name. Renaming a built-in field for real requires an actual
+  code change. This is intentional, not a bug still waiting to be fixed
+  — but it can look like the edit "didn't work" if you're not aware of
+  it.
+  Reports specifically: its 6 built-in report types (Error Report
+  especially, which drives negative Score penalties) each have real,
+  hardcoded behavior — a NEW custom Reports sub-category has none of
+  that; it starts as a blank slate with zero effect on Score either way.
+
 KEY SYSTEM DESIGNS WORTH KNOWING ABOUT
-  - Mechanical vs Electrical: many categories (Team Activity, Post-Sales,
-    Technical Support, Pre-Sales' Sales Wing) show different fields or
+  - Mechanical vs Electrical: many categories show different fields or
     dropdown lists depending on the logged-in engineer's discipline
   - Chip options: nearly every dropdown/chip list in the app is
     Superadmin-managed live from the Admin panel, backed by one shared
     "chip_options" table keyed by category + field name
+  - "Project name" / entry title: the feed and logs show whichever field
+    is marked section:"identity" first (excluding Lift ID and the
+    sub-type selector itself). If a category/sub-type has no such field,
+    entries show as "(untitled)" — this is expected, not a bug, unless
+    a genuine identity-type field exists and still isn't being picked up
+  - Home page "Recent activity" is updated directly at submission time
+    using the just-submitted data, NOT via the realtime subscription
+    also present in the code — that subscription listens on
+    "activity_log", a different table than the one task submissions
+    actually insert into ("tasks"), so it doesn't reliably fire for new
+    submissions. Worth being aware of if debugging anything realtime-
+    related in this file.
   - R&I Project Manager: separate from lift-tracked tasks — internal
     projects with their own task breakdown, Gantt view, and progress %
   - This Backup/Restore/Schema/Briefing menu: Superadmin-only, lives
@@ -4814,7 +4867,11 @@ expected" has happened before in this project — the cause was a missing
 or mismatched database permission (Row Level Security policy), not the
 button itself. Always verify what a button does against the schema's
 "ROW LEVEL SECURITY POLICIES" section, not just against what the UI
-appears to allow.`;
+appears to allow. A second recurring cause has been async timing —
+functions that refresh a list right after saving something new need to
+actually wait (await) for that save to finish first, or the refresh runs
+against stale data and the new item appears to be "missing" even though
+it saved correctly.`;
     downloadTextFile(`project_briefing_${new Date().toISOString().slice(0,10)}.txt`, text);
   }
 
