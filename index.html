@@ -5262,7 +5262,12 @@ appears to allow.`;
         </label>
         <label id="newFieldHasOtherWrap" style="display:none; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
           <input type="checkbox" id="newFieldHasOther"> Include an "Other" option
-        </label>`;
+        </label>
+        <div class="form-field" id="newFieldOptionsWrap" style="display:none;">
+          <div class="field-label">Options</div>
+          <div id="newFieldOptionsList">${quickAddOptionRowHtml('')}${quickAddOptionRowHtml('')}</div>
+          <button type="button" class="btn" style="padding:5px 12px; font-size:12px;" onclick="document.getElementById('newFieldOptionsList').insertAdjacentHTML('beforeend', quickAddOptionRowHtml(''))">+ Add option</button>
+        </div>`;
       submitBtn.textContent = 'Add Field';
       submitBtn.setAttribute('onclick', 'submitNewCustomField()');
       updateNewFieldSubTypeOptions();
@@ -5286,11 +5291,19 @@ appears to allow.`;
     const showMonospace = type === 'text';
     const showNumeric = type === 'text';
     const showHasOther = type === 'chipselect';
+    // Options only make sense to collect here when ADDING a brand-new
+    // field — an existing field's options already have their own home
+    // (the "Options" button on its row), and this list always starts
+    // blank, so showing it during an edit would risk submitting an empty
+    // list and silently wiping out options that already exist and are
+    // already in use on real, submitted entries.
+    const showOptions = (type === 'chips' || type === 'chipselect') && !editingFieldId;
     document.getElementById('newFieldPlaceholderWrap').style.display = showPlaceholder ? 'block' : 'none';
     document.getElementById('newFieldHintWrap').style.display = showHint ? 'block' : 'none';
     document.getElementById('newFieldMonospaceWrap').style.display = showMonospace ? 'flex' : 'none';
     document.getElementById('newFieldNumericWrap').style.display = showNumeric ? 'flex' : 'none';
     document.getElementById('newFieldHasOtherWrap').style.display = showHasOther ? 'flex' : 'none';
+    document.getElementById('newFieldOptionsWrap').style.display = showOptions ? 'block' : 'none';
   }
 
   async function submitNewSubcategory(){
@@ -5367,8 +5380,22 @@ appears to allow.`;
       const { error } = await sb.from('custom_fields').update(payload).eq('id', existing.id);
       if(error){ alert('Could not save changes: ' + error.message); return; }
     } else {
-      const { error } = await sb.from('custom_fields').insert({ ...payload, is_builtin: false });
+      // .select().single() specifically so the newly-created row's id comes
+      // straight back — needed immediately below to save this field's own
+      // options against it, without a second round-trip to look it up.
+      // Same pattern already used by submitQuickAddField for this exact
+      // reason.
+      const { data: inserted, error } = await sb.from('custom_fields').insert({ ...payload, is_builtin: false }).select().single();
       if(error){ alert('Could not add field: ' + error.message); return; }
+      if(fieldType === 'chips' || fieldType === 'chipselect'){
+        const optionValues = Array.from(document.querySelectorAll('#newFieldOptionsList .qa-option-input'))
+          .map(inp => inp.value.trim()).filter(v => v);
+        if(optionValues.length){
+          await sb.from('chip_options').insert(
+            optionValues.map((label, idx) => ({ category: 'customfield', field_key: inserted.id, label, sort_order: idx }))
+          );
+        }
+      }
     }
 
     closeAddFieldModal();
