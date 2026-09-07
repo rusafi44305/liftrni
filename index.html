@@ -1032,9 +1032,59 @@
   .bg-sensor-ring{ transform-box:fill-box; transform-origin:center; animation:bgGearCW 40s linear infinite; }
   .bg-sensor-ring-inner{ transform-box:fill-box; transform-origin:center; animation:bgGearCCW 28s linear infinite; }
 
+  /* ---------- Center-field elements: bolt/nut cluster + circuit trace ----------
+     The shaft and sensor ring both sit at the far edges, leaving the
+     whole middle of the screen (where the main content actually is)
+     completely empty. These sit behind that central content instead —
+     a couple of slowly-turning bolt/nut shapes and a small circuit-board
+     trace with its own signal pulse — kept smaller and sparser than the
+     edge pieces since they're readable right behind actual text and
+     cards, not off in empty space. */
+  /* ---------- Center-field elements: bolt/nut cluster + circuit trace ----------
+     The shaft and sensor ring both sit at the far edges, leaving the
+     whole middle of the screen (where the main content actually is)
+     completely empty. These sit behind that central content instead —
+     a couple of slowly-turning bolt/nut shapes and a small circuit-board
+     trace with its own signal pulse. Opacity set via #bgAnim svg.bg-*
+     specifically (not just .bg-*) so it actually beats the shared
+     "#bgAnim svg" base-opacity rule above in specificity — a plain class
+     selector alone is weaker than that id+type rule and would silently
+     never apply otherwise. Kept a notch fainter than the edge pieces
+     since these sit directly behind real text and cards, not empty
+     space. */
+  #bgAnim svg.bg-center-svg{ opacity:0.09; }
+  html[data-theme="dark"] #bgAnim svg.bg-center-svg, html[data-theme="midnight"] #bgAnim svg.bg-center-svg,
+  html[data-theme="midnightblue"] #bgAnim svg.bg-center-svg, html[data-theme="sunset"] #bgAnim svg.bg-center-svg{ opacity:0.055; }
+  .bg-bolt-1{ left:38vw; top:12vh; width:56px; height:56px; animation:bgGearCW 46s linear infinite; transform-box:fill-box; transform-origin:center; }
+  .bg-bolt-2{ left:62vw; top:52vh; width:38px; height:38px; animation:bgGearCCW 32s linear infinite; transform-box:fill-box; transform-origin:center; }
+  .bg-circuit-svg{ left:44vw; top:32vh; width:180px; height:120px; }
+  .bg-circuit-signal{ fill:var(--bg-anim-ink, var(--text-faint)); opacity:0; animation:bgCircuitSignal 6s linear infinite; }
+  @keyframes bgCircuitSignal{
+    0%{ transform:translate(0,0); opacity:0; }
+    4%{ opacity:1; }
+    23%{ transform:translate(70px,0); opacity:1; }
+    27%{ transform:translate(70px,0); opacity:1; }
+    48%{ transform:translate(70px,50px); opacity:1; }
+    52%{ transform:translate(70px,50px); opacity:1; }
+    73%{ transform:translate(150px,50px); opacity:1; }
+    92%{ transform:translate(150px,50px); opacity:1; }
+    100%{ transform:translate(150px,50px); opacity:0; }
+  }
+
+  /* Mobile: the center is exactly where every card and line of text
+     already lives on a narrow screen, with none of the breathing room
+     desktop has — so the center pieces are dropped entirely rather than
+     scaled down, and the busier edge animations (scan line, floor-node
+     sequence) are trimmed too, both for a calmer look on small screens
+     and for less continuous animation work on likely lower-powered/
+     battery-sensitive devices. The shaft, rings, and rail signals —
+     the primary motion — stay, just resized as before. */
   @media (max-width: 700px){
     .bg-lift-svg{ width:clamp(70px, 20vw, 120px); }
     .bg-gears-svg{ width:clamp(130px, 44vw, 220px); bottom:80px; }
+    .bg-center-svg, .bg-circuit-svg{ display:none; }
+    .bg-scan-line{ display:none; }
+    .bg-floor-node:nth-of-type(n+3){ display:none; }
   }
 </style>
 <div id="bgAnim" aria-hidden="true">
@@ -1151,6 +1201,27 @@
       <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(288 170 140)"/>
       <line x1="170" y1="108" x2="170" y2="116" stroke-width="2" transform="rotate(324 170 140)"/>
     </g>
+  </svg>
+
+  <!-- Center-field elements: two bolt/nut shapes and a small circuit
+       trace with its own traveling signal — sit behind the main content
+       in the middle of the screen, where the shaft and ring at the
+       edges leave empty space today. -->
+  <svg class="bg-center-svg bg-bolt-1" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="47,39 28,50 9,39 9,17 28,6 47,17" stroke-width="2"/>
+    <circle cx="28" cy="28" r="9" stroke-width="1.8"/>
+  </svg>
+  <svg class="bg-center-svg bg-bolt-2" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="32,26.5 19,34 6,26.5 6,11.5 19,4 32,11.5" stroke-width="1.8"/>
+    <circle cx="19" cy="19" r="6" stroke-width="1.5"/>
+  </svg>
+  <svg class="bg-center-svg bg-circuit-svg" viewBox="0 0 180 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 10 H80 V60 H160" stroke-width="1.5" opacity="0.7"/>
+    <circle class="bg-fill" cx="10" cy="10" r="3"/>
+    <circle class="bg-fill" cx="80" cy="10" r="2.5"/>
+    <circle class="bg-fill" cx="80" cy="60" r="2.5"/>
+    <circle class="bg-fill" cx="160" cy="60" r="3"/>
+    <circle class="bg-circuit-signal" cx="10" cy="10" r="3.5"/>
   </svg>
 </div>
  
