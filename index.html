@@ -16,10 +16,10 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <style>
   :root{
-    --bg:#E3E4E8;
-    --surface:#F7F7F9;
-    --surface-alt:#EBECF0;
-    --border:#DADBE0;
+    --bg:#C7C9CF;
+    --surface:#FFFFFF;
+    --surface-alt:#EEEFF2;
+    --border:#DCDDE2;
     --text:#0A0E17;
     --text-dim:#454E5E;
     --text-faint:#646C7B;
@@ -30,7 +30,7 @@
     --green:#0F7A4C;
     --red:#B3291E;
     --radius:14px;
-    --shadow:0 1px 3px rgba(10,14,23,0.06), 0 10px 26px -12px rgba(10,14,23,0.16);
+    --shadow:0 1px 2px rgba(10,14,23,0.05), 0 4px 12px -4px rgba(10,14,23,0.10);
     --header-bg:#EEF0F4;
  
     /* dim tints auto-derive from the solid color + current surface, so every theme gets a correct tint for free */
@@ -69,23 +69,23 @@
   /* "dark" is a standard mid-gray dark mode (closer to macOS/iOS dark). "midnight" is a much
      deeper near-black OLED tier — the two should feel clearly different in brightness. */
   html[data-theme="dark"]{
-    --bg:#202329; --surface:#262A32; --surface-alt:#2E323C; --border:#31353F;
+    --bg:#202329; --surface:#454B58; --surface-alt:#4F5663; --border:#565D69;
     --text:#F5F6F8; --text-dim:#B8BFCC; --text-faint:#8F98A7; --bg-anim-ink:#8B96B8;
     --accent:#6C9BFF; --accent-rgb:108,155,255; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
     --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5; --c-techsupport:#E8AD6C;
     --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8; --c-surveyissues:#F47171;
-    --shadow:0 1px 3px rgba(0,0,0,0.28), 0 10px 26px -12px rgba(0,0,0,0.45);
+    --shadow:0 1px 2px rgba(0,0,0,0.22), 0 4px 12px -4px rgba(0,0,0,0.30);
     --header-bg:#202329;
   }
   html[data-theme="midnight"]{
-    --bg:#05070D; --surface:#080B13; --surface-alt:#0D111C; --border:#10141F;
+    --bg:#05070D; --surface:#1A2233; --surface-alt:#212B3F; --border:#28324A;
     --text:#F5F7FB; --text-dim:#9CA5B8; --text-faint:#737D91; --bg-anim-ink:#7482A6;
     --accent:#5B8DEF; --accent-rgb:91,141,239; --amber:#E0A23D; --green:#34D399; --red:#F0685C;
     --c-rni:#9A82F0; --c-presales:#5C97F5; --c-client:#3FC2C2; --c-postsales:#3FCF8E;
     --c-install:#E3A25B; --c-commission:#F0954D; --c-aftersales:#F06FA0; --c-production:#8890F0; --c-techsupport:#E3A25B;
     --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A; --c-surveyissues:#F47171;
-    --shadow:0 1px 3px rgba(0,0,0,0.5), 0 14px 34px -14px rgba(0,0,0,0.7);
+    --shadow:0 1px 2px rgba(0,0,0,0.35), 0 4px 14px -4px rgba(0,0,0,0.45);
     --header-bg:#05070D;
   }
   /* "Midnight Blue" — a genuinely blue-cast dark theme, distinct from the
@@ -94,26 +94,26 @@
      every card/panel reads as a clearly separate layer sitting on top of
      the background, matching how a real macOS window sits on the desktop. */
   html[data-theme="midnightblue"]{
-    --bg:#0A0F1E; --surface:#0F1526; --surface-alt:#141C31; --border:#182034;
+    --bg:#0A0F1E; --surface:#212E4D; --surface-alt:#293A5C; --border:#304368;
     --text:#F0F4FF; --text-dim:#A9B8DD; --text-faint:#7C8CB5; --bg-anim-ink:#5E7AC7;
     --accent:#4A90FF; --accent-rgb:74,144,255; --amber:#E5A23D; --green:#38D6A0; --red:#F0685C;
     --c-rni:#A08CF5; --c-presales:#6BA6FF; --c-client:#4DD4D4; --c-postsales:#4EDCA0;
     --c-install:#EAAE6A; --c-commission:#F4A05E; --c-aftersales:#F480B0; --c-production:#96A0FF; --c-techsupport:#EAAE6A;
     --c-requisition:#4CCEE8; --c-scm:#BEE85A; --c-existingdev:#CFC2A6; --c-surveyissues:#FF7A7A;
-    --shadow:0 1px 3px rgba(3,8,22,0.55), 0 16px 38px -16px rgba(6,16,42,0.75);
+    --shadow:0 1px 2px rgba(3,8,22,0.4), 0 4px 14px -4px rgba(6,16,42,0.5);
     --header-bg:#0A0F1E;
   }
   /* "Sunset" — a warm, amber/gold-cast theme (still dark-based, matching
      how every other theme option here works) rather than a light mode.
      Surface again clearly lighter than bg for the same reason as above. */
   html[data-theme="sunset"]{
-    --bg:#1C130B; --surface:#221810; --surface-alt:#2A1E14; --border:#2E2117;
+    --bg:#1C130B; --surface:#46331F; --surface-alt:#503A24; --border:#59422A;
     --text:#FFF4E2; --text-dim:#E3C6A0; --text-faint:#B4936C; --bg-anim-ink:#C99354;
     --accent:#FF9F1C; --accent-rgb:255,159,28; --amber:#FFB648; --green:#5FD068; --red:#FF6B5C;
     --c-rni:#C9A6F5; --c-presales:#7FB8FF; --c-client:#5FD6C4; --c-postsales:#7BDE8E;
     --c-install:#FFB65E; --c-commission:#FFA255; --c-aftersales:#FF8FAE; --c-production:#B2A6FF; --c-techsupport:#FFB65E;
     --c-requisition:#5FD0DE; --c-scm:#D8E85A; --c-existingdev:#E0C89E; --c-surveyissues:#FF8570;
-    --shadow:0 1px 3px rgba(20,10,2,0.5), 0 16px 38px -16px rgba(30,15,4,0.72);
+    --shadow:0 1px 2px rgba(20,10,2,0.35), 0 4px 14px -4px rgba(30,15,4,0.45);
     --header-bg:#1C130B;
   }
   html{transition:background .2s ease;}
@@ -408,12 +408,19 @@
   .cc-techsupport{--accent-c:var(--c-techsupport); --accent-ic:var(--ic-techsupport);}
  
   /* ---------- ACTIVITY FEED ---------- */
+  /* Switched from margin-bottom + :last-of-type reset to a flex column
+     with `gap` here — functionally similar, but gap guarantees the exact
+     same spacing between every item with no edge cases to get subtly
+     wrong, and makes it trivial to keep the outer panel's own padding
+     matching it exactly (both 20px, see .panel[style] on the Recent
+     activity section) so the gap around the whole group and the gap
+     between each item read as genuinely identical. */
+  #homeFeed{ display:flex; flex-direction:column; gap:20px; }
   .feed-item{
-    display:flex; gap:14px; padding:13px 16px; margin-bottom:10px;
+    display:flex; gap:14px; padding:16px;
     background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow);
     transition:transform .15s ease, border-color .15s ease;
   }
-  .feed-item:last-of-type{margin-bottom:0;}
   .feed-item:hover{ transform:translateY(-1px); border-color:color-mix(in srgb, var(--accent) 35%, var(--border)); }
   .tag{
     font-size:10.5px; font-weight:700; padding:3px 8px; border-radius:6px; white-space:nowrap;
@@ -873,7 +880,7 @@
   .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #editModal .panel,
   .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
-    background:color-mix(in srgb, var(--surface) 82%, transparent) !important;
+    background:color-mix(in srgb, var(--surface) 97%, transparent) !important;
     backdrop-filter:blur(26px) saturate(170%);
     -webkit-backdrop-filter:blur(26px) saturate(170%);
     border:1px solid color-mix(in srgb, var(--border) 65%, transparent) !important;
@@ -893,6 +900,20 @@
     border:1px solid color-mix(in srgb, var(--border) 60%, transparent) !important;
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
     border-radius:16px !important;
+  }
+  /* Light theme specifically: cards render as fully opaque, pure white —
+     no blending with the grey page background showing through — for
+     maximum readability against that background, rather than following
+     the translucent "frosted glass" treatment every dark theme uses.
+     The blur is kept (still gives the soft edge-highlight look) but with
+     nothing showing through it to actually blur. */
+  html:not([data-theme]) .panel, html:not([data-theme]) .stat-card, html:not([data-theme]) .mytask-item,
+  html:not([data-theme]) .feed-item, html:not([data-theme]) .approve-row, html:not([data-theme]) .form-card,
+  html:not([data-theme]) .role-card, html:not([data-theme]) #editModal .panel, html:not([data-theme]) .cat-tile,
+  html:not([data-theme]) .t-card, html:not([data-theme]) .lift-header, html:not([data-theme]) .queued-item,
+  html:not([data-theme]) .gantt-wrap, html:not([data-theme]) .searchbar, html:not([data-theme]) .mt-desc-wrap,
+  html:not([data-theme]) .status-chip, html:not([data-theme]) .devDetailPanel, html:not([data-theme]) #accountMenu{
+    background:var(--surface) !important;
   }
   /* These render dense, list-like task cards in several different views
      (category log, dashboard inspect, My Tasks) — the shared 16px radius
@@ -1092,6 +1113,18 @@
   </div>
 </div>
 
+<!-- Success confirmations use this instead of the blocking overlay above —
+     a small, non-blocking banner that slides down, sits briefly, and slides
+     back up on its own, closer to how a native iOS/macOS notification
+     behaves than a dialog someone has to dismiss. Errors still use the
+     overlay above, since those genuinely need a moment of attention. -->
+<div id="successToast" style="display:none; position:fixed; top:18px; left:50%; z-index:1000; transform:translateX(-50%) translateY(-140%); opacity:0; transition:transform .35s cubic-bezier(.34,1.4,.4,1), opacity .25s ease; pointer-events:none;">
+  <div style="display:flex; align-items:center; gap:10px; padding:12px 20px; border-radius:999px; background:color-mix(in srgb, var(--surface) 94%, transparent); backdrop-filter:blur(24px) saturate(180%); -webkit-backdrop-filter:blur(24px) saturate(180%); border:1px solid color-mix(in srgb, var(--border) 70%, transparent); box-shadow:0 12px 30px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12); max-width:min(88vw, 420px);">
+    <span style="display:flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:var(--green); color:#fff; font-size:12px; font-weight:700; flex-shrink:0;">✓</span>
+    <span id="successToastMessage" style="font-size:13.5px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;"></span>
+  </div>
+</div>
+
 <div id="editModal" style="display:none; position:fixed; inset:0; z-index:998; background:rgba(0,0,0,0.6); align-items:center; justify-content:center; padding:20px;">
   <div class="panel" style="max-width:520px; width:100%; max-height:85vh; overflow-y:auto; padding:22px;">
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
@@ -1152,7 +1185,7 @@
             Theme
           </span>
           <div class="theme-switch" style="margin:0;">
-            <button class="theme-dot" data-theme-name="white" style="background:#E3E4E8;" onclick="setTheme('white', this)" title="Light"></button>
+            <button class="theme-dot" data-theme-name="white" style="background:#D3D4D9;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
             <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
@@ -1313,7 +1346,7 @@
           <div class="block-sub">Latest entries across all categories</div>
         </div>
       </div>
-      <div class="panel" style="padding:6px 20px;">
+      <div class="panel" style="padding:20px;">
         <div id="homeFeed"><div class="placeholder-note">Loading…</div></div>
       </div>
     </section>
@@ -1496,7 +1529,7 @@
             <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, Midnight (OLED), Midnight Blue, or Sunset</div>
           </div>
           <div class="theme-switch">
-            <button class="theme-dot" data-theme-name="white" style="background:#E3E4E8;" onclick="setTheme('white', this)" title="Light"></button>
+            <button class="theme-dot" data-theme-name="white" style="background:#D3D4D9;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
             <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
@@ -4889,6 +4922,7 @@ appears to allow.`;
     closeQuickAddModal();
     await loadDynamicFieldOptions(true); // real form's Support Type/Sub-category dropdown picks this up immediately
     loadCustomFieldsPanel();
+    showFormPopup(`"${name}" added.`, 'success');
   }
 
   // Only Chips/Dropdown need this — start with 2 blank option rows (same
@@ -5041,6 +5075,7 @@ appears to allow.`;
     closeQuickAddModal();
     await loadDynamicFieldOptions(true); // the real form's cached custom fields/options pick this up immediately
     loadCustomFieldsPanel();
+    showFormPopup(`"${label}" added.`, 'success');
   }
 
   function closeAddFieldModal(){
@@ -5269,6 +5304,7 @@ appears to allow.`;
     closeAddFieldModal();
     await loadDynamicFieldOptions(true); // so the real "Support Type"/"Sub-category" dropdown picks this up immediately, not just after a page refresh
     loadCustomFieldsPanel();
+    showFormPopup(`"${name}" added.`, 'success');
   }
 
   function updateNewFieldSubTypeOptions(preselect){
@@ -5337,6 +5373,7 @@ appears to allow.`;
 
     closeAddFieldModal();
     loadCustomFieldsPanel();
+    showFormPopup(existing ? `"${label}" updated.` : `"${label}" added.`, 'success');
   }
 
   async function deleteCustomField(id){
@@ -5427,6 +5464,7 @@ appears to allow.`;
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(field) renderDedicatedTableOptionsModal(field);
     await loadDynamicFieldOptions(true); // keep the real form's cached options in sync immediately
+    showFormPopup(`"${name}" added.`, 'success');
   }
 
   async function deleteDedicatedTableOptionRow(tableName, rowId, fieldId){
@@ -5501,6 +5539,7 @@ appears to allow.`;
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(field) renderFieldOptionsModal(field);
     await loadDynamicFieldOptions(true); // keep the real form's cached options in sync immediately, for built-in fields
+    showFormPopup(`"${label}" added.`, 'success');
   }
 
   async function deleteFieldOptionRow(optionId, fieldId){
