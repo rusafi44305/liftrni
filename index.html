@@ -880,17 +880,18 @@
   .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #editModal .panel,
   .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
-    background:color-mix(in srgb, var(--surface) 97%, transparent) !important;
-    backdrop-filter:blur(26px) saturate(170%);
-    -webkit-backdrop-filter:blur(26px) saturate(170%);
-    border:1px solid color-mix(in srgb, var(--border) 65%, transparent) !important;
-    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
+    background:color-mix(in srgb, var(--surface) 74%, transparent) !important;
+    backdrop-filter:blur(28px) saturate(180%);
+    -webkit-backdrop-filter:blur(28px) saturate(180%);
+    border:1px solid color-mix(in srgb, var(--border) 55%, transparent) !important;
+    border-top-color:color-mix(in srgb, white 45%, var(--border) 55%) !important;
+    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.04) !important;
     border-radius:16px !important;
   }
   /* The account menu specifically needs to stay near-opaque rather than
      following the lighter translucency every other card above uses —
      text sitting behind it (nav bar, page content) was legible through
-     it at the shared 82% level, which defeats the point of a dropdown
+     it at the shared 74% level, which defeats the point of a dropdown
      menu. Kept as its own rule, deliberately more solid, rather than
      raising the opacity for every other panel too. */
   #accountMenu{
@@ -901,19 +902,19 @@
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
     border-radius:16px !important;
   }
-  /* Light theme specifically: cards render as fully opaque, pure white —
-     no blending with the grey page background showing through — for
-     maximum readability against that background, rather than following
-     the translucent "frosted glass" treatment every dark theme uses.
-     The blur is kept (still gives the soft edge-highlight look) but with
-     nothing showing through it to actually blur. */
+  /* Light theme: still gets real glass translucency now (not fully
+     opaque like before), just a notch more solid than the dark themes'
+     74% — light backgrounds are more sensitive to legibility loss from
+     whatever's showing through than dark ones are, so this stays a
+     little safer while still reading as genuine glass rather than a
+     flat card. */
   html:not([data-theme]) .panel, html:not([data-theme]) .stat-card, html:not([data-theme]) .mytask-item,
   html:not([data-theme]) .feed-item, html:not([data-theme]) .approve-row, html:not([data-theme]) .form-card,
   html:not([data-theme]) .role-card, html:not([data-theme]) #editModal .panel, html:not([data-theme]) .cat-tile,
   html:not([data-theme]) .t-card, html:not([data-theme]) .lift-header, html:not([data-theme]) .queued-item,
   html:not([data-theme]) .gantt-wrap, html:not([data-theme]) .searchbar, html:not([data-theme]) .mt-desc-wrap,
-  html:not([data-theme]) .status-chip, html:not([data-theme]) .devDetailPanel, html:not([data-theme]) #accountMenu{
-    background:var(--surface) !important;
+  html:not([data-theme]) .status-chip, html:not([data-theme]) .devDetailPanel{
+    background:color-mix(in srgb, var(--surface) 85%, transparent) !important;
   }
   /* These render dense, list-like task cards in several different views
      (category log, dashboard inspect, My Tasks) — the shared 16px radius
@@ -1080,8 +1081,8 @@
      battery-sensitive devices. The shaft, rings, and rail signals —
      the primary motion — stay, just resized as before. */
   @media (max-width: 700px){
-    .bg-lift-svg{ width:clamp(70px, 20vw, 120px); }
-    .bg-gears-svg{ width:clamp(130px, 44vw, 220px); bottom:80px; }
+    .bg-lift-svg{ width:clamp(110px, 34vw, 165px); top:4vh; height:70vh; }
+    .bg-gears-svg{ width:clamp(160px, 50vw, 240px); bottom:95px; right:-1vw; }
     .bg-center-svg, .bg-circuit-svg{ display:none; }
     .bg-scan-line{ display:none; }
     .bg-floor-node:nth-of-type(n+3){ display:none; }
