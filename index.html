@@ -514,6 +514,21 @@
   .kpi-spark div{width:7px; background:var(--accent); border-radius:2px 2px 0 0;}
  
   .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px;}
+  /* Grid items default to min-width:auto, which means a child with long
+     unbroken content (a full URL with no spaces to wrap at, in this
+     case) can force the whole grid track wider than its column — wider
+     than the screen on mobile once that column becomes 100% width. This
+     override lets items actually shrink to fit their column, which is
+     what makes overflow:hidden/text-overflow:ellipsis on content inside
+     them work at all; without it, ellipsis has no width limit to
+     truncate against in the first place. */
+  .split-grid > *{ min-width:0; }
+  /* Soft separator between each link in the "Links" dropdown, so
+     consecutive names don't run together with nothing but a hover state
+     to tell them apart. Skipped on the last one so the list doesn't end
+     with a stray line right against the dropdown's own edge. */
+  .category-link-item{ border-bottom:1px solid var(--border); }
+  .category-link-item:last-child{ border-bottom:none; }
   .is-dragging-field{opacity:0.4;}
   .draggable-field-row:hover{background:var(--surface-alt); border-radius:6px;}
   @media (min-width: 861px){
@@ -2526,10 +2541,15 @@
     }
     wrap.style.display = 'block';
     const colorVar = `var(${CATEGORY_LINKS_COLOR_VAR[cat]})`;
+    // Same button and dropdown either way — just a different label for
+    // Reports specifically, since "Upload" reads more naturally there
+    // than "Links" does, even though it's still just a list of links
+    // under the hood.
+    const buttonLabel = cat === 'surveyissues' ? 'Upload' : 'Links';
     wrap.innerHTML = `
       <button type="button" onclick="toggleCategoryLinksDropdown(event, '${cat}')" style="display:flex; align-items:center; gap:6px; padding:7px 14px; border-radius:9px; border:1.5px solid ${colorVar}; background:color-mix(in srgb, ${colorVar} 14%, transparent); color:${colorVar}; font-size:12.5px; font-weight:600; cursor:pointer; white-space:nowrap;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.07 0l2.83-2.83a5 5 0 0 0-7.07-7.07L11.5 4.5"/><path d="M14 11a5 5 0 0 0-7.07 0L4.1 13.83a5 5 0 0 0 7.07 7.07L12.5 19.5"/></svg>
-        Links
+        ${buttonLabel}
       </button>
       <div id="categoryLinksDropdown" style="display:none; position:absolute; right:0; top:calc(100% + 6px); background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:6px; min-width:220px; max-width:320px; z-index:50; box-shadow:var(--shadow);"></div>
     `;
@@ -2552,7 +2572,7 @@
       dropdown.innerHTML = '<div class="placeholder-note" style="padding:8px;">No links added yet — a Superadmin can add some from the Admin panel.</div>';
       return;
     }
-    dropdown.innerHTML = data.map(link => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" style="display:block; padding:9px 10px; border-radius:8px; color:var(--text); font-size:13px; font-weight:500; text-decoration:none; transition:background-color .1s ease;" onmouseover="this.style.backgroundColor='var(--surface-alt)'" onmouseout="this.style.backgroundColor='transparent'">${escapeHtml(link.label)}</a>`).join('');
+    dropdown.innerHTML = data.map(link => `<a href="${escapeHtml(link.url)}" target="_blank" rel="noopener noreferrer" class="category-link-item" style="display:block; padding:9px 10px; color:var(--text); font-size:13px; font-weight:500; text-decoration:none; transition:background-color .1s ease;" onmouseover="this.style.backgroundColor='var(--surface-alt)'" onmouseout="this.style.backgroundColor='transparent'">${escapeHtml(link.label)}</a>`).join('');
   }
   // Closes the links dropdown on any click outside it — same
   // click-outside pattern the account menu already uses elsewhere.
@@ -2587,17 +2607,32 @@
           </div>`).join('')
         : '<div class="placeholder-note">No links yet.</div>';
       return `<div class="panel">
-        <div class="panel-title">${catLabel}</div>
-        <div>${rowsHtml}</div>
-        <div style="display:flex; flex-direction:column; gap:8px; margin-top:14px;">
-          <input type="text" id="newLinkLabel-${catKey}" placeholder="Link name, e.g. Warranty Policy PDF" style="padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
-          <input type="text" id="newLinkUrl-${catKey}" placeholder="https://…" style="padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <div class="panel-title" style="margin:0;">${catLabel}</div>
+          <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAddLinkForm('${catKey}', this)">+ Add a link</button>
+        </div>
+        <div style="margin-top:14px;">${rowsHtml}</div>
+        <div id="addLinkForm-${catKey}" style="display:none; flex-direction:column; gap:8px; margin-top:14px;">
+          <input type="text" id="newLinkLabel-${catKey}" placeholder="Link name, e.g. Warranty Policy PDF" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
+          <input type="text" id="newLinkUrl-${catKey}" placeholder="https://…" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
           <button class="queue-btn" onclick="addCategoryLink('${catKey}')">+ Add link</button>
         </div>
       </div>`;
     };
 
     panel.innerHTML = `<div class="split-grid">${sectionHtml('postsales', 'Post-Sales Activity')}${sectionHtml('surveyissues', 'Reports')}</div>`;
+  }
+
+  // The add-link form starts collapsed for both categories — most visits
+  // to this panel are just to glance at what's already there, not to add
+  // something new, so keeping the form tucked away by default keeps the
+  // list itself the focus rather than an input form nobody's using yet.
+  function toggleAddLinkForm(catKey, btn){
+    const form = document.getElementById(`addLinkForm-${catKey}`);
+    if(!form) return;
+    const isHidden = form.style.display === 'none';
+    form.style.display = isHidden ? 'flex' : 'none';
+    btn.textContent = isHidden ? 'Hide' : '+ Add a link';
   }
 
   async function addCategoryLink(catKey){
