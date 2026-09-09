@@ -532,6 +532,10 @@
   @media (max-width: 480px){
     .stat-row.profile-kpi-row{ grid-template-columns:1fr !important; }
   }
+  @media (max-width: 700px){
+    #dashHeroCard{ grid-template-columns:1fr !important; }
+    #dashHeroCard > div:last-child{ border-left:none !important; padding-left:0 !important; border-top:1px solid var(--border); padding-top:14px; margin-top:4px; }
+  }
   /* Soft separator between each link in the "Links" dropdown, so
      consecutive names don't run together with nothing but a hover state
      to tell them apart. Skipped on the last one so the list doesn't end
@@ -1819,21 +1823,27 @@
       </div>
     </div>
 
-    <div class="panel" id="dashHeroCard" style="display:flex; align-items:center; gap:20px; flex-wrap:wrap; margin-bottom:18px;">
-      <div id="dashHeroRing" style="flex-shrink:0;"></div>
-      <div style="flex:1; min-width:180px;">
-        <div class="field-label" style="margin-bottom:2px;" id="dashHeroLabel">Team score in range</div>
-        <div style="display:flex; align-items:baseline; gap:10px;">
-          <span id="dashHeroScore" style="font-size:26px; font-weight:700;">—</span>
-          <span id="dashHeroTrend" style="font-size:12.5px; font-weight:600;"></span>
+    <div class="panel" id="dashHeroCard" style="display:grid; grid-template-columns:1.3fr 1fr; gap:20px; align-items:center; margin-bottom:18px;">
+      <div style="display:flex; align-items:center; gap:20px;">
+        <div id="dashHeroRing" style="flex-shrink:0;"></div>
+        <div style="flex:1; min-width:140px;">
+          <div class="field-label" style="margin-bottom:2px;" id="dashHeroLabel">Team score in range</div>
+          <div style="display:flex; align-items:baseline; gap:10px;">
+            <span id="dashHeroScore" style="font-size:26px; font-weight:700;">—</span>
+            <span id="dashHeroTrend" style="font-size:12.5px; font-weight:600;"></span>
+          </div>
+          <div id="dashHeroSub" style="font-size:11.5px; color:var(--text-faint); margin-top:3px;">—</div>
         </div>
-        <div id="dashHeroSub" style="font-size:11.5px; color:var(--text-faint); margin-top:3px;">—</div>
+      </div>
+      <div style="border-left:1px solid var(--border); padding-left:20px;">
+        <div class="field-label" style="margin-bottom:8px;">Activity trend in range</div>
+        <div id="dashHeroTrendChart"></div>
       </div>
     </div>
  
     <div class="stat-row">
-      <div class="stat-card"><div class="n" id="dashStatActivities">—</div><div class="l">Activities in range</div></div>
-      <div class="stat-card"><div class="n" id="dashStatLifts">—</div><div class="l">Distinct Lift IDs touched</div></div>
+      <div class="stat-card"><div style="display:flex; align-items:flex-end; justify-content:space-between; gap:8px;"><div><div class="n" id="dashStatActivities">—</div><div class="l">Activities in range</div></div><div id="dashSparkActivities"></div></div></div>
+      <div class="stat-card"><div style="display:flex; align-items:flex-end; justify-content:space-between; gap:8px;"><div><div class="n" id="dashStatLifts">—</div><div class="l">Distinct Lift IDs touched</div></div><div id="dashSparkLifts"></div></div></div>
       <div class="stat-card"><div class="n" id="dashStatEngineers">—</div><div class="l">Engineers active in range</div></div>
       <div class="stat-card"><div class="n" id="dashStatCategories">—</div><div class="l">Categories used</div></div>
     </div>
@@ -7302,6 +7312,39 @@ for a competing inline style first.`;
     document.getElementById('dashStatLifts').textContent = liftSet.size;
     document.getElementById('dashStatEngineers').textContent = engineerSet.size;
     document.getElementById('dashStatCategories').textContent = Object.keys(catCounts).length;
+
+    // Weekly trend, computed from the same filtered rows — no extra
+    // query. Uses each task's Perform Date where available (same
+    // convention as the rest of the app), falling back to created_at for
+    // older entries logged before that field existed. Buckets by
+    // ISO week number within the row's year so activity groups sensibly
+    // regardless of how wide the selected date range is.
+    const weekOf = (d) => {
+      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      const dayNum = date.getUTCDay() || 7;
+      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
+      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+      const weekNum = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+      return `${date.getUTCFullYear()}-W${weekNum}`;
+    };
+    const weekCounts = {};
+    const weekLiftSets = {};
+    rows.forEach(r => {
+      const performDate = r.details && r.details['Perform Date'];
+      const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(r.created_at);
+      const wk = weekOf(d);
+      weekCounts[wk] = (weekCounts[wk] || 0) + 1;
+      if(r.lift_id){ (weekLiftSets[wk] || (weekLiftSets[wk] = new Set())).add(r.lift_id); }
+    });
+    const weekKeysSorted = Object.keys(weekCounts).sort();
+    const activityTrendValues = weekKeysSorted.map(k => weekCounts[k]);
+    const liftTrendValues = weekKeysSorted.map(k => weekLiftSets[k] ? weekLiftSets[k].size : 0);
+
+    document.getElementById('dashHeroTrendChart').innerHTML = weekKeysSorted.length >= 2
+      ? sparklineSvg(activityTrendValues, '#378ADD', 220, 54)
+      : '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
+    document.getElementById('dashSparkActivities').innerHTML = sparklineSvg(activityTrendValues, '#378ADD', 46, 22);
+    document.getElementById('dashSparkLifts').innerHTML = sparklineSvg(liftTrendValues, '#1D9E75', 46, 22);
  
     const maxCat = Math.max(1, ...Object.values(catCounts));
     const catSorted = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
