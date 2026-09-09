@@ -1846,16 +1846,19 @@
       </div>
     </div>
 
-    <div class="dash-compact-grid" style="display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:14px; margin-bottom:18px;">
-      <div class="panel dash-glow-panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; position:relative; overflow:hidden;">
-        <div class="dash-glow-blob" style="background:#1D9E75;"></div>
-        <div style="display:flex; align-items:center; gap:10px; position:relative; z-index:1;">
-          <div id="dashRingActivities" title="Activities in range"></div>
-          <div id="dashRingScore" title="Team score in range"></div>
-          <div id="dashRingLifts" title="Distinct Lift IDs touched"></div>
+    <div class="panel dash-glow-panel" style="position:relative; overflow:hidden; margin-bottom:14px;">
+      <div class="dash-glow-blob" style="background:#1D9E75; top:-40px; left:50%; transform:translateX(-50%);"></div>
+      <div style="position:relative; z-index:1;">
+        <div class="field-label" style="margin-bottom:14px; text-align:center;">Team overview</div>
+        <div style="display:flex; justify-content:center;">
+          <div id="dashConcentricRings" style="position:relative;"></div>
         </div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center; position:relative; z-index:1;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+        <div id="dashRingLegend" style="display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-top:16px;"></div>
+        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin-top:8px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
       </div>
+    </div>
+
+    <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
       <div class="panel dash-glow-panel" style="position:relative; overflow:hidden;">
         <div class="dash-glow-blob" style="background:#378ADD;"></div>
         <div style="position:relative; z-index:1;">
@@ -1873,9 +1876,12 @@
       </div>
     </div>
 
-    <div class="panel" style="margin-bottom:18px;">
-      <div class="field-label" style="margin-bottom:8px;">Activity map — by week in range</div>
-      <div id="dashActivityHeatmap"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel dash-glow-panel" style="margin-bottom:18px; position:relative; overflow:hidden;">
+      <div class="dash-glow-blob" style="background:#378ADD; top:auto; bottom:-40px; left:-20px;"></div>
+      <div style="position:relative; z-index:1;">
+        <div class="field-label" style="margin-bottom:10px;">Activity timeline — by week in range</div>
+        <div id="dashActivityTimeline"><div class="placeholder-note">Loading…</div></div>
+      </div>
     </div>
  
     <section class="block">
@@ -3966,23 +3972,83 @@
     // multiple rings on the same page means the browser silently uses
     // whichever <linearGradient> happened to be defined first for all
     // of them, so every ring would render with only the first ring's
-    // gradient colors. The counter keeps each ring's gradient genuinely
-    // its own. The glow is a plain SVG drop-shadow filter, which — being
-    // a colored light spread rather than a flat fill — naturally reads
-    // stronger on a dark background and quieter on a light one without
-    // needing separate per-theme values.
-    const gid = `ringGrad${ringGradientCounter++}`;
+    // gradient colors. The glow uses a real SVG <filter> (blur + merge)
+    // rather than CSS filter:drop-shadow via the style attribute —
+    // technically valid on SVG, but support for it on dynamically
+    // injected (innerHTML) SVG content is inconsistent across browsers
+    // in a way a native SVG filter element isn't.
+    const gid = `ringGrad${ringGradientCounter}`;
+    const fid = `ringGlow${ringGradientCounter}`;
+    ringGradientCounter++;
     return `<svg width="${size}" height="${size}" viewBox="0 0 42 42" role="img" aria-label="${ariaText}">
       <defs>
         <linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="${color}" stop-opacity="0.7"></stop>
           <stop offset="100%" stop-color="${color}"></stop>
         </linearGradient>
+        <filter id="${fid}" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1.1" result="blur"></feGaussianBlur>
+          <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+        </filter>
       </defs>
       <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${trackColor || 'var(--border)'}" stroke-width="3.5"></circle>
-      <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="3.5" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)" style="filter:drop-shadow(0 0 4px ${color}88);"></circle>
+      <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="3.5" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)" filter="url(#${fid})"></circle>
       <text x="21" y="24.5" text-anchor="middle" style="font-size:9px; font-weight:700; font-family:'Inter', sans-serif;" fill="${textColor || 'var(--text)'}">${displayText != null ? displayText : pct.toFixed(0) + '%'}</text>
     </svg>`;
+  }
+  // Three metrics as one set of true concentric rings sharing a single
+  // center (Apple Fitness style) rather than three separate side-by-side
+  // circles — each ring is its own percent-of-its-own-max, since the
+  // three metrics (a 0-100 score, a raw activity count, a raw lift
+  // count) have no shared scale to plot literally against each other;
+  // the point is showing three independent "how full is this" glances
+  // at once, not a literal proportional comparison between them.
+  // centerLabel/centerSub render as real text in the middle where the
+  // rings' shared center is otherwise empty space.
+  function concentricRingsSvg(rings, size, centerLabel, centerSub){
+    const baseR = 44, gap = 11;
+    const circumference = (r) => 2 * Math.PI * r;
+    // A real SVG <filter> (feGaussianBlur + feMerge) rather than a CSS
+    // filter:drop-shadow set via the style attribute — the CSS version
+    // is technically valid on SVG shapes, but support for applying it to
+    // dynamically injected (innerHTML) SVG is inconsistent across
+    // browsers in a way a native SVG filter element isn't. One shared
+    // filter per ring-set is enough; it doesn't need a per-ring color
+    // since blur doesn't need to know the shape's own color.
+    const filterId = `concGlow${ringGradientCounter}`;
+    const defsHtml = rings.map((ring, i) => {
+      const gid = `concGrad${i}_${ringGradientCounter}`;
+      return `<linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${ring.color}" stop-opacity="0.65"></stop>
+          <stop offset="100%" stop-color="${ring.color}"></stop>
+        </linearGradient>`;
+    }).join('') + `<filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="blur"></feGaussianBlur>
+        <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+      </filter>`;
+    const circlesHtml = rings.map((ring, i) => {
+      const r = baseR - i * gap;
+      const c = circumference(r);
+      // A ring at or near 0% would otherwise render as an invisible (or
+      // near-invisible) sliver rather than a visible ring at all — same
+      // "never fully empty" floor already used for the leaderboard's
+      // score bars, applied here for the same reason.
+      const pct = Math.max(3, Math.min(100, ring.pct));
+      const dash = (pct / 100) * c;
+      const gid = `concGrad${i}_${ringGradientCounter}`;
+      return `
+        <circle cx="50" cy="50" r="${r}" fill="transparent" stroke="var(--border)" stroke-width="7"></circle>
+        <circle cx="50" cy="50" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="7" stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 50 50)" filter="url(#${filterId})"></circle>`;
+    }).join('');
+    ringGradientCounter++;
+    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="${rings.map(r => r.label + ': ' + r.displayValue).join(', ')}">
+      <defs>${defsHtml}</defs>
+      ${circlesHtml}
+    </svg>
+    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none;">
+      <div style="font-size:${size*0.16}px; font-weight:700; line-height:1;">${centerLabel}</div>
+      <div style="font-size:${size*0.055}px; color:var(--text-faint); margin-top:3px;">${centerSub}</div>
+    </div>`;
   }
   // Small SVG sparkline for trend rows — takes an array of numbers and
   // draws a simple polyline, scaled to fit. Returns a flat line if there
@@ -4020,16 +4086,22 @@
     }));
     const lineD = smoothPathD(points);
     const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
-    const gid = `sparkGrad${sparkGradientCounter++}`;
+    const gid = `sparkGrad${sparkGradientCounter}`;
+    const fid = `sparkGlow${sparkGradientCounter}`;
+    sparkGradientCounter++;
     return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
       <defs>
         <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="${color}" stop-opacity="0.35"></stop>
           <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
         </linearGradient>
+        <filter id="${fid}" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur"></feGaussianBlur>
+          <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+        </filter>
       </defs>
       <path d="${areaD}" fill="url(#${gid})" stroke="none"></path>
-      <path d="${lineD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 3px ${color}90);"></path>
+      <path d="${lineD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#${fid})"></path>
     </svg>`;
   }
   const CATEGORY_ICON_SVG = {
@@ -7421,13 +7493,6 @@ for a competing inline style first.`;
     document.getElementById('dashHeroTrendChart').innerHTML = weekKeysSorted.length >= 2
       ? sparklineSvg(activityTrendValues, '#378ADD', 210, 44)
       : '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
-    // Activities/Lifts rings intentionally always render fully filled —
-    // unlike Team Score, these are raw counts with no natural "percent
-    // of what" meaning, so a partial fill here would imply a benchmark
-    // that doesn't actually exist. Kept as rings anyway for visual
-    // consistency with the score ring beside them, just always full.
-    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg(100, '#378ADD', 52, 'Activities in range', null, null, String(rows.length));
-    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg(100, '#D85A30', 52, 'Distinct Lift IDs touched', null, null, String(liftSet.size));
 
     // First week vs last week within the selected range — a range the
     // user picked themselves has no natural "previous period" to compare
@@ -7443,25 +7508,92 @@ for a competing inline style first.`;
       trendEl.textContent = '';
     }
 
-    // Activity map: one cell per week in range, shaded by how busy that
-    // week was relative to the busiest week in the same range — same
-    // weekCounts data the trend line and sparklines already use, just
-    // shown as a density grid instead of a line. A GitHub-contributions-
-    // style visual, not a literal geographic map, since Lift IDs are
-    // building/site references, not coordinates this app actually has.
-    const heatmapEl = document.getElementById('dashActivityHeatmap');
+    // Activity timeline: a real, labeled chart replacing the earlier
+    // heatmap — that version only showed color intensity with the actual
+    // week/count hidden behind a hover tooltip, which never worked on
+    // mobile touch at all. This shows genuine calendar dates and the
+    // busiest week's count directly on the chart, readable without
+    // touching anything.
+    const timelineEl = document.getElementById('dashActivityTimeline');
     if(weekKeysSorted.length < 1){
-      heatmapEl.innerHTML = '<div class="placeholder-note">No activity in this range.</div>';
+      timelineEl.innerHTML = '<div class="placeholder-note">No activity in this range.</div>';
+    } else if(weekKeysSorted.length === 1){
+      timelineEl.innerHTML = `<div class="placeholder-note">${activityTrendValues[0]} activit${activityTrendValues[0]===1?'y':'ies'} logged — need at least two weeks of data in range for a timeline.</div>`;
     } else {
-      const maxWeekCount = Math.max(1, ...activityTrendValues);
-      const greenShades = ['#EAF3DE','#C0DD97','#97C459','#639922','#3B6D11'];
-      const cellsHtml = weekKeysSorted.map((wk, i) => {
-        const count = activityTrendValues[i];
-        const shadeIdx = count === 0 ? 0 : Math.min(4, Math.ceil((count / maxWeekCount) * 4));
-        const weekLabel = wk.replace('-W', ', week ');
-        return `<div style="aspect-ratio:1; border-radius:3px; background:${greenShades[shadeIdx]};" title="${weekLabel}: ${count} activit${count===1?'y':'ies'}"></div>`;
-      }).join('');
-      heatmapEl.innerHTML = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(22px, 1fr)); gap:4px;">${cellsHtml}</div>`;
+      // Converts an ISO "YYYY-Wnn" key (as produced by weekOf above) back
+      // to that week's Monday, purely for display — ISO week 1 is
+      // defined as whichever week contains January 4th, so walking back
+      // to that week's Monday and adding 7 days per week-number-minus-one
+      // reconstructs the real calendar date the key was built from.
+      const isoWeekToDate = (key) => {
+        const [yearStr, weekStr] = key.split('-W');
+        const year = parseInt(yearStr), week = parseInt(weekStr);
+        const jan4 = new Date(Date.UTC(year, 0, 4));
+        const jan4Day = jan4.getUTCDay() || 7;
+        const week1Monday = new Date(jan4);
+        week1Monday.setUTCDate(jan4.getUTCDate() - jan4Day + 1);
+        const target = new Date(week1Monday);
+        target.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
+        return target;
+      };
+      // Extra top padding specifically (not just the usual symmetric
+      // pad) — the peak label is drawn above its dot, and the peak by
+      // definition sits at the chart's highest point, so without this
+      // the label has nowhere to go but off the top edge of the chart.
+      const w = 500, h = 100, pad = 14, topPad = 26;
+      const maxV = Math.max(1, ...activityTrendValues);
+      const minV = Math.min(0, ...activityTrendValues);
+      const range = Math.max(maxV - minV, 1);
+      const pts = activityTrendValues.map((v, i) => ({
+        x: (i/(activityTrendValues.length-1)) * w,
+        y: topPad + (h - topPad - pad) - ((v-minV)/range) * (h - topPad - pad),
+        v
+      }));
+      const lineD = smoothPathD(pts.map(p => ({x:p.x, y:p.y})));
+      const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
+      const peakIdx = activityTrendValues.indexOf(maxV);
+      // Same real-SVG-filter approach as the rings/sparklines above,
+      // rather than CSS filter:drop-shadow via style — and a genuinely
+      // unique gradient/filter id per render (via the shared counter)
+      // rather than a fixed "timelineFill" id, since this same markup
+      // gets rebuilt every time the date range or engineer filter is
+      // applied, not just once.
+      const tid = `timeline${sparkGradientCounter}`;
+      sparkGradientCounter++;
+      const dotsHtml = pts.map((p, i) => i === peakIdx
+        ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="var(--surface)" stroke="#378ADD" stroke-width="2" filter="url(#${tid}glow)"></circle>
+           <text x="${p.x.toFixed(1)}" y="${(p.y-9).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text)">${p.v}</text>`
+        : `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#378ADD" filter="url(#${tid}glow)"></circle>`
+      ).join('');
+      // With many weeks in range, printing every single date underneath
+      // would overlap into an unreadable smear — thinning to at most 5
+      // evenly-spaced labels (always including the first and last week)
+      // keeps every label legible regardless of how wide the range is.
+      const maxLabels = 5;
+      const labelStep = Math.max(1, Math.ceil((weekKeysSorted.length - 1) / (maxLabels - 1)));
+      const dateLabels = weekKeysSorted
+        .map((k, i) => ({ i, date: isoWeekToDate(k) }))
+        .filter(({i}) => i % labelStep === 0 || i === weekKeysSorted.length - 1);
+      const labelsHtml = dateLabels.map(({date}) =>
+        `<span>${date.toLocaleDateString('en-GB', { day:'2-digit', month:'short' })}</span>`
+      ).join('');
+      timelineEl.innerHTML = `
+        <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="${tid}fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#378ADD" stop-opacity="0.4"></stop>
+              <stop offset="100%" stop-color="#378ADD" stop-opacity="0"></stop>
+            </linearGradient>
+            <filter id="${tid}glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur in="SourceGraphic" stdDeviation="1.3" result="blur"></feGaussianBlur>
+              <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+            </filter>
+          </defs>
+          <path d="${areaD}" fill="url(#${tid}fill)" stroke="none"></path>
+          <path d="${lineD}" fill="none" stroke="#378ADD" stroke-width="2.5" filter="url(#${tid}glow)"></path>
+          ${dotsHtml}
+        </svg>
+        <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint); margin-top:2px;">${labelsHtml}</div>`;
     }
  
     const maxCat = Math.max(1, ...Object.values(catCounts));
@@ -7539,7 +7671,29 @@ for a competing inline style first.`;
     // meant to answer "how's the team doing", not "who's most active".
     const scoresInRange = Object.values(byEngineer).map(e => e.kpi);
     const teamAvgScore = scoresInRange.length ? scoresInRange.reduce((s,v) => s+v, 0) / scoresInRange.length : 0;
-    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', 78, engineerId ? 'Score in range' : 'Team score in range');
+    // Three concentric rings sharing one center rather than three
+    // separate circles — Activities/Lifts stay fully filled since
+    // they're raw counts with no natural "percent of what" to show
+    // partially (same honesty rule as before, just carried into the new
+    // layout); Team Score is the only one of the three with a real
+    // percent meaning, so it's the only one that visually varies.
+    const ringsContainer = document.getElementById('dashConcentricRings');
+    ringsContainer.style.width = ringsContainer.style.height = '150px';
+    ringsContainer.innerHTML = concentricRingsSvg([
+      { pct: teamAvgScore, color: '#1D9E75', label: 'Team score', displayValue: teamAvgScore.toFixed(1) + '%' },
+      { pct: 100, color: '#378ADD', label: 'Activities', displayValue: String(rows.length) },
+      { pct: 100, color: '#D85A30', label: 'Lifts touched', displayValue: String(liftSet.size) }
+    ], 150, teamAvgScore.toFixed(0), engineerId ? 'score in range' : 'team score');
+    document.getElementById('dashRingLegend').innerHTML = [
+      { color:'#1D9E75', label:'Team score', value: teamAvgScore.toFixed(1) + '%' },
+      { color:'#378ADD', label:'Activities', value: String(rows.length) },
+      { color:'#D85A30', label:'Lifts touched', value: String(liftSet.size) }
+    ].map(item => `
+      <div style="display:flex; align-items:center; gap:7px;">
+        <span style="width:9px; height:9px; border-radius:50%; background:${item.color}; box-shadow:0 0 5px ${item.color}90; flex-shrink:0;"></span>
+        <span style="font-size:12.5px;">${item.label} <b style="margin-left:2px;">${item.value}</b></span>
+      </div>
+    `).join('');
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
