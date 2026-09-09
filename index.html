@@ -529,6 +529,23 @@
      ("Overall Score — average of every performed month") pushed the
      grid item wider than its column, overflowing the page. */
   .profile-kpi-row > *{ min-width:0; }
+  /* A soft, blurred color blob tucked in a panel's corner, behind its
+     real content (z-index:1 on the content siblings keeps it there) —
+     gives the dashboard's key panels some visual depth instead of a
+     flat single-color card, echoing the glow accents used across the
+     rest of the vibrancy/glass system already in this app. Kept
+     deliberately subtle (low opacity, heavily blurred) so it reads as
+     ambient light rather than a distracting colored patch — same glow
+     technique, scaled back from something like a hero marketing page to
+     something a person actually works in front of all day. */
+  .dash-glow-blob{
+    position:absolute; top:-30px; left:-30px; width:140px; height:140px;
+    border-radius:50%; filter:blur(38px); opacity:0.22; pointer-events:none;
+  }
+  html[data-theme="dark"] .dash-glow-blob, html[data-theme="midnight"] .dash-glow-blob,
+  html[data-theme="midnightblue"] .dash-glow-blob, html[data-theme="sunset"] .dash-glow-blob{
+    opacity:0.35;
+  }
   @media (max-width: 480px){
     .stat-row.profile-kpi-row{ grid-template-columns:1fr !important; }
   }
@@ -1830,22 +1847,29 @@
     </div>
 
     <div class="dash-compact-grid" style="display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:14px; margin-bottom:18px;">
-      <div class="panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;">
-        <div style="display:flex; align-items:center; gap:10px;">
+      <div class="panel dash-glow-panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; position:relative; overflow:hidden;">
+        <div class="dash-glow-blob" style="background:#1D9E75;"></div>
+        <div style="display:flex; align-items:center; gap:10px; position:relative; z-index:1;">
           <div id="dashRingActivities" title="Activities in range"></div>
           <div id="dashRingScore" title="Team score in range"></div>
           <div id="dashRingLifts" title="Distinct Lift IDs touched"></div>
         </div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+        <div style="font-size:11px; color:var(--text-faint); text-align:center; position:relative; z-index:1;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
       </div>
-      <div class="panel">
-        <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
-        <div id="dashHeroTrendChart"></div>
-        <div id="dashHeroTrend" style="font-size:11.5px; font-weight:600; margin-top:8px;"></div>
+      <div class="panel dash-glow-panel" style="position:relative; overflow:hidden;">
+        <div class="dash-glow-blob" style="background:#378ADD;"></div>
+        <div style="position:relative; z-index:1;">
+          <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+          <div id="dashHeroTrendChart"></div>
+          <div id="dashHeroTrend" style="font-size:11.5px; font-weight:600; margin-top:8px;"></div>
+        </div>
       </div>
-      <div class="panel">
-        <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
-        <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+      <div class="panel dash-glow-panel" style="position:relative; overflow:hidden;">
+        <div class="dash-glow-blob" style="background:#D85A30;"></div>
+        <div style="position:relative; z-index:1;">
+          <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
+          <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+        </div>
       </div>
     </div>
 
@@ -3931,15 +3955,32 @@
   // custom properties the same way HTML elements do in every browser —
   // the track behind it still uses var(--border) safely since that part
   // never needs to change color.
+  let ringGradientCounter = 0;
   function scoreRingSvg(percent, color, size, label, trackColor, textColor, displayText){
     const pct = Math.max(0, Math.min(100, percent));
     const r = 16.5;
     const circumference = 2 * Math.PI * r;
     const dash = (pct / 100) * circumference;
     const ariaText = displayText != null ? `${label || 'Value'}: ${displayText}` : `${label || 'Score'}: ${pct.toFixed(0)} percent`;
+    // A unique gradient id per ring — reusing one fixed id across
+    // multiple rings on the same page means the browser silently uses
+    // whichever <linearGradient> happened to be defined first for all
+    // of them, so every ring would render with only the first ring's
+    // gradient colors. The counter keeps each ring's gradient genuinely
+    // its own. The glow is a plain SVG drop-shadow filter, which — being
+    // a colored light spread rather than a flat fill — naturally reads
+    // stronger on a dark background and quieter on a light one without
+    // needing separate per-theme values.
+    const gid = `ringGrad${ringGradientCounter++}`;
     return `<svg width="${size}" height="${size}" viewBox="0 0 42 42" role="img" aria-label="${ariaText}">
+      <defs>
+        <linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.7"></stop>
+          <stop offset="100%" stop-color="${color}"></stop>
+        </linearGradient>
+      </defs>
       <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${trackColor || 'var(--border)'}" stroke-width="3.5"></circle>
-      <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${color}" stroke-width="3.5" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)"></circle>
+      <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="3.5" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)" style="filter:drop-shadow(0 0 4px ${color}88);"></circle>
       <text x="21" y="24.5" text-anchor="middle" style="font-size:9px; font-weight:700; font-family:'Inter', sans-serif;" fill="${textColor || 'var(--text)'}">${displayText != null ? displayText : pct.toFixed(0) + '%'}</text>
     </svg>`;
   }
@@ -3964,6 +4005,7 @@
     d += ` L ${last.x.toFixed(1)},${last.y.toFixed(1)}`;
     return d;
   }
+  let sparkGradientCounter = 0;
   function sparklineSvg(values, color, w, h){
     if(!values || values.length < 2) return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="var(--border)" stroke-width="1.5"/></svg>`;
     const max = Math.max(...values, 1), min = Math.min(...values, 0);
@@ -3976,7 +4018,19 @@
       x: i/(values.length-1)*w,
       y: pad + (h - pad*2) - ((v-min)/range)*(h - pad*2)
     }));
-    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${smoothPathD(points)}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    const lineD = smoothPathD(points);
+    const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
+    const gid = `sparkGrad${sparkGradientCounter++}`;
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.35"></stop>
+          <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
+        </linearGradient>
+      </defs>
+      <path d="${areaD}" fill="url(#${gid})" stroke="none"></path>
+      <path d="${lineD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 0 3px ${color}90);"></path>
+    </svg>`;
   }
   const CATEGORY_ICON_SVG = {
     rni: '<path d="M14.7 6.3a1 1 0 0 0 1.4 1.4l3.6-3.6a1 1 0 0 0-1.4-1.4zM9 15l-4 4M14 4l-1.5 1.5M15 9.5L20 4.5"/><path d="M17 12l-8 8-5-5 8-8z"/>',
@@ -7422,11 +7476,13 @@ for a competing inline style first.`;
       // chart, and a donut needs more room to stay readable than this
       // layout gives it. Bars scale relative to whichever category has
       // the most activity, same logic the old donut's proportions used.
-      const barsHtml = catSorted.map(([cat,count], i) => `
+      const barsHtml = catSorted.map(([cat,count], i) => {
+        const c = catColors[i % catColors.length];
+        return `
         <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0;">
-          <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:${catColors[i % catColors.length]}; border-radius:3px 3px 0 0;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
+          <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:linear-gradient(180deg, color-mix(in srgb, ${c} 70%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}70;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
         </div>
-      `).join('');
+      `;}).join('');
       // Each dot sits directly beside its own name as one wrapping chip,
       // rather than all dots up front followed by a run-on comma list —
       // the earlier version left no visual link between a color and the
@@ -7504,7 +7560,7 @@ for a competing inline style first.`;
             // meter instead.
             return `<div style="display:flex; align-items:center; gap:8px;">
               <div style="width:46px; height:6px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; flex-shrink:0;">
-                <div style="width:${Math.max(pct, 6)}%; height:100%; background:linear-gradient(90deg, #1D9E75, #4ADE9C); border-radius:99px;"></div>
+                <div style="width:${Math.max(pct, 6)}%; height:100%; background:linear-gradient(90deg, #1D9E75, #4ADE9C); border-radius:99px; box-shadow:0 0 6px #1D9E7590;"></div>
               </div>
               <span>${e.kpi.toFixed(1)}</span>
             </div>`;
