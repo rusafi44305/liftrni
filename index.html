@@ -1848,6 +1848,11 @@
         <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
       </div>
     </div>
+
+    <div class="panel" style="margin-bottom:18px;">
+      <div class="field-label" style="margin-bottom:8px;">Activity map — by week in range</div>
+      <div id="dashActivityHeatmap"><div class="placeholder-note">Loading…</div></div>
+    </div>
  
     <section class="block">
       <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
@@ -3942,12 +3947,36 @@
   // draws a simple polyline, scaled to fit. Returns a flat line if there
   // isn't enough data to show a real trend, rather than a misleading or
   // broken shape.
+  // Smoothing technique: draw a quadratic bezier from each point to the
+  // midpoint of it and the next point, using the point itself as the
+  // control — a standard, cheap way to turn a jagged polyline into a
+  // curve that still passes close to every real data value, without
+  // needing full spline math for what's just a small trend indicator.
+  function smoothPathD(points){
+    if(points.length < 2) return '';
+    let d = `M ${points[0].x},${points[0].y}`;
+    for(let i = 0; i < points.length - 1; i++){
+      const p0 = points[i], p1 = points[i+1];
+      const midX = (p0.x + p1.x) / 2, midY = (p0.y + p1.y) / 2;
+      d += ` Q ${p0.x.toFixed(1)},${p0.y.toFixed(1)} ${midX.toFixed(1)},${midY.toFixed(1)}`;
+    }
+    const last = points[points.length-1];
+    d += ` L ${last.x.toFixed(1)},${last.y.toFixed(1)}`;
+    return d;
+  }
   function sparklineSvg(values, color, w, h){
     if(!values || values.length < 2) return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="var(--border)" stroke-width="1.5"/></svg>`;
     const max = Math.max(...values, 1), min = Math.min(...values, 0);
     const range = Math.max(max - min, 1);
-    const pts = values.map((v, i) => `${(i/(values.length-1)*w).toFixed(1)},${(h - ((v-min)/range)*h).toFixed(1)}`).join(' ');
-    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    // A little vertical padding keeps the curve's peaks/troughs from
+    // touching the very top/bottom edge of the box, which otherwise
+    // looks clipped once the line is smoothed and overshoots slightly.
+    const pad = h * 0.12;
+    const points = values.map((v, i) => ({
+      x: i/(values.length-1)*w,
+      y: pad + (h - pad*2) - ((v-min)/range)*(h - pad*2)
+    }));
+    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><path d="${smoothPathD(points)}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   }
   const CATEGORY_ICON_SVG = {
     rni: '<path d="M14.7 6.3a1 1 0 0 0 1.4 1.4l3.6-3.6a1 1 0 0 0-1.4-1.4zM9 15l-4 4M14 4l-1.5 1.5M15 9.5L20 4.5"/><path d="M17 12l-8 8-5-5 8-8z"/>',
@@ -7358,6 +7387,27 @@ for a competing inline style first.`;
       trendEl.textContent = diff === 0 ? 'Flat across range' : `${arrow} ${Math.abs(diff)} vs first week in range`;
     } else {
       trendEl.textContent = '';
+    }
+
+    // Activity map: one cell per week in range, shaded by how busy that
+    // week was relative to the busiest week in the same range — same
+    // weekCounts data the trend line and sparklines already use, just
+    // shown as a density grid instead of a line. A GitHub-contributions-
+    // style visual, not a literal geographic map, since Lift IDs are
+    // building/site references, not coordinates this app actually has.
+    const heatmapEl = document.getElementById('dashActivityHeatmap');
+    if(weekKeysSorted.length < 1){
+      heatmapEl.innerHTML = '<div class="placeholder-note">No activity in this range.</div>';
+    } else {
+      const maxWeekCount = Math.max(1, ...activityTrendValues);
+      const greenShades = ['#EAF3DE','#C0DD97','#97C459','#639922','#3B6D11'];
+      const cellsHtml = weekKeysSorted.map((wk, i) => {
+        const count = activityTrendValues[i];
+        const shadeIdx = count === 0 ? 0 : Math.min(4, Math.ceil((count / maxWeekCount) * 4));
+        const weekLabel = wk.replace('-W', ', week ');
+        return `<div style="aspect-ratio:1; border-radius:3px; background:${greenShades[shadeIdx]};" title="${weekLabel}: ${count} activit${count===1?'y':'ies'}"></div>`;
+      }).join('');
+      heatmapEl.innerHTML = `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(22px, 1fr)); gap:4px;">${cellsHtml}</div>`;
     }
  
     const maxCat = Math.max(1, ...Object.values(catCounts));
