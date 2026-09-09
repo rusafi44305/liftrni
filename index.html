@@ -2246,7 +2246,15 @@
   // set of fields rather than sharing a common base.
   const generalSupportSubforms = {
     'Production Support': [
-      liftIdOptional(),
+      // A plain text name for this task rather than the shared
+      // liftIdOptional() field — General Support entries aren't reliably
+      // tied to one specific lift, and a numeric-leaning ID field isn't
+      // right for what's meant to just identify the task by name. Kept
+      // optional, matching the field's previous behavior, just with a
+      // label and type that actually fit what it's for. Applied to all
+      // three sub-types below that previously used Lift ID (Production,
+      // QC, Other) — SCM Support already uses its own Supplier Name.
+      {t:'text', l:'Task Name', ph:'Optional — a short name for this task', section:'identity'},
       {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_production', section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
     ],
@@ -2256,18 +2264,11 @@
       {t:'textarea', l:'Notes', section:'description'}
     ],
     'QC Support': [
-      liftIdOptional(),
+      {t:'text', l:'Task Name', ph:'Optional — a short name for this task', section:'identity'},
       {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_qc', section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
     ],
     'Other Support': [
-      // A plain text name for this task rather than the shared
-      // liftIdOptional() field the other two sub-types use — Other
-      // Support entries aren't reliably tied to one specific lift the
-      // way Production/QC Support are, and a numeric-leaning ID field
-      // isn't right for what's meant to just identify the task by name.
-      // Kept optional, matching the field's previous behavior, just with
-      // a label and type that actually fit what it's for.
       {t:'text', l:'Task Name', ph:'Optional — a short name for this task', section:'identity'},
       {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_other', section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
@@ -6570,9 +6571,18 @@ for a competing inline style first.`;
         // applied to this card so a sub-category visually reads as
         // "belonging to" its category without competing with it.
         const catColorVar = CATEGORY_COLOR_VAR[catKey];
-        const cardBg = catColorVar ? `color-mix(in srgb, ${catColorVar} 7%, var(--surface-alt))` : 'var(--surface-alt)';
+        // Bumped from a subtler 7-16% mix to 26% — some browsers/webviews
+        // don't support the CSS color-mix() function this relies on at
+        // all, in which case the whole background declaration is invalid
+        // and silently ignored, falling back to the plain surface color
+        // with no tint whatsoever rather than a slightly-off one. The
+        // colored left border below uses a plain, universally-supported
+        // color value (no color-mix), so it stays a reliable fallback
+        // signal even if the background tint itself doesn't render.
+        const cardBg = catColorVar ? `color-mix(in srgb, ${catColorVar} 26%, var(--surface-alt))` : 'var(--surface-alt)';
         const headerColor = catColorVar || 'var(--accent)';
-        return `<div style="margin-bottom:18px; padding:12px 14px; border-radius:10px; background:${cardBg};">
+        const cardBorder = catColorVar ? `border-left:4px solid ${catColorVar};` : '';
+        return `<div style="margin-bottom:18px; padding:12px 14px 12px 16px; border-radius:10px; background:${cardBg}; ${cardBorder}">
           ${allSubtypes.length > 1 ? `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
             <span style="font-size:13px; font-weight:600; color:${headerColor};">${subType || 'Shared across all sub-categories'}</span>
             ${subType && customSubtypeIdByName[subType] ? `<button class="btn remove" style="padding:4px 6px;" onclick="deleteCustomSubtype('${customSubtypeIdByName[subType]}', '${subType.replace(/'/g,"\\'")}')" title="Delete this sub-category" aria-label="Delete sub-category"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
