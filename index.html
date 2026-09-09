@@ -2249,17 +2249,20 @@
       // A plain text name for this task rather than the shared
       // liftIdOptional() field — General Support entries aren't reliably
       // tied to one specific lift, and a numeric-leaning ID field isn't
-      // right for what's meant to just identify the task by name. Kept
-      // optional, matching the field's previous behavior, just with a
-      // label and type that actually fit what it's for. Applied to all
-      // three sub-types below that previously used Lift ID (Production,
-      // QC, Other) — SCM Support already uses its own Supplier Name.
+      // right for what's meant to just identify the task by name.
+      // Applied to all four sub-types below that previously used
+      // different identity fields (Production/QC/Other had Lift ID,
+      // SCM Support had its own Supplier Name) — all four now share
+      // "Task Name" for consistency across the category.
       {t:'text', l:'Task Name', ph:'Optional — a short name for this task', section:'identity'},
       {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_production', section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
     ],
     'SCM Support': [
-      {t:'text', l:'Supplier Name', req:true, section:'identity'},
+      // Matches the other three General Support sub-types (Production,
+      // QC, Other) now that all four use the same "Task Name" field
+      // instead of each having its own differently-named identity field.
+      {t:'text', l:'Task Name', ph:'Optional — a short name for this task', section:'identity'},
       {t:'chips', l:'Work Type', hint:'select all that apply', source:'generalsupport:work_type_scm', section:'details'},
       {t:'textarea', l:'Notes', section:'description'}
     ],
