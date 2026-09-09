@@ -7370,10 +7370,19 @@ for a competing inline style first.`;
           <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:${catColors[i % catColors.length]}; border-radius:3px 3px 0 0;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
         </div>
       `).join('');
-      const legendHtml = catSorted.map(([cat], i) => `<span style="width:7px; height:7px; border-radius:50%; background:${catColors[i % catColors.length]}; display:inline-block; margin-right:3px;"></span>`).join('');
+      // Each dot sits directly beside its own name as one wrapping chip,
+      // rather than all dots up front followed by a run-on comma list —
+      // the earlier version left no visual link between a color and the
+      // name it belonged to, which read as congested rather than compact.
+      const legendHtml = catSorted.map(([cat], i) => `
+        <span style="display:inline-flex; align-items:center; gap:4px; margin:0 10px 4px 0;">
+          <span style="width:7px; height:7px; border-radius:50%; background:${catColors[i % catColors.length]}; flex-shrink:0;"></span>
+          <span style="font-size:10.5px; color:var(--text-faint);">${catMeta[cat]?.name || cat}</span>
+        </span>
+      `).join('');
       document.getElementById('dashCategoryBreakdown').innerHTML = `
-        <div style="display:flex; align-items:flex-end; gap:6px; height:54px; margin-bottom:8px;">${barsHtml}</div>
-        <div style="font-size:10.5px; color:var(--text-faint); line-height:1.7;">${legendHtml}${catSorted.map(([cat]) => catMeta[cat]?.name || cat).join(', ')}</div>`;
+        <div style="display:flex; align-items:flex-end; gap:6px; height:54px; margin-bottom:10px;">${barsHtml}</div>
+        <div style="display:flex; flex-wrap:wrap;">${legendHtml}</div>`;
     }
  
     // Leaderboard: per engineer totals + their top category, built from the same filtered rows
@@ -7428,7 +7437,21 @@ for a competing inline style first.`;
     lbBody.innerHTML = leaderboard.length ? leaderboard.map(([id, e], i) => {
       const topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0];
       const kpiCell = canSeeIndividualKpi
-        ? `<div style="display:flex; align-items:center; gap:7px;"><div style="width:44px; height:5px; background:var(--border); border-radius:99px; overflow:hidden; flex-shrink:0;"><div style="width:${Math.max(0,Math.min(100,e.kpi))}%; height:100%; background:#1D9E75;"></div></div><span>${e.kpi.toFixed(1)}</span></div>`
+        ? (() => {
+            const pct = Math.max(0, Math.min(100, e.kpi));
+            // A bare var(--border) track read as a stray leftover line
+            // rather than a deliberate bar, especially at low scores
+            // where almost none of it is filled. A visible track
+            // background plus a minimum-width gradient fill (never
+            // fully empty, even at 0) makes it read as an intentional
+            // meter instead.
+            return `<div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:46px; height:6px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; flex-shrink:0;">
+                <div style="width:${Math.max(pct, 6)}%; height:100%; background:linear-gradient(90deg, #1D9E75, #4ADE9C); border-radius:99px;"></div>
+              </div>
+              <span>${e.kpi.toFixed(1)}</span>
+            </div>`;
+          })()
         : '<span title="Restricted by Superadmin" style="color:var(--text-faint);">🔒</span>';
       const errorCell = !canSeeErrorReports
         ? '<span title="Restricted by Superadmin" style="color:var(--text-faint);">🔒</span>'
