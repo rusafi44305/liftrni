@@ -529,6 +529,22 @@
      ("Overall Score — average of every performed month") pushed the
      grid item wider than its column, overflowing the page. */
   .profile-kpi-row > *{ min-width:0; }
+  /* Liquid glass treatment for the Dashboard's overview cards — same
+     blur/translucency/border pattern already used by the dock and the
+     account menu elsewhere in this app (color-mix on --surface/--border
+     plus backdrop-filter blur+saturate), just applied here too so the
+     effect reads as part of the app's existing design language rather
+     than a one-off style bolted onto a single page. Works across all 5
+     themes since it's built from each theme's own --surface/--border
+     rather than a fixed color. */
+  .liquid-glass-card{
+    background: color-mix(in srgb, var(--surface) 78%, transparent);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+  }
   @media (max-width: 480px){
     .stat-row.profile-kpi-row{ grid-template-columns:1fr !important; }
   }
@@ -1829,35 +1845,9 @@
       </div>
     </div>
 
-    <div style="display:flex; justify-content:center; gap:28px; margin-bottom:14px; flex-wrap:wrap;">
-      <div style="text-align:center;">
-        <div id="dashRingScore"></div>
-        <p style="font-size:11.5px; color:var(--text-faint); margin:6px 0 0;">Team score</p>
-      </div>
-      <div style="text-align:center;">
-        <div id="dashRingActivities"></div>
-        <p style="font-size:11.5px; color:var(--text-faint); margin:6px 0 0;">Activities</p>
-      </div>
-      <div style="text-align:center;">
-        <div id="dashRingLifts"></div>
-        <p style="font-size:11.5px; color:var(--text-faint); margin:6px 0 0;">Lifts touched</p>
-      </div>
-    </div>
-    <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-8px 0 18px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+    <div id="dashOverviewContainer"></div>
 
-    <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
-      <div class="panel">
-        <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
-        <div id="dashHeroTrendChart"></div>
-        <div id="dashHeroTrend" style="font-size:11.5px; font-weight:600; margin-top:8px;"></div>
-      </div>
-      <div class="panel">
-        <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
-        <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-      </div>
-    </div>
-
-    <div class="panel" style="margin-bottom:18px;">
+    <div class="panel liquid-glass-card" style="margin-bottom:18px;">
       <div class="field-label" style="margin-bottom:10px;">Activity by week</div>
       <div id="dashActivityTimeline"><div class="placeholder-note">Loading…</div></div>
     </div>
@@ -4008,7 +3998,7 @@
   }
   let sparkGradientCounter = 0;
   function sparklineSvg(values, color, w, h){
-    if(!values || values.length < 2) return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="var(--border)" stroke-width="1.5"/></svg>`;
+    if(!values || values.length < 2) return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="var(--border)" stroke-width="1.5"/></svg>`;
     const max = Math.max(...values, 1), min = Math.min(...values, 0);
     const range = Math.max(max - min, 1);
     // A little vertical padding keeps the curve's peaks/troughs from
@@ -4022,16 +4012,21 @@
     const lineD = smoothPathD(points);
     const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
     const gid = `sparkGrad${sparkGradientCounter}`;
+    const fid = `sparkGlow${sparkGradientCounter}`;
     sparkGradientCounter++;
-    return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
       <defs>
         <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${color}" stop-opacity="0.25"></stop>
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.4"></stop>
           <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
         </linearGradient>
+        <filter id="${fid}" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur"></feGaussianBlur>
+          <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
+        </filter>
       </defs>
       <path d="${areaD}" fill="url(#${gid})" stroke="none"></path>
-      <path d="${lineD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="${lineD}" fill="none" stroke="${color}" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" filter="url(#${fid})"></path>
     </svg>`;
   }
   const CATEGORY_ICON_SVG = {
@@ -7399,7 +7394,94 @@ for a competing inline style first.`;
   }
  
   let currentDashRows = [];
+  // The Dashboard overview's card groupings genuinely differ by screen
+  // size, not just reflow — on mobile, Team Score and the Weekly Trend
+  // share one card side by side; on desktop they're each their own card,
+  // and Weekly Trend instead pairs with By Category as a second row. A
+  // pure CSS grid-area reflow can reposition individual items but can't
+  // change which items share one visual card together, so this renders
+  // two genuinely different HTML structures and switches between them in
+  // JS based on viewport width — re-rendering only when actually
+  // crossing the breakpoint (dashOverviewMode tracks which one is live),
+  // not on every resize pixel.
+  let dashOverviewMode = null;
+  function renderDashOverviewIfNeeded(){
+    const isMobile = window.innerWidth < 700;
+    const mode = isMobile ? 'mobile' : 'desktop';
+    if(mode === dashOverviewMode) return false;
+    dashOverviewMode = mode;
+    const container = document.getElementById('dashOverviewContainer');
+    if(mode === 'mobile'){
+      container.innerHTML = `
+        <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:14px; margin-bottom:10px;">
+          <div id="dashRingScore" style="flex-shrink:0;"></div>
+          <div style="flex-shrink:0; text-align:center;"><p style="font-size:11px; color:var(--text-faint); margin:0;">Team score</p></div>
+          <div style="flex:1; min-width:0; border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:14px;">
+            <div class="field-label" style="margin-bottom:6px;">Weekly trend</div>
+            <div id="dashHeroTrendChart"></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; margin-bottom:10px;">
+          <div class="panel liquid-glass-card" style="flex:1; display:flex; align-items:center; gap:10px;">
+            <div id="dashRingActivities" style="flex-shrink:0;"></div>
+            <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Activities</p>
+          </div>
+          <div class="panel liquid-glass-card" style="flex:1; display:flex; align-items:center; gap:10px;">
+            <div id="dashRingLifts" style="flex-shrink:0;"></div>
+            <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
+          </div>
+        </div>
+        <div class="panel liquid-glass-card" style="margin-bottom:8px;">
+          <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
+          <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+        </div>
+        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin-bottom:18px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>`;
+    } else {
+      container.innerHTML = `
+        <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
+            <div id="dashRingScore" style="flex-shrink:0;"></div>
+            <p style="font-size:12px; color:var(--text-faint); margin:0;">Team score</p>
+          </div>
+          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
+            <div id="dashRingActivities" style="flex-shrink:0;"></div>
+            <p style="font-size:12px; color:var(--text-faint); margin:0;">Activities</p>
+          </div>
+          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
+            <div id="dashRingLifts" style="flex-shrink:0;"></div>
+            <p style="font-size:12px; color:var(--text-faint); margin:0;">Lifts touched</p>
+          </div>
+        </div>
+        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 14px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+        <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
+          <div class="panel liquid-glass-card">
+            <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
+            <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+          </div>
+          <div class="panel liquid-glass-card">
+            <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+            <div id="dashHeroTrendChart"></div>
+          </div>
+        </div>`;
+    }
+    return true;
+  }
+  window.addEventListener('resize', () => {
+    // Only matters (and only re-renders) if this crossed the 700px
+    // breakpoint since the last check — everyday window resizing that
+    // stays within the same mode should not tear down and rebuild the
+    // rings/chart on every single pixel of movement.
+    if(document.getElementById('view-dashboard')?.classList.contains('active') && renderDashOverviewIfNeeded()){
+      loadDashboard();
+    }
+  });
+
   async function loadDashboard(){
+    // Builds the mobile or desktop card grouping (see comment above) if
+    // it isn't already the current one — must happen before anything
+    // below tries to populate #dashRingScore etc., since those elements
+    // only exist once this has actually run at least once.
+    renderDashOverviewIfNeeded();
     // Defensive: if either pre-step fails (a network blip, anything), don't
     // let it silently abort the whole function and leave the page stuck on
     // "Loading…" forever — log it and continue straight to the main query,
@@ -7464,20 +7546,6 @@ for a competing inline style first.`;
     document.getElementById('dashHeroTrendChart').innerHTML = weekKeysSorted.length >= 2
       ? sparklineSvg(activityTrendValues, '#378ADD', 210, 44)
       : '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
-
-    // First week vs last week within the selected range — a range the
-    // user picked themselves has no natural "previous period" to compare
-    // against without a second query, so this compares within the data
-    // already fetched instead of guessing at what "before" should mean.
-    const trendEl = document.getElementById('dashHeroTrend');
-    if(activityTrendValues.length >= 2){
-      const diff = activityTrendValues[activityTrendValues.length-1] - activityTrendValues[0];
-      const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
-      trendEl.style.color = diff > 0 ? '#1D9E75' : diff < 0 ? 'var(--red, #D14343)' : 'var(--text-faint)';
-      trendEl.textContent = diff === 0 ? 'Flat across range' : `${arrow} ${Math.abs(diff)} vs first week in range`;
-    } else {
-      trendEl.textContent = '';
-    }
 
     // Activity by week: a plain bar chart — count printed above each
     // bar, real calendar date below it. Replaces an earlier curve-based
@@ -7545,7 +7613,7 @@ for a competing inline style first.`;
         const c = catColors[i % catColors.length];
         return `
         <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0;">
-          <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:${c}; border-radius:4px 4px 2px 2px;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
+          <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}80;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
         </div>
       `;}).join('');
       // Each dot sits directly beside its own name as one wrapping chip,
@@ -7604,9 +7672,16 @@ for a competing inline style first.`;
     // meant to answer "how's the team doing", not "who's most active".
     const scoresInRange = Object.values(byEngineer).map(e => e.kpi);
     const teamAvgScore = scoresInRange.length ? scoresInRange.reduce((s,v) => s+v, 0) / scoresInRange.length : 0;
-    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', 64, 'Team score', null, null, null, true);
-    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg(100, '#378ADD', 64, 'Activities', null, null, String(rows.length), true);
-    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg(100, '#D85A30', 64, 'Lifts touched', null, null, String(liftSet.size), true);
+    // Activities and Lifts are raw counts with no natural "percent of
+    // what" on their own — but shown relative to EACH OTHER (whichever
+    // is larger reads as the full ring, the smaller one its proportional
+    // share) gives a real, honest comparison instead of either an
+    // arbitrary fixed fill or two rings that are always both completely
+    // full regardless of the actual numbers.
+    const ringMaxOfTwo = Math.max(rows.length, liftSet.size, 1);
+    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', 64, 'Team score');
+    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg((rows.length/ringMaxOfTwo)*100, '#378ADD', 64, 'Activities', null, null, String(rows.length));
+    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg((liftSet.size/ringMaxOfTwo)*100, '#D85A30', 64, 'Lifts touched', null, null, String(liftSet.size));
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
