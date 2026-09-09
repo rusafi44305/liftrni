@@ -2521,7 +2521,20 @@
       // it, every re-render silently snapped back to showing the first listed
       // option, even when a different one was actually in effect.
       const opts = (f.opts || []).map(o => `<option value="${o}" ${o === f.currentValue ? 'selected' : ''}>${o}</option>`).join('');
-      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti" id="${f.id||''}" ${f.onchange ? `onchange="${f.onchange}"` : ''}>${opts}</select></div>`;
+      // The three sub-category selectors (Support Type, Report Type) each
+      // belong to exactly one category, so the field's own id is enough
+      // to know which color to use — no need to track "current category"
+      // separately just for this. A light tint of that category's own
+      // color (not the solid fill the top-level category dropdown uses)
+      // signals "this belongs to that category" without competing with
+      // the bolder top-level dropdown for attention.
+      const SUBTYPE_SELECTOR_CATEGORY = { generalSupportType: 'generalsupport', techSupportType: 'techsupport', reportTypeSelect: 'surveyissues' };
+      const subtypeCat = SUBTYPE_SELECTOR_CATEGORY[f.id];
+      const subtypeColorVar = subtypeCat ? CATEGORY_COLOR_VAR[subtypeCat] : null;
+      const subtypeStyle = subtypeColorVar
+        ? ` style="background-color:color-mix(in srgb, ${subtypeColorVar} 22%, var(--surface)); border-color:${subtypeColorVar};"`
+        : '';
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><select class="ti" id="${f.id||''}" ${f.onchange ? `onchange="${f.onchange}"` : ''}${subtypeStyle}>${opts}</select></div>`;
     }
     if(f.t==='textarea'){
       return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><textarea placeholder="${f.ph||''}"></textarea></div>`;
