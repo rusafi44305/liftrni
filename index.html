@@ -529,23 +529,6 @@
      ("Overall Score — average of every performed month") pushed the
      grid item wider than its column, overflowing the page. */
   .profile-kpi-row > *{ min-width:0; }
-  /* A soft, blurred color blob tucked in a panel's corner, behind its
-     real content (z-index:1 on the content siblings keeps it there) —
-     gives the dashboard's key panels some visual depth instead of a
-     flat single-color card, echoing the glow accents used across the
-     rest of the vibrancy/glass system already in this app. Kept
-     deliberately subtle (low opacity, heavily blurred) so it reads as
-     ambient light rather than a distracting colored patch — same glow
-     technique, scaled back from something like a hero marketing page to
-     something a person actually works in front of all day. */
-  .dash-glow-blob{
-    position:absolute; top:-30px; left:-30px; width:140px; height:140px;
-    border-radius:50%; filter:blur(38px); opacity:0.22; pointer-events:none;
-  }
-  html[data-theme="dark"] .dash-glow-blob, html[data-theme="midnight"] .dash-glow-blob,
-  html[data-theme="midnightblue"] .dash-glow-blob, html[data-theme="sunset"] .dash-glow-blob{
-    opacity:0.35;
-  }
   @media (max-width: 480px){
     .stat-row.profile-kpi-row{ grid-template-columns:1fr !important; }
   }
@@ -1846,42 +1829,37 @@
       </div>
     </div>
 
-    <div class="panel dash-glow-panel" style="position:relative; overflow:hidden; margin-bottom:14px;">
-      <div class="dash-glow-blob" style="background:#1D9E75; top:-40px; left:50%; transform:translateX(-50%);"></div>
-      <div style="position:relative; z-index:1;">
-        <div class="field-label" style="margin-bottom:14px; text-align:center;">Team overview</div>
-        <div style="display:flex; justify-content:center;">
-          <div id="dashConcentricRings" style="position:relative;"></div>
-        </div>
-        <div id="dashRingLegend" style="display:flex; justify-content:center; gap:24px; flex-wrap:wrap; margin-top:16px;"></div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin-top:8px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+    <div style="display:flex; justify-content:center; gap:28px; margin-bottom:14px; flex-wrap:wrap;">
+      <div style="text-align:center;">
+        <div id="dashRingScore"></div>
+        <p style="font-size:11.5px; color:var(--text-faint); margin:6px 0 0;">Team score</p>
+      </div>
+      <div style="text-align:center;">
+        <div id="dashRingActivities"></div>
+        <p style="font-size:11.5px; color:var(--text-faint); margin:6px 0 0;">Activities</p>
+      </div>
+      <div style="text-align:center;">
+        <div id="dashRingLifts"></div>
+        <p style="font-size:11.5px; color:var(--text-faint); margin:6px 0 0;">Lifts touched</p>
       </div>
     </div>
+    <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-8px 0 18px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
 
     <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
-      <div class="panel dash-glow-panel" style="position:relative; overflow:hidden;">
-        <div class="dash-glow-blob" style="background:#378ADD;"></div>
-        <div style="position:relative; z-index:1;">
-          <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
-          <div id="dashHeroTrendChart"></div>
-          <div id="dashHeroTrend" style="font-size:11.5px; font-weight:600; margin-top:8px;"></div>
-        </div>
+      <div class="panel">
+        <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+        <div id="dashHeroTrendChart"></div>
+        <div id="dashHeroTrend" style="font-size:11.5px; font-weight:600; margin-top:8px;"></div>
       </div>
-      <div class="panel dash-glow-panel" style="position:relative; overflow:hidden;">
-        <div class="dash-glow-blob" style="background:#D85A30;"></div>
-        <div style="position:relative; z-index:1;">
-          <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
-          <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-        </div>
+      <div class="panel">
+        <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
+        <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
       </div>
     </div>
 
-    <div class="panel dash-glow-panel" style="margin-bottom:18px; position:relative; overflow:hidden;">
-      <div class="dash-glow-blob" style="background:#378ADD; top:auto; bottom:-40px; left:-20px;"></div>
-      <div style="position:relative; z-index:1;">
-        <div class="field-label" style="margin-bottom:10px;">Activity timeline — by week in range</div>
-        <div id="dashActivityTimeline"><div class="placeholder-note">Loading…</div></div>
-      </div>
+    <div class="panel" style="margin-bottom:18px;">
+      <div class="field-label" style="margin-bottom:10px;">Activity by week</div>
+      <div id="dashActivityTimeline"><div class="placeholder-note">Loading…</div></div>
     </div>
  
     <section class="block">
@@ -3962,12 +3940,23 @@
   // the track behind it still uses var(--border) safely since that part
   // never needs to change color.
   let ringGradientCounter = 0;
-  function scoreRingSvg(percent, color, size, label, trackColor, textColor, displayText){
+  function scoreRingSvg(percent, color, size, label, trackColor, textColor, displayText, plain){
     const pct = Math.max(0, Math.min(100, percent));
     const r = 16.5;
     const circumference = 2 * Math.PI * r;
     const dash = (pct / 100) * circumference;
     const ariaText = displayText != null ? `${label || 'Value'}: ${displayText}` : `${label || 'Score'}: ${pct.toFixed(0)} percent`;
+    // plain=true skips the gradient/glow entirely for a flat, simple ring
+    // — used on the Dashboard, which wants a plain-infographic look;
+    // Profile keeps the richer version, so this stays an opt-in rather
+    // than changing the shared default.
+    if(plain){
+      return `<svg width="${size}" height="${size}" viewBox="0 0 42 42" role="img" aria-label="${ariaText}">
+        <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${trackColor || 'var(--border)'}" stroke-width="4"></circle>
+        <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${color}" stroke-width="4" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)"></circle>
+        <text x="21" y="24.5" text-anchor="middle" style="font-size:9px; font-weight:700; font-family:'Inter', sans-serif;" fill="${textColor || 'var(--text)'}">${displayText != null ? displayText : pct.toFixed(0) + '%'}</text>
+      </svg>`;
+    }
     // A unique gradient id per ring — reusing one fixed id across
     // multiple rings on the same page means the browser silently uses
     // whichever <linearGradient> happened to be defined first for all
@@ -3995,60 +3984,6 @@
       <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="3.5" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)" filter="url(#${fid})"></circle>
       <text x="21" y="24.5" text-anchor="middle" style="font-size:9px; font-weight:700; font-family:'Inter', sans-serif;" fill="${textColor || 'var(--text)'}">${displayText != null ? displayText : pct.toFixed(0) + '%'}</text>
     </svg>`;
-  }
-  // Three metrics as one set of true concentric rings sharing a single
-  // center (Apple Fitness style) rather than three separate side-by-side
-  // circles — each ring is its own percent-of-its-own-max, since the
-  // three metrics (a 0-100 score, a raw activity count, a raw lift
-  // count) have no shared scale to plot literally against each other;
-  // the point is showing three independent "how full is this" glances
-  // at once, not a literal proportional comparison between them.
-  // centerLabel/centerSub render as real text in the middle where the
-  // rings' shared center is otherwise empty space.
-  function concentricRingsSvg(rings, size, centerLabel, centerSub){
-    const baseR = 44, gap = 11;
-    const circumference = (r) => 2 * Math.PI * r;
-    // A real SVG <filter> (feGaussianBlur + feMerge) rather than a CSS
-    // filter:drop-shadow set via the style attribute — the CSS version
-    // is technically valid on SVG shapes, but support for applying it to
-    // dynamically injected (innerHTML) SVG is inconsistent across
-    // browsers in a way a native SVG filter element isn't. One shared
-    // filter per ring-set is enough; it doesn't need a per-ring color
-    // since blur doesn't need to know the shape's own color.
-    const filterId = `concGlow${ringGradientCounter}`;
-    const defsHtml = rings.map((ring, i) => {
-      const gid = `concGrad${i}_${ringGradientCounter}`;
-      return `<linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="${ring.color}" stop-opacity="0.65"></stop>
-          <stop offset="100%" stop-color="${ring.color}"></stop>
-        </linearGradient>`;
-    }).join('') + `<filter id="${filterId}" x="-50%" y="-50%" width="200%" height="200%">
-        <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="blur"></feGaussianBlur>
-        <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-      </filter>`;
-    const circlesHtml = rings.map((ring, i) => {
-      const r = baseR - i * gap;
-      const c = circumference(r);
-      // A ring at or near 0% would otherwise render as an invisible (or
-      // near-invisible) sliver rather than a visible ring at all — same
-      // "never fully empty" floor already used for the leaderboard's
-      // score bars, applied here for the same reason.
-      const pct = Math.max(3, Math.min(100, ring.pct));
-      const dash = (pct / 100) * c;
-      const gid = `concGrad${i}_${ringGradientCounter}`;
-      return `
-        <circle cx="50" cy="50" r="${r}" fill="transparent" stroke="var(--border)" stroke-width="7"></circle>
-        <circle cx="50" cy="50" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="7" stroke-linecap="round" stroke-dasharray="${dash.toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 50 50)" filter="url(#${filterId})"></circle>`;
-    }).join('');
-    ringGradientCounter++;
-    return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" role="img" aria-label="${rings.map(r => r.label + ': ' + r.displayValue).join(', ')}">
-      <defs>${defsHtml}</defs>
-      ${circlesHtml}
-    </svg>
-    <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; pointer-events:none;">
-      <div style="font-size:${size*0.16}px; font-weight:700; line-height:1;">${centerLabel}</div>
-      <div style="font-size:${size*0.055}px; color:var(--text-faint); margin-top:3px;">${centerSub}</div>
-    </div>`;
   }
   // Small SVG sparkline for trend rows — takes an array of numbers and
   // draws a simple polyline, scaled to fit. Returns a flat line if there
@@ -4087,21 +4022,16 @@
     const lineD = smoothPathD(points);
     const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
     const gid = `sparkGrad${sparkGradientCounter}`;
-    const fid = `sparkGlow${sparkGradientCounter}`;
     sparkGradientCounter++;
     return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
       <defs>
         <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="${color}" stop-opacity="0.35"></stop>
+          <stop offset="0%" stop-color="${color}" stop-opacity="0.25"></stop>
           <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
         </linearGradient>
-        <filter id="${fid}" x="-50%" y="-50%" width="200%" height="200%">
-          <feGaussianBlur in="SourceGraphic" stdDeviation="1" result="blur"></feGaussianBlur>
-          <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-        </filter>
       </defs>
       <path d="${areaD}" fill="url(#${gid})" stroke="none"></path>
-      <path d="${lineD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" filter="url(#${fid})"></path>
+      <path d="${lineD}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
     </svg>`;
   }
   const CATEGORY_ICON_SVG = {
@@ -5740,11 +5670,14 @@ for a competing inline style first.`;
     { key: 'techsupport', label: 'Technical Support', subTypes: ['Installation Support', 'Commissioning Support', 'After-Sales Support'] },
     { key: 'generalsupport', label: 'General Support', subTypes: ['Production Support', 'SCM Support', 'QC Support', 'Other Support'] },
     // Reports' 6 report types are fixed — each one has its own hardcoded
-    // form and (for Error Report specifically) its own scoring logic, so
-    // unlike the other categories with sub-types, Superadmins can add
-    // fields to any of these 6, but can't create a brand-new 7th one —
-    // it wouldn't have any real behavior behind it. That's why
-    // 'surveyissues' is deliberately left out of SUBCATEGORY_CAPABLE below.
+    // form and (for Error Report specifically) its own scoring logic.
+    // Custom sub-categories added here for Reports have no such behavior
+    // behind them (no dedicated form, no scoring), so treat any "7th"
+    // Reports type you see as a likely mistake — if one appears under
+    // both Reports and another category, it usually means the Category
+    // dropdown in this same modal was left on the wrong value when it
+    // was submitted once, then corrected and resubmitted — worth
+    // deleting the stray one rather than assuming it's meant to exist.
     { key: 'surveyissues', label: 'Reports', subTypes: ['Survey Data Mismatch Report', 'Error Report', 'Mechanical Components Service Report', 'Commissioning Damage Materials Report', 'After Sales Damage Materials Report', 'Electrical & Electronics Components Service Report'] },
   ];
 
@@ -7508,17 +7441,15 @@ for a competing inline style first.`;
       trendEl.textContent = '';
     }
 
-    // Activity timeline: a real, labeled chart replacing the earlier
-    // heatmap — that version only showed color intensity with the actual
-    // week/count hidden behind a hover tooltip, which never worked on
-    // mobile touch at all. This shows genuine calendar dates and the
-    // busiest week's count directly on the chart, readable without
-    // touching anything.
+    // Activity by week: a plain bar chart — count printed above each
+    // bar, real calendar date below it. Replaces an earlier curve-based
+    // timeline that looked sparse and weak with only a handful of data
+    // points; bars stay visually substantial regardless of how many
+    // weeks are in range, and don't rely on a hover or a precise glance
+    // at a line's height to read the actual number.
     const timelineEl = document.getElementById('dashActivityTimeline');
     if(weekKeysSorted.length < 1){
       timelineEl.innerHTML = '<div class="placeholder-note">No activity in this range.</div>';
-    } else if(weekKeysSorted.length === 1){
-      timelineEl.innerHTML = `<div class="placeholder-note">${activityTrendValues[0]} activit${activityTrendValues[0]===1?'y':'ies'} logged — need at least two weeks of data in range for a timeline.</div>`;
     } else {
       // Converts an ISO "YYYY-Wnn" key (as produced by weekOf above) back
       // to that week's Monday, purely for display — ISO week 1 is
@@ -7536,64 +7467,28 @@ for a competing inline style first.`;
         target.setUTCDate(week1Monday.getUTCDate() + (week - 1) * 7);
         return target;
       };
-      // Extra top padding specifically (not just the usual symmetric
-      // pad) — the peak label is drawn above its dot, and the peak by
-      // definition sits at the chart's highest point, so without this
-      // the label has nowhere to go but off the top edge of the chart.
-      const w = 500, h = 100, pad = 14, topPad = 26;
       const maxV = Math.max(1, ...activityTrendValues);
-      const minV = Math.min(0, ...activityTrendValues);
-      const range = Math.max(maxV - minV, 1);
-      const pts = activityTrendValues.map((v, i) => ({
-        x: (i/(activityTrendValues.length-1)) * w,
-        y: topPad + (h - topPad - pad) - ((v-minV)/range) * (h - topPad - pad),
-        v
-      }));
-      const lineD = smoothPathD(pts.map(p => ({x:p.x, y:p.y})));
-      const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
-      const peakIdx = activityTrendValues.indexOf(maxV);
-      // Same real-SVG-filter approach as the rings/sparklines above,
-      // rather than CSS filter:drop-shadow via style — and a genuinely
-      // unique gradient/filter id per render (via the shared counter)
-      // rather than a fixed "timelineFill" id, since this same markup
-      // gets rebuilt every time the date range or engineer filter is
-      // applied, not just once.
-      const tid = `timeline${sparkGradientCounter}`;
-      sparkGradientCounter++;
-      const dotsHtml = pts.map((p, i) => i === peakIdx
-        ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="5" fill="var(--surface)" stroke="#378ADD" stroke-width="2" filter="url(#${tid}glow)"></circle>
-           <text x="${p.x.toFixed(1)}" y="${(p.y-9).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--text)">${p.v}</text>`
-        : `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#378ADD" filter="url(#${tid}glow)"></circle>`
-      ).join('');
-      // With many weeks in range, printing every single date underneath
-      // would overlap into an unreadable smear — thinning to at most 5
-      // evenly-spaced labels (always including the first and last week)
-      // keeps every label legible regardless of how wide the range is.
-      const maxLabels = 5;
+      // With many weeks in range, a date label under every single bar
+      // would overlap into an unreadable smear as the bars get thinner —
+      // thinning to at most 8 labels (always keeping the first and last)
+      // keeps every visible label legible regardless of range width. The
+      // bar itself and its count stay for every week either way, just
+      // not every week's date underneath it.
+      const maxLabels = 8;
       const labelStep = Math.max(1, Math.ceil((weekKeysSorted.length - 1) / (maxLabels - 1)));
-      const dateLabels = weekKeysSorted
-        .map((k, i) => ({ i, date: isoWeekToDate(k) }))
-        .filter(({i}) => i % labelStep === 0 || i === weekKeysSorted.length - 1);
-      const labelsHtml = dateLabels.map(({date}) =>
-        `<span>${date.toLocaleDateString('en-GB', { day:'2-digit', month:'short' })}</span>`
-      ).join('');
-      timelineEl.innerHTML = `
-        <svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-          <defs>
-            <linearGradient id="${tid}fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#378ADD" stop-opacity="0.4"></stop>
-              <stop offset="100%" stop-color="#378ADD" stop-opacity="0"></stop>
-            </linearGradient>
-            <filter id="${tid}glow" x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="1.3" result="blur"></feGaussianBlur>
-              <feMerge><feMergeNode in="blur"></feMergeNode><feMergeNode in="SourceGraphic"></feMergeNode></feMerge>
-            </filter>
-          </defs>
-          <path d="${areaD}" fill="url(#${tid}fill)" stroke="none"></path>
-          <path d="${lineD}" fill="none" stroke="#378ADD" stroke-width="2.5" filter="url(#${tid}glow)"></path>
-          ${dotsHtml}
-        </svg>
-        <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--text-faint); margin-top:2px;">${labelsHtml}</div>`;
+      const barsHtml = weekKeysSorted.map((k, i) => {
+        const v = activityTrendValues[i];
+        const date = isoWeekToDate(k);
+        const showLabel = i % labelStep === 0 || i === weekKeysSorted.length - 1;
+        const dateLabel = date.toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+        return `
+          <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:5px; min-width:0;">
+            <span style="font-size:11px; font-weight:600;">${v}</span>
+            <div style="width:100%; height:${Math.max(6, Math.round((v/maxV)*60))}px; background:#378ADD; border-radius:4px 4px 2px 2px;" title="${dateLabel}: ${v} activit${v===1?'y':'ies'}"></div>
+            <span style="font-size:9.5px; color:var(--text-faint); white-space:nowrap;">${showLabel ? dateLabel : ''}</span>
+          </div>`;
+      }).join('');
+      timelineEl.innerHTML = `<div style="display:flex; align-items:flex-end; gap:8px; height:90px;">${barsHtml}</div>`;
     }
  
     const maxCat = Math.max(1, ...Object.values(catCounts));
@@ -7612,7 +7507,7 @@ for a competing inline style first.`;
         const c = catColors[i % catColors.length];
         return `
         <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0;">
-          <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:linear-gradient(180deg, color-mix(in srgb, ${c} 70%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}70;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
+          <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:${c}; border-radius:4px 4px 2px 2px;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
         </div>
       `;}).join('');
       // Each dot sits directly beside its own name as one wrapping chip,
@@ -7671,29 +7566,9 @@ for a competing inline style first.`;
     // meant to answer "how's the team doing", not "who's most active".
     const scoresInRange = Object.values(byEngineer).map(e => e.kpi);
     const teamAvgScore = scoresInRange.length ? scoresInRange.reduce((s,v) => s+v, 0) / scoresInRange.length : 0;
-    // Three concentric rings sharing one center rather than three
-    // separate circles — Activities/Lifts stay fully filled since
-    // they're raw counts with no natural "percent of what" to show
-    // partially (same honesty rule as before, just carried into the new
-    // layout); Team Score is the only one of the three with a real
-    // percent meaning, so it's the only one that visually varies.
-    const ringsContainer = document.getElementById('dashConcentricRings');
-    ringsContainer.style.width = ringsContainer.style.height = '150px';
-    ringsContainer.innerHTML = concentricRingsSvg([
-      { pct: teamAvgScore, color: '#1D9E75', label: 'Team score', displayValue: teamAvgScore.toFixed(1) + '%' },
-      { pct: 100, color: '#378ADD', label: 'Activities', displayValue: String(rows.length) },
-      { pct: 100, color: '#D85A30', label: 'Lifts touched', displayValue: String(liftSet.size) }
-    ], 150, teamAvgScore.toFixed(0), engineerId ? 'score in range' : 'team score');
-    document.getElementById('dashRingLegend').innerHTML = [
-      { color:'#1D9E75', label:'Team score', value: teamAvgScore.toFixed(1) + '%' },
-      { color:'#378ADD', label:'Activities', value: String(rows.length) },
-      { color:'#D85A30', label:'Lifts touched', value: String(liftSet.size) }
-    ].map(item => `
-      <div style="display:flex; align-items:center; gap:7px;">
-        <span style="width:9px; height:9px; border-radius:50%; background:${item.color}; box-shadow:0 0 5px ${item.color}90; flex-shrink:0;"></span>
-        <span style="font-size:12.5px;">${item.label} <b style="margin-left:2px;">${item.value}</b></span>
-      </div>
-    `).join('');
+    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', 64, 'Team score', null, null, null, true);
+    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg(100, '#378ADD', 64, 'Activities', null, null, String(rows.length), true);
+    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg(100, '#D85A30', 64, 'Lifts touched', null, null, String(liftSet.size), true);
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
@@ -7714,7 +7589,7 @@ for a competing inline style first.`;
             // meter instead.
             return `<div style="display:flex; align-items:center; gap:8px;">
               <div style="width:46px; height:6px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; flex-shrink:0;">
-                <div style="width:${Math.max(pct, 6)}%; height:100%; background:linear-gradient(90deg, #1D9E75, #4ADE9C); border-radius:99px; box-shadow:0 0 6px #1D9E7590;"></div>
+                <div style="width:${Math.max(pct, 6)}%; height:100%; background:#1D9E75; border-radius:99px;"></div>
               </div>
               <span>${e.kpi.toFixed(1)}</span>
             </div>`;
