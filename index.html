@@ -17,22 +17,26 @@
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
   :root{
-    --bg:#DDDEE3;
-    --surface:#FFFFFF;
-    --surface-alt:#EEEFF2;
-    --border:#DCDDE2;
-    --text:#0A0E17;
+    --bg:#F0F1F5;
+    --surface:#EBEAEF;
+    --surface-alt:#E3E2E8;
+    --border:#D4D5DC;
+    --text:#1A1B1E;
     --text-dim:#454E5E;
     --text-faint:#646C7B;
     --bg-anim-ink:#5A6478;
-    --accent:#2952D9;
-    --accent-rgb:41,82,217;
+    --accent:#4A78E0;
+    --accent-rgb:74,120,224;
     --amber:#A85F00;
     --green:#0F7A4C;
     --red:#B3291E;
     --radius:14px;
     --shadow:0 1px 2px rgba(10,14,23,0.05), 0 4px 12px -4px rgba(10,14,23,0.10);
     --header-bg:#EEF0F4;
+    /* Gradient wash colors, sampled directly from the reference image
+       (2026-09-10) — warm peach top-left, cool blue top-right. */
+    --wash-1:#F9F2EA;
+    --wash-2:#E1F2F9;
  
     /* dim tints auto-derive from the solid color + current surface, so every theme gets a correct tint for free */
     --accent-dim:color-mix(in srgb, var(--accent) 14%, var(--surface));
@@ -67,114 +71,37 @@
   }
  
   /* ---------- THEMES ---------- */
-  /* "dark" is a standard mid-gray dark mode (closer to macOS/iOS dark). "midnight" is a much
-     deeper near-black OLED tier — the two should feel clearly different in brightness. */
+  /* "dark" is the only dark theme now — Midnight, Steel, and Sunset were
+     removed (2026-09-10) to match the two-theme reference exactly. */
   html[data-theme="dark"]{
-    --bg:#202329; --surface:#454B58; --surface-alt:#4F5663; --border:#6B7280;
-    --text:#F5F6F8; --text-dim:#C7CDD9; --text-faint:#A3ACBC; --bg-anim-ink:#8B96B8;
-    --accent:#6C9BFF; --accent-rgb:108,155,255; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
+    --bg:#0D1218; --surface:#2B2B2B; --surface-alt:#333333; --border:#454545;
+    --text:#ECEDEF; --text-dim:#C7CDD9; --text-faint:#A3ACBC; --bg-anim-ink:#8B96B8;
+    --accent:#5B8DEF; --accent-rgb:91,141,239; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
     --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5; --c-techsupport:#E8AD6C;
     --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8; --c-surveyissues:#F47171;
     --shadow:0 1px 2px rgba(0,0,0,0.22), 0 4px 12px -4px rgba(0,0,0,0.30);
-    --header-bg:#202329;
-  }
-  html[data-theme="midnight"]{
-    --bg:#05070D; --surface:#1A2233; --surface-alt:#212B3F; --border:#384260;
-    --text:#F5F7FB; --text-dim:#ABB4C7; --text-faint:#8790A5; --bg-anim-ink:#7482A6;
-    --accent:#5B8DEF; --accent-rgb:91,141,239; --amber:#E0A23D; --green:#34D399; --red:#F0685C;
-    --c-rni:#9A82F0; --c-presales:#5C97F5; --c-client:#3FC2C2; --c-postsales:#3FCF8E;
-    --c-install:#E3A25B; --c-commission:#F0954D; --c-aftersales:#F06FA0; --c-production:#8890F0; --c-techsupport:#E3A25B;
-    --c-requisition:#3FBCD1; --c-scm:#B4D64A; --c-existingdev:#C7B79A; --c-surveyissues:#F47171;
-    --shadow:0 1px 2px rgba(0,0,0,0.35), 0 4px 14px -4px rgba(0,0,0,0.45);
-    --header-bg:#05070D;
-  }
-  /* "Sunset" — a warm, amber/gold-cast theme (still dark-based, matching
-     how every other theme option here works) rather than a light mode.
-     Surface again clearly lighter than bg for the same reason as above. */
-  html[data-theme="sunset"]{
-    --bg:#1C130B; --surface:#46331F; --surface-alt:#503A24; --border:#6E5335;
-    --text:#FFF4E2; --text-dim:#EAD3B3; --text-faint:#C3A67E; --bg-anim-ink:#C99354;
-    --accent:#FF9F1C; --accent-rgb:255,159,28; --amber:#FFB648; --green:#5FD068; --red:#FF6B5C;
-    --c-rni:#C9A6F5; --c-presales:#7FB8FF; --c-client:#5FD6C4; --c-postsales:#7BDE8E;
-    --c-install:#FFB65E; --c-commission:#FFA255; --c-aftersales:#FF8FAE; --c-production:#B2A6FF; --c-techsupport:#FFB65E;
-    --c-requisition:#5FD0DE; --c-scm:#D8E85A; --c-existingdev:#E0C89E; --c-surveyissues:#FF8570;
-    --shadow:0 1px 2px rgba(20,10,2,0.35), 0 4px 14px -4px rgba(30,15,4,0.45);
-    --header-bg:#1C130B;
-  }
-
-  /* "Steel" — the one theme here where surface is LIGHTER than bg rather
-     than darker: a genuinely dark night background, but cards, panels,
-     and input fields are light grey, like brushed steel panels sitting
-     on a dark shop floor. Every other theme keeps bg and surface in the
-     same tonal range (both dark, or both light for White), so one single
-     --text/--text-dim/--text-faint value works everywhere in it. That
-     assumption breaks here on purpose, so two separate rule sets exist:
-     this one (light text, for whatever sits directly on the dark --bg —
-     page titles, nav labels, the login screen) and a second, explicit
-     override further below (dark text) scoped to every card/surface
-     container class in the app, so text inside a light card is
-     actually readable against it instead of inheriting light-on-light.
-     Category/tag colors below are the same ones already tuned for
-     White's white surface (see :root, and its own comment on why they're
-     darkened) — reused as-is since they face the identical problem:
-     needing to read as text on a light background, not a dark one. */
-  html[data-theme="steel"]{
-    --bg:#0B0D12; --surface:#E7E9ED; --surface-alt:#DADDE3; --border:#B0B4BC;
-    --text:#F2F4F7; --text-dim:#C3C8D1; --text-faint:#8C93A0; --bg-anim-ink:#4A5570;
-    --accent:#3D74E0; --accent-rgb:61,116,224; --amber:#A85F00; --green:#0F7A4C; --red:#B3291E;
-    --c-rni:#6E4FD1; --c-presales:#1D6FD9; --c-client:#0C7979; --c-postsales:#167C51;
-    --c-install:#A15B18; --c-commission:#AF5200; --c-aftersales:#C23D74; --c-production:#4A50C9; --c-techsupport:#A15B18;
-    --c-requisition:#0C7788; --c-scm:#597600; --c-existingdev:#6B5B44; --c-surveyissues:#B31919;
-    --shadow:0 1px 2px rgba(0,0,0,0.30), 0 4px 14px -4px rgba(0,0,0,0.40);
-    --header-bg:#0B0D12;
-  }
-  /* The dark-text-on-light-card override for Steel — every class in this
-     app that actually paints a light surface underneath its own text.
-     2026-09-10 (second pass): found several more gaps beyond the vibrancy
-     rule's own list — small header-level badges that carry their own
-     light surface-alt circle (.avatar, #notifBell, .role-icon) while
-     sitting in the dark page header, plus nav.tabs itself (its .active
-     state was covered, the tab bar's own resting background wasn't), and
-     a few defensive additions (.btn.reject/.view-details, .tag.gray)
-     that were probably fine via inheritance already but cost nothing to
-     make explicit rather than assumed. Text darkened further to a true
-     near-black rather than a dark gray, as asked. */
-  html[data-theme="steel"] .panel, html[data-theme="steel"] .stat-card, html[data-theme="steel"] .mytask-item,
-  html[data-theme="steel"] .feed-item, html[data-theme="steel"] .approve-row, html[data-theme="steel"] .form-card,
-  html[data-theme="steel"] .role-card, html[data-theme="steel"] .cat-tile, html[data-theme="steel"] .t-card,
-  html[data-theme="steel"] .lift-header, html[data-theme="steel"] .queued-item, html[data-theme="steel"] .gantt-wrap,
-  html[data-theme="steel"] .chip-opt, html[data-theme="steel"] .searchbar, html[data-theme="steel"] .mt-desc-wrap,
-  html[data-theme="steel"] .status-chip, html[data-theme="steel"] .clock-pill, html[data-theme="steel"] .pending-pill,
-  html[data-theme="steel"] .devDetailPanel, html[data-theme="steel"] .liquid-glass-card,
-  html[data-theme="steel"] .gantt-project-card, html[data-theme="steel"] .proj-task-row,
-  html[data-theme="steel"] input, html[data-theme="steel"] select, html[data-theme="steel"] textarea, html[data-theme="steel"] table,
-  html[data-theme="steel"] nav.tabs, html[data-theme="steel"] .theme-switch, html[data-theme="steel"] #notifPanel,
-  html[data-theme="steel"] .au-avatar, html[data-theme="steel"] .avatar, html[data-theme="steel"] #notifBell,
-  html[data-theme="steel"] .role-icon, html[data-theme="steel"] .btn.reject, html[data-theme="steel"] .btn.view-details,
-  html[data-theme="steel"] .tag.gray, html[data-theme="steel"] #chatMentionDropdown, html[data-theme="steel"] #categoryLinksDropdown{
-    --text:#000000; --text-dim:#33363D; --text-faint:#595E68;
+    --header-bg:#0D1218;
+    /* Gradient wash colors, sampled directly from the reference image
+       (2026-09-10) — warm gray-brown top-left, cool blue top-right. */
+    --wash-1:#2B2D2C;
+    --wash-2:#202E37;
   }
 
   /* 2026-09-10: replaced the earlier glow (text-shadow) treatment — asked
      to remove it and use a light accent-tinted text color instead, on
      the same set of elements (headings, section titles, big stat
-     numbers, ring numbers, buttons), for Dark/Midnight only now that
-     Midnight Blue has been removed. A 45%-accent mix keeps these
-     readable as plain text (unlike glow, which blurred small text) while
-     still reading as a deliberate, tinted accent rather than the default
-     flat text color. currentColor isn't usable here the way it was for
-     glow (this sets the color itself, not a shadow around whatever color
-     already exists), so each rule explicitly mixes that theme's own
-     --accent with --text. */
+     numbers, ring numbers, buttons), Dark only now that Midnight,
+     Midnight Blue, Steel, and Sunset have all been removed. A 45%-accent
+     mix keeps these readable as plain text (unlike glow, which blurred
+     small text) while still reading as a deliberate, tinted accent
+     rather than the default flat text color. currentColor isn't usable
+     here the way it was for glow (this sets the color itself, not a
+     shadow around whatever color already exists), so this mixes Dark's
+     own --accent with --text. */
   html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3,
   html[data-theme="dark"] .hero-title, html[data-theme="dark"] .block-title, html[data-theme="dark"] .panel-title,
   html[data-theme="dark"] .stat-card .n, html[data-theme="dark"] .btn, html[data-theme="dark"] svg text{
-    color: color-mix(in srgb, var(--accent) 45%, var(--text));
-  }
-  html[data-theme="midnight"] h1, html[data-theme="midnight"] h2, html[data-theme="midnight"] h3,
-  html[data-theme="midnight"] .hero-title, html[data-theme="midnight"] .block-title, html[data-theme="midnight"] .panel-title,
-  html[data-theme="midnight"] .stat-card .n, html[data-theme="midnight"] .btn, html[data-theme="midnight"] svg text{
     color: color-mix(in srgb, var(--accent) 45%, var(--text));
   }
   html{transition:background .2s ease;}
@@ -182,7 +109,21 @@
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
     font-family:'Inter',sans-serif;
-    background:var(--bg);
+    /* 2026-09-10 (revised): replaced the earlier generic accent/amber/
+       green-derived gradient with the actual warm/cool wash colors
+       sampled directly from the reference images (peach top-left, blue
+       top-right, fading to base --bg) — confirmed by pixel-sampling the
+       reference JPEGs rather than guessing. --wash-1/--wash-2 are
+       defined per theme (White, Dark) right next to that theme's other
+       colors, so this one rule still needs no per-theme special-casing
+       even though the exact hues are now fixed rather than derived.
+       Sits behind the existing #bgAnim line-art overlay, layering with
+       it rather than replacing it. */
+    background:
+      radial-gradient(ellipse 420px 280px at 25% 6%, var(--wash-1) 0%, transparent 65%),
+      radial-gradient(ellipse 420px 280px at 78% 8%, var(--wash-2) 0%, transparent 65%),
+      var(--bg);
+    background-attachment:fixed;
     color:var(--text);
     -webkit-font-smoothing:antialiased;
   }
@@ -609,8 +550,9 @@
   }
   /* Same missing-color issue as the vibrancy rule above, found in 3
      inline-styled dropdowns that set a background but never a color at
-     all — harmless in every theme where bg and surface are the same
-     tone as body's own text color anyway, but a real gap in Steel. */
+     all — harmless while bg/surface stay the same tonal range, but a
+     real gap for any theme where they don't (this fix predates Steel's
+     removal but is still correct/harmless to keep). */
   #notifPanel, #chatMentionDropdown, #categoryLinksDropdown{ color: var(--text); }
   /* There was no hover state at all before this — asked to make the
      glass effect "more significant but gentle," matching how macOS
@@ -1165,10 +1107,10 @@
      row, not as the intended glass-edge effect. Denser tabular data
      just isn't a good host surface for this decoration. */
   .no-shine::before{ display:none !important; }
-  html[data-theme="dark"] .panel::before, html[data-theme="midnight"] .panel::before, html[data-theme="steel"] .panel::before, html[data-theme="sunset"] .panel::before,
-  html[data-theme="dark"] .stat-card::before, html[data-theme="midnight"] .stat-card::before, html[data-theme="steel"] .stat-card::before, html[data-theme="sunset"] .stat-card::before,
-  html[data-theme="dark"] .mytask-item::before, html[data-theme="midnight"] .mytask-item::before, html[data-theme="steel"] .mytask-item::before, html[data-theme="sunset"] .mytask-item::before,
-  html[data-theme="dark"] .feed-item::before, html[data-theme="midnight"] .feed-item::before, html[data-theme="steel"] .feed-item::before, html[data-theme="sunset"] .feed-item::before{
+  html[data-theme="dark"] .panel::before,
+  html[data-theme="dark"] .stat-card::before,
+  html[data-theme="dark"] .mytask-item::before,
+  html[data-theme="dark"] .feed-item::before{
     opacity:0.5;
   }
   /* The account menu specifically needs to stay near-opaque rather than
@@ -1264,7 +1206,7 @@
 <style>
   #bgAnim{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
   #bgAnim svg{ position:absolute; opacity:0.19; }
-  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg, html[data-theme="steel"] #bgAnim svg, html[data-theme="sunset"] #bgAnim svg{ opacity:0.13; }
+  html[data-theme="dark"] #bgAnim svg{ opacity:0.13; }
   #bgAnim svg *{ stroke:var(--bg-anim-ink, var(--text-faint)); }
   #bgAnim svg .bg-fill{ fill:var(--bg-anim-ink, var(--text-faint)); stroke:none; }
 
@@ -1347,8 +1289,7 @@
      since these sit directly behind real text and cards, not empty
      space. */
   #bgAnim svg.bg-center-svg{ opacity:0.13; }
-  html[data-theme="dark"] #bgAnim svg.bg-center-svg, html[data-theme="midnight"] #bgAnim svg.bg-center-svg,
-  html[data-theme="steel"] #bgAnim svg.bg-center-svg, html[data-theme="sunset"] #bgAnim svg.bg-center-svg{ opacity:0.09; }
+  html[data-theme="dark"] #bgAnim svg.bg-center-svg{ opacity:0.09; }
   .bg-bolt-1{ left:38vw; top:12vh; width:56px; height:56px; animation:bgGearCW 46s linear infinite; transform-box:fill-box; transform-origin:center; }
   .bg-bolt-2{ left:62vw; top:52vh; width:38px; height:38px; animation:bgGearCCW 32s linear infinite; transform-box:fill-box; transform-origin:center; }
   .bg-circuit-svg{ left:44vw; top:32vh; width:180px; height:120px; }
@@ -1625,11 +1566,8 @@
             Theme
           </span>
           <div class="theme-switch" style="margin:0;">
-            <button class="theme-dot" data-theme-name="white" style="background:#D3D4D9;" onclick="setTheme('white', this)" title="Light"></button>
-            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
-            <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
-            <button class="theme-dot" data-theme-name="steel" style="background:linear-gradient(135deg, #0B0D12, #E7E9ED);" onclick="setTheme('steel', this)" title="Steel"></button>
-            <button class="theme-dot" data-theme-name="sunset" style="background:linear-gradient(135deg, #1C130B, #FF9F1C);" onclick="setTheme('sunset', this)" title="Sunset"></button>
+            <button class="theme-dot" data-theme-name="white" style="background:#EBEAEF;" onclick="setTheme('white', this)" title="Light"></button>
+            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #5B8DEF);" onclick="setTheme('dark', this)" title="Dark"></button>
           </div>
         </div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="openTutorial()">
@@ -1678,10 +1616,6 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
     <span>Home</span>
   </button>
-  <button data-view="search" title="Lift Search">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><circle cx="11" cy="11" r="1.7" fill="currentColor" stroke="none"/></svg>
-    <span>Lift Trace</span>
-  </button>
   <button data-view="mytasks" title="My Tasks">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><rect x="9" y="2.3" width="6" height="3" rx="1"/><path d="M9 10.5h6M9 14h6M9 17.5h3.5"/></svg>
     <span>My Tasks</span>
@@ -1727,8 +1661,8 @@
         <p class="hero-desc">Search any Lift ID to see its full history — from first survey to after sales support — logged by the engineer who ever did the work.</p>
         <div class="searchbar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="homeLiftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') quickTraceFromHome();">
-          <button onclick="quickTraceFromHome()">Trace</button>
+          <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
+          <button onclick="runLiftSearch()">Trace</button>
         </div>
         <div class="search-hint">Search by Lift ID, project name, or any keyword in the entry.</div>
       </div>
@@ -1753,7 +1687,23 @@
         </div>
       </div>
     </div>
- 
+
+    <!-- 2026-09-10: Lift Trace merged into Home — this used to be its own
+         separate nav tab/page. Searching from the hero above now shows
+         results right here instead of navigating away. Empty/hidden
+         until an actual search runs, so a normal visit to Home looks
+         exactly as it always did. -->
+    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
+      <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
+      <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
+      <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
+        <option value="">All sections</option>
+        <option value="Mechanical">Mechanical</option>
+        <option value="Electrical">Electrical</option>
+      </select>
+    </div>
+    <div id="liftSearchResult"></div>
+
     <div class="stat-row">
       <div class="stat-card"><div class="n" id="homeStatLifts">—</div><div class="l">Distinct lifts tracked</div><div class="delta flat" id="homeStatLiftsDelta">—</div></div>
       <div class="stat-card"><div class="n" id="homeStatActivities">—</div><div class="l">Activities logged</div><div class="delta flat" id="homeStatActivitiesDelta">—</div></div>
@@ -1791,34 +1741,6 @@
       </div>
     </section>
   </div>
- 
-  <!-- ============ LIFT SEARCH ============ -->
-  <div class="view" id="view-search">
-    <div class="searchbar" style="max-width:100%; margin-bottom:14px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
-      <button onclick="runLiftSearch()">Trace</button>
-    </div>
-
-    <!-- Filters narrow down the current search results client-side —
-         they don't re-query the database, so they only make sense (and
-         only get populated) once a search has actually run. Engineer
-         options are built from whoever actually appears in the current
-         results, not the whole company roster, since that's the only
-         list that's ever useful here. -->
-    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
-      <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
-      <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
-      <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
-        <option value="">All sections</option>
-        <option value="Mechanical">Mechanical</option>
-        <option value="Electrical">Electrical</option>
-      </select>
-    </div>
-
-    <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace to see its full history across every category.</div></div>
-  </div>
-
  
   <!-- ============ CATEGORY LOG ============ -->
   <div class="view" id="view-category">
@@ -2013,14 +1935,11 @@
         <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
           <div>
             <div style="font-size:13.5px; font-weight:600;">Theme</div>
-            <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, Midnight (OLED), Steel, or Sunset</div>
+            <div style="font-size:11.5px; color:var(--text-faint);">Light or Dark</div>
           </div>
           <div class="theme-switch">
-            <button class="theme-dot" data-theme-name="white" style="background:#D3D4D9;" onclick="setTheme('white', this)" title="Light"></button>
-            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
-            <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
-            <button class="theme-dot" data-theme-name="steel" style="background:linear-gradient(135deg, #0B0D12, #E7E9ED);" onclick="setTheme('steel', this)" title="Steel"></button>
-            <button class="theme-dot" data-theme-name="sunset" style="background:linear-gradient(135deg, #1C130B, #FF9F1C);" onclick="setTheme('sunset', this)" title="Sunset"></button>
+            <button class="theme-dot" data-theme-name="white" style="background:#EBEAEF;" onclick="setTheme('white', this)" title="Light"></button>
+            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #5B8DEF);" onclick="setTheme('dark', this)" title="Dark"></button>
           </div>
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0 8px; border-top:1px solid var(--border); margin-top:8px;">
@@ -3308,7 +3227,7 @@
  
   // ---- Live date/time (nav pill + dashboard "as of") ----
   // ---- Admin: remove a user from the system ----
-  // ---- Theme switcher (white / dark / midnight) ----
+  // ---- Theme switcher (white / dark) ----
   // Lives in the Profile page's Appearance section and in the profile-corner
   // dropdown menu (both share the .theme-dot markup, so setTheme keeps every
   // instance of it in sync). Persisted to localStorage so it survives reloads.
@@ -3330,7 +3249,7 @@
     // 2026-09-10: Midnight Blue was removed — anyone whose browser still
     // has it saved from before falls back to White here instead of
     // applying a data-theme value with no matching CSS left behind for it.
-    if(saved === 'midnightblue') saved = 'white';
+    if(['midnightblue','midnight','steel','sunset'].includes(saved)) saved = 'white';
     if(saved === 'white'){ document.documentElement.removeAttribute('data-theme'); }
     else{ document.documentElement.setAttribute('data-theme', saved); }
     document.documentElement.style.colorScheme = saved === 'white' ? 'light' : 'dark';
@@ -3857,7 +3776,9 @@
     { date:'2026-09-10', summary:'Three fixes to the previous update. (1) Steel theme bug: text was rendering light-on-light on cards like the Home page\'s Recent Activity feed and My Tasks rows — the dark-text override only covered .panel-type "holder" cards, missing most of the shared vibrancy rule\'s class list (.mytask-item, .feed-item, .chip-opt, .status-chip, and others). Rebuilt to cover every class from that rule directly, confirmed by cross-checking the two lists match. (2) Card borders thinned across every theme — border opacity 55%→35%, the bright top-edge highlight toned down 45%→25% white, since the combination was reading as one thick edge rather than a thin one; Steel\'s own border color also lightened for a subtler look against its light cards. (3) Nested item/task cards (My Tasks rows, Recent Activity entries, timeline cards, chips, pills) were sharing the exact same background shade as the holder panel they sit inside, with no visual separation — split into two rules so items now render a lighter shade than their holder in every theme.' },
     { date:'2026-09-10', summary:'Further UI polish. Steel theme: text darkened to true near-black (was a dark gray), and found several more light-on-light gaps beyond the previous pass — small header-level badges that carry their own light circle (the user avatar, notification bell, role icon) while sitting in the dark page header, plus nav.tabs\' own resting background (only its active state was covered before). Card borders removed entirely, everywhere, every theme — "liquid glass with no border" — kept as a declared but fully transparent 1px border rather than deleted outright, so box-sizing keeps every card\'s rendered dimensions pixel-identical (visual-only change, no layout shift). Definition now comes from the backdrop blur and shadow/inset highlight alone. Profile page: Score/Time now stays a 2x2 grid on mobile too instead of collapsing to a single stacked column, matching desktop.' },
     { date:'2026-09-10', summary:'Profile\'s Score/Time cards simplified on mobile only — desktop is completely untouched. The verbose text (label, trend arrow, task-count line) is hidden below 700px width, leaving just the ring plus one short caption ("This month", "Overall", "Time (month)", "Time (all-time)") instead of the fuller desktop wording. The ring\'s own number stays fully visible either way — that\'s real SVG text drawn as part of the ring itself, not something being hidden — and every ring still carries a proper aria-label for screen readers regardless of what\'s visible on screen, so nothing lost accessibility, just visual clutter.' },
-    { date:'2026-09-10', summary:'Found the real cause of Steel\'s remaining white-text spots (My Tasks, Recent Activity, timeline entries): redefining the --text custom property on a container only helps descendants that explicitly write color:var(--text) themselves — elements like a task title that set no color of their own just inherit the plain resolved color from body, computed once up there using body\'s own (unrelated, correctly-light) --text value, never re-checking anything defined further down. Fixed at the source: every holder/item card class now explicitly declares color:var(--text), so anything colorless inside correctly inherits from its actual container instead of from body. Same fix applied to 3 inline-styled dropdowns that had a background but no color property at all. Holder-vs-item shade contrast strengthened (was too subtle to notice) in both Steel and White. Reduced padding/gaps across the most widely-shared layout rules (main content area, .panel, .stat-row, .split-grid, task/feed list items, form cards) for a more compact, denser UI — the honest scope here is the big shared rules that affect most pages at once, not an exhaustive pass over every individual inline margin in the file.' }
+    { date:'2026-09-10', summary:'Found the real cause of Steel\'s remaining white-text spots (My Tasks, Recent Activity, timeline entries): redefining the --text custom property on a container only helps descendants that explicitly write color:var(--text) themselves — elements like a task title that set no color of their own just inherit the plain resolved color from body, computed once up there using body\'s own (unrelated, correctly-light) --text value, never re-checking anything defined further down. Fixed at the source: every holder/item card class now explicitly declares color:var(--text), so anything colorless inside correctly inherits from its actual container instead of from body. Same fix applied to 3 inline-styled dropdowns that had a background but no color property at all. Holder-vs-item shade contrast strengthened (was too subtle to notice) in both Steel and White. Reduced padding/gaps across the most widely-shared layout rules (main content area, .panel, .stat-row, .split-grid, task/feed list items, form cards) for a more compact, denser UI — the honest scope here is the big shared rules that affect most pages at once, not an exhaustive pass over every individual inline margin in the file.' },
+    { date:'2026-09-10', summary:'Added a soft gradient wash to the page background, all 5 themes, replacing the flat single-color background — three faint colored glows (built from each theme\'s own --accent/--amber/--green, not hardcoded) fading into that theme\'s base --bg. Sits behind the existing animated line-art overlay rather than replacing it. Purely a background-property change — no page structure, layout, or functionality touched; Home and Lift Trace stay exactly as they are, no merging or new hero sections.' },
+    { date:'2026-09-10', summary:'Theme system cut down to 2 (Light, Dark) — Midnight, Steel, and Sunset removed entirely, not just hidden; anyone with one of those saved falls back to Light automatically. Both remaining themes recolored to match a reference design closely: colors were sampled directly from the reference images\' actual pixels rather than estimated (Light: page #F0F1F5, card #EBEAEF; Dark: page #0D1218, card #2B2B2B), and the background gradient wash redone using the exact warm-peach/cool-blue tones found in that sampling instead of the previous generic accent-derived version. No page, tab, or functional behavior changed — this was scoped as a pure color/theme update per explicit instruction, confirmed before starting.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5653,8 +5574,15 @@ HOW UPDATES WORK
      it — this is what keeps the section above current
 
 VISUAL DESIGN / THEMES
-  5 themes: White (default, light), Dark, Midnight (OLED-black), Midnight
-  Blue, Sunset — switchable from the account menu or Profile page.
+  2 themes: Light and Dark — switchable from the account menu or Profile
+  page. Colors are matched to a specific reference design (2026-09-10):
+  Light uses page bg #F0F1F5 / card #EBEAEF, Dark uses page bg #0D1218 /
+  card #2B2B2B, both with a soft two-tone gradient wash (warm peach +
+  cool blue, via the --wash-1/--wash-2 variables) behind the existing
+  animated SVG background. The previous 5-theme lineup (Midnight,
+  Midnight Blue, Steel, Sunset) was removed entirely to match the
+  reference exactly, not just hidden — reintroducing any of them means
+  writing that theme block from scratch.
   UI style is a macOS-inspired "liquid glass": cards use translucent,
   blurred backgrounds with a bright top-edge highlight and a
   scroll-linked light reflection along each border, over an animated SVG
@@ -7057,20 +6985,10 @@ for a competing inline style first.`;
 
   // ============ LIFT SEARCH (real data, across every category) ============
   const TIMELINE_DOT_COLORS = ['', 'red', 'green', 'amber'];
-  // The Home page has its own quick-search box so people don't have to
-  // navigate to Lift Search first. It used to share the SAME id as the
-  // real search box on that page — meaning whichever one appeared first in
-  // the HTML always "won" every getElementById() call, so typing into one
-  // box while the other one was empty (or stale) could silently search for
-  // the wrong thing. Distinct ids fix that; this function bridges the two:
-  // take what was typed on Home, carry it over to the real search page,
-  // and actually run the search there.
-  function quickTraceFromHome(){
-    const val = document.getElementById('homeLiftSearchInput').value.trim();
-    showView('search');
-    document.getElementById('liftSearchInput').value = val;
-    if(val) runLiftSearch();
-  }
+  // 2026-09-10: Lift Trace merged into Home — used to be a separate page
+  // with its own search box, bridged from Home's own quick-search box via
+  // quickTraceFromHome(). Now there's exactly one search box (in Home's
+  // hero), and it calls runLiftSearch() directly.
 
   // Populated fresh on every search — lets the Edit button on a search
   // result actually find its row (findTaskById checks this too), and lets a
