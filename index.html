@@ -5401,6 +5401,25 @@ KEY SYSTEM DESIGNS WORTH KNOWING ABOUT
     mobile even when the grid itself is already single-column there.
     Fix pattern used here: .split-grid > * { min-width: 0; }
 
+PENDING — DISCUSSED BUT NOT YET BUILT
+A richer, "more live" Dashboard was being planned when this briefing was
+generated, but nothing below had been built into the real app yet:
+  - A small pulsing "live" badge next to the Team Score ring, signaling
+    the data is current
+  - A "Top performer" spotlight card — the leading engineer gets their
+    own card (avatar, name, score, task count), not just a leaderboard
+    row
+  - A live "Recent activity" feed — the last few tasks logged org-wide,
+    with who/what/how-long-ago, refreshing as new ones come in. This
+    specifically needs a genuinely new query (nothing on the Dashboard
+    currently fetches org-wide recent tasks) and, for real live
+    refreshing, a realtime subscription — treat it as new code to write,
+    not a style tweak to an existing section
+If picking this back up, confirm the person still wants these three
+specific pieces (and in this position — after the score/activity/lifts
+row, before the category/trend row) before building, since it was
+agreed in principle but never actually implemented.
+
 IF YOU RUN INTO THIS EXACT SITUATION
 "The frontend shows a button for an action, but doesn't behave as
 expected" has happened before in this project — the cause was a missing
