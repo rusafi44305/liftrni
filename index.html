@@ -546,7 +546,7 @@
     background: color-mix(in srgb, var(--surface) 78%, transparent);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid transparent;
+    border: 1px solid var(--border);
     border-radius: 16px;
     box-shadow: var(--shadow);
     color: var(--text);
@@ -1044,7 +1044,7 @@
   .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
     backdrop-filter:blur(28px) saturate(180%);
     -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border:1px solid transparent !important;
+    border:1px solid var(--border) !important;
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(255,255,255,0.03) !important;
     border-radius:16px !important;
     position:relative;
@@ -1082,48 +1082,12 @@
   .status-chip, .clock-pill, .pending-pill{
     background:color-mix(in srgb, color-mix(in srgb, var(--surface) 91%, white 9%) 92%, transparent) !important;
   }
-  /* A moving light reflection along each card's own border — like light
-     catching the edge of real glass as you tilt it. --shine-pos is kept
-     updated (in the scroll handler in the script below) as the page
-     scrolls, and this gradient's position follows it, so the highlight
-     visibly sweeps along the border while scrolling rather than sitting
-     static in one place. Confined to just the border ring itself (not
-     the card's face) via the mask/composite trick below: it paints the
-     full box then subtracts everything inside the border's inner edge,
-     leaving only the ring visible. `content:''` and pointer-events:none
-     keep it purely decorative — never intercepts clicks meant for the
-     card underneath. */
-  .panel::before, .stat-card::before, .mytask-item::before, .feed-item::before, .approve-row::before,
-  .form-card::before, .role-card::before, #editModal .panel::before, .cat-tile::before, .t-card::before,
-  .lift-header::before, .queued-item::before, .gantt-wrap::before, .searchbar::before, .mt-desc-wrap::before,
-  .devDetailPanel::before{
-    content:'';
-    position:absolute; inset:0; border-radius:inherit;
-    padding:1.5px;
-    background:linear-gradient(115deg,
-      transparent calc(var(--shine-pos, 20%) - 22%),
-      rgba(255,255,255,0.85) var(--shine-pos, 20%),
-      transparent calc(var(--shine-pos, 20%) + 22%));
-    -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    -webkit-mask-composite:xor;
-    mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-    mask-composite:exclude;
-    pointer-events:none;
-    opacity:0.8;
-  }
-  /* Data tables (the leaderboard, the approved-users list) get excluded
-     from the moving shine entirely — their own row-divider lines sit at
-     a fixed height, and the shine sweeping past that exact position as
-     the page scrolls read as a distracting stray line cutting across a
-     row, not as the intended glass-edge effect. Denser tabular data
-     just isn't a good host surface for this decoration. */
-  .no-shine::before{ display:none !important; }
-  html[data-theme="dark"] .panel::before,
-  html[data-theme="dark"] .stat-card::before,
-  html[data-theme="dark"] .mytask-item::before,
-  html[data-theme="dark"] .feed-item::before{
-    opacity:0.5;
-  }
+  /* 2026-09-10: removed the scroll-linked shine reflection entirely (was
+     here — a moving highlight along each card's border edge, tied to
+     scroll position via --shine-pos, updated in a scroll listener
+     further below). Replaced with a plain, static, visible border —
+     see the border:1px solid var(--border) rule on the main vibrancy
+     block below, and on .liquid-glass-card/#accountMenu. */
   /* The account menu specifically needs to stay near-opaque rather than
      following the lighter translucency every other card above uses —
      text sitting behind it (nav bar, page content) was legible through
@@ -1134,7 +1098,7 @@
     background:color-mix(in srgb, var(--surface) 96%, transparent) !important;
     backdrop-filter:blur(30px) saturate(180%);
     -webkit-backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid transparent !important;
+    border:1px solid var(--border) !important;
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
     border-radius:16px !important;
   }
@@ -3290,27 +3254,6 @@
   }
   initTheme();
 
-  // Moves the border-shine gradient (see the .panel::before rule in
-  // <style>) as the page scrolls, so the reflection visibly sweeps along
-  // every card's edge instead of sitting in one fixed spot. Wraps
-  // smoothly with modulo so it keeps sweeping and repeating on long
-  // scrolls rather than running once and stopping. Throttled to at most
-  // once per animation frame — scroll fires far more often than the
-  // screen can actually repaint, so anything heavier here would be
-  // wasted work, not smoother motion.
-  let shineScrollTicking = false;
-  function updateBorderShine(){
-    const pos = ((window.scrollY / 3) % 140) - 20;
-    document.documentElement.style.setProperty('--shine-pos', pos + '%');
-    shineScrollTicking = false;
-  }
-  window.addEventListener('scroll', () => {
-    if(!shineScrollTicking){
-      requestAnimationFrame(updateBorderShine);
-      shineScrollTicking = true;
-    }
-  }, { passive: true });
- 
   function openTutorial(){
     // Point this at wherever the tutorial PDF is hosted in this repo/site,
     // e.g. a "tutorial.pdf" committed alongside index.html on GitHub Pages.
@@ -3817,7 +3760,8 @@
     { date:'2026-09-10', summary:'Dark theme cards darkened again per follow-up feedback (#1C1C1C→#181818, secondary surface #2C2C2C→#282828), same gap preserved. Also: checked Backup/Restore actually works end to end rather than just that the buttons run without erroring — found a real, serious gap. custom_fields, custom_subtypes, and category_links (the entire Task Fields catalog and Category Links) were missing from BACKUP_TABLES entirely, so backups never included them; worse, the server-side restore_backup() Postgres function is hardcoded with explicit per-table DELETE/INSERT statements and was also missing all 3, so even a full backup taken today couldn\'t have restored them. Fixed both halves — see the accompanying SQL migration for the database-side fix, which can\'t be applied from code changes alone. Backups taken before deploying both halves won\'t contain this data for restore purposes; take a fresh one once both are live.' },
     { date:'2026-09-10', summary:'The Import Backup modal\'s Restore button was there all along but easy to miss entirely — it was icon-only (a trash can, of all things, which reads as "delete" not "restore") with no visible text, relying purely on a hover tooltip that doesn\'t even work on touch devices. Replaced with a proper circular-restore-arrow icon plus a visible "Restore" label, matching the Download button next to it.' },
     { date:'2026-09-10', summary:'Added a proper Delete button to Import Backup (was missing entirely — only Download and Restore existed) — deleting a backup only removes that snapshot, never touches live data, so it just needs a plain confirm(). All three actions (Download/Restore/Delete) switched to icon-only per request, each with a distinct icon and color so they stay recognizable without text (download arrow, circular restore arrow in amber, trash can in red), plus proper title/aria-label tooltips. Also: category/task item cards (My Tasks rows, Recent Activity, category tiles) were reading as washed-out grey — the white-mix used to lighten them relative to their holder card was too strong (24%) once Dark\'s own card color got darker in recent updates; dropped to 9%. Dark theme\'s category tag colors brightened (~22% lighter) so they pop better against the now-darker cards. Background gradient wash made noticeably more visible — bigger spread, much slower fade-out — in both themes.' },
-    { date:'2026-09-10', summary:'Simplified 5 of the 8 nav tab icons for a cleaner, more minimal look (Home, Lift Trace, and Admin were already simple enough and left untouched): My Tasks is now a plain checklist (3 lines + checkmarks, was a busier clipboard shape); Chat is a single clean speech-bubble outline (dropped the 3 dots); Dashboard dropped its 3 small dots, now just plain bars; Notebook is a single clean notebook shape with no pencil overlay at all — the pencil/notebook overlap has been a recurring fiddly spot in past updates, so removing it entirely settles that for good; Projects/Gantt is now 3 simple solid bars of different lengths (a literal mini gantt-chart shape) instead of a dotted trend line. All hand-drawn as inline SVG in the same stroke style already used elsewhere in the app, not a new icon font/dependency.' }
+    { date:'2026-09-10', summary:'Simplified 5 of the 8 nav tab icons for a cleaner, more minimal look (Home, Lift Trace, and Admin were already simple enough and left untouched): My Tasks is now a plain checklist (3 lines + checkmarks, was a busier clipboard shape); Chat is a single clean speech-bubble outline (dropped the 3 dots); Dashboard dropped its 3 small dots, now just plain bars; Notebook is a single clean notebook shape with no pencil overlay at all — the pencil/notebook overlap has been a recurring fiddly spot in past updates, so removing it entirely settles that for good; Projects/Gantt is now 3 simple solid bars of different lengths (a literal mini gantt-chart shape) instead of a dotted trend line. All hand-drawn as inline SVG in the same stroke style already used elsewhere in the app, not a new icon font/dependency.' },
+    { date:'2026-09-10', summary:'Removed the scroll-linked border-shine effect entirely (the moving light reflection that swept along each card\'s edge as you scrolled, tracked via --shine-pos and a scroll event listener) — both the CSS pseudo-element and its JS scroll handler are gone. Replaced with a plain, static, visible 1px border (var(--border)) on every card, .liquid-glass-card, and the account menu dropdown, in place of the fully transparent border from the "no border" look a few updates back.' }
   ];
  
   let currentUser = null;   // Supabase auth user
