@@ -1616,6 +1616,13 @@
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
     <span>Home</span>
   </button>
+  <!-- 2026-09-10: restored — this tab and its view (view-search) were
+       accidentally lost during unrelated theme work, which is how Lift
+       Trace ended up merged into Home instead of being its own page. -->
+  <button data-view="search" title="Lift Trace">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <span>Lift Trace</span>
+  </button>
   <button data-view="mytasks" title="My Tasks">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><rect x="9" y="2.3" width="6" height="3" rx="1"/><path d="M9 10.5h6M9 14h6M9 17.5h3.5"/></svg>
     <span>My Tasks</span>
@@ -1661,8 +1668,8 @@
         <p class="hero-desc">Search any Lift ID to see its full history — from first survey to after sales support — logged by the engineer who ever did the work.</p>
         <div class="searchbar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
-          <button onclick="runLiftSearch()">Trace</button>
+          <input type="text" id="homeSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') traceFromHome();">
+          <button onclick="traceFromHome()">Trace</button>
         </div>
         <div class="search-hint">Search by Lift ID, project name, or any keyword in the entry.</div>
       </div>
@@ -1687,22 +1694,6 @@
         </div>
       </div>
     </div>
-
-    <!-- 2026-09-10: Lift Trace merged into Home — this used to be its own
-         separate nav tab/page. Searching from the hero above now shows
-         results right here instead of navigating away. Empty/hidden
-         until an actual search runs, so a normal visit to Home looks
-         exactly as it always did. -->
-    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
-      <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
-      <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
-      <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
-        <option value="">All sections</option>
-        <option value="Mechanical">Mechanical</option>
-        <option value="Electrical">Electrical</option>
-      </select>
-    </div>
-    <div id="liftSearchResult"></div>
 
     <div class="stat-row">
       <div class="stat-card"><div class="n" id="homeStatLifts">—</div><div class="l">Distinct lifts tracked</div><div class="delta flat" id="homeStatLiftsDelta">—</div></div>
@@ -1740,6 +1731,36 @@
         <div id="homeFeed"><div class="placeholder-note">Loading…</div></div>
       </div>
     </section>
+  </div>
+ 
+  <!-- ============ LIFT SEARCH ============ -->
+  <!-- 2026-09-10: restored — this was accidentally lost during unrelated
+       theme work, which is how the search ended up inline on Home
+       instead of being its own tab. -->
+  <div class="view" id="view-search">
+    <div class="searchbar" style="max-width:100%; margin-bottom:14px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
+      <button onclick="runLiftSearch()">Trace</button>
+    </div>
+
+    <!-- Filters narrow down the current search results client-side —
+         they don't re-query the database, so they only make sense (and
+         only get populated) once a search has actually run. Engineer
+         options are built from whoever actually appears in the current
+         results, not the whole company roster, since that's the only
+         list that's ever useful here. -->
+    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
+      <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
+      <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
+      <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
+        <option value="">All sections</option>
+        <option value="Mechanical">Mechanical</option>
+        <option value="Electrical">Electrical</option>
+      </select>
+    </div>
+
+    <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace to see its full history across every category.</div></div>
   </div>
  
   <!-- ============ CATEGORY LOG ============ -->
@@ -3778,7 +3799,8 @@
     { date:'2026-09-10', summary:'Profile\'s Score/Time cards simplified on mobile only — desktop is completely untouched. The verbose text (label, trend arrow, task-count line) is hidden below 700px width, leaving just the ring plus one short caption ("This month", "Overall", "Time (month)", "Time (all-time)") instead of the fuller desktop wording. The ring\'s own number stays fully visible either way — that\'s real SVG text drawn as part of the ring itself, not something being hidden — and every ring still carries a proper aria-label for screen readers regardless of what\'s visible on screen, so nothing lost accessibility, just visual clutter.' },
     { date:'2026-09-10', summary:'Found the real cause of Steel\'s remaining white-text spots (My Tasks, Recent Activity, timeline entries): redefining the --text custom property on a container only helps descendants that explicitly write color:var(--text) themselves — elements like a task title that set no color of their own just inherit the plain resolved color from body, computed once up there using body\'s own (unrelated, correctly-light) --text value, never re-checking anything defined further down. Fixed at the source: every holder/item card class now explicitly declares color:var(--text), so anything colorless inside correctly inherits from its actual container instead of from body. Same fix applied to 3 inline-styled dropdowns that had a background but no color property at all. Holder-vs-item shade contrast strengthened (was too subtle to notice) in both Steel and White. Reduced padding/gaps across the most widely-shared layout rules (main content area, .panel, .stat-row, .split-grid, task/feed list items, form cards) for a more compact, denser UI — the honest scope here is the big shared rules that affect most pages at once, not an exhaustive pass over every individual inline margin in the file.' },
     { date:'2026-09-10', summary:'Added a soft gradient wash to the page background, all 5 themes, replacing the flat single-color background — three faint colored glows (built from each theme\'s own --accent/--amber/--green, not hardcoded) fading into that theme\'s base --bg. Sits behind the existing animated line-art overlay rather than replacing it. Purely a background-property change — no page structure, layout, or functionality touched; Home and Lift Trace stay exactly as they are, no merging or new hero sections.' },
-    { date:'2026-09-10', summary:'Theme system cut down to 2 (Light, Dark) — Midnight, Steel, and Sunset removed entirely, not just hidden; anyone with one of those saved falls back to Light automatically. Both remaining themes recolored to match a reference design closely: colors were sampled directly from the reference images\' actual pixels rather than estimated (Light: page #F0F1F5, card #EBEAEF; Dark: page #0D1218, card #2B2B2B), and the background gradient wash redone using the exact warm-peach/cool-blue tones found in that sampling instead of the previous generic accent-derived version. No page, tab, or functional behavior changed — this was scoped as a pure color/theme update per explicit instruction, confirmed before starting.' }
+    { date:'2026-09-10', summary:'Theme system cut down to 2 (Light, Dark) — Midnight, Steel, and Sunset removed entirely, not just hidden; anyone with one of those saved falls back to Light automatically. Both remaining themes recolored to match a reference design closely: colors were sampled directly from the reference images\' actual pixels rather than estimated (Light: page #F0F1F5, card #EBEAEF; Dark: page #0D1218, card #2B2B2B), and the background gradient wash redone using the exact warm-peach/cool-blue tones found in that sampling instead of the previous generic accent-derived version. No page, tab, or functional behavior changed — this was scoped as a pure color/theme update per explicit instruction, confirmed before starting.' },
+    { date:'2026-09-10', summary:'Fixed a real regression: the dedicated Lift Trace tab (view-search) and its nav button had gone missing entirely at some point, with its search box, filters, and results ending up merged directly into Home instead — so searching from Home showed results inline rather than switching to its own tab, which is not how this ever should have worked. Restored Lift Trace as its own tab with its original search/filter/result content. Home\'s search box is now a separate element (homeSearchInput, not the same id as the real Lift Trace input, since both exist in the DOM at once) wired through a new traceFromHome() handoff: switches to the Lift Trace tab, drops the typed term into its real input, and runs the search there — matching the original "search from Home, see results on Lift Trace" behavior.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -6994,6 +7016,23 @@ for a competing inline style first.`;
   // result actually find its row (findTaskById checks this too), and lets a
   // saved edit refresh this same view instead of only the category log.
   let liftSearchRows = [];
+
+  // Home's search box is a separate element (homeSearchInput) from the
+  // real Lift Trace tab's own input (liftSearchInput) — deliberately not
+  // the same id, since both exist in the DOM at once and duplicate ids
+  // would mean only one could ever actually be found by getElementById.
+  // This is the "quick trace from Home" handoff: take whatever was
+  // typed here, switch to the Lift Trace tab, drop it into that tab's
+  // real input, and run the actual search there — matching how this
+  // always worked before Lift Trace briefly (and accidentally) got
+  // merged into Home during unrelated theme work.
+  function traceFromHome(){
+    const term = document.getElementById('homeSearchInput').value.trim();
+    showView('search');
+    onViewShown('search');
+    document.getElementById('liftSearchInput').value = term;
+    if(term) runLiftSearch();
+  }
 
   async function runLiftSearch(){
     const term = document.getElementById('liftSearchInput').value.trim();
