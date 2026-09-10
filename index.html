@@ -3638,7 +3638,8 @@
     { date:'2026-09-10', summary:'Real bugfix, not a data problem this time: the Task Fields catalog\'s sub-category headers depend on a shared cache (dynamicFieldOptions.customSubtypes) that only got populated by visiting the task-logging form first — the Admin panel never loaded it itself. Opening Task Fields as the very first thing after a fresh page load meant every Superadmin-added sub-category, across every category, would silently be missing from the catalog even though the real data was completely intact — this is what looked like Factory Maintenance "disappearing" again with nothing actually deleted. loadCustomFieldsPanel() now loads this itself first, at no cost on repeat visits since it\'s already-loaded-skip guarded.' },
     { date:'2026-09-10', summary:'Dashboard\'s Weekly trend replaced: was a single flat line (total activity only); now a layered "mountain" area chart showing the top 3 most active categories as their own translucent bands, everything else folded into one "Other" band so it stays readable rather than 6 categories squashed on top of each other. All layers share one scale (not independently normalized) so relative activity between categories stays honest. Hoverable points show the exact count per category per week. Same card, same position, both mobile and desktop — everything else on the Dashboard (rings, leaderboard, category bars) is unchanged.' },
     { date:'2026-09-10', summary:'Dashboard visually regrouped into two titled sections ("Team overview" and "Category & engineer performance"), each its own liquid-glass card, on both mobile and desktop — no change to any underlying data, permissions, filters, or the leaderboard table\'s own behavior, only how the existing rings/charts are visually grouped. Also fixed the Weekly trend chart\'s stretching: it was using preserveAspectRatio="none", forcing a non-uniform stretch to whatever width its card happened to be — visibly distorted on wide desktop screens. Added a new "Top engineers by score" mini chart (visualizing the same score data the leaderboard\'s Score column already has, just sorted and charted rather than tabled) — respects the same Superadmin-configurable KPI-visibility permission the leaderboard column already uses.' },
-    { date:'2026-09-10', summary:'Fixed a layout flaw in the desktop Dashboard\'s new "Team overview" card from the previous update: the 4 rings sat in a narrow stacked column next to the Weekly trend chart in a 2-column grid, and grid columns stretch to match each other\'s height by default — so the short trend-chart column was being stretched to match the much taller ring column, leaving a large dead-space gap under the chart. Changed to one full-width horizontal row of rings with the trend chart full-width below it, matching how mobile already laid it out. No functional change, purely the fix.' }
+    { date:'2026-09-10', summary:'Fixed a layout flaw in the desktop Dashboard\'s new "Team overview" card from the previous update: the 4 rings sat in a narrow stacked column next to the Weekly trend chart in a 2-column grid, and grid columns stretch to match each other\'s height by default — so the short trend-chart column was being stretched to match the much taller ring column, leaving a large dead-space gap under the chart. Changed to one full-width horizontal row of rings with the trend chart full-width below it, matching how mobile already laid it out. No functional change, purely the fix.' },
+    { date:'2026-09-10', summary:'Two more Dashboard fixes: (1) Weekly trend was rendering tiny on desktop — it had a fixed pixel height regardless of container width, so once it became a full-width element, preserveAspectRatio="meet" had to shrink the whole drawing down to fit that short height and center it with large empty margins on both sides. Switched to height:auto so it scales naturally from the container\'s real width instead, and gave it a taller base aspect ratio now that it\'s the hero element of its own card. (2) Mobile\'s Team overview rings looked scattered because Team Score sat centered on its own row while the other 3 sat left-aligned below it — inconsistent alignment, not the stacking itself. Replaced with a plain symmetric 2x2 grid, all 4 rings styled identically.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4092,13 +4093,18 @@
       return `<path d="${areaD}" fill="${s.color}" fill-opacity="0.26"></path><path d="${lineD}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>${dotsHtml}`;
     }).join('');
     const legendHtml = series.map(s => `<span style="display:inline-flex; align-items:center; gap:4px; margin:0 10px 4px 0;"><span style="width:7px; height:7px; border-radius:2px; background:${s.color}; flex-shrink:0;"></span><span style="font-size:10.5px; color:var(--text-faint);">${s.label}</span></span>`).join('');
-    // 2026-09-10 fix: preserveAspectRatio="none" was forcing this to
-    // stretch non-uniformly to fill whatever width its container
-    // happened to be — fine on a narrow phone card, visibly distorted on
-    // a wide desktop one. "xMidYMid meet" scales the chart uniformly
-    // instead, so the peaks keep their real proportions regardless of
-    // how wide the card is.
-    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${layersHtml}</svg>
+    // 2026-09-10 second fix: the first fix (preserveAspectRatio="none" →
+    // "xMidYMid meet") stopped the distortion, but height="${h}" was
+    // still forcing the SVG's actual rendered height to a fixed pixel
+    // value regardless of how wide its container was. On a wide desktop
+    // card, "meet" then had to shrink the whole drawing down to fit that
+    // short fixed height and center it — leaving big empty margins on
+    // both sides and making the chart look tiny in a large box. Dropping
+    // the fixed height and using height:auto instead lets the browser
+    // derive the actual height from the viewBox's own aspect ratio as
+    // the real width changes, so it scales up properly on desktop and
+    // down properly on mobile — no letterboxing, no distortion either way.
+    return `<svg width="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="display:block; width:100%; height:auto;">${layersHtml}</svg>
       <div style="display:flex; flex-wrap:wrap; margin-top:6px;">${legendHtml}</div>`;
   }
 
@@ -7693,20 +7699,23 @@ for a competing inline style first.`;
       container.innerHTML = `
         <div class="panel liquid-glass-card" style="margin-bottom:12px;">
           <div class="panel-title" style="text-align:center; margin-bottom:12px;">Team overview</div>
-          <div style="display:flex; justify-content:center; margin-bottom:12px;">
-            <div id="dashRingScore"></div>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:9px;">
-            <div id="dashRingActivities" style="flex-shrink:0;"></div>
-            <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Activities</p>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:9px;">
-            <div id="dashRingLifts" style="flex-shrink:0;"></div>
-            <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
-            <div id="dashRingTime" style="flex-shrink:0;"></div>
-            <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Time logged</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
+            <div style="display:flex; align-items:center; gap:9px;">
+              <div id="dashRingScore" style="flex-shrink:0;"></div>
+              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Team score</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:9px;">
+              <div id="dashRingActivities" style="flex-shrink:0;"></div>
+              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Activities</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:9px;">
+              <div id="dashRingLifts" style="flex-shrink:0;"></div>
+              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:9px;">
+              <div id="dashRingTime" style="flex-shrink:0;"></div>
+              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Time logged</p>
+            </div>
           </div>
           <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
           <div id="dashHeroTrendChart"></div>
@@ -7871,7 +7880,7 @@ for a competing inline style first.`;
         return Object.keys(catsThisWeek).reduce((sum, cat) => sum + (topCatsForTrend.includes(cat) ? 0 : catsThisWeek[cat]), 0);
       });
       if(otherValues.some(v => v > 0)) trendSeries.push({ label: 'Other', color: 'var(--text-faint)', values: otherValues });
-      document.getElementById('dashHeroTrendChart').innerHTML = mountainTrendSvg(trendSeries, weekKeysSorted, 210, 44);
+      document.getElementById('dashHeroTrendChart').innerHTML = mountainTrendSvg(trendSeries, weekKeysSorted, 600, 170);
     } else {
       document.getElementById('dashHeroTrendChart').innerHTML = '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
     }
