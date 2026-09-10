@@ -2263,6 +2263,15 @@
   // matching the discipline the current user is assigned.
   const postsalesDisciplineFields = {
     mechanical: [
+      // Moved here from the shared postsales base (2026-09-10) — Mechanical-
+      // only now; Electrical never needs these. Order kept identical to
+      // where they used to sit, right before Door Type.
+      {t:'chipselect', l:'Lift Type', req:true, source:'postsales:lift_type', placeholder:'Select…', section:'details'},
+      {t:'chipselect', l:'Capacity', req:true, source:'postsales:capacity', hasOther:true, placeholder:'Select…', section:'details'},
+      {t:'text', l:'Other Capacity (kg)', numeric:true, showIf:{selectLabel:'Capacity', value:'Other'}, section:'details'},
+      {t:'chipselect', l:'Motor Origin', req:true, source:'postsales:motor_origin', placeholder:'Select…', section:'details'},
+      {t:'text', l:'Model', section:'details'},
+      {t:'text', l:'F/S/O', ph:'e.g. 7/7/7', section:'details'},
       {t:'chipselect', l:'Door Type', req:true, source:'postsales:door_type', placeholder:'Select…', section:'details'},
       {t:'chipselect', l:'Door Opening Width', req:true, source:'postsales:door_opening_width', hasOther:true, placeholder:'Select…', section:'details'},
       {t:'text', l:'Other Door Opening Width (mm)', numeric:true, showIf:{selectLabel:'Door Opening Width', value:'Other'}, section:'details'},
@@ -2380,12 +2389,12 @@
     postsales: [
       liftId(),
       {t:'text', l:'Project Name', req:true, section:'identity'},
-      {t:'chipselect', l:'Lift Type', req:true, source:'postsales:lift_type', placeholder:'Select…', section:'details'},
-      {t:'chipselect', l:'Capacity', req:true, source:'postsales:capacity', hasOther:true, placeholder:'Select…', section:'details'},
-      {t:'text', l:'Other Capacity (kg)', numeric:true, showIf:{selectLabel:'Capacity', value:'Other'}, section:'details'},
-      {t:'chipselect', l:'Motor Origin', req:true, source:'postsales:motor_origin', placeholder:'Select…', section:'details'},
-      {t:'text', l:'Model', section:'details'},
-      {t:'text', l:'F/S/O', ph:'e.g. 7/7/7', section:'details'},
+      // Lift Type/Capacity/Motor Origin/Model/F/S/O moved to
+      // postsalesDisciplineFields.mechanical below (2026-09-10) — these
+      // were being shown to Electrical engineers too, who never needed
+      // them. Nothing here affects data already logged: Electrical
+      // entries that already have these keys in their `details` keep
+      // them exactly as they are; only the form going forward changes.
       // Sales Wing lives only in the electrical section below — Mechanical
       // doesn't use it — plus Door fields, Work Type, and everything else
       // discipline-specific, all concatenated in by renderTaskForm().
@@ -3607,7 +3616,8 @@
     { date:'2026-09-09', summary:'Gantt chart mobile layout fixed (date-ticks and task bars now align correctly on narrow screens; Edit/Delete buttons moved to the name row so bars can reach full width). Project PPTX report export added (one-slide, client-side via PptxGenJS, Arial font, inset card design). "Links"/"Upload" quick-links feature added for Post-Sales Activity and Reports (Superadmin-managed via new category_links table). Category dropdown reverted to full solid-color fill after a brief subtler-accent experiment. Project Briefing changed to read this changelog live instead of being a fully static, hand-written block.' },
     { date:'2026-09-10', summary:'Dashboard redesigned through several iterations, settling on: plain progress circles (Team Score/Activities/Lifts) with responsive card grouping that genuinely differs mobile vs desktop, a category bar chart, and a weekly trend line — duplicate "Activity by week" bar chart removed after it was found to also be silently throwing an error on every load (a stale element reference), which had been breaking the leaderboard and score ring beneath it. Fixed a real week-ordering bug: weeks were sorted as text, not numbers, so e.g. September could appear to come before February. Sub-category color tinting added: Admin panel cards and the task-logging form (Support Type, Report Type dropdowns) now show a light tint of the parent category color. Added the ability to delete a Superadmin-added sub-category (previously add-only, with no way to remove a mistaken entry) with a check for existing tasks under that name first. Renamed several General Support fields (Lift ID / Supplier Name) to a consistent "Task Name" text field across all four of its sub-types.' },
     { date:'2026-09-10', summary:'Two bugfixes found in review of the previous update: (1) Team Activity/Pre-Sales/Post-Sales tasks were titling themselves "— None —" (or the picked sub-category name) instead of their real identity field, once a Superadmin added any custom sub-category to one of those 3 categories — the new "Sub-category" selector was missing from the same identity-field exclusion list that Report Type/Support Type already use, so it was winning the race to be picked as the title. (2) The "delete a sub-category" safety check that\'s meant to warn about existing tasks logged under that name was silently doing nothing — it filtered tasks by a `sub_type` column that doesn\'t exist on the tasks table (that value actually lives inside the details field), and the query error wasn\'t even being checked, so it always read back as "0 tasks found" and let deletions through without ever warning. Both fixed.' },
-    { date:'2026-09-10', summary:'Time Logged feature added: any field marked as Duration (minutes) — the 2 existing built-in fields (Team Activity\'s "Duration (min)", Pre-Sales\' "Deployed Time (min)"), or any brand new one a Superadmin flags with the new "Track as Duration" checkbox on a Number field in Task Fields — now rolls up automatically, no code change needed for future ones. Shows on each person\'s Profile page (all-time + this month) and on the Team Dashboard (a new "Time logged" ring next to Team Score/Activities/Lifts, plus a Time column on the leaderboard). Computed live from the tasks table on each load rather than stored separately, so it\'s always in sync with the real data. Requires a one-time DB migration adding `custom_fields.is_duration` — see the SQL note for this update.' }
+    { date:'2026-09-10', summary:'Time Logged feature added: any field marked as Duration (minutes) — the 2 existing built-in fields (Team Activity\'s "Duration (min)", Pre-Sales\' "Deployed Time (min)"), or any brand new one a Superadmin flags with the new "Track as Duration" checkbox on a Number field in Task Fields — now rolls up automatically, no code change needed for future ones. Shows on each person\'s Profile page (all-time + this month) and on the Team Dashboard (a new "Time logged" ring next to Team Score/Activities/Lifts, plus a Time column on the leaderboard). Computed live from the tasks table on each load rather than stored separately, so it\'s always in sync with the real data. Requires a one-time DB migration adding `custom_fields.is_duration` — see the SQL note for this update.' },
+    { date:'2026-09-10', summary:'Post-Sales Activity: Lift Type, Capacity, Motor Origin, Model, and F/S/O were being shown on the form for both Mechanical and Electrical engineers even though Electrical never used them — moved into the Mechanical-only field set (built-in fields, so this needed a code change rather than an Admin panel edit). Electrical entries already logged with these fields keep that data untouched; only the form going forward changed. No database changes involved.' }
   ];
  
   let currentUser = null;   // Supabase auth user
