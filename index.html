@@ -306,7 +306,7 @@
   .switch input:checked + .switch-track::before{ transform:translateX(20px); }
  
  
-  main{max-width:1180px; margin:0 auto; padding:36px 28px 90px;}
+  main{max-width:1180px; margin:0 auto; padding:24px 20px 70px;}
   .view{display:none;}
   .view.active{display:block; animation:fade .35s ease;}
   @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -388,7 +388,7 @@
   .mini-stat .lbl{font-size:11px; color:#8391AE; margin-top:2px;}
  
   /* ---------- STAT ROW ---------- */
-  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:40px;}
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:22px;}
   .stat-card{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:18px 20px; box-shadow:var(--shadow);
@@ -478,7 +478,7 @@
      between each item read as genuinely identical. */
   #homeFeed{ display:flex; flex-direction:column; gap:20px; }
   .feed-item{
-    display:flex; gap:14px; padding:16px;
+    display:flex; gap:10px; padding:11px;
     background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow);
     transition:transform .15s ease, border-color .15s ease;
   }
@@ -573,7 +573,7 @@
   .kpi-spark{display:flex; align-items:flex-end; gap:4px; height:44px;}
   .kpi-spark div{width:7px; background:var(--accent); border-radius:2px 2px 0 0;}
  
-  .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:22px;}
+  .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:14px;}
   /* Grid items default to min-width:auto, which means a child with long
      unbroken content (a full URL with no spaces to wrap at, in this
      case) can force the whole grid track wider than its column — wider
@@ -604,8 +604,14 @@
     border: 1px solid transparent;
     border-radius: 16px;
     box-shadow: var(--shadow);
+    color: var(--text);
     transition: transform 0.28s cubic-bezier(0.25,0.8,0.4,1), box-shadow 0.28s ease, background 0.28s ease, backdrop-filter 0.28s ease;
   }
+  /* Same missing-color issue as the vibrancy rule above, found in 3
+     inline-styled dropdowns that set a background but never a color at
+     all — harmless in every theme where bg and surface are the same
+     tone as body's own text color anyway, but a real gap in Steel. */
+  #notifPanel, #chatMentionDropdown, #categoryLinksDropdown{ color: var(--text); }
   /* There was no hover state at all before this — asked to make the
      glass effect "more significant but gentle," matching how macOS
      itself handles hover on translucent surfaces: a touch more opacity/
@@ -674,7 +680,7 @@
     #customFieldsPanel .split-grid{ grid-template-columns:1fr 1fr; }
   }
   .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:flex-start; }
-  .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow);}
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow);}
   .panel-title{font-size:13.5px; font-weight:600; margin-bottom:16px; color:var(--text-dim);}
  
   .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:11px;}
@@ -707,7 +713,7 @@
   .gantt-wrap{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; overflow-x:auto;}
   .gantt-months{display:grid; grid-template-columns:220px repeat(6, 1fr); gap:0; margin-bottom:6px; min-width:900px;}
   .gantt-months .gm{font-size:11px; font-weight:600; color:var(--text-faint); text-align:center; padding-bottom:8px; border-bottom:1px solid var(--border);}
-  .gantt-project-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden; }
+  .gantt-project-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden; color:var(--text); }
   .gantt-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 20px; flex-wrap:wrap;}
   .proj-gantt-task-row:hover{ background:var(--surface-alt); }
   /* On narrow screens the task rows below wrap onto two lines each (name
@@ -738,7 +744,7 @@
   .gt-name{font-size:14px; font-weight:600;}
   .gt-sub{font-size:12px; color:var(--text-faint); font-weight:400; margin-top:2px;}
   .status-capsule{font-size:11.5px; font-weight:600; padding:4px 12px; border-radius:999px; color:#fff; white-space:nowrap;}
-  .proj-task-row{background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;}
+  .proj-task-row{background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:9px 12px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; color:var(--text);}
   .legend{display:flex; gap:18px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border);}
   .leg-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-dim);}
   .leg-dot{width:9px; height:9px; border-radius:3px;}
@@ -818,7 +824,7 @@
   #taskFormPanel{border-left:4px solid var(--accent-c, var(--accent)); transition:border-color .2s;}
   #devTaskPanel{border-left:4px solid var(--accent); transition:border-color .2s;}
   .dev-form-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px;}
-  .form-card{background:var(--surface-alt); border:1px solid var(--border); border-radius:14px; padding:18px;}
+  .form-card{background:var(--surface-alt); border:1px solid var(--border); border-radius:14px; padding:13px;}
   .form-card.span-2{grid-column:1 / -1;}
   .form-card-head{display:flex; align-items:center; gap:10px; margin-bottom:15px;}
   .form-card-badge{
@@ -892,7 +898,7 @@
   .chip-hint{font-size:10.5px; color:var(--text-faint); font-weight:500; text-transform:none; letter-spacing:0; margin-left:5px;}
   .form-note{font-size:11.5px; color:var(--text-faint); margin-top:10px; text-align:center;}
   .field-warning{ font-size:11.5px; color:var(--red); margin-top:4px; }
-  .mytask-item{padding:13px 18px; margin-bottom:10px;}
+  .mytask-item{padding:10px 14px; margin-bottom:7px;}
   .mytask-item:last-of-type{margin-bottom:0;}
   .mt-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
   .mt-title{font-size:13.5px; font-weight:600; margin-bottom:3px;}
@@ -961,7 +967,7 @@
     .stat-row, .cat-grid, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr);}
     .split-grid, .split-grid-tasks, .dev-form-grid{grid-template-columns:1fr;}
     .form-row-2{grid-template-columns:1fr;}
-    main{padding:24px 16px 110px;}
+    main{padding:16px 12px 100px;}
     header.topnav{padding:7px 16px;}
     nav.tabs.dock button span{ display:none; }
     nav.tabs.dock button{ padding:10px; }
@@ -1089,10 +1095,23 @@
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(255,255,255,0.03) !important;
     border-radius:16px !important;
     position:relative;
+    /* 2026-09-10: the actual root cause of Steel's remaining white-text
+       spots (task titles in My Tasks/Recent Activity/timelines, etc.).
+       Redefining the --text custom property on a container (done
+       earlier, in the Steel theme block) only helps descendants that
+       explicitly write color:var(--text) themselves — it does nothing
+       for an element like .mt-title, which sets no color of its own and
+       just inherits the plain resolved color from body, computed once
+       at body's own (unrelated) scope using body's own --text value.
+       Declaring color:var(--text) HERE means it's now these containers,
+       not body, that anything colorless inside them inherits from —
+       fixing every such case at once instead of chasing individual
+       classes that happen to lack their own color declaration. */
+    color:var(--text);
   }
   /* Holder cards — the outer containers things sit inside. */
   .panel, .stat-card, .form-card, .role-card, #editModal .panel, .lift-header, .gantt-wrap, .searchbar, .devDetailPanel{
-    background:color-mix(in srgb, var(--surface) 74%, transparent) !important;
+    background:color-mix(in srgb, var(--surface) 68%, transparent) !important;
   }
   /* Nested item/task cards — things that sit INSIDE a holder above (a
      "Recent activity" feed row inside its panel, a My Tasks row, a
@@ -1101,10 +1120,14 @@
      and the panel it sat in looked like one flat surface with no
      separation. Lightened relative to --surface (white blended in
      first, then the transparency layer) so they read as a distinct,
-     slightly-raised layer on top of their container instead. */
+     slightly-raised layer on top of their container instead.
+     2026-09-10: strengthened the gap further both ways — holder opacity
+     down (74%→68%) and item white-mix up (15%→24%) — the first version
+     of this split was correct in principle but too subtle to actually
+     notice at a glance. */
   .mytask-item, .feed-item, .approve-row, .cat-tile, .t-card, .queued-item, .chip-opt, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill{
-    background:color-mix(in srgb, color-mix(in srgb, var(--surface) 85%, white 15%) 80%, transparent) !important;
+    background:color-mix(in srgb, color-mix(in srgb, var(--surface) 76%, white 24%) 88%, transparent) !important;
   }
   /* A moving light reflection along each card's own border — like light
      catching the edge of real glass as you tilt it. --shine-pos is kept
@@ -1182,7 +1205,7 @@
   html:not([data-theme]) .mytask-item, html:not([data-theme]) .feed-item, html:not([data-theme]) .approve-row,
   html:not([data-theme]) .cat-tile, html:not([data-theme]) .t-card, html:not([data-theme]) .queued-item,
   html:not([data-theme]) .mt-desc-wrap, html:not([data-theme]) .status-chip{
-    background:color-mix(in srgb, var(--surface) 60%, var(--surface-alt)) !important;
+    background:color-mix(in srgb, var(--surface) 45%, var(--surface-alt)) !important;
   }
   /* These render dense, list-like task cards in several different views
      (category log, dashboard inspect, My Tasks) — the shared 16px radius
@@ -3833,7 +3856,8 @@
     { date:'2026-09-10', summary:'Reworked the previous update: the glow effect is gone, replaced with a lighter accent-tinted text color on the same elements (headings/numbers/buttons), Dark and Midnight only. Midnight Blue theme removed entirely (5 themes total again). New "Steel" theme added in its place: genuinely dark night background, but cards/panels/inputs are light grey — the one theme here where surface is lighter than bg rather than darker, so it needed its own explicit dark-text-on-light-card override scoped to every card/surface class in the app (checked directly against every var(--surface) usage), on top of the usual light-text-on-dark-bg values for whatever sits directly on the page background. Liquid-glass cards also got a real hover state for the first time — a gentle lift, deepened blur/saturation, and a softer shadow, macOS-style — since there wasn\'t one at all before. Profile page: Time Logged moved up from its own separate panel into a 2x2 matrix with Score, using the same ring style and dark kpi-card as the Score cards instead of plain text.' },
     { date:'2026-09-10', summary:'Three fixes to the previous update. (1) Steel theme bug: text was rendering light-on-light on cards like the Home page\'s Recent Activity feed and My Tasks rows — the dark-text override only covered .panel-type "holder" cards, missing most of the shared vibrancy rule\'s class list (.mytask-item, .feed-item, .chip-opt, .status-chip, and others). Rebuilt to cover every class from that rule directly, confirmed by cross-checking the two lists match. (2) Card borders thinned across every theme — border opacity 55%→35%, the bright top-edge highlight toned down 45%→25% white, since the combination was reading as one thick edge rather than a thin one; Steel\'s own border color also lightened for a subtler look against its light cards. (3) Nested item/task cards (My Tasks rows, Recent Activity entries, timeline cards, chips, pills) were sharing the exact same background shade as the holder panel they sit inside, with no visual separation — split into two rules so items now render a lighter shade than their holder in every theme.' },
     { date:'2026-09-10', summary:'Further UI polish. Steel theme: text darkened to true near-black (was a dark gray), and found several more light-on-light gaps beyond the previous pass — small header-level badges that carry their own light circle (the user avatar, notification bell, role icon) while sitting in the dark page header, plus nav.tabs\' own resting background (only its active state was covered before). Card borders removed entirely, everywhere, every theme — "liquid glass with no border" — kept as a declared but fully transparent 1px border rather than deleted outright, so box-sizing keeps every card\'s rendered dimensions pixel-identical (visual-only change, no layout shift). Definition now comes from the backdrop blur and shadow/inset highlight alone. Profile page: Score/Time now stays a 2x2 grid on mobile too instead of collapsing to a single stacked column, matching desktop.' },
-    { date:'2026-09-10', summary:'Profile\'s Score/Time cards simplified on mobile only — desktop is completely untouched. The verbose text (label, trend arrow, task-count line) is hidden below 700px width, leaving just the ring plus one short caption ("This month", "Overall", "Time (month)", "Time (all-time)") instead of the fuller desktop wording. The ring\'s own number stays fully visible either way — that\'s real SVG text drawn as part of the ring itself, not something being hidden — and every ring still carries a proper aria-label for screen readers regardless of what\'s visible on screen, so nothing lost accessibility, just visual clutter.' }
+    { date:'2026-09-10', summary:'Profile\'s Score/Time cards simplified on mobile only — desktop is completely untouched. The verbose text (label, trend arrow, task-count line) is hidden below 700px width, leaving just the ring plus one short caption ("This month", "Overall", "Time (month)", "Time (all-time)") instead of the fuller desktop wording. The ring\'s own number stays fully visible either way — that\'s real SVG text drawn as part of the ring itself, not something being hidden — and every ring still carries a proper aria-label for screen readers regardless of what\'s visible on screen, so nothing lost accessibility, just visual clutter.' },
+    { date:'2026-09-10', summary:'Found the real cause of Steel\'s remaining white-text spots (My Tasks, Recent Activity, timeline entries): redefining the --text custom property on a container only helps descendants that explicitly write color:var(--text) themselves — elements like a task title that set no color of their own just inherit the plain resolved color from body, computed once up there using body\'s own (unrelated, correctly-light) --text value, never re-checking anything defined further down. Fixed at the source: every holder/item card class now explicitly declares color:var(--text), so anything colorless inside correctly inherits from its actual container instead of from body. Same fix applied to 3 inline-styled dropdowns that had a background but no color property at all. Holder-vs-item shade contrast strengthened (was too subtle to notice) in both Steel and White. Reduced padding/gaps across the most widely-shared layout rules (main content area, .panel, .stat-row, .split-grid, task/feed list items, form cards) for a more compact, denser UI — the honest scope here is the big shared rules that affect most pages at once, not an exhaustive pass over every individual inline margin in the file.' }
   ];
  
   let currentUser = null;   // Supabase auth user
