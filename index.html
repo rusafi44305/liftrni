@@ -3600,7 +3600,8 @@
     { date:'2026-09-06', summary:'Reports category given full parity with the custom-fields system (sub-categories, dynamic fields, dedicated-table options). Task Fields catalog UI fixes (race conditions, compact zone rendering).' },
     { date:'2026-09-08', summary:'5-theme system finalized (added Midnight Blue, Sunset); macOS-style visual redesign: liquid-glass card vibrancy, section labels toned down to quiet gray, all modals given a consistent close button and max-height, scroll-linked border-reflection effect. Notebook dock icon redesigned (fixed pen/notebook overlap). Download index.html fixed to fetch the clean source instead of a live-data snapshot (previous version could leak on-screen data into the downloaded file).' },
     { date:'2026-09-09', summary:'Gantt chart mobile layout fixed (date-ticks and task bars now align correctly on narrow screens; Edit/Delete buttons moved to the name row so bars can reach full width). Project PPTX report export added (one-slide, client-side via PptxGenJS, Arial font, inset card design). "Links"/"Upload" quick-links feature added for Post-Sales Activity and Reports (Superadmin-managed via new category_links table). Category dropdown reverted to full solid-color fill after a brief subtler-accent experiment. Project Briefing changed to read this changelog live instead of being a fully static, hand-written block.' },
-    { date:'2026-09-10', summary:'Dashboard redesigned through several iterations, settling on: plain progress circles (Team Score/Activities/Lifts) with responsive card grouping that genuinely differs mobile vs desktop, a category bar chart, and a weekly trend line — duplicate "Activity by week" bar chart removed after it was found to also be silently throwing an error on every load (a stale element reference), which had been breaking the leaderboard and score ring beneath it. Fixed a real week-ordering bug: weeks were sorted as text, not numbers, so e.g. September could appear to come before February. Sub-category color tinting added: Admin panel cards and the task-logging form (Support Type, Report Type dropdowns) now show a light tint of the parent category color. Added the ability to delete a Superadmin-added sub-category (previously add-only, with no way to remove a mistaken entry) with a check for existing tasks under that name first. Renamed several General Support fields (Lift ID / Supplier Name) to a consistent "Task Name" text field across all four of its sub-types.' }
+    { date:'2026-09-10', summary:'Dashboard redesigned through several iterations, settling on: plain progress circles (Team Score/Activities/Lifts) with responsive card grouping that genuinely differs mobile vs desktop, a category bar chart, and a weekly trend line — duplicate "Activity by week" bar chart removed after it was found to also be silently throwing an error on every load (a stale element reference), which had been breaking the leaderboard and score ring beneath it. Fixed a real week-ordering bug: weeks were sorted as text, not numbers, so e.g. September could appear to come before February. Sub-category color tinting added: Admin panel cards and the task-logging form (Support Type, Report Type dropdowns) now show a light tint of the parent category color. Added the ability to delete a Superadmin-added sub-category (previously add-only, with no way to remove a mistaken entry) with a check for existing tasks under that name first. Renamed several General Support fields (Lift ID / Supplier Name) to a consistent "Task Name" text field across all four of its sub-types.' },
+    { date:'2026-09-10', summary:'Two bugfixes found in review of the previous update: (1) Team Activity/Pre-Sales/Post-Sales tasks were titling themselves "— None —" (or the picked sub-category name) instead of their real identity field, once a Superadmin added any custom sub-category to one of those 3 categories — the new "Sub-category" selector was missing from the same identity-field exclusion list that Report Type/Support Type already use, so it was winning the race to be picked as the title. (2) The "delete a sub-category" safety check that\'s meant to warn about existing tasks logged under that name was silently doing nothing — it filtered tasks by a `sub_type` column that doesn\'t exist on the tasks table (that value actually lives inside the details field), and the query error wasn\'t even being checked, so it always read back as "0 tasks found" and let deletions through without ever warning. Both fixed.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4963,7 +4964,7 @@
       // Also skip the sub-type selectors themselves (Support Type/Report
       // Type) — see the matching skip in the select loop below for why.
       const fieldDef = fields.find(f => f.l === label);
-      const isSubtypeSelector = fieldDef && ['techSupportType','generalSupportType','reportTypeSelect'].includes(fieldDef.id);
+      const isSubtypeSelector = fieldDef && (['techSupportType','generalSupportType','reportTypeSelect'].includes(fieldDef.id) || (fieldDef.id || '').startsWith('newSubcatSelect_'));
       if(!projectName && fieldDef && fieldDef.section === 'identity' && label !== 'Lift ID' && !isSubtypeSelector) projectName = val;
     });
     // row2text + textarea values, matched by label via DOM order
@@ -5011,8 +5012,16 @@
       // "title" instead of anything actually meaningful. Excluding these
       // 3 selector fields by id (the same way Lift ID is excluded by
       // label above) lets the loop keep going to find the real one.
+      //
+      // 2026-09-10 fix: the same race existed for Team Activity/Pre-Sales/
+      // Post-Sales' new "Sub-category" selector (id "newSubcatSelect_"+cat)
+      // — it's also identity-section and rendered first, so every task in
+      // those 3 categories was titling itself "— None —" (or whatever
+      // sub-category was picked) once a Superadmin had added one, instead
+      // of the category's real identity field. Excluded by id prefix,
+      // same fix as the 3 selectors above.
       const fieldDef = fields.find(f => f.l === label);
-      const isSubtypeSelector = fieldDef && ['techSupportType','generalSupportType','reportTypeSelect'].includes(fieldDef.id);
+      const isSubtypeSelector = fieldDef && (['techSupportType','generalSupportType','reportTypeSelect'].includes(fieldDef.id) || (fieldDef.id || '').startsWith('newSubcatSelect_'));
       if(!projectName && fieldDef && fieldDef.section === 'identity' && label !== 'Lift ID' && !isSubtypeSelector) projectName = val;
     });
     // Star rating fields (currently just Error Report's Impact) — store
@@ -6194,14 +6203,37 @@ for a competing inline style first.`;
   // nothing breaks), but it does mean that name stops appearing as a
   // choice going forward, which is worth confirming explicitly rather
   // than surprising someone with real logged history under it.
+  //
+  // 2026-09-10 bugfix: this used to filter tasks with .eq('sub_type', name)
+  // — but `tasks` has no sub_type COLUMN at all; the actual value lives
+  // inside the flexible `details` jsonb field, under a key that differs
+  // by category ("Support Type" for Technical/General Support, "Report
+  // Type" for Reports, "Sub-category" for Team Activity/Pre-Sales/Post-
+  // Sales). The old query silently failed against the missing column
+  // (error wasn't even checked) and always read back as "0 tasks found",
+  // so the warning never fired even when real tasks existed under that
+  // name. Same fetch-broadly-then-match-client-side approach already
+  // used elsewhere in this file for other details-based fields (see
+  // Perform Date filtering in loadActivityTrend for the same pattern).
+  const SUBTYPE_DETAILS_KEY = {
+    techsupport: 'Support Type', generalsupport: 'Support Type',
+    surveyissues: 'Report Type',
+    rni: 'Sub-category', presales: 'Sub-category', postsales: 'Sub-category'
+  };
   async function deleteCustomSubtype(id, name){
     const catKey = Object.keys(dynamicFieldOptions.customSubtypes || {})
       .find(k => (dynamicFieldOptions.customSubtypes[k] || []).some(s => s.id === id));
     let warning = `Delete the "${name}" sub-category? This can't be undone.`;
-    if(catKey){
-      const { count } = await sb.from('tasks').select('*', { count: 'exact', head: true }).eq('category', catKey).eq('sub_type', name);
-      if(count){
-        warning = `${count} task${count===1?'':'s'} already logged under "${name}". Deleting it removes it from the dropdown for future entries, but those existing tasks keep showing "${name}" as their sub-type — they won't be changed or lost. Delete anyway?`;
+    const detailsKey = catKey && SUBTYPE_DETAILS_KEY[catKey];
+    if(catKey && detailsKey){
+      const { data, error } = await sb.from('tasks').select('details').eq('category', catKey);
+      if(error){
+        console.error('deleteCustomSubtype task check failed:', error.message);
+      } else {
+        const count = (data || []).filter(r => r.details && r.details[detailsKey] === name).length;
+        if(count){
+          warning = `${count} task${count===1?'':'s'} already logged under "${name}". Deleting it removes it from the dropdown for future entries, but those existing tasks keep showing "${name}" as their sub-type — they won't be changed or lost. Delete anyway?`;
+        }
       }
     }
     if(!confirm(warning)) return;
