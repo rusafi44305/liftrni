@@ -2790,7 +2790,17 @@
       // itself is never reordered or touched, so nothing about how
       // Installation/Commissioning/After-Sales Support already work can
       // be affected by this.
-      const extraSubtypes = (dynamicFieldOptions.customSubtypes['techsupport'] || []).map(s => s.name);
+      //
+      // 2026-09-10 fix: this used to show EVERY custom sub-category to
+      // EVERY discipline regardless of its own zone setting — unlike Team
+      // Activity/Pre-Sales/Post-Sales's generic sub-category selector,
+      // which already filtered by zone correctly. A sub-category created
+      // with zone 'electrical' (or 'mechanical') is now only offered to
+      // that discipline; 'common' ones still show to both, same as
+      // before.
+      const extraSubtypes = (dynamicFieldOptions.customSubtypes['techsupport'] || [])
+        .filter(s => s.zone === 'common' || s.zone === discipline)
+        .map(s => s.name);
       if(subField) subField.opts = ['Installation Support','Commissioning Support','After-Sales Support', ...extraSubtypes];
       const subSelect = document.getElementById('techSupportType');
       const subType = subSelect ? subSelect.value : 'Installation Support';
@@ -2807,7 +2817,12 @@
     // sub-types is currently selected.
     if(cat === 'generalsupport'){
       const subField = fields.find(f => f.id === 'generalSupportType');
-      const extraSubtypes = (dynamicFieldOptions.customSubtypes['generalsupport'] || []).map(s => s.name);
+      // 2026-09-10 fix: same gap Technical Support had — every custom
+      // sub-category was shown to both disciplines regardless of its own
+      // zone setting. Now filtered the same way as everywhere else.
+      const extraSubtypes = (dynamicFieldOptions.customSubtypes['generalsupport'] || [])
+        .filter(s => s.zone === 'common' || s.zone === discipline)
+        .map(s => s.name);
       if(subField) subField.opts = ['Production Support','SCM Support','QC Support','Other Support', ...extraSubtypes];
       const subSelect = document.getElementById('generalSupportType');
       const subType = subSelect ? subSelect.value : 'Production Support';
@@ -3617,7 +3632,9 @@
     { date:'2026-09-10', summary:'Dashboard redesigned through several iterations, settling on: plain progress circles (Team Score/Activities/Lifts) with responsive card grouping that genuinely differs mobile vs desktop, a category bar chart, and a weekly trend line — duplicate "Activity by week" bar chart removed after it was found to also be silently throwing an error on every load (a stale element reference), which had been breaking the leaderboard and score ring beneath it. Fixed a real week-ordering bug: weeks were sorted as text, not numbers, so e.g. September could appear to come before February. Sub-category color tinting added: Admin panel cards and the task-logging form (Support Type, Report Type dropdowns) now show a light tint of the parent category color. Added the ability to delete a Superadmin-added sub-category (previously add-only, with no way to remove a mistaken entry) with a check for existing tasks under that name first. Renamed several General Support fields (Lift ID / Supplier Name) to a consistent "Task Name" text field across all four of its sub-types.' },
     { date:'2026-09-10', summary:'Two bugfixes found in review of the previous update: (1) Team Activity/Pre-Sales/Post-Sales tasks were titling themselves "— None —" (or the picked sub-category name) instead of their real identity field, once a Superadmin added any custom sub-category to one of those 3 categories — the new "Sub-category" selector was missing from the same identity-field exclusion list that Report Type/Support Type already use, so it was winning the race to be picked as the title. (2) The "delete a sub-category" safety check that\'s meant to warn about existing tasks logged under that name was silently doing nothing — it filtered tasks by a `sub_type` column that doesn\'t exist on the tasks table (that value actually lives inside the details field), and the query error wasn\'t even being checked, so it always read back as "0 tasks found" and let deletions through without ever warning. Both fixed.' },
     { date:'2026-09-10', summary:'Time Logged feature added: any field marked as Duration (minutes) — the 2 existing built-in fields (Team Activity\'s "Duration (min)", Pre-Sales\' "Deployed Time (min)"), or any brand new one a Superadmin flags with the new "Track as Duration" checkbox on a Number field in Task Fields — now rolls up automatically, no code change needed for future ones. Shows on each person\'s Profile page (all-time + this month) and on the Team Dashboard (a new "Time logged" ring next to Team Score/Activities/Lifts, plus a Time column on the leaderboard). Computed live from the tasks table on each load rather than stored separately, so it\'s always in sync with the real data. Requires a one-time DB migration adding `custom_fields.is_duration` — see the SQL note for this update.' },
-    { date:'2026-09-10', summary:'Post-Sales Activity: Lift Type, Capacity, Motor Origin, Model, and F/S/O were being shown on the form for both Mechanical and Electrical engineers even though Electrical never used them — moved into the Mechanical-only field set (built-in fields, so this needed a code change rather than an Admin panel edit). Electrical entries already logged with these fields keep that data untouched; only the form going forward changed. No database changes involved.' }
+    { date:'2026-09-10', summary:'Post-Sales Activity: Lift Type, Capacity, Motor Origin, Model, and F/S/O were being shown on the form for both Mechanical and Electrical engineers even though Electrical never used them — moved into the Mechanical-only field set (built-in fields, so this needed a code change rather than an Admin panel edit). Electrical entries already logged with these fields keep that data untouched; only the form going forward changed. No database changes involved.' },
+    { date:'2026-09-10', summary:'Bugfix: Technical Support\'s Support Type dropdown was showing every Superadmin-created sub-category to both disciplines regardless of the sub-category\'s own zone setting — unlike Team Activity/Pre-Sales/Post-Sales\'s equivalent selector, which already respected zone correctly. Fixed so a sub-category set to Mechanical or Electrical only shows to that discipline going forward; Common ones still show to both. (Same gap exists in General Support\'s sub-category dropdown — not fixed yet, flagged for a future pass.)' },
+    { date:'2026-09-10', summary:'Same zone-filtering bugfix applied to General Support\'s Support Type dropdown (was the last category with this gap — Team Activity/Pre-Sales/Post-Sales/Technical Support/Reports all already filtered correctly). Also made the Task Fields catalog\'s "Delete sub-category" button visually distinct (icon + text label, not just a bare trash icon) from each individual field\'s own delete button — the two looked identical and sitting close together, which is how a sub-category got deleted by accident earlier today while someone meant to delete just one field under it.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -6687,7 +6704,7 @@ for a competing inline style first.`;
         return `<div style="margin-bottom:18px; padding:12px 14px 12px 16px; border-radius:10px; background:${cardBg}; ${cardBorder}">
           ${allSubtypes.length > 1 ? `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
             <span style="font-size:13px; font-weight:600; color:${headerColor};">${subType || 'Shared across all sub-categories'}</span>
-            ${subType && customSubtypeIdByName[subType] ? `<button class="btn remove" style="padding:4px 6px;" onclick="deleteCustomSubtype('${customSubtypeIdByName[subType]}', '${subType.replace(/'/g,"\\'")}')" title="Delete this sub-category" aria-label="Delete sub-category"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
+            ${subType && customSubtypeIdByName[subType] ? `<button class="btn remove" style="padding:4px 10px; font-size:11px; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;" onclick="deleteCustomSubtype('${customSubtypeIdByName[subType]}', '${subType.replace(/'/g,"\\'")}')" title="Delete this whole sub-category (not just a field)" aria-label="Delete sub-category"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>Delete sub-category</button>` : ''}
           </div>` : ''}
           ${zoneHtml}
         </div>`;
