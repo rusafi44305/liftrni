@@ -2081,31 +2081,6 @@
 </div><!-- /appShell -->
  
 <script>
-  // ============================================================
-  // CHANGELOG — dated, one-line entries for meaningful changes made in
-  // chat sessions with an AI assistant. The Project Briefing download
-  // reads this list directly (see downloadProjectBriefing below), so it
-  // stays current automatically as entries are added here — no need to
-  // separately remember to update the briefing's own text by hand.
-  // This only works if whoever's coding a session actually adds a line
-  // here when they make a meaningful change — it's a real improvement
-  // over a fully static briefing, not something that verifies itself
-  // with zero upkeep. Keep entries short: one line, what changed, not
-  // why or how.
-  // ============================================================
-  const CHANGELOG = [
-    { date:'2026-08-28', summary:'Initial build: task logging across 6 categories, Lift ID tracking, Team Chat, Notebook, Admin panel, role system (User/Admin/Superadmin).' },
-    { date:'2026-08-29', summary:'R&I Project Manager added (internal projects, Gantt view, task breakdown, progress %). Category merges and field cleanup across Pre-Sales/Post-Sales/Tech Support.' },
-    { date:'2026-08-30', summary:'Notifications system, KPI/Score weighting, monthly target tracking, task management permission restrictions (project owner vs others).' },
-    { date:'2026-08-31', summary:'Chat upgrades (@mentions), Notebook upgrade, schema snapshot export tool added to Admin.' },
-    { date:'2026-09-01', summary:'Reports category redesign (6 built-in report types, Error Report scoring penalty), chip options split for Technical Support, discipline (mechanical/electrical) field branching introduced.' },
-    { date:'2026-09-02', summary:'Mechanical vs Electrical field branching extended across categories; General Support and Requisition category merges.' },
-    { date:'2026-09-04', summary:'Backup/Restore system added (manual DB snapshots, since the Supabase free tier has none built in); Download SQL Schema and Download index.html added to the account menu.' },
-    { date:'2026-09-05', summary:'Custom Fields system Stage 1: Superadmin-managed fields and sub-categories per category, live from Admin panel, no code changes needed for new fields going forward.' },
-    { date:'2026-09-06', summary:'Reports category given full parity with the custom-fields system (sub-categories, dynamic fields, dedicated-table options). Task Fields catalog UI fixes (race conditions, compact zone rendering).' },
-    { date:'2026-09-08', summary:'5-theme system finalized (added Midnight Blue, Sunset); macOS-style visual redesign: liquid-glass card vibrancy, section labels toned down to quiet gray, all modals given a consistent close button and max-height, scroll-linked border-reflection effect. Notebook dock icon redesigned (fixed pen/notebook overlap). Download index.html fixed to fetch the clean source instead of a live-data snapshot (previous version could leak on-screen data into the downloaded file).' },
-    { date:'2026-09-09', summary:'Gantt chart mobile layout fixed (date-ticks and task bars now align correctly on narrow screens; Edit/Delete buttons moved to the name row so bars can reach full width). Project PPTX report export added (one-slide, client-side via PptxGenJS, Arial font, inset card design). "Links"/"Upload" quick-links feature added for Post-Sales Activity and Reports (Superadmin-managed via new category_links table). Category dropdown reverted to full solid-color fill after a brief subtler-accent experiment. Project Briefing changed to read this changelog live instead of being a fully static, hand-written block.' }
-  ];
 
   function showView(name){
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -3600,6 +3575,33 @@
   const SUPABASE_URL = 'https://hsqzrzmdxotorgwqrour.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhzcXpyem1keG90b3Jnd3Fyb3VyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc3MzUwMDksImV4cCI6MjEwMzMxMTAwOX0.TebAzaiasJnK2Qsg8A1SpH8TQ5iC0TZcgTxrnDS2Qgo';
   const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ============================================================
+  // CHANGELOG — dated, one-line entries for meaningful changes made in
+  // chat sessions with an AI assistant. The Project Briefing download
+  // reads this list directly (see downloadProjectBriefing below), so it
+  // stays current automatically as entries are added here — no need to
+  // separately remember to update the briefing's own text by hand.
+  // This only works if whoever's coding a session actually adds a line
+  // here when they make a meaningful change — it's a real improvement
+  // over a fully static briefing, not something that verifies itself
+  // with zero upkeep. Keep entries short: one line, what changed, not
+  // why or how.
+  // ============================================================
+  const CHANGELOG = [
+    { date:'2026-08-28', summary:'Initial build: task logging across 6 categories, Lift ID tracking, Team Chat, Notebook, Admin panel, role system (User/Admin/Superadmin).' },
+    { date:'2026-08-29', summary:'R&I Project Manager added (internal projects, Gantt view, task breakdown, progress %). Category merges and field cleanup across Pre-Sales/Post-Sales/Tech Support.' },
+    { date:'2026-08-30', summary:'Notifications system, KPI/Score weighting, monthly target tracking, task management permission restrictions (project owner vs others).' },
+    { date:'2026-08-31', summary:'Chat upgrades (@mentions), Notebook upgrade, schema snapshot export tool added to Admin.' },
+    { date:'2026-09-01', summary:'Reports category redesign (6 built-in report types, Error Report scoring penalty), chip options split for Technical Support, discipline (mechanical/electrical) field branching introduced.' },
+    { date:'2026-09-02', summary:'Mechanical vs Electrical field branching extended across categories; General Support and Requisition category merges.' },
+    { date:'2026-09-04', summary:'Backup/Restore system added (manual DB snapshots, since the Supabase free tier has none built in); Download SQL Schema and Download index.html added to the account menu.' },
+    { date:'2026-09-05', summary:'Custom Fields system Stage 1: Superadmin-managed fields and sub-categories per category, live from Admin panel, no code changes needed for new fields going forward.' },
+    { date:'2026-09-06', summary:'Reports category given full parity with the custom-fields system (sub-categories, dynamic fields, dedicated-table options). Task Fields catalog UI fixes (race conditions, compact zone rendering).' },
+    { date:'2026-09-08', summary:'5-theme system finalized (added Midnight Blue, Sunset); macOS-style visual redesign: liquid-glass card vibrancy, section labels toned down to quiet gray, all modals given a consistent close button and max-height, scroll-linked border-reflection effect. Notebook dock icon redesigned (fixed pen/notebook overlap). Download index.html fixed to fetch the clean source instead of a live-data snapshot (previous version could leak on-screen data into the downloaded file).' },
+    { date:'2026-09-09', summary:'Gantt chart mobile layout fixed (date-ticks and task bars now align correctly on narrow screens; Edit/Delete buttons moved to the name row so bars can reach full width). Project PPTX report export added (one-slide, client-side via PptxGenJS, Arial font, inset card design). "Links"/"Upload" quick-links feature added for Post-Sales Activity and Reports (Superadmin-managed via new category_links table). Category dropdown reverted to full solid-color fill after a brief subtler-accent experiment. Project Briefing changed to read this changelog live instead of being a fully static, hand-written block.' },
+    { date:'2026-09-10', summary:'Dashboard redesigned through several iterations, settling on: plain progress circles (Team Score/Activities/Lifts) with responsive card grouping that genuinely differs mobile vs desktop, a category bar chart, and a weekly trend line — duplicate "Activity by week" bar chart removed after it was found to also be silently throwing an error on every load (a stale element reference), which had been breaking the leaderboard and score ring beneath it. Fixed a real week-ordering bug: weeks were sorted as text, not numbers, so e.g. September could appear to come before February. Sub-category color tinting added: Admin panel cards and the task-logging form (Support Type, Report Type dropdowns) now show a light tint of the parent category color. Added the ability to delete a Superadmin-added sub-category (previously add-only, with no way to remove a mistaken entry) with a check for existing tasks under that name first. Renamed several General Support fields (Lift ID / Supplier Name) to a consistent "Task Name" text field across all four of its sub-types.' }
+  ];
  
   let currentUser = null;   // Supabase auth user
   let currentProfile = null; // row from public.profiles
