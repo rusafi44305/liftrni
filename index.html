@@ -3635,7 +3635,8 @@
     { date:'2026-09-10', summary:'Post-Sales Activity: Lift Type, Capacity, Motor Origin, Model, and F/S/O were being shown on the form for both Mechanical and Electrical engineers even though Electrical never used them — moved into the Mechanical-only field set (built-in fields, so this needed a code change rather than an Admin panel edit). Electrical entries already logged with these fields keep that data untouched; only the form going forward changed. No database changes involved.' },
     { date:'2026-09-10', summary:'Bugfix: Technical Support\'s Support Type dropdown was showing every Superadmin-created sub-category to both disciplines regardless of the sub-category\'s own zone setting — unlike Team Activity/Pre-Sales/Post-Sales\'s equivalent selector, which already respected zone correctly. Fixed so a sub-category set to Mechanical or Electrical only shows to that discipline going forward; Common ones still show to both. (Same gap exists in General Support\'s sub-category dropdown — not fixed yet, flagged for a future pass.)' },
     { date:'2026-09-10', summary:'Same zone-filtering bugfix applied to General Support\'s Support Type dropdown (was the last category with this gap — Team Activity/Pre-Sales/Post-Sales/Technical Support/Reports all already filtered correctly). Also made the Task Fields catalog\'s "Delete sub-category" button visually distinct (icon + text label, not just a bare trash icon) from each individual field\'s own delete button — the two looked identical and sitting close together, which is how a sub-category got deleted by accident earlier today while someone meant to delete just one field under it.' },
-    { date:'2026-09-10', summary:'Real bugfix, not a data problem this time: the Task Fields catalog\'s sub-category headers depend on a shared cache (dynamicFieldOptions.customSubtypes) that only got populated by visiting the task-logging form first — the Admin panel never loaded it itself. Opening Task Fields as the very first thing after a fresh page load meant every Superadmin-added sub-category, across every category, would silently be missing from the catalog even though the real data was completely intact — this is what looked like Factory Maintenance "disappearing" again with nothing actually deleted. loadCustomFieldsPanel() now loads this itself first, at no cost on repeat visits since it\'s already-loaded-skip guarded.' }
+    { date:'2026-09-10', summary:'Real bugfix, not a data problem this time: the Task Fields catalog\'s sub-category headers depend on a shared cache (dynamicFieldOptions.customSubtypes) that only got populated by visiting the task-logging form first — the Admin panel never loaded it itself. Opening Task Fields as the very first thing after a fresh page load meant every Superadmin-added sub-category, across every category, would silently be missing from the catalog even though the real data was completely intact — this is what looked like Factory Maintenance "disappearing" again with nothing actually deleted. loadCustomFieldsPanel() now loads this itself first, at no cost on repeat visits since it\'s already-loaded-skip guarded.' },
+    { date:'2026-09-10', summary:'Dashboard\'s Weekly trend replaced: was a single flat line (total activity only); now a layered "mountain" area chart showing the top 3 most active categories as their own translucent bands, everything else folded into one "Other" band so it stays readable rather than 6 categories squashed on top of each other. All layers share one scale (not independently normalized) so relative activity between categories stays honest. Hoverable points show the exact count per category per week. Same card, same position, both mobile and desktop — everything else on the Dashboard (rings, leaderboard, category bars) is unchanged.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4063,6 +4064,36 @@
     return d;
   }
   let sparkGradientCounter = 0;
+  // Layered "mountain" trend — each series (top categories + a folded
+  // "Other" band) gets its own translucent filled area, all sharing ONE
+  // scale (not independently normalized per series) so a category twice
+  // as active genuinely reads as roughly twice the height — honest, not
+  // visually equalized. Small hoverable dots at each point carry the
+  // exact count, same "hover for the real number" idea the rings already
+  // use via their aria-label/title.
+  function mountainTrendSvg(series, weekLabels, w, h){
+    const allValues = series.flatMap(s => s.values);
+    const max = Math.max(...allValues, 1);
+    const n = series[0].values.length;
+    const pad = h * 0.08;
+    const usableH = h - pad * 2;
+    const toPoints = values => values.map((v, i) => ({
+      x: n > 1 ? i/(n-1)*w : w/2,
+      y: pad + usableH - (v/max) * usableH,
+      v
+    }));
+    const layersHtml = series.map(s => {
+      const pts = toPoints(s.values);
+      const lineD = smoothPathD(pts);
+      const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
+      const dotsHtml = pts.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" fill="${s.color}" fill-opacity="0.9"><title>${s.label} — ${weekLabels[i] || ''}: ${p.v}</title></circle>`).join('');
+      return `<path d="${areaD}" fill="${s.color}" fill-opacity="0.26"></path><path d="${lineD}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>${dotsHtml}`;
+    }).join('');
+    const legendHtml = series.map(s => `<span style="display:inline-flex; align-items:center; gap:4px; margin:0 10px 4px 0;"><span style="width:7px; height:7px; border-radius:2px; background:${s.color}; flex-shrink:0;"></span><span style="font-size:10.5px; color:var(--text-faint);">${s.label}</span></span>`).join('');
+    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${layersHtml}</svg>
+      <div style="display:flex; flex-wrap:wrap; margin-top:6px;">${legendHtml}</div>`;
+  }
+
   function sparklineSvg(values, color, w, h){
     if(!values || values.length < 2) return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}"><line x1="0" y1="${h/2}" x2="${w}" y2="${h/2}" stroke="var(--border)" stroke-width="1.5"/></svg>`;
     const max = Math.max(...values, 1), min = Math.min(...values, 0);
@@ -7780,12 +7811,18 @@ for a competing inline style first.`;
     };
     const weekCounts = {};
     const weekLiftSets = {};
+    // Per-category, per-week — needed for the layered trend chart below.
+    // Kept separate from weekCounts (the plain total) rather than derived
+    // from it, since nothing else here needs a category breakdown by week.
+    const weekCatCounts = {};
     rows.forEach(r => {
       const performDate = r.details && r.details['Perform Date'];
       const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(r.created_at);
       const wk = weekOf(d);
       weekCounts[wk] = (weekCounts[wk] || 0) + 1;
       if(r.lift_id){ (weekLiftSets[wk] || (weekLiftSets[wk] = new Set())).add(r.lift_id); }
+      if(!weekCatCounts[wk]) weekCatCounts[wk] = {};
+      weekCatCounts[wk][r.category] = (weekCatCounts[wk][r.category] || 0) + 1;
     });
     const weekKeysSorted = Object.keys(weekCounts).sort((a, b) => {
       // Plain string sort breaks here: "2026-W36" sorts BEFORE
@@ -7800,9 +7837,27 @@ for a competing inline style first.`;
     const activityTrendValues = weekKeysSorted.map(k => weekCounts[k]);
     const liftTrendValues = weekKeysSorted.map(k => weekLiftSets[k] ? weekLiftSets[k].size : 0);
 
-    document.getElementById('dashHeroTrendChart').innerHTML = weekKeysSorted.length >= 2
-      ? sparklineSvg(activityTrendValues, '#378ADD', 210, 44)
-      : '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
+    // Weekly trend chart: layered by category rather than one flat total —
+    // but only the top 3 (by total activity across the whole range), with
+    // everything else folded into one "Other" band. Showing all 6 layered
+    // independently made the smaller categories visually unreadable,
+    // squashed flat against the baseline underneath the bigger ones.
+    if(weekKeysSorted.length >= 2){
+      const topCatsForTrend = Object.entries(catCounts).sort((a,b) => b[1]-a[1]).slice(0,3).map(([c]) => c);
+      const trendSeries = topCatsForTrend.map(cat => ({
+        label: catMeta[cat]?.name || cat,
+        color: CATEGORY_COLOR_VAR[cat] || 'var(--text-faint)',
+        values: weekKeysSorted.map(wk => (weekCatCounts[wk] && weekCatCounts[wk][cat]) || 0)
+      }));
+      const otherValues = weekKeysSorted.map(wk => {
+        const catsThisWeek = weekCatCounts[wk] || {};
+        return Object.keys(catsThisWeek).reduce((sum, cat) => sum + (topCatsForTrend.includes(cat) ? 0 : catsThisWeek[cat]), 0);
+      });
+      if(otherValues.some(v => v > 0)) trendSeries.push({ label: 'Other', color: 'var(--text-faint)', values: otherValues });
+      document.getElementById('dashHeroTrendChart').innerHTML = mountainTrendSvg(trendSeries, weekKeysSorted, 210, 44);
+    } else {
+      document.getElementById('dashHeroTrendChart').innerHTML = '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
+    }
 
     const maxCat = Math.max(1, ...Object.values(catCounts));
     const catSorted = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
