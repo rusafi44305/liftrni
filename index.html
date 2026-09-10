@@ -3636,7 +3636,8 @@
     { date:'2026-09-10', summary:'Bugfix: Technical Support\'s Support Type dropdown was showing every Superadmin-created sub-category to both disciplines regardless of the sub-category\'s own zone setting — unlike Team Activity/Pre-Sales/Post-Sales\'s equivalent selector, which already respected zone correctly. Fixed so a sub-category set to Mechanical or Electrical only shows to that discipline going forward; Common ones still show to both. (Same gap exists in General Support\'s sub-category dropdown — not fixed yet, flagged for a future pass.)' },
     { date:'2026-09-10', summary:'Same zone-filtering bugfix applied to General Support\'s Support Type dropdown (was the last category with this gap — Team Activity/Pre-Sales/Post-Sales/Technical Support/Reports all already filtered correctly). Also made the Task Fields catalog\'s "Delete sub-category" button visually distinct (icon + text label, not just a bare trash icon) from each individual field\'s own delete button — the two looked identical and sitting close together, which is how a sub-category got deleted by accident earlier today while someone meant to delete just one field under it.' },
     { date:'2026-09-10', summary:'Real bugfix, not a data problem this time: the Task Fields catalog\'s sub-category headers depend on a shared cache (dynamicFieldOptions.customSubtypes) that only got populated by visiting the task-logging form first — the Admin panel never loaded it itself. Opening Task Fields as the very first thing after a fresh page load meant every Superadmin-added sub-category, across every category, would silently be missing from the catalog even though the real data was completely intact — this is what looked like Factory Maintenance "disappearing" again with nothing actually deleted. loadCustomFieldsPanel() now loads this itself first, at no cost on repeat visits since it\'s already-loaded-skip guarded.' },
-    { date:'2026-09-10', summary:'Dashboard\'s Weekly trend replaced: was a single flat line (total activity only); now a layered "mountain" area chart showing the top 3 most active categories as their own translucent bands, everything else folded into one "Other" band so it stays readable rather than 6 categories squashed on top of each other. All layers share one scale (not independently normalized) so relative activity between categories stays honest. Hoverable points show the exact count per category per week. Same card, same position, both mobile and desktop — everything else on the Dashboard (rings, leaderboard, category bars) is unchanged.' }
+    { date:'2026-09-10', summary:'Dashboard\'s Weekly trend replaced: was a single flat line (total activity only); now a layered "mountain" area chart showing the top 3 most active categories as their own translucent bands, everything else folded into one "Other" band so it stays readable rather than 6 categories squashed on top of each other. All layers share one scale (not independently normalized) so relative activity between categories stays honest. Hoverable points show the exact count per category per week. Same card, same position, both mobile and desktop — everything else on the Dashboard (rings, leaderboard, category bars) is unchanged.' },
+    { date:'2026-09-10', summary:'Dashboard visually regrouped into two titled sections ("Team overview" and "Category & engineer performance"), each its own liquid-glass card, on both mobile and desktop — no change to any underlying data, permissions, filters, or the leaderboard table\'s own behavior, only how the existing rings/charts are visually grouped. Also fixed the Weekly trend chart\'s stretching: it was using preserveAspectRatio="none", forcing a non-uniform stretch to whatever width its card happened to be — visibly distorted on wide desktop screens. Added a new "Top engineers by score" mini chart (visualizing the same score data the leaderboard\'s Score column already has, just sorted and charted rather than tabled) — respects the same Superadmin-configurable KPI-visibility permission the leaderboard column already uses.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4090,7 +4091,13 @@
       return `<path d="${areaD}" fill="${s.color}" fill-opacity="0.26"></path><path d="${lineD}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>${dotsHtml}`;
     }).join('');
     const legendHtml = series.map(s => `<span style="display:inline-flex; align-items:center; gap:4px; margin:0 10px 4px 0;"><span style="width:7px; height:7px; border-radius:2px; background:${s.color}; flex-shrink:0;"></span><span style="font-size:10.5px; color:var(--text-faint);">${s.label}</span></span>`).join('');
-    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${layersHtml}</svg>
+    // 2026-09-10 fix: preserveAspectRatio="none" was forcing this to
+    // stretch non-uniformly to fill whatever width its container
+    // happened to be — fine on a narrow phone card, visibly distorted on
+    // a wide desktop one. "xMidYMid meet" scales the chart uniformly
+    // instead, so the peaks keep their real proportions regardless of
+    // how wide the card is.
+    return `<svg width="100%" height="${h}" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${layersHtml}</svg>
       <div style="display:flex; flex-wrap:wrap; margin-top:6px;">${legendHtml}</div>`;
   }
 
@@ -7683,62 +7690,74 @@ for a competing inline style first.`;
     const container = document.getElementById('dashOverviewContainer');
     if(mode === 'mobile'){
       container.innerHTML = `
-        <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:14px; margin-bottom:10px;">
-          <div id="dashRingScore" style="flex-shrink:0;"></div>
-          <div style="flex-shrink:0; text-align:center;"><p style="font-size:11px; color:var(--text-faint); margin:0;">Team score</p></div>
-          <div style="flex:1; min-width:0; border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:14px;">
-            <div class="field-label" style="margin-bottom:6px;">Weekly trend</div>
-            <div id="dashHeroTrendChart"></div>
+        <div class="panel liquid-glass-card" style="margin-bottom:12px;">
+          <div class="panel-title" style="text-align:center; margin-bottom:12px;">Team overview</div>
+          <div style="display:flex; justify-content:center; margin-bottom:12px;">
+            <div id="dashRingScore"></div>
           </div>
-        </div>
-        <div style="display:flex; gap:10px; margin-bottom:10px;">
-          <div class="panel liquid-glass-card" style="flex:1; display:flex; align-items:center; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:9px;">
             <div id="dashRingActivities" style="flex-shrink:0;"></div>
             <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Activities</p>
           </div>
-          <div class="panel liquid-glass-card" style="flex:1; display:flex; align-items:center; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:9px;">
             <div id="dashRingLifts" style="flex-shrink:0;"></div>
             <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
           </div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+            <div id="dashRingTime" style="flex-shrink:0;"></div>
+            <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Time logged</p>
+          </div>
+          <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+          <div id="dashHeroTrendChart"></div>
         </div>
-        <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-          <div id="dashRingTime" style="flex-shrink:0;"></div>
-          <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Time logged — from any Duration field</p>
-        </div>
-        <div class="panel liquid-glass-card" style="margin-bottom:8px;">
+        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin-bottom:14px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+        <div class="panel liquid-glass-card" style="margin-bottom:12px;">
+          <div class="panel-title" style="text-align:center; margin-bottom:12px;">Category &amp; engineer performance</div>
           <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
           <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-        </div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin-bottom:18px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>`;
+          <div class="field-label" style="margin:16px 0 8px;">Top engineers by score</div>
+          <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
+        </div>`;
     } else {
       container.innerHTML = `
-        <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
-          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
-            <div id="dashRingScore" style="flex-shrink:0;"></div>
-            <p style="font-size:12px; color:var(--text-faint); margin:0;">Team score</p>
-          </div>
-          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
-            <div id="dashRingActivities" style="flex-shrink:0;"></div>
-            <p style="font-size:12px; color:var(--text-faint); margin:0;">Activities</p>
-          </div>
-          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
-            <div id="dashRingLifts" style="flex-shrink:0;"></div>
-            <p style="font-size:12px; color:var(--text-faint); margin:0;">Lifts touched</p>
-          </div>
-          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
-            <div id="dashRingTime" style="flex-shrink:0;"></div>
-            <p style="font-size:12px; color:var(--text-faint); margin:0;">Time logged</p>
+        <div class="panel liquid-glass-card" style="margin-bottom:16px;">
+          <div class="panel-title" style="text-align:center; margin-bottom:16px;">Team overview</div>
+          <div class="dash-compact-grid" style="display:grid; grid-template-columns:200px 1fr; gap:22px;">
+            <div>
+              <div style="display:flex; justify-content:center; margin-bottom:16px;">
+                <div id="dashRingScore"></div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                <div id="dashRingActivities" style="flex-shrink:0;"></div>
+                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Activities</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                <div id="dashRingLifts" style="flex-shrink:0;"></div>
+                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div id="dashRingTime" style="flex-shrink:0;"></div>
+                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Time logged</p>
+              </div>
+            </div>
+            <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:22px;">
+              <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+              <div id="dashHeroTrendChart"></div>
+            </div>
           </div>
         </div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 14px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
-        <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;">
-          <div class="panel liquid-glass-card">
-            <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
-            <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-          </div>
-          <div class="panel liquid-glass-card">
-            <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
-            <div id="dashHeroTrendChart"></div>
+        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 16px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+        <div class="panel liquid-glass-card" style="margin-bottom:18px;">
+          <div class="panel-title" style="text-align:center; margin-bottom:16px;">Category &amp; engineer performance</div>
+          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+            <div>
+              <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
+              <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+            </div>
+            <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:22px;">
+              <div class="field-label" style="margin-bottom:8px;">Top engineers by score</div>
+              <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
+            </div>
           </div>
         </div>`;
     }
@@ -7962,6 +7981,40 @@ for a competing inline style first.`;
       : `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; font-size:11px; color:var(--text-faint);">${i+1}</span>`;
     const initials = (name) => (name || '?').split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
     const avatarColors = ['#D14343','#378ADD','#1D9E75','#D4537E','#B98900','#8A63D2'];
+
+    // Top engineers by score — a second, visual take on data the
+    // leaderboard table below already has (sorted there by activity
+    // count, not score), added for the infographic-style layout. Same
+    // permission gate as the leaderboard's own Score column: if an Admin
+    // isn't allowed to see individual scores, this stays hidden too
+    // rather than leaking scores through a side door.
+    const topEngineersEl = document.getElementById('dashTopEngineersChart');
+    if(topEngineersEl){
+      if(!canSeeIndividualKpi){
+        topEngineersEl.innerHTML = '<div class="placeholder-note">Restricted by Superadmin.</div>';
+      } else {
+        const topByScore = [...leaderboard].sort((a,b) => b[1].kpi - a[1].kpi).slice(0, 5);
+        if(!topByScore.length){
+          topEngineersEl.innerHTML = '<div class="placeholder-note">No activity in this range.</div>';
+        } else {
+          const maxKpi = Math.max(1, ...topByScore.map(([,e]) => e.kpi));
+          const rowsHtml = topByScore.map(([id, e], i) => {
+            const c = avatarColors[i % avatarColors.length];
+            const pct = Math.max(0, Math.min(100, e.kpi));
+            return `
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+              <span style="font-size:10.5px; color:var(--text-faint); width:78px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${e.name}">${e.name}</span>
+              <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; min-width:0;">
+                <div style="width:${Math.max(pct/maxKpi*100, 4)}%; height:100%; background:linear-gradient(90deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:99px; box-shadow:0 0 6px ${c}80;"></div>
+              </div>
+              <span style="font-size:10.5px; color:var(--text-faint); width:32px; text-align:right; flex-shrink:0;">${e.kpi.toFixed(1)}</span>
+            </div>`;
+          }).join('');
+          topEngineersEl.innerHTML = rowsHtml;
+        }
+      }
+    }
+
     lbBody.innerHTML = leaderboard.length ? leaderboard.map(([id, e], i) => {
       const topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0];
       const kpiCell = canSeeIndividualKpi
