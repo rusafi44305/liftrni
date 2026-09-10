@@ -3634,7 +3634,8 @@
     { date:'2026-09-10', summary:'Time Logged feature added: any field marked as Duration (minutes) — the 2 existing built-in fields (Team Activity\'s "Duration (min)", Pre-Sales\' "Deployed Time (min)"), or any brand new one a Superadmin flags with the new "Track as Duration" checkbox on a Number field in Task Fields — now rolls up automatically, no code change needed for future ones. Shows on each person\'s Profile page (all-time + this month) and on the Team Dashboard (a new "Time logged" ring next to Team Score/Activities/Lifts, plus a Time column on the leaderboard). Computed live from the tasks table on each load rather than stored separately, so it\'s always in sync with the real data. Requires a one-time DB migration adding `custom_fields.is_duration` — see the SQL note for this update.' },
     { date:'2026-09-10', summary:'Post-Sales Activity: Lift Type, Capacity, Motor Origin, Model, and F/S/O were being shown on the form for both Mechanical and Electrical engineers even though Electrical never used them — moved into the Mechanical-only field set (built-in fields, so this needed a code change rather than an Admin panel edit). Electrical entries already logged with these fields keep that data untouched; only the form going forward changed. No database changes involved.' },
     { date:'2026-09-10', summary:'Bugfix: Technical Support\'s Support Type dropdown was showing every Superadmin-created sub-category to both disciplines regardless of the sub-category\'s own zone setting — unlike Team Activity/Pre-Sales/Post-Sales\'s equivalent selector, which already respected zone correctly. Fixed so a sub-category set to Mechanical or Electrical only shows to that discipline going forward; Common ones still show to both. (Same gap exists in General Support\'s sub-category dropdown — not fixed yet, flagged for a future pass.)' },
-    { date:'2026-09-10', summary:'Same zone-filtering bugfix applied to General Support\'s Support Type dropdown (was the last category with this gap — Team Activity/Pre-Sales/Post-Sales/Technical Support/Reports all already filtered correctly). Also made the Task Fields catalog\'s "Delete sub-category" button visually distinct (icon + text label, not just a bare trash icon) from each individual field\'s own delete button — the two looked identical and sitting close together, which is how a sub-category got deleted by accident earlier today while someone meant to delete just one field under it.' }
+    { date:'2026-09-10', summary:'Same zone-filtering bugfix applied to General Support\'s Support Type dropdown (was the last category with this gap — Team Activity/Pre-Sales/Post-Sales/Technical Support/Reports all already filtered correctly). Also made the Task Fields catalog\'s "Delete sub-category" button visually distinct (icon + text label, not just a bare trash icon) from each individual field\'s own delete button — the two looked identical and sitting close together, which is how a sub-category got deleted by accident earlier today while someone meant to delete just one field under it.' },
+    { date:'2026-09-10', summary:'Real bugfix, not a data problem this time: the Task Fields catalog\'s sub-category headers depend on a shared cache (dynamicFieldOptions.customSubtypes) that only got populated by visiting the task-logging form first — the Admin panel never loaded it itself. Opening Task Fields as the very first thing after a fresh page load meant every Superadmin-added sub-category, across every category, would silently be missing from the catalog even though the real data was completely intact — this is what looked like Factory Maintenance "disappearing" again with nothing actually deleted. loadCustomFieldsPanel() now loads this itself first, at no cost on repeat visits since it\'s already-loaded-skip guarded.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -6568,6 +6569,18 @@ for a competing inline style first.`;
   // and drag-and-drop reordering land in a later stage, once this
   // foundation is confirmed to accurately reflect what already exists.
   async function loadCustomFieldsPanel(){
+    // Bugfix (2026-09-10): this panel's sub-category headers come from
+    // dynamicFieldOptions.customSubtypes, which used to only get
+    // populated by visiting the task-logging form first — loadAdminPanel
+    // never loaded it. Opening Task Fields as the very first thing after
+    // a fresh page load (e.g. straight after uploading an update) meant
+    // EVERY Superadmin-added sub-category, across every category, would
+    // silently be missing from the catalog even though the real data was
+    // completely intact — exactly what looked like Factory Maintenance
+    // "disappearing" with nothing actually deleted. This call is a no-op
+    // if it's already loaded (dynamicFieldOptionsLoaded guards it), so it
+    // costs nothing on every other visit.
+    await loadDynamicFieldOptions();
     const panel = document.getElementById('customFieldsPanel');
     const { data, error } = await sb.from('custom_fields').select('*').order('category').order('sub_type').order('zone').order('sort_order');
     if(error){
