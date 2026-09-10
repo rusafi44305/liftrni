@@ -77,9 +77,9 @@
     --bg:#0D1218; --surface:#181818; --surface-alt:#282828; --border:#454545;
     --text:#ECEDEF; --text-dim:#C7CDD9; --text-faint:#A3ACBC; --bg-anim-ink:#8B96B8;
     --accent:#5B8DEF; --accent-rgb:91,141,239; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
-    --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
-    --c-install:#E8AD6C; --c-commission:#F3A25E; --c-aftersales:#F27FAD; --c-production:#9AA1F5; --c-techsupport:#E8AD6C;
-    --c-requisition:#4FCADE; --c-scm:#C0E15C; --c-existingdev:#D3C4A8; --c-surveyissues:#F47171;
+    --c-rni:#B7A6F5; --c-presales:#8CB7F9; --c-client:#76DADA; --c-postsales:#76E2B2;
+    --c-install:#EDBF8C; --c-commission:#F6B681; --c-aftersales:#F59BBF; --c-production:#B0B6F7; --c-techsupport:#EDBF8C;
+    --c-requisition:#76D6E5; --c-scm:#CEE880; --c-existingdev:#DDD1BB; --c-surveyissues:#F69090;
     --shadow:0 1px 2px rgba(0,0,0,0.22), 0 4px 12px -4px rgba(0,0,0,0.30);
     --header-bg:#0D1218;
     /* Gradient wash colors, sampled directly from the reference image
@@ -118,10 +118,14 @@
        colors, so this one rule still needs no per-theme special-casing
        even though the exact hues are now fixed rather than derived.
        Sits behind the existing #bgAnim line-art overlay, layering with
-       it rather than replacing it. */
+       it rather than replacing it.
+       2026-09-10 (follow-up): made noticeably more visible — bigger
+       ellipses and a much later fade-out (65%→92%) so the wash actually
+       reaches most of the visible viewport instead of fading out near
+       the top corners where it started. */
     background:
-      radial-gradient(ellipse 420px 280px at 25% 6%, var(--wash-1) 0%, transparent 65%),
-      radial-gradient(ellipse 420px 280px at 78% 8%, var(--wash-2) 0%, transparent 65%),
+      radial-gradient(ellipse 900px 650px at 20% 0%, var(--wash-1) 0%, transparent 92%),
+      radial-gradient(ellipse 900px 650px at 82% 4%, var(--wash-2) 0%, transparent 92%),
       var(--bg);
     background-attachment:fixed;
     color:var(--text);
@@ -1070,13 +1074,13 @@
      separation. Lightened relative to --surface (white blended in
      first, then the transparency layer) so they read as a distinct,
      slightly-raised layer on top of their container instead.
-     2026-09-10: strengthened the gap further both ways — holder opacity
-     down (74%→68%) and item white-mix up (15%→24%) — the first version
-     of this split was correct in principle but too subtle to actually
-     notice at a glance. */
+     2026-09-10: the 24% white-mix from the previous round was reading
+     as washed-out grey once Dark's own card color got darker — dropped
+     to 9%, enough for a subtle, still-dark distinction from the holder
+     rather than a visibly lighter grey card sitting inside a dark one. */
   .mytask-item, .feed-item, .approve-row, .cat-tile, .t-card, .queued-item, .chip-opt, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill{
-    background:color-mix(in srgb, color-mix(in srgb, var(--surface) 76%, white 24%) 88%, transparent) !important;
+    background:color-mix(in srgb, color-mix(in srgb, var(--surface) 91%, white 9%) 92%, transparent) !important;
   }
   /* A moving light reflection along each card's own border — like light
      catching the edge of real glass as you tilt it. --shine-pos is kept
@@ -3811,7 +3815,8 @@
     { date:'2026-09-10', summary:'Two contrast fixes from chasing the reference images too literally. (1) White theme: page background and card background had ended up only a few points apart in tone, so cards barely stood out — widened the gap (bg #F0F1F5→#DDDFE5, card #EBEAEF→#FAFAFC). (2) Dark theme: the Edit/View-details/Delete icon buttons were nearly invisible — they get their background by tinting toward --surface, but Dark\'s --surface and --surface-alt had also become nearly identical, so the button\'s own background barely differed from the card behind it. Widened that gap too (surface-alt #333333→#3D3D3D) and, more importantly, strengthened each button\'s own tint and added a matching-color border so they read as a distinct clickable shape from their outline alone, not just background contrast that could quietly erode again later.' },
     { date:'2026-09-10', summary:'Dark theme cards darkened — they were reading as too grey/washed-out at #2B2B2B. Card is now #1C1C1C, secondary surface #2C2C2C, keeping the same ~16-point gap between the two that fixed button visibility last round, and still clearly distinguishable from the page background (#0D1218).' },
     { date:'2026-09-10', summary:'Dark theme cards darkened again per follow-up feedback (#1C1C1C→#181818, secondary surface #2C2C2C→#282828), same gap preserved. Also: checked Backup/Restore actually works end to end rather than just that the buttons run without erroring — found a real, serious gap. custom_fields, custom_subtypes, and category_links (the entire Task Fields catalog and Category Links) were missing from BACKUP_TABLES entirely, so backups never included them; worse, the server-side restore_backup() Postgres function is hardcoded with explicit per-table DELETE/INSERT statements and was also missing all 3, so even a full backup taken today couldn\'t have restored them. Fixed both halves — see the accompanying SQL migration for the database-side fix, which can\'t be applied from code changes alone. Backups taken before deploying both halves won\'t contain this data for restore purposes; take a fresh one once both are live.' },
-    { date:'2026-09-10', summary:'The Import Backup modal\'s Restore button was there all along but easy to miss entirely — it was icon-only (a trash can, of all things, which reads as "delete" not "restore") with no visible text, relying purely on a hover tooltip that doesn\'t even work on touch devices. Replaced with a proper circular-restore-arrow icon plus a visible "Restore" label, matching the Download button next to it.' }
+    { date:'2026-09-10', summary:'The Import Backup modal\'s Restore button was there all along but easy to miss entirely — it was icon-only (a trash can, of all things, which reads as "delete" not "restore") with no visible text, relying purely on a hover tooltip that doesn\'t even work on touch devices. Replaced with a proper circular-restore-arrow icon plus a visible "Restore" label, matching the Download button next to it.' },
+    { date:'2026-09-10', summary:'Added a proper Delete button to Import Backup (was missing entirely — only Download and Restore existed) — deleting a backup only removes that snapshot, never touches live data, so it just needs a plain confirm(). All three actions (Download/Restore/Delete) switched to icon-only per request, each with a distinct icon and color so they stay recognizable without text (download arrow, circular restore arrow in amber, trash can in red), plus proper title/aria-label tooltips. Also: category/task item cards (My Tasks rows, Recent Activity, category tiles) were reading as washed-out grey — the white-mix used to lighten them relative to their holder card was too strong (24%) once Dark\'s own card color got darker in recent updates; dropped to 9%. Dark theme\'s category tag colors brightened (~22% lighter) so they pop better against the now-darker cards. Background gradient wash made noticeably more visible — bigger spread, much slower fade-out — in both themes.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5740,22 +5745,25 @@ for a competing inline style first.`;
           <div style="font-size:11px; color:var(--text-faint);">${timeAgo(b.created_at)}</div>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn" style="padding:6px 12px; font-size:12px;" onclick="downloadBackupJson('${b.id}')">Download</button>
-          <button class="btn remove" style="padding:6px 12px; font-size:12px; display:inline-flex; align-items:center; gap:5px;" data-backup-id="${b.id}" data-backup-label="${escapeHtml(b.label || '')}" onclick="confirmRestoreBackup(this.dataset.backupId, this.dataset.backupLabel)" title="Restore this backup" aria-label="Restore this backup"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>Restore</button>
+          <button class="btn" style="padding:7px;" onclick="downloadBackupJson('${b.id}')" title="Download backup" aria-label="Download backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></button>
+          <button class="btn edit" style="padding:7px;" data-backup-id="${b.id}" data-backup-label="${escapeHtml(b.label || '')}" onclick="confirmRestoreBackup(this.dataset.backupId, this.dataset.backupLabel)" title="Restore this backup" aria-label="Restore this backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
+          <button class="btn remove" style="padding:7px;" data-backup-id="${b.id}" data-backup-label="${escapeHtml(b.label || '')}" onclick="confirmDeleteBackup(this.dataset.backupId, this.dataset.backupLabel)" title="Delete this backup" aria-label="Delete this backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
         </div>
       </div>`).join('');
 
+    document.getElementById('importBackupOverlay')?.remove();
     const overlay = document.createElement('div');
+    overlay.id = 'importBackupOverlay';
     overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
     overlay.innerHTML = `
       <div class="panel" style="max-width:440px; width:100%; max-height:85vh; overflow-y:auto;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
           <div class="panel-title" style="margin:0;">Import Backup</div>
-          <span style="cursor:pointer; color:var(--text-faint);" onclick="this.closest('div[style*=fixed]').remove()">✕</span>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="document.getElementById('importBackupOverlay').remove()">✕</span>
         </div>
         <div style="font-size:12.5px; color:var(--text-faint); margin-bottom:16px;">Your 3 most recent backups. Restoring rewinds your entire database to exactly how it was at that moment — anything created after that point will be lost.</div>
         ${rows}
-        <button class="btn" style="width:100%; margin-top:6px;" onclick="this.closest('div[style*=fixed]').remove()">Close</button>
+        <button class="btn" style="width:100%; margin-top:6px;" onclick="document.getElementById('importBackupOverlay').remove()">Close</button>
       </div>`;
     overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
     document.body.appendChild(overlay);
@@ -5777,6 +5785,18 @@ for a competing inline style first.`;
     if(error){ alert('Restore failed: ' + error.message); return; }
     alert('Restore complete. Reloading the page now.');
     location.reload();
+  }
+
+  // Deleting a backup only removes that snapshot from the backups table
+  // itself — it has no effect on any live data, unlike Restore. A plain
+  // confirm() is enough here for exactly that reason; this one doesn't
+  // carry the same risk as accidentally rewinding the whole database.
+  async function confirmDeleteBackup(id, label){
+    if(!confirm(`Delete the backup "${label}"? This can't be undone, but it only removes this snapshot — nothing in your live data is affected.`)) return;
+    const { error } = await sb.from('backups').delete().eq('id', id);
+    if(error){ alert('Could not delete backup: ' + error.message); return; }
+    document.getElementById('importBackupOverlay')?.remove();
+    openImportBackupModal();
   }
 
   // ============ REAL ADMIN PANEL ============
