@@ -1822,6 +1822,11 @@
       </div>
     </div>
     <div class="panel" style="margin-top:20px;">
+      <div class="panel-title">Time logged</div>
+      <div class="block-sub" style="margin-top:-6px; margin-bottom:12px;">Total minutes recorded across any Duration field you've filled in — meetings, deployed time, or any future field a Superadmin flags this way.</div>
+      <div id="profileTimeLogged"><div class="placeholder-note">Loading…</div></div>
+    </div>
+    <div class="panel" style="margin-top:20px;">
       <div class="panel-title">Error Reports — your own record</div>
       <div class="block-sub" style="margin-top:-6px; margin-bottom:12px;">For your own awareness only — this is never shown to anyone else without a Superadmin's approval, and never affects how your overall Score number is displayed to others.</div>
       <div id="profileErrorReports"><div class="placeholder-note">Loading…</div></div>
@@ -1851,8 +1856,8 @@
       <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
       <div class="panel no-shine" style="padding:8px 20px;">
         <table class="data">
-          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th>Score</th><th>Error Reports</th><th></th></tr></thead>
-          <tbody id="dashLeaderboardBody"><tr><td colspan="5" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
+          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th>Time</th><th>Score</th><th>Error Reports</th><th></th></tr></thead>
+          <tbody id="dashLeaderboardBody"><tr><td colspan="7" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -2361,7 +2366,7 @@
       {t:'text', l:'Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
       {t:'chips', l:'Task Category', hint:'select all that apply', source:'rni:task_category_mechanical', section:'details'},
       {t:'row2text', l1:'Task Start Date', l2:'Task Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
-      {t:'text', l:'Duration (min) — for meetings/training', ph:'e.g. 90', section:'details'},
+      {t:'text', l:'Duration (min) — for meetings/training', ph:'e.g. 90', numeric:true, isDuration:true, section:'details'},
       {t:'chips', l:'Status', source:'rni:status_mechanical', section:'details'},
       {t:'textarea', l:'Notes / Challenges / Achievements', section:'description'}
     ],
@@ -2369,7 +2374,7 @@
       {t:'text', l:'Client / Project Name', req:true, section:'identity'},
       {t:'chips', l:'Support Medium', hint:'select all that apply', source:'presales:support_medium', section:'details'},
       {t:'chips', l:'Support Type', hint:'select all that apply', source:'presales:client_support_task', section:'details'},
-      {t:'text', l:'Deployed Time (min)', ph:'e.g. 60', section:'details'},
+      {t:'text', l:'Deployed Time (min)', ph:'e.g. 60', numeric:true, isDuration:true, section:'details'},
       {t:'textarea', l:'Summary of support provided', section:'description'}
     ],
     postsales: [
@@ -3601,7 +3606,8 @@
     { date:'2026-09-08', summary:'5-theme system finalized (added Midnight Blue, Sunset); macOS-style visual redesign: liquid-glass card vibrancy, section labels toned down to quiet gray, all modals given a consistent close button and max-height, scroll-linked border-reflection effect. Notebook dock icon redesigned (fixed pen/notebook overlap). Download index.html fixed to fetch the clean source instead of a live-data snapshot (previous version could leak on-screen data into the downloaded file).' },
     { date:'2026-09-09', summary:'Gantt chart mobile layout fixed (date-ticks and task bars now align correctly on narrow screens; Edit/Delete buttons moved to the name row so bars can reach full width). Project PPTX report export added (one-slide, client-side via PptxGenJS, Arial font, inset card design). "Links"/"Upload" quick-links feature added for Post-Sales Activity and Reports (Superadmin-managed via new category_links table). Category dropdown reverted to full solid-color fill after a brief subtler-accent experiment. Project Briefing changed to read this changelog live instead of being a fully static, hand-written block.' },
     { date:'2026-09-10', summary:'Dashboard redesigned through several iterations, settling on: plain progress circles (Team Score/Activities/Lifts) with responsive card grouping that genuinely differs mobile vs desktop, a category bar chart, and a weekly trend line — duplicate "Activity by week" bar chart removed after it was found to also be silently throwing an error on every load (a stale element reference), which had been breaking the leaderboard and score ring beneath it. Fixed a real week-ordering bug: weeks were sorted as text, not numbers, so e.g. September could appear to come before February. Sub-category color tinting added: Admin panel cards and the task-logging form (Support Type, Report Type dropdowns) now show a light tint of the parent category color. Added the ability to delete a Superadmin-added sub-category (previously add-only, with no way to remove a mistaken entry) with a check for existing tasks under that name first. Renamed several General Support fields (Lift ID / Supplier Name) to a consistent "Task Name" text field across all four of its sub-types.' },
-    { date:'2026-09-10', summary:'Two bugfixes found in review of the previous update: (1) Team Activity/Pre-Sales/Post-Sales tasks were titling themselves "— None —" (or the picked sub-category name) instead of their real identity field, once a Superadmin added any custom sub-category to one of those 3 categories — the new "Sub-category" selector was missing from the same identity-field exclusion list that Report Type/Support Type already use, so it was winning the race to be picked as the title. (2) The "delete a sub-category" safety check that\'s meant to warn about existing tasks logged under that name was silently doing nothing — it filtered tasks by a `sub_type` column that doesn\'t exist on the tasks table (that value actually lives inside the details field), and the query error wasn\'t even being checked, so it always read back as "0 tasks found" and let deletions through without ever warning. Both fixed.' }
+    { date:'2026-09-10', summary:'Two bugfixes found in review of the previous update: (1) Team Activity/Pre-Sales/Post-Sales tasks were titling themselves "— None —" (or the picked sub-category name) instead of their real identity field, once a Superadmin added any custom sub-category to one of those 3 categories — the new "Sub-category" selector was missing from the same identity-field exclusion list that Report Type/Support Type already use, so it was winning the race to be picked as the title. (2) The "delete a sub-category" safety check that\'s meant to warn about existing tasks logged under that name was silently doing nothing — it filtered tasks by a `sub_type` column that doesn\'t exist on the tasks table (that value actually lives inside the details field), and the query error wasn\'t even being checked, so it always read back as "0 tasks found" and let deletions through without ever warning. Both fixed.' },
+    { date:'2026-09-10', summary:'Time Logged feature added: any field marked as Duration (minutes) — the 2 existing built-in fields (Team Activity\'s "Duration (min)", Pre-Sales\' "Deployed Time (min)"), or any brand new one a Superadmin flags with the new "Track as Duration" checkbox on a Number field in Task Fields — now rolls up automatically, no code change needed for future ones. Shows on each person\'s Profile page (all-time + this month) and on the Team Dashboard (a new "Time logged" ring next to Team Score/Activities/Lifts, plus a Time column on the leaderboard). Computed live from the tasks table on each load rather than stored separately, so it\'s always in sync with the real data. Requires a one-time DB migration adding `custom_fields.is_duration` — see the SQL note for this update.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5870,6 +5876,9 @@ for a competing inline style first.`;
             <label id="qaNumericWrap" style="display:flex; align-items:center; gap:8px; margin:10px 0; font-size:13px;">
               <input type="checkbox" id="qaNumeric"> Numbers only
             </label>
+            <label id="qaDurationWrap" style="display:none; align-items:center; gap:8px; margin:10px 0; font-size:13px;">
+              <input type="checkbox" id="qaDuration"> Track as Duration (value is minutes — counts toward Time Logged)
+            </label>
             <label id="qaHasOtherWrap" style="display:none; align-items:center; gap:8px; margin:10px 0; font-size:13px;">
               <input type="checkbox" id="qaHasOther"> Include an "Other" option
             </label>
@@ -5901,6 +5910,7 @@ for a competing inline style first.`;
     document.getElementById('qaHintWrap').style.display = type === 'chips' ? 'block' : 'none';
     document.getElementById('qaMonospaceWrap').style.display = type === 'text' ? 'flex' : 'none';
     document.getElementById('qaNumericWrap').style.display = type === 'text' ? 'flex' : 'none';
+    document.getElementById('qaDurationWrap').style.display = type === 'number' ? 'flex' : 'none';
     document.getElementById('qaHasOtherWrap').style.display = type === 'chipselect' ? 'flex' : 'none';
   }
 
@@ -5914,6 +5924,7 @@ for a competing inline style first.`;
     const hint = document.getElementById('qaHint').value.trim() || null;
     const isMonospace = document.getElementById('qaMonospace').checked;
     const isNumeric = document.getElementById('qaNumeric').checked;
+    const isDuration = fieldType === 'number' && document.getElementById('qaDuration').checked;
     const hasOther = document.getElementById('qaHasOther').checked;
 
     // Lands at the end of this exact group — same rule as every other
@@ -5925,7 +5936,7 @@ for a competing inline style first.`;
 
     const payload = {
       category, sub_type: subType, zone, label, field_type: fieldType, required, section, sort_order: sortOrder,
-      placeholder, hint, is_monospace: isMonospace, is_numeric: isNumeric, has_other: hasOther, is_builtin: false
+      placeholder, hint, is_monospace: isMonospace, is_numeric: isNumeric, has_other: hasOther, is_duration: isDuration, is_builtin: false
     };
     // .select().single() specifically so the newly-created row's id comes
     // straight back — needed immediately below to save this field's own
@@ -6021,6 +6032,7 @@ for a competing inline style first.`;
       document.getElementById('newFieldHint').value = existing.hint || '';
       document.getElementById('newFieldMonospace').checked = !!existing.is_monospace;
       document.getElementById('newFieldNumeric').checked = !!existing.is_numeric;
+      document.getElementById('newFieldDuration').checked = !!existing.is_duration;
       document.getElementById('newFieldHasOther').checked = !!existing.has_other;
       updateNewFieldSubTypeOptions(existing.sub_type);
       updateNewFieldTypeConditionals();
@@ -6134,6 +6146,14 @@ for a competing inline style first.`;
         <label id="newFieldNumericWrap" style="display:flex; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
           <input type="checkbox" id="newFieldNumeric"> Numbers only
         </label>
+        <!-- Only meaningful for a Number field — the value's assumed to be
+             minutes. Marking it here is the ONLY thing needed for this
+             field's minutes to start counting toward that person's Time
+             Logged everywhere (Profile, Dashboard) — no code change, same
+             promise as the rest of this Custom Fields system. -->
+        <label id="newFieldDurationWrap" style="display:none; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
+          <input type="checkbox" id="newFieldDuration"> Track as Duration (value is minutes — counts toward Time Logged)
+        </label>
         <label id="newFieldHasOtherWrap" style="display:none; align-items:center; gap:8px; margin:14px 0; font-size:13px;">
           <input type="checkbox" id="newFieldHasOther"> Include an "Other" option
         </label>
@@ -6164,6 +6184,7 @@ for a competing inline style first.`;
     const showHint = type === 'chips';
     const showMonospace = type === 'text';
     const showNumeric = type === 'text';
+    const showDuration = type === 'number';
     const showHasOther = type === 'chipselect';
     // Options only make sense to collect here when ADDING a brand-new
     // field — an existing field's options already have their own home
@@ -6176,6 +6197,7 @@ for a competing inline style first.`;
     document.getElementById('newFieldHintWrap').style.display = showHint ? 'block' : 'none';
     document.getElementById('newFieldMonospaceWrap').style.display = showMonospace ? 'flex' : 'none';
     document.getElementById('newFieldNumericWrap').style.display = showNumeric ? 'flex' : 'none';
+    document.getElementById('newFieldDurationWrap').style.display = showDuration ? 'flex' : 'none';
     document.getElementById('newFieldHasOtherWrap').style.display = showHasOther ? 'flex' : 'none';
     document.getElementById('newFieldOptionsWrap').style.display = showOptions ? 'block' : 'none';
   }
@@ -6276,6 +6298,7 @@ for a competing inline style first.`;
     const hint = document.getElementById('newFieldHint').value.trim() || null;
     const isMonospace = document.getElementById('newFieldMonospace').checked;
     const isNumeric = document.getElementById('newFieldNumeric').checked;
+    const isDuration = fieldType === 'number' && document.getElementById('newFieldDuration').checked;
     const hasOther = document.getElementById('newFieldHasOther').checked;
 
     if(!label){ alert('Please enter a label for this field.'); return; }
@@ -6297,7 +6320,7 @@ for a competing inline style first.`;
 
     const payload = {
       category, sub_type: subType, zone, label, field_type: fieldType, required, section, sort_order: sortOrder,
-      placeholder, hint, is_monospace: isMonospace, is_numeric: isNumeric, has_other: hasOther
+      placeholder, hint, is_monospace: isMonospace, is_numeric: isNumeric, has_other: hasOther, is_duration: isDuration
     };
 
     if(existing){
@@ -7379,6 +7402,68 @@ for a competing inline style first.`;
     return percentsByMonth;
   }
 
+  // ============ TIME LOGGED (duration tracking) ============
+  // Generic by design: any field anywhere — built-in or Superadmin-added
+  // via Task Fields — that's marked as a Duration field has its value
+  // (always stored as plain minutes, same convention app-wide) picked up
+  // here automatically and rolled into that person's Time Logged, with
+  // zero code changes needed for a brand new one going forward. Only 2
+  // built-in fields exist today (Team Activity's "Duration (min)" and
+  // Pre-Sales' "Deployed Time (min)") — hardcoded here since built-in
+  // fields' real behavior always lives in code, same limitation as every
+  // other built-in field in this app (see Task Fields catalog note).
+  // Superadmin-added Duration fields are picked up live from custom_fields
+  // instead, fetched fresh each time rather than cached, so a field
+  // flagged as Duration (or un-flagged) takes effect immediately —
+  // consistent with how weightMap/appSettings are already fetched fresh
+  // on each Profile/Dashboard load rather than kept in a stale cache.
+  const BUILTIN_DURATION_FIELDS = {
+    rni: ['Duration (min) — for meetings/training'],
+    presales: ['Deployed Time (min)']
+  };
+  async function getDurationLabelsByCategory(){
+    const map = {};
+    Object.entries(BUILTIN_DURATION_FIELDS).forEach(([cat, labels]) => { map[cat] = [...labels]; });
+    const { data, error } = await sb.from('custom_fields').select('category, label').eq('is_duration', true);
+    if(error){ console.error('getDurationLabelsByCategory failed:', error.message); return map; }
+    (data || []).forEach(f => {
+      if(!map[f.category]) map[f.category] = [];
+      if(!map[f.category].includes(f.label)) map[f.category].push(f.label);
+    });
+    return map;
+  }
+  // Sums every matching duration field on a single task row — a task
+  // could in principle have more than one Duration field attached to its
+  // category (e.g. a Superadmin adds a second one later), so this adds
+  // all of them rather than assuming exactly one. Non-numeric or blank
+  // values (a field left empty, or old data from before it was flagged
+  // as Duration) contribute 0 rather than producing NaN.
+  function taskDurationMinutes(row, durationLabelsByCategory){
+    const labels = (row.category && durationLabelsByCategory[row.category]) || [];
+    if(!labels.length || !row.details) return 0;
+    return labels.reduce((sum, label) => {
+      const raw = row.details[label];
+      const n = parseFloat(raw);
+      return sum + (isNaN(n) ? 0 : n);
+    }, 0);
+  }
+  // "Xh Ym" — for stat cards and tooltips where the exact figure matters.
+  function formatDurationLong(totalMinutes){
+    const mins = Math.round(totalMinutes || 0);
+    if(mins <= 0) return '0m';
+    const h = Math.floor(mins / 60), m = mins % 60;
+    if(!h) return `${m}m`;
+    if(!m) return `${h}h`;
+    return `${h}h ${m}m`;
+  }
+  // Rounded to the nearest whole hour (or plain minutes under an hour) —
+  // short enough to actually fit inside a 64px ring's center text, same
+  // constraint the Activities/Lifts touched rings already work within.
+  function formatDurationShort(totalMinutes){
+    const mins = Math.round(totalMinutes || 0);
+    if(mins < 60) return `${mins}m`;
+    return `${Math.round(mins / 60)}h`;
+  }
 
   async function loadProfile(){
     if(!currentProfile) return;
@@ -7408,6 +7493,21 @@ for a competing inline style first.`;
       return `${d.getFullYear()}-${d.getMonth()}` === thisMonthKey;
     });
     document.getElementById('profileTaskCountMonthly').textContent = monthlyRows.length;
+
+    // Time Logged — all-time and this month, from whichever fields are
+    // currently flagged as Duration fields (built-in or Superadmin-added).
+    const durationLabels = await getDurationLabelsByCategory();
+    const allTimeMinutes = rows.reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0);
+    const monthlyMinutes = monthlyRows.reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0);
+    const timeEl = document.getElementById('profileTimeLogged');
+    if(timeEl){
+      timeEl.innerHTML = allTimeMinutes > 0
+        ? `<div style="display:flex; gap:24px; flex-wrap:wrap;">
+             <div><div style="font-size:22px; font-weight:700;">${formatDurationLong(allTimeMinutes)}</div><div style="font-size:11.5px; color:var(--text-faint);">Time logged (all-time)</div></div>
+             <div><div style="font-size:22px; font-weight:700;">${formatDurationLong(monthlyMinutes)}</div><div style="font-size:11.5px; color:var(--text-faint);">This month</div></div>
+           </div>`
+        : `<div class="placeholder-note">No Duration fields logged yet — time shows up here once a task with a Duration field (e.g. meeting length) is submitted.</div>`;
+    }
 
     const { data: weightData } = await sb.from('kpi_weights').select('*');
     const weightMap = {};
@@ -7530,6 +7630,10 @@ for a competing inline style first.`;
             <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
           </div>
         </div>
+        <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <div id="dashRingTime" style="flex-shrink:0;"></div>
+          <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Time logged — from any Duration field</p>
+        </div>
         <div class="panel liquid-glass-card" style="margin-bottom:8px;">
           <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
           <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
@@ -7537,7 +7641,7 @@ for a competing inline style first.`;
         <div style="font-size:11px; color:var(--text-faint); text-align:center; margin-bottom:18px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>`;
     } else {
       container.innerHTML = `
-        <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
+        <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px; margin-bottom:14px;">
           <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
             <div id="dashRingScore" style="flex-shrink:0;"></div>
             <p style="font-size:12px; color:var(--text-faint); margin:0;">Team score</p>
@@ -7549,6 +7653,10 @@ for a competing inline style first.`;
           <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
             <div id="dashRingLifts" style="flex-shrink:0;"></div>
             <p style="font-size:12px; color:var(--text-faint); margin:0;">Lifts touched</p>
+          </div>
+          <div class="panel liquid-glass-card" style="display:flex; align-items:center; gap:12px;">
+            <div id="dashRingTime" style="flex-shrink:0;"></div>
+            <p style="font-size:12px; color:var(--text-faint); margin:0;">Time logged</p>
           </div>
         </div>
         <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 14px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
@@ -7607,6 +7715,7 @@ for a competing inline style first.`;
  
     const rows = data || [];
     currentDashRows = rows;
+    const durationLabels = await getDurationLabelsByCategory();
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
     const engineerSet = new Set(rows.map(r=>r.employee_id));
     const catCounts = {};
@@ -7701,12 +7810,16 @@ for a competing inline style first.`;
     const target = appSettings.monthly_score_target ?? 20;
 
     const byEngineer = {};
+    let teamTotalDuration = 0;
     rows.forEach(r => {
       const id = r.employee_id;
-      if(!byEngineer[id]) byEngineer[id] = { name: r.profiles ? displayName(r.profiles) : '—', total: 0, cats: {}, rows: [] };
+      if(!byEngineer[id]) byEngineer[id] = { name: r.profiles ? displayName(r.profiles) : '—', total: 0, cats: {}, rows: [], duration: 0 };
       byEngineer[id].total++;
       byEngineer[id].cats[r.category] = (byEngineer[id].cats[r.category]||0) + 1;
       byEngineer[id].rows.push(r);
+      const mins = taskDurationMinutes(r, durationLabels);
+      byEngineer[id].duration += mins;
+      teamTotalDuration += mins;
     });
     // Same rule as the Profile page — each engineer's Score here is the
     // average of every month's already-capped percentage across whatever
@@ -7740,6 +7853,13 @@ for a competing inline style first.`;
     document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', 64, 'Team score');
     document.getElementById('dashRingActivities').innerHTML = scoreRingSvg((rows.length/ringMaxOfTwo)*100, '#378ADD', 64, 'Activities', null, null, String(rows.length));
     document.getElementById('dashRingLifts').innerHTML = scoreRingSvg((liftSet.size/ringMaxOfTwo)*100, '#D85A30', 64, 'Lifts touched', null, null, String(liftSet.size));
+    // Deliberately always a full ring rather than a percent-of-something
+    // — unlike Activities/Lifts, there's no honest natural comparison for
+    // minutes to be "relative to" (a different unit entirely), so this
+    // ring exists to hold the number, not to visually represent a share
+    // of anything. Same idea as Team Score being the one meaningful
+    // percentage among these four.
+    document.getElementById('dashRingTime').innerHTML = scoreRingSvg(100, '#8A63D2', 64, 'Time logged', null, null, formatDurationShort(teamTotalDuration));
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
@@ -7771,10 +7891,10 @@ for a competing inline style first.`;
         : (e.errorCount ? `${e.errorCount} <span style="color:var(--red); font-size:11px;">(${e.errorImpact.toFixed(1)})</span>` : '—');
       const avColor = avatarColors[i % avatarColors.length];
       return `<tr style="cursor:pointer;" onclick="document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">
-        <td><div class="rank-name" style="display:flex; align-items:center; gap:9px;">${rankBadge(i)}<span style="width:24px; height:24px; border-radius:50%; background:${avColor}22; color:${avColor}; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${initials(e.name)}</span>${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td>${kpiCell}</td><td>${errorCell}</td>
+        <td><div class="rank-name" style="display:flex; align-items:center; gap:9px;">${rankBadge(i)}<span style="width:24px; height:24px; border-radius:50%; background:${avColor}22; color:${avColor}; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${initials(e.name)}</span>${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td title="${formatDurationLong(e.duration)}">${e.duration > 0 ? formatDurationShort(e.duration) : '—'}</td><td>${kpiCell}</td><td>${errorCell}</td>
         <td><button class="btn inspect" style="padding:4px 12px; font-size:11.5px;" onclick="event.stopPropagation(); document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">Inspect</button></td>
       </tr>`;
-    }).join('') : '<tr><td colspan="6" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
+    }).join('') : '<tr><td colspan="7" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
 
     // Inspecting a specific engineer also surfaces their real individual
     // entries below — not just re-shown summary numbers the dropdown filter
