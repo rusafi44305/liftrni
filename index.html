@@ -117,6 +117,38 @@
     --shadow:0 1px 2px rgba(20,10,2,0.35), 0 4px 14px -4px rgba(30,15,4,0.45);
     --header-bg:#1C130B;
   }
+
+  /* 2026-09-10: glow effect for Dark / Midnight / Midnight Blue only —
+     Sunset and White are untouched on purpose, this was asked for the
+     "dark" themes specifically. Deliberately scoped to headings, big
+     numbers, and buttons rather than every piece of text: a comparison
+     demo showed glow blurring small body text/table cells/labels to the
+     point of hurting readability, while it reads as a nice intentional
+     effect on bigger, bolder text. `currentColor` means each element
+     glows in its own existing color rather than one fixed glow color —
+     a category-colored ring number glows in that category's color, a
+     plain heading glows in the theme's own text color, etc.
+     `svg text` covers every ring's center number (Team Score, Activities,
+     Lifts touched, Time logged, and any future ring) since that's genuinely
+     the only place this app draws text inside an svg — checked directly,
+     not assumed. */
+  html[data-theme="dark"] h1, html[data-theme="midnight"] h1, html[data-theme="midnightblue"] h1,
+  html[data-theme="dark"] h2, html[data-theme="midnight"] h2, html[data-theme="midnightblue"] h2,
+  html[data-theme="dark"] h3, html[data-theme="midnight"] h3, html[data-theme="midnightblue"] h3,
+  html[data-theme="dark"] .hero-title, html[data-theme="midnight"] .hero-title, html[data-theme="midnightblue"] .hero-title,
+  html[data-theme="dark"] .block-title, html[data-theme="midnight"] .block-title, html[data-theme="midnightblue"] .block-title,
+  html[data-theme="dark"] .panel-title, html[data-theme="midnight"] .panel-title, html[data-theme="midnightblue"] .panel-title,
+  html[data-theme="dark"] .stat-card .n, html[data-theme="midnight"] .stat-card .n, html[data-theme="midnightblue"] .stat-card .n,
+  html[data-theme="dark"] .btn, html[data-theme="midnight"] .btn, html[data-theme="midnightblue"] .btn,
+  html[data-theme="dark"] svg text, html[data-theme="midnight"] svg text, html[data-theme="midnightblue"] svg text{
+    text-shadow: 0 0 6px currentColor;
+  }
+  /* Buttons specifically get a touch less blur — at button-label sizes
+     the same 6px used above starts softening the letters noticeably,
+     the same legibility issue the demo showed for small text generally. */
+  html[data-theme="dark"] .btn, html[data-theme="midnight"] .btn, html[data-theme="midnightblue"] .btn{
+    text-shadow: 0 0 3px currentColor;
+  }
   html{transition:background .2s ease;}
   body{transition:background-color .2s ease, color .2s ease;}
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -1633,14 +1665,31 @@
  
   <!-- ============ LIFT SEARCH ============ -->
   <div class="view" id="view-search">
-    <div class="searchbar" style="max-width:100%; margin-bottom:26px;">
+    <div class="searchbar" style="max-width:100%; margin-bottom:14px;">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
       <button onclick="runLiftSearch()">Trace</button>
     </div>
- 
+
+    <!-- Filters narrow down the current search results client-side —
+         they don't re-query the database, so they only make sense (and
+         only get populated) once a search has actually run. Engineer
+         options are built from whoever actually appears in the current
+         results, not the whole company roster, since that's the only
+         list that's ever useful here. -->
+    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
+      <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
+      <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
+      <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
+        <option value="">All sections</option>
+        <option value="Mechanical">Mechanical</option>
+        <option value="Electrical">Electrical</option>
+      </select>
+    </div>
+
     <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace to see its full history across every category.</div></div>
   </div>
+
  
   <!-- ============ CATEGORY LOG ============ -->
   <div class="view" id="view-category">
@@ -3651,7 +3700,9 @@
     { date:'2026-09-10', summary:'Dashboard visually regrouped into two titled sections ("Team overview" and "Category & engineer performance"), each its own liquid-glass card, on both mobile and desktop — no change to any underlying data, permissions, filters, or the leaderboard table\'s own behavior, only how the existing rings/charts are visually grouped. Also fixed the Weekly trend chart\'s stretching: it was using preserveAspectRatio="none", forcing a non-uniform stretch to whatever width its card happened to be — visibly distorted on wide desktop screens. Added a new "Top engineers by score" mini chart (visualizing the same score data the leaderboard\'s Score column already has, just sorted and charted rather than tabled) — respects the same Superadmin-configurable KPI-visibility permission the leaderboard column already uses.' },
     { date:'2026-09-10', summary:'Fixed a layout flaw in the desktop Dashboard\'s new "Team overview" card from the previous update: the 4 rings sat in a narrow stacked column next to the Weekly trend chart in a 2-column grid, and grid columns stretch to match each other\'s height by default — so the short trend-chart column was being stretched to match the much taller ring column, leaving a large dead-space gap under the chart. Changed to one full-width horizontal row of rings with the trend chart full-width below it, matching how mobile already laid it out. No functional change, purely the fix.' },
     { date:'2026-09-10', summary:'Two more Dashboard fixes: (1) Weekly trend was rendering tiny on desktop — it had a fixed pixel height regardless of container width, so once it became a full-width element, preserveAspectRatio="meet" had to shrink the whole drawing down to fit that short height and center it with large empty margins on both sides. Switched to height:auto so it scales naturally from the container\'s real width instead, and gave it a taller base aspect ratio now that it\'s the hero element of its own card. (2) Mobile\'s Team overview rings looked scattered because Team Score sat centered on its own row while the other 3 sat left-aligned below it — inconsistent alignment, not the stacking itself. Replaced with a plain symmetric 2x2 grid, all 4 rings styled identically.' },
-    { date:'2026-09-10', summary:'Desktop-only Dashboard redesign of the "Team overview" card (mobile untouched, still the 2x2 grid from the previous update): the 4 rings are now bigger (84px vs 64px) and each sits in its own small liquid-glass sub-card for a more layered glass look, arranged in a 2x2 grid on the left; the Weekly trend chart sits on the right and now stretches to match the ring grid\'s height exactly (CSS grid\'s natural column-stretch behavior, same mechanism that caused the earlier stretching bug — used deliberately here since the two columns are a sensible height match now, unlike before). Ring size and layout are desktop-mode-only (checked via the existing dashOverviewMode flag), so mobile\'s rendering path is completely unaffected.' }
+    { date:'2026-09-10', summary:'Desktop-only Dashboard redesign of the "Team overview" card (mobile untouched, still the 2x2 grid from the previous update): the 4 rings are now bigger (84px vs 64px) and each sits in its own small liquid-glass sub-card for a more layered glass look, arranged in a 2x2 grid on the left; the Weekly trend chart sits on the right and now stretches to match the ring grid\'s height exactly (CSS grid\'s natural column-stretch behavior, same mechanism that caused the earlier stretching bug — used deliberately here since the two columns are a sensible height match now, unlike before). Ring size and layout are desktop-mode-only (checked via the existing dashOverviewMode flag), so mobile\'s rendering path is completely unaffected.' },
+    { date:'2026-09-10', summary:'Added filters to Lift Trace: By Category, By Engineer, and By Section (Mechanical/Electrical). These narrow down the current search results client-side rather than re-querying the database — Engineer options only ever list people who actually appear in the current results, not the whole roster. Section comes from each task\'s own Discipline field, stamped in at submission time from the logging engineer\'s profile, so it reflects what their discipline WAS when the work was logged rather than their current profile setting.' },
+    { date:'2026-09-10', summary:'Added a subtle glow effect (text-shadow) to headings, section titles, big stat numbers, ring center numbers, and buttons, across every page, for the Dark/Midnight/Midnight Blue themes only — Sunset and White untouched. Deliberately NOT applied to body text, table cells, or form labels: a side-by-side demo showed glow blurring small text enough to hurt readability, while it reads as an intentional effect on bigger/bolder text. Glows in each element\'s own existing color (currentColor) rather than one fixed glow color.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -6876,6 +6927,7 @@ for a competing inline style first.`;
     const resultEl = document.getElementById('liftSearchResult');
     if(!term){ resultEl.innerHTML = '<div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace.</div>'; return; }
     resultEl.innerHTML = '<div class="placeholder-note">Searching…</div>';
+    document.getElementById('liftTraceFilters').style.display = 'none';
 
     // Case-insensitive, partial match on either field — a strict exact match
     // on lift_id used to miss real entries over something as small as a typed
@@ -6912,6 +6964,51 @@ for a competing inline style first.`;
     }
     liftSearchRows = data;
 
+    // Filter dropdowns are populated from the actual results, not a fixed
+    // master list — Category is the one exception (always all 6, since
+    // "this result set happens not to include Reports" isn't a
+    // meaningful reason to hide the option). Engineer options only ever
+    // list people who actually appear here; a full company roster would
+    // be mostly irrelevant noise for a single lift/keyword's history.
+    const catsPresent = [...new Set(data.map(r => r.category))];
+    document.getElementById('liftFilterCategory').innerHTML = '<option value="">All categories</option>' +
+      Object.keys(catMeta).filter(c => catsPresent.includes(c)).map(c => `<option value="${c}">${catMeta[c].name}</option>`).join('');
+    const engineersPresent = new Map();
+    data.forEach(r => { if(r.employee_id && !engineersPresent.has(r.employee_id)) engineersPresent.set(r.employee_id, r.profiles ? displayName(r.profiles) : '—'); });
+    document.getElementById('liftFilterEngineer').innerHTML = '<option value="">All engineers</option>' +
+      [...engineersPresent.entries()].sort((a,b) => a[1].localeCompare(b[1])).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
+    document.getElementById('liftFilterSection').value = '';
+    document.getElementById('liftTraceFilters').style.display = 'flex';
+
+    renderLiftTraceResults(data);
+  }
+
+  // Re-filters the already-fetched liftSearchRows client-side — no new
+  // database query, since narrowing down a result set the user already
+  // has in front of them doesn't need one. Section/discipline comes from
+  // details['Discipline'], stamped onto every task at submission time
+  // from the logging engineer's own profile — this reflects what their
+  // discipline WAS when they logged it, which is what "which section did
+  // this work" should mean, even if their profile discipline changes later.
+  function applyLiftTraceFilters(){
+    const cat = document.getElementById('liftFilterCategory').value;
+    const eng = document.getElementById('liftFilterEngineer').value;
+    const section = document.getElementById('liftFilterSection').value;
+    const filtered = liftSearchRows.filter(r => {
+      if(cat && r.category !== cat) return false;
+      if(eng && r.employee_id !== eng) return false;
+      if(section && (r.details || {})['Discipline'] !== section) return false;
+      return true;
+    });
+    renderLiftTraceResults(filtered);
+  }
+
+  function renderLiftTraceResults(data){
+    const resultEl = document.getElementById('liftSearchResult');
+    if(!data.length){
+      resultEl.innerHTML = '<div class="placeholder-note">No entries match the selected filters.</div>';
+      return;
+    }
     // Group by Lift ID — a project-name search can genuinely match several
     // different lifts, so each distinct lift gets its own card + timeline
     // rather than assuming (like the old code did) that every result shares
