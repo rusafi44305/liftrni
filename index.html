@@ -89,21 +89,6 @@
     --shadow:0 1px 2px rgba(0,0,0,0.35), 0 4px 14px -4px rgba(0,0,0,0.45);
     --header-bg:#05070D;
   }
-  /* "Midnight Blue" — a genuinely blue-cast dark theme, distinct from the
-     neutral-gray "dark" and the near-black "midnight" above it. Surface is
-     deliberately several steps lighter than bg (not just a subtle tint) so
-     every card/panel reads as a clearly separate layer sitting on top of
-     the background, matching how a real macOS window sits on the desktop. */
-  html[data-theme="midnightblue"]{
-    --bg:#0A0F1E; --surface:#212E4D; --surface-alt:#293A5C; --border:#3E5480;
-    --text:#F0F4FF; --text-dim:#B8C5E5; --text-faint:#8FA0C4; --bg-anim-ink:#5E7AC7;
-    --accent:#4A90FF; --accent-rgb:74,144,255; --amber:#E5A23D; --green:#38D6A0; --red:#F0685C;
-    --c-rni:#A08CF5; --c-presales:#6BA6FF; --c-client:#4DD4D4; --c-postsales:#4EDCA0;
-    --c-install:#EAAE6A; --c-commission:#F4A05E; --c-aftersales:#F480B0; --c-production:#96A0FF; --c-techsupport:#EAAE6A;
-    --c-requisition:#4CCEE8; --c-scm:#BEE85A; --c-existingdev:#CFC2A6; --c-surveyissues:#FF7A7A;
-    --shadow:0 1px 2px rgba(3,8,22,0.4), 0 4px 14px -4px rgba(6,16,42,0.5);
-    --header-bg:#0A0F1E;
-  }
   /* "Sunset" — a warm, amber/gold-cast theme (still dark-based, matching
      how every other theme option here works) rather than a light mode.
      Surface again clearly lighter than bg for the same reason as above. */
@@ -118,36 +103,71 @@
     --header-bg:#1C130B;
   }
 
-  /* 2026-09-10: glow effect for Dark / Midnight / Midnight Blue only —
-     Sunset and White are untouched on purpose, this was asked for the
-     "dark" themes specifically. Deliberately scoped to headings, big
-     numbers, and buttons rather than every piece of text: a comparison
-     demo showed glow blurring small body text/table cells/labels to the
-     point of hurting readability, while it reads as a nice intentional
-     effect on bigger, bolder text. `currentColor` means each element
-     glows in its own existing color rather than one fixed glow color —
-     a category-colored ring number glows in that category's color, a
-     plain heading glows in the theme's own text color, etc.
-     `svg text` covers every ring's center number (Team Score, Activities,
-     Lifts touched, Time logged, and any future ring) since that's genuinely
-     the only place this app draws text inside an svg — checked directly,
-     not assumed. */
-  html[data-theme="dark"] h1, html[data-theme="midnight"] h1, html[data-theme="midnightblue"] h1,
-  html[data-theme="dark"] h2, html[data-theme="midnight"] h2, html[data-theme="midnightblue"] h2,
-  html[data-theme="dark"] h3, html[data-theme="midnight"] h3, html[data-theme="midnightblue"] h3,
-  html[data-theme="dark"] .hero-title, html[data-theme="midnight"] .hero-title, html[data-theme="midnightblue"] .hero-title,
-  html[data-theme="dark"] .block-title, html[data-theme="midnight"] .block-title, html[data-theme="midnightblue"] .block-title,
-  html[data-theme="dark"] .panel-title, html[data-theme="midnight"] .panel-title, html[data-theme="midnightblue"] .panel-title,
-  html[data-theme="dark"] .stat-card .n, html[data-theme="midnight"] .stat-card .n, html[data-theme="midnightblue"] .stat-card .n,
-  html[data-theme="dark"] .btn, html[data-theme="midnight"] .btn, html[data-theme="midnightblue"] .btn,
-  html[data-theme="dark"] svg text, html[data-theme="midnight"] svg text, html[data-theme="midnightblue"] svg text{
-    text-shadow: 0 0 6px currentColor;
+  /* "Steel" — the one theme here where surface is LIGHTER than bg rather
+     than darker: a genuinely dark night background, but cards, panels,
+     and input fields are light grey, like brushed steel panels sitting
+     on a dark shop floor. Every other theme keeps bg and surface in the
+     same tonal range (both dark, or both light for White), so one single
+     --text/--text-dim/--text-faint value works everywhere in it. That
+     assumption breaks here on purpose, so two separate rule sets exist:
+     this one (light text, for whatever sits directly on the dark --bg —
+     page titles, nav labels, the login screen) and a second, explicit
+     override further below (dark text) scoped to every card/surface
+     container class in the app, so text inside a light card is
+     actually readable against it instead of inheriting light-on-light.
+     Category/tag colors below are the same ones already tuned for
+     White's white surface (see :root, and its own comment on why they're
+     darkened) — reused as-is since they face the identical problem:
+     needing to read as text on a light background, not a dark one. */
+  html[data-theme="steel"]{
+    --bg:#0B0D12; --surface:#E7E9ED; --surface-alt:#DADDE3; --border:#8A8F98;
+    --text:#F2F4F7; --text-dim:#C3C8D1; --text-faint:#8C93A0; --bg-anim-ink:#4A5570;
+    --accent:#3D74E0; --accent-rgb:61,116,224; --amber:#A85F00; --green:#0F7A4C; --red:#B3291E;
+    --c-rni:#6E4FD1; --c-presales:#1D6FD9; --c-client:#0C7979; --c-postsales:#167C51;
+    --c-install:#A15B18; --c-commission:#AF5200; --c-aftersales:#C23D74; --c-production:#4A50C9; --c-techsupport:#A15B18;
+    --c-requisition:#0C7788; --c-scm:#597600; --c-existingdev:#6B5B44; --c-surveyissues:#B31919;
+    --shadow:0 1px 2px rgba(0,0,0,0.30), 0 4px 14px -4px rgba(0,0,0,0.40);
+    --header-bg:#0B0D12;
   }
-  /* Buttons specifically get a touch less blur — at button-label sizes
-     the same 6px used above starts softening the letters noticeably,
-     the same legibility issue the demo showed for small text generally. */
-  html[data-theme="dark"] .btn, html[data-theme="midnight"] .btn, html[data-theme="midnightblue"] .btn{
-    text-shadow: 0 0 3px currentColor;
+  /* The dark-text-on-light-card override for Steel — every class in this
+     app that actually paints a light surface underneath its own text
+     (checked directly against every "background:var(--surface...)" rule
+     in this file, plus every built-in modal, which all use .panel as
+     their content box). One-off inline-styled elements that happen not
+     to sit inside any of these containers are the honest limitation
+     here — those would need a follow-up fix if any turn up in testing,
+     rather than something achievable with certainty in one pass across
+     a file this size. */
+  html[data-theme="steel"] .panel, html[data-theme="steel"] .liquid-glass-card, html[data-theme="steel"] .stat-card,
+  html[data-theme="steel"] .t-card, html[data-theme="steel"] .form-card, html[data-theme="steel"] .role-card,
+  html[data-theme="steel"] .gantt-project-card, html[data-theme="steel"] .proj-task-row,
+  html[data-theme="steel"] input, html[data-theme="steel"] select, html[data-theme="steel"] textarea, html[data-theme="steel"] table,
+  html[data-theme="steel"] nav.tabs button.active, html[data-theme="steel"] nav.tabs.dock button.active,
+  html[data-theme="steel"] .theme-switch, html[data-theme="steel"] #notifPanel, html[data-theme="steel"] .au-avatar,
+  html[data-theme="steel"] #chatMentionDropdown, html[data-theme="steel"] #categoryLinksDropdown, html[data-theme="steel"] .lift-header{
+    --text:#1A1D24; --text-dim:#4A505C; --text-faint:#767C88;
+  }
+
+  /* 2026-09-10: replaced the earlier glow (text-shadow) treatment — asked
+     to remove it and use a light accent-tinted text color instead, on
+     the same set of elements (headings, section titles, big stat
+     numbers, ring numbers, buttons), for Dark/Midnight only now that
+     Midnight Blue has been removed. A 45%-accent mix keeps these
+     readable as plain text (unlike glow, which blurred small text) while
+     still reading as a deliberate, tinted accent rather than the default
+     flat text color. currentColor isn't usable here the way it was for
+     glow (this sets the color itself, not a shadow around whatever color
+     already exists), so each rule explicitly mixes that theme's own
+     --accent with --text. */
+  html[data-theme="dark"] h1, html[data-theme="dark"] h2, html[data-theme="dark"] h3,
+  html[data-theme="dark"] .hero-title, html[data-theme="dark"] .block-title, html[data-theme="dark"] .panel-title,
+  html[data-theme="dark"] .stat-card .n, html[data-theme="dark"] .btn, html[data-theme="dark"] svg text{
+    color: color-mix(in srgb, var(--accent) 45%, var(--text));
+  }
+  html[data-theme="midnight"] h1, html[data-theme="midnight"] h2, html[data-theme="midnight"] h3,
+  html[data-theme="midnight"] .hero-title, html[data-theme="midnight"] .block-title, html[data-theme="midnight"] .panel-title,
+  html[data-theme="midnight"] .stat-card .n, html[data-theme="midnight"] .btn, html[data-theme="midnight"] svg text{
+    color: color-mix(in srgb, var(--accent) 45%, var(--text));
   }
   html{transition:background .2s ease;}
   body{transition:background-color .2s ease, color .2s ease;}
@@ -576,6 +596,23 @@
     border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
     border-radius: 16px;
     box-shadow: var(--shadow);
+    transition: transform 0.28s cubic-bezier(0.25,0.8,0.4,1), box-shadow 0.28s ease, background 0.28s ease, backdrop-filter 0.28s ease, border-color 0.28s ease;
+  }
+  /* There was no hover state at all before this — asked to make the
+     glass effect "more significant but gentle," matching how macOS
+     itself handles hover on translucent surfaces: a touch more opacity/
+     saturation so the vibrancy visibly deepens, a small lift rather than
+     a jump, and a softer/wider shadow underneath to sell the lift. Kept
+     deliberately subtle in magnitude — a 2px rise and a moderate blur/
+     saturation bump reads as "responsive" without feeling like a bouncy
+     UI toy, which is the actual macOS feel being asked for here. */
+  .liquid-glass-card:hover{
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border-color: color-mix(in srgb, var(--border) 85%, transparent);
+    box-shadow: var(--shadow), 0 10px 28px -10px rgba(0,0,0,0.28);
+    transform: translateY(-2px);
   }
   @media (max-width: 480px){
     .stat-row.profile-kpi-row{ grid-template-columns:1fr !important; }
@@ -1046,10 +1083,10 @@
      row, not as the intended glass-edge effect. Denser tabular data
      just isn't a good host surface for this decoration. */
   .no-shine::before{ display:none !important; }
-  html[data-theme="dark"] .panel::before, html[data-theme="midnight"] .panel::before, html[data-theme="midnightblue"] .panel::before, html[data-theme="sunset"] .panel::before,
-  html[data-theme="dark"] .stat-card::before, html[data-theme="midnight"] .stat-card::before, html[data-theme="midnightblue"] .stat-card::before, html[data-theme="sunset"] .stat-card::before,
-  html[data-theme="dark"] .mytask-item::before, html[data-theme="midnight"] .mytask-item::before, html[data-theme="midnightblue"] .mytask-item::before, html[data-theme="sunset"] .mytask-item::before,
-  html[data-theme="dark"] .feed-item::before, html[data-theme="midnight"] .feed-item::before, html[data-theme="midnightblue"] .feed-item::before, html[data-theme="sunset"] .feed-item::before{
+  html[data-theme="dark"] .panel::before, html[data-theme="midnight"] .panel::before, html[data-theme="steel"] .panel::before, html[data-theme="sunset"] .panel::before,
+  html[data-theme="dark"] .stat-card::before, html[data-theme="midnight"] .stat-card::before, html[data-theme="steel"] .stat-card::before, html[data-theme="sunset"] .stat-card::before,
+  html[data-theme="dark"] .mytask-item::before, html[data-theme="midnight"] .mytask-item::before, html[data-theme="steel"] .mytask-item::before, html[data-theme="sunset"] .mytask-item::before,
+  html[data-theme="dark"] .feed-item::before, html[data-theme="midnight"] .feed-item::before, html[data-theme="steel"] .feed-item::before, html[data-theme="sunset"] .feed-item::before{
     opacity:0.5;
   }
   /* The account menu specifically needs to stay near-opaque rather than
@@ -1094,8 +1131,10 @@
   }
   /* .indicator-panel and .kpi-card are DELIBERATELY excluded above — both
      are permanent dark cards with hardcoded light text, by design, in
-     every theme (including the new light-on-dark Sunset/Midnight Blue
-     ones). Adding them to the vibrancy list would make their text
+     every theme (including the light-on-dark Sunset theme, and Steel,
+     whose own cards are light but whose kpi-card islands stay dark like
+     everyone else's — see the Steel comment further up for why that's
+     fine and not a contradiction). Adding them to the vibrancy list would make their text
      unreadable against their own fixed dark background. */
   .kpi-card{
     background:linear-gradient(135deg, #0E1420, #1B2745) !important;
@@ -1135,7 +1174,7 @@
 <style>
   #bgAnim{ position:fixed; inset:0; z-index:-1; overflow:hidden; pointer-events:none; }
   #bgAnim svg{ position:absolute; opacity:0.19; }
-  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg, html[data-theme="midnightblue"] #bgAnim svg, html[data-theme="sunset"] #bgAnim svg{ opacity:0.13; }
+  html[data-theme="dark"] #bgAnim svg, html[data-theme="midnight"] #bgAnim svg, html[data-theme="steel"] #bgAnim svg, html[data-theme="sunset"] #bgAnim svg{ opacity:0.13; }
   #bgAnim svg *{ stroke:var(--bg-anim-ink, var(--text-faint)); }
   #bgAnim svg .bg-fill{ fill:var(--bg-anim-ink, var(--text-faint)); stroke:none; }
 
@@ -1219,7 +1258,7 @@
      space. */
   #bgAnim svg.bg-center-svg{ opacity:0.13; }
   html[data-theme="dark"] #bgAnim svg.bg-center-svg, html[data-theme="midnight"] #bgAnim svg.bg-center-svg,
-  html[data-theme="midnightblue"] #bgAnim svg.bg-center-svg, html[data-theme="sunset"] #bgAnim svg.bg-center-svg{ opacity:0.09; }
+  html[data-theme="steel"] #bgAnim svg.bg-center-svg, html[data-theme="sunset"] #bgAnim svg.bg-center-svg{ opacity:0.09; }
   .bg-bolt-1{ left:38vw; top:12vh; width:56px; height:56px; animation:bgGearCW 46s linear infinite; transform-box:fill-box; transform-origin:center; }
   .bg-bolt-2{ left:62vw; top:52vh; width:38px; height:38px; animation:bgGearCCW 32s linear infinite; transform-box:fill-box; transform-origin:center; }
   .bg-circuit-svg{ left:44vw; top:32vh; width:180px; height:120px; }
@@ -1499,7 +1538,7 @@
             <button class="theme-dot" data-theme-name="white" style="background:#D3D4D9;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
-            <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
+            <button class="theme-dot" data-theme-name="steel" style="background:linear-gradient(135deg, #0B0D12, #E7E9ED);" onclick="setTheme('steel', this)" title="Steel"></button>
             <button class="theme-dot" data-theme-name="sunset" style="background:linear-gradient(135deg, #1C130B, #FF9F1C);" onclick="setTheme('sunset', this)" title="Sunset"></button>
           </div>
         </div>
@@ -1847,6 +1886,24 @@
           <div style="font-size:11.5px; color:#C7D0E8; margin-top:2px;"><span id="profileTaskCount">—</span> total tasks (all-time)</div>
         </div>
       </div>
+      <!-- 2026-09-10: Time Logged moved up here from its own separate
+           panel further down the page, to sit as a 2x2 matrix with
+           Score rather than being a second, disconnected section — same
+           kpi-card visual language as the two Score cards above it. -->
+      <div class="kpi-card" style="display:flex; align-items:center; gap:18px;">
+        <div id="profileRingTimeMonthly" style="flex-shrink:0;"></div>
+        <div style="flex:1; min-width:0;">
+          <div class="kpi-lbl" style="margin-bottom:2px;">Time Logged (this month)</div>
+          <span class="kpi-num" id="profileTimeMonthly" style="font-size:22px;">—</span>
+        </div>
+      </div>
+      <div class="kpi-card" style="display:flex; align-items:center; gap:18px;">
+        <div id="profileRingTimeAllTime" style="flex-shrink:0;"></div>
+        <div style="flex:1; min-width:0;">
+          <div class="kpi-lbl" style="margin-bottom:2px;">Time Logged (all-time)</div>
+          <span class="kpi-num" id="profileTimeAllTime" style="font-size:22px;">—</span>
+        </div>
+      </div>
     </div>
     <div style="display:flex; justify-content:flex-end; margin:-14px 0 24px;">
       <button class="queue-btn" onclick="loadProfile()">↻ Recalculate my Score</button>
@@ -1862,13 +1919,13 @@
         <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
           <div>
             <div style="font-size:13.5px; font-weight:600;">Theme</div>
-            <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, Midnight (OLED), Midnight Blue, or Sunset</div>
+            <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, Midnight (OLED), Steel, or Sunset</div>
           </div>
           <div class="theme-switch">
             <button class="theme-dot" data-theme-name="white" style="background:#D3D4D9;" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #202329, #6C9BFF);" onclick="setTheme('dark', this)" title="Dark"></button>
             <button class="theme-dot" data-theme-name="midnight" style="background:linear-gradient(135deg, #05070D, #5B8DEF);" onclick="setTheme('midnight', this)" title="Midnight"></button>
-            <button class="theme-dot" data-theme-name="midnightblue" style="background:linear-gradient(135deg, #0A0F1E, #4A90FF);" onclick="setTheme('midnightblue', this)" title="Midnight Blue"></button>
+            <button class="theme-dot" data-theme-name="steel" style="background:linear-gradient(135deg, #0B0D12, #E7E9ED);" onclick="setTheme('steel', this)" title="Steel"></button>
             <button class="theme-dot" data-theme-name="sunset" style="background:linear-gradient(135deg, #1C130B, #FF9F1C);" onclick="setTheme('sunset', this)" title="Sunset"></button>
           </div>
         </div>
@@ -1880,11 +1937,6 @@
           <button class="queue-btn" onclick="openTutorial()">📄 Open PDF</button>
         </div>
       </div>
-    </div>
-    <div class="panel" style="margin-top:20px;">
-      <div class="panel-title">Time logged</div>
-      <div class="block-sub" style="margin-top:-6px; margin-bottom:12px;">Total minutes recorded across any Duration field you've filled in — meetings, deployed time, or any future field a Superadmin flags this way.</div>
-      <div id="profileTimeLogged"><div class="placeholder-note">Loading…</div></div>
     </div>
     <div class="panel" style="margin-top:20px;">
       <div class="panel-title">Error Reports — your own record</div>
@@ -3181,6 +3233,10 @@
   function initTheme(){
     let saved = 'white';
     try{ saved = localStorage.getItem('waltonLiftTheme') || 'white'; }catch(e){}
+    // 2026-09-10: Midnight Blue was removed — anyone whose browser still
+    // has it saved from before falls back to White here instead of
+    // applying a data-theme value with no matching CSS left behind for it.
+    if(saved === 'midnightblue') saved = 'white';
     if(saved === 'white'){ document.documentElement.removeAttribute('data-theme'); }
     else{ document.documentElement.setAttribute('data-theme', saved); }
     document.documentElement.style.colorScheme = saved === 'white' ? 'light' : 'dark';
@@ -3702,7 +3758,8 @@
     { date:'2026-09-10', summary:'Two more Dashboard fixes: (1) Weekly trend was rendering tiny on desktop — it had a fixed pixel height regardless of container width, so once it became a full-width element, preserveAspectRatio="meet" had to shrink the whole drawing down to fit that short height and center it with large empty margins on both sides. Switched to height:auto so it scales naturally from the container\'s real width instead, and gave it a taller base aspect ratio now that it\'s the hero element of its own card. (2) Mobile\'s Team overview rings looked scattered because Team Score sat centered on its own row while the other 3 sat left-aligned below it — inconsistent alignment, not the stacking itself. Replaced with a plain symmetric 2x2 grid, all 4 rings styled identically.' },
     { date:'2026-09-10', summary:'Desktop-only Dashboard redesign of the "Team overview" card (mobile untouched, still the 2x2 grid from the previous update): the 4 rings are now bigger (84px vs 64px) and each sits in its own small liquid-glass sub-card for a more layered glass look, arranged in a 2x2 grid on the left; the Weekly trend chart sits on the right and now stretches to match the ring grid\'s height exactly (CSS grid\'s natural column-stretch behavior, same mechanism that caused the earlier stretching bug — used deliberately here since the two columns are a sensible height match now, unlike before). Ring size and layout are desktop-mode-only (checked via the existing dashOverviewMode flag), so mobile\'s rendering path is completely unaffected.' },
     { date:'2026-09-10', summary:'Added filters to Lift Trace: By Category, By Engineer, and By Section (Mechanical/Electrical). These narrow down the current search results client-side rather than re-querying the database — Engineer options only ever list people who actually appear in the current results, not the whole roster. Section comes from each task\'s own Discipline field, stamped in at submission time from the logging engineer\'s profile, so it reflects what their discipline WAS when the work was logged rather than their current profile setting.' },
-    { date:'2026-09-10', summary:'Added a subtle glow effect (text-shadow) to headings, section titles, big stat numbers, ring center numbers, and buttons, across every page, for the Dark/Midnight/Midnight Blue themes only — Sunset and White untouched. Deliberately NOT applied to body text, table cells, or form labels: a side-by-side demo showed glow blurring small text enough to hurt readability, while it reads as an intentional effect on bigger/bolder text. Glows in each element\'s own existing color (currentColor) rather than one fixed glow color.' }
+    { date:'2026-09-10', summary:'Added a subtle glow effect (text-shadow) to headings, section titles, big stat numbers, ring center numbers, and buttons, across every page, for the Dark/Midnight/Midnight Blue themes only — Sunset and White untouched. Deliberately NOT applied to body text, table cells, or form labels: a side-by-side demo showed glow blurring small text enough to hurt readability, while it reads as an intentional effect on bigger/bolder text. Glows in each element\'s own existing color (currentColor) rather than one fixed glow color.' },
+    { date:'2026-09-10', summary:'Reworked the previous update: the glow effect is gone, replaced with a lighter accent-tinted text color on the same elements (headings/numbers/buttons), Dark and Midnight only. Midnight Blue theme removed entirely (5 themes total again). New "Steel" theme added in its place: genuinely dark night background, but cards/panels/inputs are light grey — the one theme here where surface is lighter than bg rather than darker, so it needed its own explicit dark-text-on-light-card override scoped to every card/surface class in the app (checked directly against every var(--surface) usage), on top of the usual light-text-on-dark-bg values for whatever sits directly on the page background. Liquid-glass cards also got a real hover state for the first time — a gentle lift, deepened blur/saturation, and a softer shadow, macOS-style — since there wasn\'t one at all before. Profile page: Time Logged moved up from its own separate panel into a 2x2 matrix with Score, using the same ring style and dark kpi-card as the Score cards instead of plain text.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -7690,18 +7747,17 @@ for a competing inline style first.`;
 
     // Time Logged — all-time and this month, from whichever fields are
     // currently flagged as Duration fields (built-in or Superadmin-added).
+    // Rendered as rings now, matching the Score cards next to them (same
+    // hardcoded white-on-dark kpi-card styling, same ring size) rather
+    // than the old plain-text panel, since this now sits in the same
+    // 2x2 matrix as Score instead of being a separate section.
     const durationLabels = await getDurationLabelsByCategory();
     const allTimeMinutes = rows.reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0);
     const monthlyMinutes = monthlyRows.reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0);
-    const timeEl = document.getElementById('profileTimeLogged');
-    if(timeEl){
-      timeEl.innerHTML = allTimeMinutes > 0
-        ? `<div style="display:flex; gap:24px; flex-wrap:wrap;">
-             <div><div style="font-size:22px; font-weight:700;">${formatDurationLong(allTimeMinutes)}</div><div style="font-size:11.5px; color:var(--text-faint);">Time logged (all-time)</div></div>
-             <div><div style="font-size:22px; font-weight:700;">${formatDurationLong(monthlyMinutes)}</div><div style="font-size:11.5px; color:var(--text-faint);">This month</div></div>
-           </div>`
-        : `<div class="placeholder-note">No Duration fields logged yet — time shows up here once a task with a Duration field (e.g. meeting length) is submitted.</div>`;
-    }
+    document.getElementById('profileRingTimeMonthly').innerHTML = scoreRingSvg(100, '#4ADE9C', 66, 'Time logged this month', 'rgba(255,255,255,0.18)', '#fff', formatDurationShort(monthlyMinutes));
+    document.getElementById('profileRingTimeAllTime').innerHTML = scoreRingSvg(100, '#6C9BFF', 66, 'Time logged all-time', 'rgba(255,255,255,0.18)', '#fff', formatDurationShort(allTimeMinutes));
+    document.getElementById('profileTimeMonthly').textContent = formatDurationLong(monthlyMinutes);
+    document.getElementById('profileTimeAllTime').textContent = formatDurationLong(allTimeMinutes);
 
     const { data: weightData } = await sb.from('kpi_weights').select('*');
     const weightMap = {};
