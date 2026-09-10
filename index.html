@@ -74,7 +74,7 @@
   /* "dark" is the only dark theme now — Midnight, Steel, and Sunset were
      removed (2026-09-10) to match the two-theme reference exactly. */
   html[data-theme="dark"]{
-    --bg:#0D1218; --surface:#2B2B2B; --surface-alt:#3D3D3D; --border:#4E4E4E;
+    --bg:#0D1218; --surface:#1C1C1C; --surface-alt:#2C2C2C; --border:#454545;
     --text:#ECEDEF; --text-dim:#C7CDD9; --text-faint:#A3ACBC; --bg-anim-ink:#8B96B8;
     --accent:#5B8DEF; --accent-rgb:91,141,239; --amber:#E0A23D; --green:#3FCF8E; --red:#F0685C;
     --c-rni:#A38DF2; --c-presales:#6CA3F7; --c-client:#4FCFCF; --c-postsales:#4FDA9C;
@@ -1574,7 +1574,7 @@
           </span>
           <div class="theme-switch" style="margin:0;">
             <button class="theme-dot" data-theme-name="white" style="background:linear-gradient(135deg, #DDDFE5, #FAFAFC);" onclick="setTheme('white', this)" title="Light"></button>
-            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #3D3D3D);" onclick="setTheme('dark', this)" title="Dark"></button>
+            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #2C2C2C);" onclick="setTheme('dark', this)" title="Dark"></button>
           </div>
         </div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="openTutorial()">
@@ -1967,7 +1967,7 @@
           </div>
           <div class="theme-switch">
             <button class="theme-dot" data-theme-name="white" style="background:linear-gradient(135deg, #DDDFE5, #FAFAFC);" onclick="setTheme('white', this)" title="Light"></button>
-            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #3D3D3D);" onclick="setTheme('dark', this)" title="Dark"></button>
+            <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #2C2C2C);" onclick="setTheme('dark', this)" title="Dark"></button>
           </div>
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0 8px; border-top:1px solid var(--border); margin-top:8px;">
@@ -3808,7 +3808,8 @@
     { date:'2026-09-10', summary:'Added a soft gradient wash to the page background, all 5 themes, replacing the flat single-color background — three faint colored glows (built from each theme\'s own --accent/--amber/--green, not hardcoded) fading into that theme\'s base --bg. Sits behind the existing animated line-art overlay rather than replacing it. Purely a background-property change — no page structure, layout, or functionality touched; Home and Lift Trace stay exactly as they are, no merging or new hero sections.' },
     { date:'2026-09-10', summary:'Theme system cut down to 2 (Light, Dark) — Midnight, Steel, and Sunset removed entirely, not just hidden; anyone with one of those saved falls back to Light automatically. Both remaining themes recolored to match a reference design closely: colors were sampled directly from the reference images\' actual pixels rather than estimated (Light: page #F0F1F5, card #EBEAEF; Dark: page #0D1218, card #2B2B2B), and the background gradient wash redone using the exact warm-peach/cool-blue tones found in that sampling instead of the previous generic accent-derived version. No page, tab, or functional behavior changed — this was scoped as a pure color/theme update per explicit instruction, confirmed before starting.' },
     { date:'2026-09-10', summary:'Fixed a real regression: the dedicated Lift Trace tab (view-search) and its nav button had gone missing entirely at some point, with its search box, filters, and results ending up merged directly into Home instead — so searching from Home showed results inline rather than switching to its own tab, which is not how this ever should have worked. Restored Lift Trace as its own tab with its original search/filter/result content. Home\'s search box is now a separate element (homeSearchInput, not the same id as the real Lift Trace input, since both exist in the DOM at once) wired through a new traceFromHome() handoff: switches to the Lift Trace tab, drops the typed term into its real input, and runs the search there — matching the original "search from Home, see results on Lift Trace" behavior.' },
-    { date:'2026-09-10', summary:'Two contrast fixes from chasing the reference images too literally. (1) White theme: page background and card background had ended up only a few points apart in tone, so cards barely stood out — widened the gap (bg #F0F1F5→#DDDFE5, card #EBEAEF→#FAFAFC). (2) Dark theme: the Edit/View-details/Delete icon buttons were nearly invisible — they get their background by tinting toward --surface, but Dark\'s --surface and --surface-alt had also become nearly identical, so the button\'s own background barely differed from the card behind it. Widened that gap too (surface-alt #333333→#3D3D3D) and, more importantly, strengthened each button\'s own tint and added a matching-color border so they read as a distinct clickable shape from their outline alone, not just background contrast that could quietly erode again later.' }
+    { date:'2026-09-10', summary:'Two contrast fixes from chasing the reference images too literally. (1) White theme: page background and card background had ended up only a few points apart in tone, so cards barely stood out — widened the gap (bg #F0F1F5→#DDDFE5, card #EBEAEF→#FAFAFC). (2) Dark theme: the Edit/View-details/Delete icon buttons were nearly invisible — they get their background by tinting toward --surface, but Dark\'s --surface and --surface-alt had also become nearly identical, so the button\'s own background barely differed from the card behind it. Widened that gap too (surface-alt #333333→#3D3D3D) and, more importantly, strengthened each button\'s own tint and added a matching-color border so they read as a distinct clickable shape from their outline alone, not just background contrast that could quietly erode again later.' },
+    { date:'2026-09-10', summary:'Dark theme cards darkened — they were reading as too grey/washed-out at #2B2B2B. Card is now #1C1C1C, secondary surface #2C2C2C, keeping the same ~16-point gap between the two that fixed button visibility last round, and still clearly distinguishable from the page background (#0D1218).' }
   ];
  
   let currentUser = null;   // Supabase auth user
