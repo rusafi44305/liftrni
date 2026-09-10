@@ -120,7 +120,7 @@
      darkened) — reused as-is since they face the identical problem:
      needing to read as text on a light background, not a dark one. */
   html[data-theme="steel"]{
-    --bg:#0B0D12; --surface:#E7E9ED; --surface-alt:#DADDE3; --border:#8A8F98;
+    --bg:#0B0D12; --surface:#E7E9ED; --surface-alt:#DADDE3; --border:#B0B4BC;
     --text:#F2F4F7; --text-dim:#C3C8D1; --text-faint:#8C93A0; --bg-anim-ink:#4A5570;
     --accent:#3D74E0; --accent-rgb:61,116,224; --amber:#A85F00; --green:#0F7A4C; --red:#B3291E;
     --c-rni:#6E4FD1; --c-presales:#1D6FD9; --c-client:#0C7979; --c-postsales:#167C51;
@@ -130,21 +130,30 @@
     --header-bg:#0B0D12;
   }
   /* The dark-text-on-light-card override for Steel — every class in this
-     app that actually paints a light surface underneath its own text
-     (checked directly against every "background:var(--surface...)" rule
-     in this file, plus every built-in modal, which all use .panel as
-     their content box). One-off inline-styled elements that happen not
-     to sit inside any of these containers are the honest limitation
-     here — those would need a follow-up fix if any turn up in testing,
-     rather than something achievable with certainty in one pass across
-     a file this size. */
-  html[data-theme="steel"] .panel, html[data-theme="steel"] .liquid-glass-card, html[data-theme="steel"] .stat-card,
-  html[data-theme="steel"] .t-card, html[data-theme="steel"] .form-card, html[data-theme="steel"] .role-card,
+     app that actually paints a light surface underneath its own text.
+     2026-09-10: the first version of this rule missed most of the
+     "MACOS VIBRANCY POLISH" class list further down (.mytask-item,
+     .feed-item, .chip-opt, .status-chip, etc.) — those are exactly the
+     kind of card used for things like the Home page's Recent Activity
+     feed and My Tasks rows, so text there was rendering light-on-light.
+     This version is built by directly copying that rule's full class
+     list rather than a separate guess at "which classes probably need
+     this," so the two stay in sync going forward — if a class is ever
+     added to the vibrancy rule, it needs adding here too. One-off
+     inline-styled elements outside any of these containers remain the
+     honest limitation — a follow-up fix if any turn up in testing. */
+  html[data-theme="steel"] .panel, html[data-theme="steel"] .stat-card, html[data-theme="steel"] .mytask-item,
+  html[data-theme="steel"] .feed-item, html[data-theme="steel"] .approve-row, html[data-theme="steel"] .form-card,
+  html[data-theme="steel"] .role-card, html[data-theme="steel"] .cat-tile, html[data-theme="steel"] .t-card,
+  html[data-theme="steel"] .lift-header, html[data-theme="steel"] .queued-item, html[data-theme="steel"] .gantt-wrap,
+  html[data-theme="steel"] .chip-opt, html[data-theme="steel"] .searchbar, html[data-theme="steel"] .mt-desc-wrap,
+  html[data-theme="steel"] .status-chip, html[data-theme="steel"] .clock-pill, html[data-theme="steel"] .pending-pill,
+  html[data-theme="steel"] .devDetailPanel, html[data-theme="steel"] .liquid-glass-card,
   html[data-theme="steel"] .gantt-project-card, html[data-theme="steel"] .proj-task-row,
   html[data-theme="steel"] input, html[data-theme="steel"] select, html[data-theme="steel"] textarea, html[data-theme="steel"] table,
   html[data-theme="steel"] nav.tabs button.active, html[data-theme="steel"] nav.tabs.dock button.active,
   html[data-theme="steel"] .theme-switch, html[data-theme="steel"] #notifPanel, html[data-theme="steel"] .au-avatar,
-  html[data-theme="steel"] #chatMentionDropdown, html[data-theme="steel"] #categoryLinksDropdown, html[data-theme="steel"] .lift-header{
+  html[data-theme="steel"] #chatMentionDropdown, html[data-theme="steel"] #categoryLinksDropdown{
     --text:#1A1D24; --text-dim:#4A505C; --text-faint:#767C88;
   }
 
@@ -1034,18 +1043,39 @@
      MACOS VIBRANCY POLISH — frosted-glass "material" surfaces,
      matching Sonoma/Sequoia's translucent panel language, applied
      consistently across every card-like surface in the app.
+     2026-09-10: split into two rules (holder vs item) with the actual
+     background moved out of this shared block — see below. Border also
+     thinned here: 55%→35% opacity, and the bright top-edge highlight
+     toned down (45%→25% white) since the combination of a solid border
+     plus that bright highlight plus the inset box-shadow was reading as
+     one thick edge rather than a thin one.
   ============================================================ */
   .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #editModal .panel,
   .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
-    background:color-mix(in srgb, var(--surface) 74%, transparent) !important;
     backdrop-filter:blur(28px) saturate(180%);
     -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border:1px solid color-mix(in srgb, var(--border) 55%, transparent) !important;
-    border-top-color:color-mix(in srgb, white 45%, var(--border) 55%) !important;
-    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.35), inset 0 0 0 1px rgba(255,255,255,0.04) !important;
+    border:1px solid color-mix(in srgb, var(--border) 35%, transparent) !important;
+    border-top-color:color-mix(in srgb, white 25%, var(--border) 75%) !important;
+    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(255,255,255,0.03) !important;
     border-radius:16px !important;
     position:relative;
+  }
+  /* Holder cards — the outer containers things sit inside. */
+  .panel, .stat-card, .form-card, .role-card, #editModal .panel, .lift-header, .gantt-wrap, .searchbar, .devDetailPanel{
+    background:color-mix(in srgb, var(--surface) 74%, transparent) !important;
+  }
+  /* Nested item/task cards — things that sit INSIDE a holder above (a
+     "Recent activity" feed row inside its panel, a My Tasks row, a
+     timeline entry, a chip, a status pill). These used to share the
+     exact same background as their holder, which is why a task card
+     and the panel it sat in looked like one flat surface with no
+     separation. Lightened relative to --surface (white blended in
+     first, then the transparency layer) so they read as a distinct,
+     slightly-raised layer on top of their container instead. */
+  .mytask-item, .feed-item, .approve-row, .cat-tile, .t-card, .queued-item, .chip-opt, .mt-desc-wrap,
+  .status-chip, .clock-pill, .pending-pill{
+    background:color-mix(in srgb, color-mix(in srgb, var(--surface) 85%, white 15%) 80%, transparent) !important;
   }
   /* A moving light reflection along each card's own border — like light
      catching the edge of real glass as you tilt it. --shine-pos is kept
@@ -1109,13 +1139,21 @@
      whatever's showing through than dark ones are, so this stays a
      little safer while still reading as genuine glass rather than a
      flat card. */
-  html:not([data-theme]) .panel, html:not([data-theme]) .stat-card, html:not([data-theme]) .mytask-item,
-  html:not([data-theme]) .feed-item, html:not([data-theme]) .approve-row, html:not([data-theme]) .form-card,
-  html:not([data-theme]) .role-card, html:not([data-theme]) #editModal .panel, html:not([data-theme]) .cat-tile,
-  html:not([data-theme]) .t-card, html:not([data-theme]) .lift-header, html:not([data-theme]) .queued-item,
-  html:not([data-theme]) .gantt-wrap, html:not([data-theme]) .searchbar, html:not([data-theme]) .mt-desc-wrap,
-  html:not([data-theme]) .status-chip, html:not([data-theme]) .devDetailPanel{
+  html:not([data-theme]) .panel, html:not([data-theme]) .stat-card, html:not([data-theme]) .form-card,
+  html:not([data-theme]) .role-card, html:not([data-theme]) #editModal .panel, html:not([data-theme]) .lift-header,
+  html:not([data-theme]) .gantt-wrap, html:not([data-theme]) .searchbar, html:not([data-theme]) .devDetailPanel{
     background:color-mix(in srgb, var(--surface) 85%, transparent) !important;
+  }
+  /* Same holder/item split as the dark-theme rule above. Worth noting
+     honestly: since White's --surface is already pure white, "lighter
+     than white" isn't physically possible — these still separate
+     visibly from their holder because --surface-alt (already a step
+     grayer than white in this theme) is blended in instead of white,
+     rather than the lightening trick used everywhere else. */
+  html:not([data-theme]) .mytask-item, html:not([data-theme]) .feed-item, html:not([data-theme]) .approve-row,
+  html:not([data-theme]) .cat-tile, html:not([data-theme]) .t-card, html:not([data-theme]) .queued-item,
+  html:not([data-theme]) .mt-desc-wrap, html:not([data-theme]) .status-chip{
+    background:color-mix(in srgb, var(--surface) 60%, var(--surface-alt)) !important;
   }
   /* These render dense, list-like task cards in several different views
      (category log, dashboard inspect, My Tasks) — the shared 16px radius
@@ -3759,7 +3797,8 @@
     { date:'2026-09-10', summary:'Desktop-only Dashboard redesign of the "Team overview" card (mobile untouched, still the 2x2 grid from the previous update): the 4 rings are now bigger (84px vs 64px) and each sits in its own small liquid-glass sub-card for a more layered glass look, arranged in a 2x2 grid on the left; the Weekly trend chart sits on the right and now stretches to match the ring grid\'s height exactly (CSS grid\'s natural column-stretch behavior, same mechanism that caused the earlier stretching bug — used deliberately here since the two columns are a sensible height match now, unlike before). Ring size and layout are desktop-mode-only (checked via the existing dashOverviewMode flag), so mobile\'s rendering path is completely unaffected.' },
     { date:'2026-09-10', summary:'Added filters to Lift Trace: By Category, By Engineer, and By Section (Mechanical/Electrical). These narrow down the current search results client-side rather than re-querying the database — Engineer options only ever list people who actually appear in the current results, not the whole roster. Section comes from each task\'s own Discipline field, stamped in at submission time from the logging engineer\'s profile, so it reflects what their discipline WAS when the work was logged rather than their current profile setting.' },
     { date:'2026-09-10', summary:'Added a subtle glow effect (text-shadow) to headings, section titles, big stat numbers, ring center numbers, and buttons, across every page, for the Dark/Midnight/Midnight Blue themes only — Sunset and White untouched. Deliberately NOT applied to body text, table cells, or form labels: a side-by-side demo showed glow blurring small text enough to hurt readability, while it reads as an intentional effect on bigger/bolder text. Glows in each element\'s own existing color (currentColor) rather than one fixed glow color.' },
-    { date:'2026-09-10', summary:'Reworked the previous update: the glow effect is gone, replaced with a lighter accent-tinted text color on the same elements (headings/numbers/buttons), Dark and Midnight only. Midnight Blue theme removed entirely (5 themes total again). New "Steel" theme added in its place: genuinely dark night background, but cards/panels/inputs are light grey — the one theme here where surface is lighter than bg rather than darker, so it needed its own explicit dark-text-on-light-card override scoped to every card/surface class in the app (checked directly against every var(--surface) usage), on top of the usual light-text-on-dark-bg values for whatever sits directly on the page background. Liquid-glass cards also got a real hover state for the first time — a gentle lift, deepened blur/saturation, and a softer shadow, macOS-style — since there wasn\'t one at all before. Profile page: Time Logged moved up from its own separate panel into a 2x2 matrix with Score, using the same ring style and dark kpi-card as the Score cards instead of plain text.' }
+    { date:'2026-09-10', summary:'Reworked the previous update: the glow effect is gone, replaced with a lighter accent-tinted text color on the same elements (headings/numbers/buttons), Dark and Midnight only. Midnight Blue theme removed entirely (5 themes total again). New "Steel" theme added in its place: genuinely dark night background, but cards/panels/inputs are light grey — the one theme here where surface is lighter than bg rather than darker, so it needed its own explicit dark-text-on-light-card override scoped to every card/surface class in the app (checked directly against every var(--surface) usage), on top of the usual light-text-on-dark-bg values for whatever sits directly on the page background. Liquid-glass cards also got a real hover state for the first time — a gentle lift, deepened blur/saturation, and a softer shadow, macOS-style — since there wasn\'t one at all before. Profile page: Time Logged moved up from its own separate panel into a 2x2 matrix with Score, using the same ring style and dark kpi-card as the Score cards instead of plain text.' },
+    { date:'2026-09-10', summary:'Three fixes to the previous update. (1) Steel theme bug: text was rendering light-on-light on cards like the Home page\'s Recent Activity feed and My Tasks rows — the dark-text override only covered .panel-type "holder" cards, missing most of the shared vibrancy rule\'s class list (.mytask-item, .feed-item, .chip-opt, .status-chip, and others). Rebuilt to cover every class from that rule directly, confirmed by cross-checking the two lists match. (2) Card borders thinned across every theme — border opacity 55%→35%, the bright top-edge highlight toned down 45%→25% white, since the combination was reading as one thick edge rather than a thin one; Steel\'s own border color also lightened for a subtler look against its light cards. (3) Nested item/task cards (My Tasks rows, Recent Activity entries, timeline cards, chips, pills) were sharing the exact same background shade as the holder panel they sit inside, with no visual separation — split into two rules so items now render a lighter shade than their holder in every theme.' }
   ];
  
   let currentUser = null;   // Supabase auth user
