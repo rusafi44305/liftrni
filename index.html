@@ -131,17 +131,15 @@
   }
   /* The dark-text-on-light-card override for Steel — every class in this
      app that actually paints a light surface underneath its own text.
-     2026-09-10: the first version of this rule missed most of the
-     "MACOS VIBRANCY POLISH" class list further down (.mytask-item,
-     .feed-item, .chip-opt, .status-chip, etc.) — those are exactly the
-     kind of card used for things like the Home page's Recent Activity
-     feed and My Tasks rows, so text there was rendering light-on-light.
-     This version is built by directly copying that rule's full class
-     list rather than a separate guess at "which classes probably need
-     this," so the two stay in sync going forward — if a class is ever
-     added to the vibrancy rule, it needs adding here too. One-off
-     inline-styled elements outside any of these containers remain the
-     honest limitation — a follow-up fix if any turn up in testing. */
+     2026-09-10 (second pass): found several more gaps beyond the vibrancy
+     rule's own list — small header-level badges that carry their own
+     light surface-alt circle (.avatar, #notifBell, .role-icon) while
+     sitting in the dark page header, plus nav.tabs itself (its .active
+     state was covered, the tab bar's own resting background wasn't), and
+     a few defensive additions (.btn.reject/.view-details, .tag.gray)
+     that were probably fine via inheritance already but cost nothing to
+     make explicit rather than assumed. Text darkened further to a true
+     near-black rather than a dark gray, as asked. */
   html[data-theme="steel"] .panel, html[data-theme="steel"] .stat-card, html[data-theme="steel"] .mytask-item,
   html[data-theme="steel"] .feed-item, html[data-theme="steel"] .approve-row, html[data-theme="steel"] .form-card,
   html[data-theme="steel"] .role-card, html[data-theme="steel"] .cat-tile, html[data-theme="steel"] .t-card,
@@ -151,10 +149,11 @@
   html[data-theme="steel"] .devDetailPanel, html[data-theme="steel"] .liquid-glass-card,
   html[data-theme="steel"] .gantt-project-card, html[data-theme="steel"] .proj-task-row,
   html[data-theme="steel"] input, html[data-theme="steel"] select, html[data-theme="steel"] textarea, html[data-theme="steel"] table,
-  html[data-theme="steel"] nav.tabs button.active, html[data-theme="steel"] nav.tabs.dock button.active,
-  html[data-theme="steel"] .theme-switch, html[data-theme="steel"] #notifPanel, html[data-theme="steel"] .au-avatar,
-  html[data-theme="steel"] #chatMentionDropdown, html[data-theme="steel"] #categoryLinksDropdown{
-    --text:#1A1D24; --text-dim:#4A505C; --text-faint:#767C88;
+  html[data-theme="steel"] nav.tabs, html[data-theme="steel"] .theme-switch, html[data-theme="steel"] #notifPanel,
+  html[data-theme="steel"] .au-avatar, html[data-theme="steel"] .avatar, html[data-theme="steel"] #notifBell,
+  html[data-theme="steel"] .role-icon, html[data-theme="steel"] .btn.reject, html[data-theme="steel"] .btn.view-details,
+  html[data-theme="steel"] .tag.gray, html[data-theme="steel"] #chatMentionDropdown, html[data-theme="steel"] #categoryLinksDropdown{
+    --text:#000000; --text-dim:#33363D; --text-faint:#595E68;
   }
 
   /* 2026-09-10: replaced the earlier glow (text-shadow) treatment — asked
@@ -602,10 +601,10 @@
     background: color-mix(in srgb, var(--surface) 78%, transparent);
     backdrop-filter: blur(24px) saturate(180%);
     -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+    border: 1px solid transparent;
     border-radius: 16px;
     box-shadow: var(--shadow);
-    transition: transform 0.28s cubic-bezier(0.25,0.8,0.4,1), box-shadow 0.28s ease, background 0.28s ease, backdrop-filter 0.28s ease, border-color 0.28s ease;
+    transition: transform 0.28s cubic-bezier(0.25,0.8,0.4,1), box-shadow 0.28s ease, background 0.28s ease, backdrop-filter 0.28s ease;
   }
   /* There was no hover state at all before this — asked to make the
      glass effect "more significant but gentle," matching how macOS
@@ -614,17 +613,15 @@
      a jump, and a softer/wider shadow underneath to sell the lift. Kept
      deliberately subtle in magnitude — a 2px rise and a moderate blur/
      saturation bump reads as "responsive" without feeling like a bouncy
-     UI toy, which is the actual macOS feel being asked for here. */
+     UI toy, which is the actual macOS feel being asked for here.
+     border-color removed from hover here (2026-09-10) — no visible
+     border left to darken now that this card is genuinely borderless. */
   .liquid-glass-card:hover{
     background: color-mix(in srgb, var(--surface) 88%, transparent);
     backdrop-filter: blur(28px) saturate(200%);
     -webkit-backdrop-filter: blur(28px) saturate(200%);
-    border-color: color-mix(in srgb, var(--border) 85%, transparent);
     box-shadow: var(--shadow), 0 10px 28px -10px rgba(0,0,0,0.28);
     transform: translateY(-2px);
-  }
-  @media (max-width: 480px){
-    .stat-row.profile-kpi-row{ grid-template-columns:1fr !important; }
   }
   @media (max-width: 700px){
     .dash-compact-grid{ grid-template-columns:1fr !important; }
@@ -1049,14 +1046,21 @@
      toned down (45%→25% white) since the combination of a solid border
      plus that bright highlight plus the inset box-shadow was reading as
      one thick edge rather than a thin one.
-  ============================================================ */
+     2026-09-10: asked to go further — genuinely borderless, "liquid
+     glass with no border." Border color set to fully transparent (kept
+     as a declared 1px transparent border rather than removed outright,
+     so box-sizing:border-box means the box's rendered dimensions don't
+     shift by even a pixel — purely visual, no layout change). Definition
+     now comes entirely from the backdrop blur plus the shadow/inset
+     highlight below, the way real macOS glass reads without a hard
+     outline. border-top-color dropped since it only had meaning while
+     there was a real border to tint. */
   .panel, .stat-card, .mytask-item, .feed-item, .approve-row, .form-card, .role-card, #editModal .panel,
   .cat-tile, .t-card, .lift-header, .queued-item, .gantt-wrap, .chip-opt, .searchbar, .mt-desc-wrap,
   .status-chip, .clock-pill, .pending-pill, .devDetailPanel{
     backdrop-filter:blur(28px) saturate(180%);
     -webkit-backdrop-filter:blur(28px) saturate(180%);
-    border:1px solid color-mix(in srgb, var(--border) 35%, transparent) !important;
-    border-top-color:color-mix(in srgb, white 25%, var(--border) 75%) !important;
+    border:1px solid transparent !important;
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22), inset 0 0 0 1px rgba(255,255,255,0.03) !important;
     border-radius:16px !important;
     position:relative;
@@ -1129,7 +1133,7 @@
     background:color-mix(in srgb, var(--surface) 96%, transparent) !important;
     backdrop-filter:blur(30px) saturate(180%);
     -webkit-backdrop-filter:blur(30px) saturate(180%);
-    border:1px solid color-mix(in srgb, var(--border) 60%, transparent) !important;
+    border:1px solid transparent !important;
     box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.22);
     border-radius:16px !important;
   }
@@ -3798,7 +3802,8 @@
     { date:'2026-09-10', summary:'Added filters to Lift Trace: By Category, By Engineer, and By Section (Mechanical/Electrical). These narrow down the current search results client-side rather than re-querying the database — Engineer options only ever list people who actually appear in the current results, not the whole roster. Section comes from each task\'s own Discipline field, stamped in at submission time from the logging engineer\'s profile, so it reflects what their discipline WAS when the work was logged rather than their current profile setting.' },
     { date:'2026-09-10', summary:'Added a subtle glow effect (text-shadow) to headings, section titles, big stat numbers, ring center numbers, and buttons, across every page, for the Dark/Midnight/Midnight Blue themes only — Sunset and White untouched. Deliberately NOT applied to body text, table cells, or form labels: a side-by-side demo showed glow blurring small text enough to hurt readability, while it reads as an intentional effect on bigger/bolder text. Glows in each element\'s own existing color (currentColor) rather than one fixed glow color.' },
     { date:'2026-09-10', summary:'Reworked the previous update: the glow effect is gone, replaced with a lighter accent-tinted text color on the same elements (headings/numbers/buttons), Dark and Midnight only. Midnight Blue theme removed entirely (5 themes total again). New "Steel" theme added in its place: genuinely dark night background, but cards/panels/inputs are light grey — the one theme here where surface is lighter than bg rather than darker, so it needed its own explicit dark-text-on-light-card override scoped to every card/surface class in the app (checked directly against every var(--surface) usage), on top of the usual light-text-on-dark-bg values for whatever sits directly on the page background. Liquid-glass cards also got a real hover state for the first time — a gentle lift, deepened blur/saturation, and a softer shadow, macOS-style — since there wasn\'t one at all before. Profile page: Time Logged moved up from its own separate panel into a 2x2 matrix with Score, using the same ring style and dark kpi-card as the Score cards instead of plain text.' },
-    { date:'2026-09-10', summary:'Three fixes to the previous update. (1) Steel theme bug: text was rendering light-on-light on cards like the Home page\'s Recent Activity feed and My Tasks rows — the dark-text override only covered .panel-type "holder" cards, missing most of the shared vibrancy rule\'s class list (.mytask-item, .feed-item, .chip-opt, .status-chip, and others). Rebuilt to cover every class from that rule directly, confirmed by cross-checking the two lists match. (2) Card borders thinned across every theme — border opacity 55%→35%, the bright top-edge highlight toned down 45%→25% white, since the combination was reading as one thick edge rather than a thin one; Steel\'s own border color also lightened for a subtler look against its light cards. (3) Nested item/task cards (My Tasks rows, Recent Activity entries, timeline cards, chips, pills) were sharing the exact same background shade as the holder panel they sit inside, with no visual separation — split into two rules so items now render a lighter shade than their holder in every theme.' }
+    { date:'2026-09-10', summary:'Three fixes to the previous update. (1) Steel theme bug: text was rendering light-on-light on cards like the Home page\'s Recent Activity feed and My Tasks rows — the dark-text override only covered .panel-type "holder" cards, missing most of the shared vibrancy rule\'s class list (.mytask-item, .feed-item, .chip-opt, .status-chip, and others). Rebuilt to cover every class from that rule directly, confirmed by cross-checking the two lists match. (2) Card borders thinned across every theme — border opacity 55%→35%, the bright top-edge highlight toned down 45%→25% white, since the combination was reading as one thick edge rather than a thin one; Steel\'s own border color also lightened for a subtler look against its light cards. (3) Nested item/task cards (My Tasks rows, Recent Activity entries, timeline cards, chips, pills) were sharing the exact same background shade as the holder panel they sit inside, with no visual separation — split into two rules so items now render a lighter shade than their holder in every theme.' },
+    { date:'2026-09-10', summary:'Further UI polish. Steel theme: text darkened to true near-black (was a dark gray), and found several more light-on-light gaps beyond the previous pass — small header-level badges that carry their own light circle (the user avatar, notification bell, role icon) while sitting in the dark page header, plus nav.tabs\' own resting background (only its active state was covered before). Card borders removed entirely, everywhere, every theme — "liquid glass with no border" — kept as a declared but fully transparent 1px border rather than deleted outright, so box-sizing keeps every card\'s rendered dimensions pixel-identical (visual-only change, no layout shift). Definition now comes from the backdrop blur and shadow/inset highlight alone. Profile page: Score/Time now stays a 2x2 grid on mobile too instead of collapsing to a single stacked column, matching desktop.' }
   ];
  
   let currentUser = null;   // Supabase auth user
