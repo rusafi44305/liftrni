@@ -626,6 +626,31 @@
   @media (max-width: 700px){
     .dash-compact-grid{ grid-template-columns:1fr !important; }
   }
+  /* 2026-09-10: Profile's Score/Time cards on mobile — asked for "clean
+     and crispy," specifically just the ring with the verbose desktop
+     text (label, trend arrow, task-count line) removed. The ring itself
+     already shows its own number inside (scoreRingSvg draws that as
+     real SVG text, not part of what's being hidden here) and carries a
+     proper aria-label for screen readers regardless of what's visible —
+     so nothing gets less accessible, just less visually busy. A single
+     short caption replaces the removed text rather than leaving 4
+     identical-looking rings with zero way to tell them apart; deliberately
+     NOT the same wording as the desktop labels, just short and no
+     content it wasn't fine to compress ("Monthly Score (this month)"
+     becomes "This month", etc.) — this is a mobile-only rule, desktop's
+     kpi-card is completely untouched. */
+  .kpi-mobile-caption{ display:none; }
+  @media (max-width: 700px){
+    .profile-kpi-row .kpi-card{
+      flex-direction:column; justify-content:center; text-align:center; gap:10px !important;
+      padding:20px 14px;
+    }
+    .profile-kpi-row .kpi-detail-text{ display:none; }
+    .profile-kpi-row .kpi-mobile-caption{
+      display:block; font-size:11px; font-weight:600; letter-spacing:0.02em;
+      color:#C7D0E8; text-transform:uppercase;
+    }
+  }
   /* Desktop-only Dashboard trend chart: the grid it sits in stretches
      this column to match the 2x2 ring grid's height automatically (CSS
      grid's default align-items:stretch), but the SVG itself still needs
@@ -1911,7 +1936,7 @@
     <div class="stat-row profile-kpi-row" style="grid-template-columns:1fr 1fr;">
       <div class="kpi-card" style="display:flex; align-items:center; gap:18px;">
         <div id="profileRingMonthly" style="flex-shrink:0;"></div>
-        <div style="flex:1; min-width:0;">
+        <div class="kpi-detail-text" style="flex:1; min-width:0;">
           <div class="kpi-lbl" style="margin-bottom:2px;">Monthly Score (<span id="profileKpiMonthLabel">this month</span>)</div>
           <div style="display:flex; align-items:baseline; gap:8px;">
             <span class="kpi-num" id="profileKpiMonthly" style="font-size:22px;">—</span>
@@ -1919,14 +1944,16 @@
           </div>
           <div style="font-size:11.5px; color:#C7D0E8; margin-top:2px;"><span id="profileTaskCountMonthly">—</span> tasks this month</div>
         </div>
+        <div class="kpi-mobile-caption">This month</div>
       </div>
       <div class="kpi-card" style="display:flex; align-items:center; gap:18px;">
         <div id="profileRingOverall" style="flex-shrink:0;"></div>
-        <div style="flex:1; min-width:0;">
+        <div class="kpi-detail-text" style="flex:1; min-width:0;">
           <div class="kpi-lbl" id="profileKpiLabel" style="margin-bottom:2px;">Overall Score</div>
           <span class="kpi-num" id="profileKpiScore" style="font-size:22px;">—</span>
           <div style="font-size:11.5px; color:#C7D0E8; margin-top:2px;"><span id="profileTaskCount">—</span> total tasks (all-time)</div>
         </div>
+        <div class="kpi-mobile-caption">Overall</div>
       </div>
       <!-- 2026-09-10: Time Logged moved up here from its own separate
            panel further down the page, to sit as a 2x2 matrix with
@@ -1934,17 +1961,19 @@
            kpi-card visual language as the two Score cards above it. -->
       <div class="kpi-card" style="display:flex; align-items:center; gap:18px;">
         <div id="profileRingTimeMonthly" style="flex-shrink:0;"></div>
-        <div style="flex:1; min-width:0;">
+        <div class="kpi-detail-text" style="flex:1; min-width:0;">
           <div class="kpi-lbl" style="margin-bottom:2px;">Time Logged (this month)</div>
           <span class="kpi-num" id="profileTimeMonthly" style="font-size:22px;">—</span>
         </div>
+        <div class="kpi-mobile-caption">Time (month)</div>
       </div>
       <div class="kpi-card" style="display:flex; align-items:center; gap:18px;">
         <div id="profileRingTimeAllTime" style="flex-shrink:0;"></div>
-        <div style="flex:1; min-width:0;">
+        <div class="kpi-detail-text" style="flex:1; min-width:0;">
           <div class="kpi-lbl" style="margin-bottom:2px;">Time Logged (all-time)</div>
           <span class="kpi-num" id="profileTimeAllTime" style="font-size:22px;">—</span>
         </div>
+        <div class="kpi-mobile-caption">Time (all-time)</div>
       </div>
     </div>
     <div style="display:flex; justify-content:flex-end; margin:-14px 0 24px;">
@@ -3803,7 +3832,8 @@
     { date:'2026-09-10', summary:'Added a subtle glow effect (text-shadow) to headings, section titles, big stat numbers, ring center numbers, and buttons, across every page, for the Dark/Midnight/Midnight Blue themes only — Sunset and White untouched. Deliberately NOT applied to body text, table cells, or form labels: a side-by-side demo showed glow blurring small text enough to hurt readability, while it reads as an intentional effect on bigger/bolder text. Glows in each element\'s own existing color (currentColor) rather than one fixed glow color.' },
     { date:'2026-09-10', summary:'Reworked the previous update: the glow effect is gone, replaced with a lighter accent-tinted text color on the same elements (headings/numbers/buttons), Dark and Midnight only. Midnight Blue theme removed entirely (5 themes total again). New "Steel" theme added in its place: genuinely dark night background, but cards/panels/inputs are light grey — the one theme here where surface is lighter than bg rather than darker, so it needed its own explicit dark-text-on-light-card override scoped to every card/surface class in the app (checked directly against every var(--surface) usage), on top of the usual light-text-on-dark-bg values for whatever sits directly on the page background. Liquid-glass cards also got a real hover state for the first time — a gentle lift, deepened blur/saturation, and a softer shadow, macOS-style — since there wasn\'t one at all before. Profile page: Time Logged moved up from its own separate panel into a 2x2 matrix with Score, using the same ring style and dark kpi-card as the Score cards instead of plain text.' },
     { date:'2026-09-10', summary:'Three fixes to the previous update. (1) Steel theme bug: text was rendering light-on-light on cards like the Home page\'s Recent Activity feed and My Tasks rows — the dark-text override only covered .panel-type "holder" cards, missing most of the shared vibrancy rule\'s class list (.mytask-item, .feed-item, .chip-opt, .status-chip, and others). Rebuilt to cover every class from that rule directly, confirmed by cross-checking the two lists match. (2) Card borders thinned across every theme — border opacity 55%→35%, the bright top-edge highlight toned down 45%→25% white, since the combination was reading as one thick edge rather than a thin one; Steel\'s own border color also lightened for a subtler look against its light cards. (3) Nested item/task cards (My Tasks rows, Recent Activity entries, timeline cards, chips, pills) were sharing the exact same background shade as the holder panel they sit inside, with no visual separation — split into two rules so items now render a lighter shade than their holder in every theme.' },
-    { date:'2026-09-10', summary:'Further UI polish. Steel theme: text darkened to true near-black (was a dark gray), and found several more light-on-light gaps beyond the previous pass — small header-level badges that carry their own light circle (the user avatar, notification bell, role icon) while sitting in the dark page header, plus nav.tabs\' own resting background (only its active state was covered before). Card borders removed entirely, everywhere, every theme — "liquid glass with no border" — kept as a declared but fully transparent 1px border rather than deleted outright, so box-sizing keeps every card\'s rendered dimensions pixel-identical (visual-only change, no layout shift). Definition now comes from the backdrop blur and shadow/inset highlight alone. Profile page: Score/Time now stays a 2x2 grid on mobile too instead of collapsing to a single stacked column, matching desktop.' }
+    { date:'2026-09-10', summary:'Further UI polish. Steel theme: text darkened to true near-black (was a dark gray), and found several more light-on-light gaps beyond the previous pass — small header-level badges that carry their own light circle (the user avatar, notification bell, role icon) while sitting in the dark page header, plus nav.tabs\' own resting background (only its active state was covered before). Card borders removed entirely, everywhere, every theme — "liquid glass with no border" — kept as a declared but fully transparent 1px border rather than deleted outright, so box-sizing keeps every card\'s rendered dimensions pixel-identical (visual-only change, no layout shift). Definition now comes from the backdrop blur and shadow/inset highlight alone. Profile page: Score/Time now stays a 2x2 grid on mobile too instead of collapsing to a single stacked column, matching desktop.' },
+    { date:'2026-09-10', summary:'Profile\'s Score/Time cards simplified on mobile only — desktop is completely untouched. The verbose text (label, trend arrow, task-count line) is hidden below 700px width, leaving just the ring plus one short caption ("This month", "Overall", "Time (month)", "Time (all-time)") instead of the fuller desktop wording. The ring\'s own number stays fully visible either way — that\'s real SVG text drawn as part of the ring itself, not something being hidden — and every ring still carries a proper aria-label for screen readers regardless of what\'s visible on screen, so nothing lost accessibility, just visual clutter.' }
   ];
  
   let currentUser = null;   // Supabase auth user
