@@ -551,6 +551,17 @@
   @media (max-width: 700px){
     .dash-compact-grid{ grid-template-columns:1fr !important; }
   }
+  /* Desktop-only Dashboard trend chart: the grid it sits in stretches
+     this column to match the 2x2 ring grid's height automatically (CSS
+     grid's default align-items:stretch), but the SVG itself still needs
+     telling to actually fill that height rather than just deriving it
+     from the viewBox aspect ratio (which is what mobile relies on,
+     unaffected here since it never gets this wrapper class). !important
+     is needed to win over the inline height:auto the chart function sets
+     for its general/mobile case. */
+  @media (min-width: 700px){
+    .trend-fill svg{ height:100% !important; }
+  }
   /* Soft separator between each link in the "Links" dropdown, so
      consecutive names don't run together with nothing but a hover state
      to tell them apart. Skipped on the last one so the list doesn't end
@@ -3639,7 +3650,8 @@
     { date:'2026-09-10', summary:'Dashboard\'s Weekly trend replaced: was a single flat line (total activity only); now a layered "mountain" area chart showing the top 3 most active categories as their own translucent bands, everything else folded into one "Other" band so it stays readable rather than 6 categories squashed on top of each other. All layers share one scale (not independently normalized) so relative activity between categories stays honest. Hoverable points show the exact count per category per week. Same card, same position, both mobile and desktop — everything else on the Dashboard (rings, leaderboard, category bars) is unchanged.' },
     { date:'2026-09-10', summary:'Dashboard visually regrouped into two titled sections ("Team overview" and "Category & engineer performance"), each its own liquid-glass card, on both mobile and desktop — no change to any underlying data, permissions, filters, or the leaderboard table\'s own behavior, only how the existing rings/charts are visually grouped. Also fixed the Weekly trend chart\'s stretching: it was using preserveAspectRatio="none", forcing a non-uniform stretch to whatever width its card happened to be — visibly distorted on wide desktop screens. Added a new "Top engineers by score" mini chart (visualizing the same score data the leaderboard\'s Score column already has, just sorted and charted rather than tabled) — respects the same Superadmin-configurable KPI-visibility permission the leaderboard column already uses.' },
     { date:'2026-09-10', summary:'Fixed a layout flaw in the desktop Dashboard\'s new "Team overview" card from the previous update: the 4 rings sat in a narrow stacked column next to the Weekly trend chart in a 2-column grid, and grid columns stretch to match each other\'s height by default — so the short trend-chart column was being stretched to match the much taller ring column, leaving a large dead-space gap under the chart. Changed to one full-width horizontal row of rings with the trend chart full-width below it, matching how mobile already laid it out. No functional change, purely the fix.' },
-    { date:'2026-09-10', summary:'Two more Dashboard fixes: (1) Weekly trend was rendering tiny on desktop — it had a fixed pixel height regardless of container width, so once it became a full-width element, preserveAspectRatio="meet" had to shrink the whole drawing down to fit that short height and center it with large empty margins on both sides. Switched to height:auto so it scales naturally from the container\'s real width instead, and gave it a taller base aspect ratio now that it\'s the hero element of its own card. (2) Mobile\'s Team overview rings looked scattered because Team Score sat centered on its own row while the other 3 sat left-aligned below it — inconsistent alignment, not the stacking itself. Replaced with a plain symmetric 2x2 grid, all 4 rings styled identically.' }
+    { date:'2026-09-10', summary:'Two more Dashboard fixes: (1) Weekly trend was rendering tiny on desktop — it had a fixed pixel height regardless of container width, so once it became a full-width element, preserveAspectRatio="meet" had to shrink the whole drawing down to fit that short height and center it with large empty margins on both sides. Switched to height:auto so it scales naturally from the container\'s real width instead, and gave it a taller base aspect ratio now that it\'s the hero element of its own card. (2) Mobile\'s Team overview rings looked scattered because Team Score sat centered on its own row while the other 3 sat left-aligned below it — inconsistent alignment, not the stacking itself. Replaced with a plain symmetric 2x2 grid, all 4 rings styled identically.' },
+    { date:'2026-09-10', summary:'Desktop-only Dashboard redesign of the "Team overview" card (mobile untouched, still the 2x2 grid from the previous update): the 4 rings are now bigger (84px vs 64px) and each sits in its own small liquid-glass sub-card for a more layered glass look, arranged in a 2x2 grid on the left; the Weekly trend chart sits on the right and now stretches to match the ring grid\'s height exactly (CSS grid\'s natural column-stretch behavior, same mechanism that caused the earlier stretching bug — used deliberately here since the two columns are a sensible height match now, unlike before). Ring size and layout are desktop-mode-only (checked via the existing dashOverviewMode flag), so mobile\'s rendering path is completely unaffected.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -7732,26 +7744,30 @@ for a competing inline style first.`;
       container.innerHTML = `
         <div class="panel liquid-glass-card" style="margin-bottom:16px;">
           <div class="panel-title" style="text-align:center; margin-bottom:16px;">Team overview</div>
-          <div style="display:flex; justify-content:space-around; align-items:center; gap:14px; padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid color-mix(in srgb, var(--border) 65%, transparent);">
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div id="dashRingScore" style="flex-shrink:0;"></div>
-              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Team score</p>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+                <div id="dashRingScore"></div>
+                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Team score</p>
+              </div>
+              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+                <div id="dashRingActivities"></div>
+                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Activities</p>
+              </div>
+              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+                <div id="dashRingLifts"></div>
+                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
+              </div>
+              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+                <div id="dashRingTime"></div>
+                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Time logged</p>
+              </div>
             </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div id="dashRingActivities" style="flex-shrink:0;"></div>
-              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Activities</p>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div id="dashRingLifts" style="flex-shrink:0;"></div>
-              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-              <div id="dashRingTime" style="flex-shrink:0;"></div>
-              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Time logged</p>
+            <div class="trend-fill" style="display:flex; flex-direction:column;">
+              <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+              <div id="dashHeroTrendChart" style="flex:1; display:flex; flex-direction:column;"></div>
             </div>
           </div>
-          <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
-          <div id="dashHeroTrendChart"></div>
         </div>
         <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 16px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
         <div class="panel liquid-glass-card" style="margin-bottom:18px;">
@@ -7971,16 +7987,20 @@ for a competing inline style first.`;
     // arbitrary fixed fill or two rings that are always both completely
     // full regardless of the actual numbers.
     const ringMaxOfTwo = Math.max(rows.length, liftSet.size, 1);
-    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', 64, 'Team score');
-    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg((rows.length/ringMaxOfTwo)*100, '#378ADD', 64, 'Activities', null, null, String(rows.length));
-    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg((liftSet.size/ringMaxOfTwo)*100, '#D85A30', 64, 'Lifts touched', null, null, String(liftSet.size));
+    // Bigger on desktop only — mobile stays exactly the size it already
+    // is (asked to keep as-is), desktop's rings sit in a roomier 2x2
+    // grid now and read better larger.
+    const ringSize = dashOverviewMode === 'desktop' ? 84 : 64;
+    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', ringSize, 'Team score');
+    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg((rows.length/ringMaxOfTwo)*100, '#378ADD', ringSize, 'Activities', null, null, String(rows.length));
+    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg((liftSet.size/ringMaxOfTwo)*100, '#D85A30', ringSize, 'Lifts touched', null, null, String(liftSet.size));
     // Deliberately always a full ring rather than a percent-of-something
     // — unlike Activities/Lifts, there's no honest natural comparison for
     // minutes to be "relative to" (a different unit entirely), so this
     // ring exists to hold the number, not to visually represent a share
     // of anything. Same idea as Team Score being the one meaningful
     // percentage among these four.
-    document.getElementById('dashRingTime').innerHTML = scoreRingSvg(100, '#8A63D2', 64, 'Time logged', null, null, formatDurationShort(teamTotalDuration));
+    document.getElementById('dashRingTime').innerHTML = scoreRingSvg(100, '#8A63D2', ringSize, 'Time logged', null, null, formatDurationShort(teamTotalDuration));
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
