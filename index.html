@@ -3637,7 +3637,8 @@
     { date:'2026-09-10', summary:'Same zone-filtering bugfix applied to General Support\'s Support Type dropdown (was the last category with this gap — Team Activity/Pre-Sales/Post-Sales/Technical Support/Reports all already filtered correctly). Also made the Task Fields catalog\'s "Delete sub-category" button visually distinct (icon + text label, not just a bare trash icon) from each individual field\'s own delete button — the two looked identical and sitting close together, which is how a sub-category got deleted by accident earlier today while someone meant to delete just one field under it.' },
     { date:'2026-09-10', summary:'Real bugfix, not a data problem this time: the Task Fields catalog\'s sub-category headers depend on a shared cache (dynamicFieldOptions.customSubtypes) that only got populated by visiting the task-logging form first — the Admin panel never loaded it itself. Opening Task Fields as the very first thing after a fresh page load meant every Superadmin-added sub-category, across every category, would silently be missing from the catalog even though the real data was completely intact — this is what looked like Factory Maintenance "disappearing" again with nothing actually deleted. loadCustomFieldsPanel() now loads this itself first, at no cost on repeat visits since it\'s already-loaded-skip guarded.' },
     { date:'2026-09-10', summary:'Dashboard\'s Weekly trend replaced: was a single flat line (total activity only); now a layered "mountain" area chart showing the top 3 most active categories as their own translucent bands, everything else folded into one "Other" band so it stays readable rather than 6 categories squashed on top of each other. All layers share one scale (not independently normalized) so relative activity between categories stays honest. Hoverable points show the exact count per category per week. Same card, same position, both mobile and desktop — everything else on the Dashboard (rings, leaderboard, category bars) is unchanged.' },
-    { date:'2026-09-10', summary:'Dashboard visually regrouped into two titled sections ("Team overview" and "Category & engineer performance"), each its own liquid-glass card, on both mobile and desktop — no change to any underlying data, permissions, filters, or the leaderboard table\'s own behavior, only how the existing rings/charts are visually grouped. Also fixed the Weekly trend chart\'s stretching: it was using preserveAspectRatio="none", forcing a non-uniform stretch to whatever width its card happened to be — visibly distorted on wide desktop screens. Added a new "Top engineers by score" mini chart (visualizing the same score data the leaderboard\'s Score column already has, just sorted and charted rather than tabled) — respects the same Superadmin-configurable KPI-visibility permission the leaderboard column already uses.' }
+    { date:'2026-09-10', summary:'Dashboard visually regrouped into two titled sections ("Team overview" and "Category & engineer performance"), each its own liquid-glass card, on both mobile and desktop — no change to any underlying data, permissions, filters, or the leaderboard table\'s own behavior, only how the existing rings/charts are visually grouped. Also fixed the Weekly trend chart\'s stretching: it was using preserveAspectRatio="none", forcing a non-uniform stretch to whatever width its card happened to be — visibly distorted on wide desktop screens. Added a new "Top engineers by score" mini chart (visualizing the same score data the leaderboard\'s Score column already has, just sorted and charted rather than tabled) — respects the same Superadmin-configurable KPI-visibility permission the leaderboard column already uses.' },
+    { date:'2026-09-10', summary:'Fixed a layout flaw in the desktop Dashboard\'s new "Team overview" card from the previous update: the 4 rings sat in a narrow stacked column next to the Weekly trend chart in a 2-column grid, and grid columns stretch to match each other\'s height by default — so the short trend-chart column was being stretched to match the much taller ring column, leaving a large dead-space gap under the chart. Changed to one full-width horizontal row of rings with the trend chart full-width below it, matching how mobile already laid it out. No functional change, purely the fix.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -7722,34 +7723,31 @@ for a competing inline style first.`;
       container.innerHTML = `
         <div class="panel liquid-glass-card" style="margin-bottom:16px;">
           <div class="panel-title" style="text-align:center; margin-bottom:16px;">Team overview</div>
-          <div class="dash-compact-grid" style="display:grid; grid-template-columns:200px 1fr; gap:22px;">
-            <div>
-              <div style="display:flex; justify-content:center; margin-bottom:16px;">
-                <div id="dashRingScore"></div>
-              </div>
-              <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-                <div id="dashRingActivities" style="flex-shrink:0;"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Activities</p>
-              </div>
-              <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-                <div id="dashRingLifts" style="flex-shrink:0;"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
-              </div>
-              <div style="display:flex; align-items:center; gap:10px;">
-                <div id="dashRingTime" style="flex-shrink:0;"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Time logged</p>
-              </div>
+          <div style="display:flex; justify-content:space-around; align-items:center; gap:14px; padding-bottom:18px; margin-bottom:18px; border-bottom:1px solid color-mix(in srgb, var(--border) 65%, transparent);">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div id="dashRingScore" style="flex-shrink:0;"></div>
+              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Team score</p>
             </div>
-            <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:22px;">
-              <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
-              <div id="dashHeroTrendChart"></div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div id="dashRingActivities" style="flex-shrink:0;"></div>
+              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Activities</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div id="dashRingLifts" style="flex-shrink:0;"></div>
+              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div id="dashRingTime" style="flex-shrink:0;"></div>
+              <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Time logged</p>
             </div>
           </div>
+          <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+          <div id="dashHeroTrendChart"></div>
         </div>
         <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 16px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
         <div class="panel liquid-glass-card" style="margin-bottom:18px;">
           <div class="panel-title" style="text-align:center; margin-bottom:16px;">Category &amp; engineer performance</div>
-          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start;">
             <div>
               <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
               <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
