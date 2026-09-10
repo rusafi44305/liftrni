@@ -296,7 +296,12 @@
   .indicator-panel{
     background:linear-gradient(180deg, #0E1420, #182238);
     border-radius:20px; padding:26px 26px 22px;
-    box-shadow:0 20px 50px -20px rgba(14,20,32,0.45);
+    /* 2026-09-10: "floating opaque glass" — stays fully solid/opaque (no
+       see-through), but reads like glass via a much bigger, softer
+       shadow (lifts it off the page), an inset top-highlight (light
+       catching an edge), and a saturation boost on the gradient itself. */
+    box-shadow:0 32px 70px -18px rgba(0,0,0,0.55), 0 8px 20px -6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+    filter:saturate(125%);
     position:relative; overflow:hidden;
   }
   .indicator-panel::before{
@@ -765,6 +770,21 @@
     background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='white' stroke-width='1.8' fill='none'/%3E%3C/svg%3E");
   }
   .cat-select select option{ background:var(--surface); color:var(--text); font-weight:500; }
+  /* 2026-09-10 (revised): tried darkening the background fill itself
+     for Dark theme, but the actual preference is the opposite — keep
+     the bright --c-* fill, just make the TEXT dark instead of white so
+     it reads clearly against a light-colored background. Reverted the
+     background darkening; this only touches text color and the dropdown
+     arrow's own stroke color, not --c-* or the fill itself. */
+  html[data-theme="dark"] .cat-select.cc-rni select,
+  html[data-theme="dark"] .cat-select.cc-presales select,
+  html[data-theme="dark"] .cat-select.cc-postsales select,
+  html[data-theme="dark"] .cat-select.cc-techsupport select,
+  html[data-theme="dark"] .cat-select.cc-generalsupport select,
+  html[data-theme="dark"] .cat-select.cc-surveyissues select{
+    color:#1A1D24;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%231A1D24' stroke-width='1.8' fill='none'/%3E%3C/svg%3E");
+  }
   /* Every OTHER <select> in the app (role assignments, dashboard filters,
      Task fields modals, etc.) had no equivalent rule — their dropdown
      option lists were falling back to the browser's own native rendering
@@ -1145,7 +1165,12 @@
      unreadable against their own fixed dark background. */
   .kpi-card{
     background:linear-gradient(135deg, #0E1420, #1B2745) !important;
-    box-shadow:var(--shadow);
+    /* 2026-09-10: same "floating opaque glass" treatment as the Activity
+       Trend panel — bigger softer shadow, inset top-highlight, saturate
+       boost. Still fully opaque, just reads like glass instead of a
+       flat card. */
+    box-shadow:0 32px 70px -18px rgba(0,0,0,0.55), 0 8px 20px -6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+    filter:saturate(125%);
     border-radius:18px !important;
     color:#fff !important;
   }
@@ -3761,7 +3786,8 @@
     { date:'2026-09-10', summary:'The Import Backup modal\'s Restore button was there all along but easy to miss entirely — it was icon-only (a trash can, of all things, which reads as "delete" not "restore") with no visible text, relying purely on a hover tooltip that doesn\'t even work on touch devices. Replaced with a proper circular-restore-arrow icon plus a visible "Restore" label, matching the Download button next to it.' },
     { date:'2026-09-10', summary:'Added a proper Delete button to Import Backup (was missing entirely — only Download and Restore existed) — deleting a backup only removes that snapshot, never touches live data, so it just needs a plain confirm(). All three actions (Download/Restore/Delete) switched to icon-only per request, each with a distinct icon and color so they stay recognizable without text (download arrow, circular restore arrow in amber, trash can in red), plus proper title/aria-label tooltips. Also: category/task item cards (My Tasks rows, Recent Activity, category tiles) were reading as washed-out grey — the white-mix used to lighten them relative to their holder card was too strong (24%) once Dark\'s own card color got darker in recent updates; dropped to 9%. Dark theme\'s category tag colors brightened (~22% lighter) so they pop better against the now-darker cards. Background gradient wash made noticeably more visible — bigger spread, much slower fade-out — in both themes.' },
     { date:'2026-09-10', summary:'Simplified 5 of the 8 nav tab icons for a cleaner, more minimal look (Home, Lift Trace, and Admin were already simple enough and left untouched): My Tasks is now a plain checklist (3 lines + checkmarks, was a busier clipboard shape); Chat is a single clean speech-bubble outline (dropped the 3 dots); Dashboard dropped its 3 small dots, now just plain bars; Notebook is a single clean notebook shape with no pencil overlay at all — the pencil/notebook overlap has been a recurring fiddly spot in past updates, so removing it entirely settles that for good; Projects/Gantt is now 3 simple solid bars of different lengths (a literal mini gantt-chart shape) instead of a dotted trend line. All hand-drawn as inline SVG in the same stroke style already used elsewhere in the app, not a new icon font/dependency.' },
-    { date:'2026-09-10', summary:'Removed the scroll-linked border-shine effect entirely (the moving light reflection that swept along each card\'s edge as you scrolled, tracked via --shine-pos and a scroll event listener) — both the CSS pseudo-element and its JS scroll handler are gone. Replaced with a plain, static, visible 1px border (var(--border)) on every card, .liquid-glass-card, and the account menu dropdown, in place of the fully transparent border from the "no border" look a few updates back.' }
+    { date:'2026-09-10', summary:'Removed the scroll-linked border-shine effect entirely (the moving light reflection that swept along each card\'s edge as you scrolled, tracked via --shine-pos and a scroll event listener) — both the CSS pseudo-element and its JS scroll handler are gone. Replaced with a plain, static, visible 1px border (var(--border)) on every card, .liquid-glass-card, and the account menu dropdown, in place of the fully transparent border from the "no border" look a few updates back.' },
+    { date:'2026-09-10', summary:'Home\'s Activity Trend panel and all 4 Profile Score/Time cards given a "floating opaque glass" treatment: still fully solid/opaque (not see-through), but now with a much bigger, softer shadow that visibly lifts them off the page, an inset top-edge highlight, and a slight saturation boost on their gradient. Category dropdown in My Tasks: tried darkening the background fill for Dark theme, but the actual preference was the opposite — kept the bright fill color and switched the text (and dropdown arrow) to dark instead of white, so it reads clearly against a light-colored background without dimming the color itself.' }
   ];
  
   let currentUser = null;   // Supabase auth user
