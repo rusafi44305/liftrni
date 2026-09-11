@@ -630,7 +630,11 @@
   @media (min-width: 861px){
     #customFieldsPanel .split-grid{ grid-template-columns:1fr 1fr; }
   }
-  .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:flex-start; }
+  .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:stretch; }
+  @media (min-width: 861px){
+    .my-tasks-list-panel{ display:flex; flex-direction:column; overflow:hidden; }
+    .my-tasks-list-panel #myTasksList{ flex:1; overflow-y:auto; min-height:0; }
+  }
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow);}
   .panel-title{font-size:13.5px; font-weight:600; margin-bottom:16px; color:var(--text-dim);}
  
@@ -1832,7 +1836,21 @@
       </div>
  
       <!-- my submissions -->
-      <div class="panel">
+      <!-- 2026-09-10: display:flex + overflow:hidden here is the actual
+           mechanism that makes this match the form panel's height on
+           desktop — with align-items:stretch on the grid (changed from
+           flex-start above), a plain block panel would still grow to fit
+           however many tasks are in the list, which could make THIS side
+           taller than the form and pull the form along with it via
+           stretch. overflow:hidden stops that: this panel's own natural
+           height becomes small regardless of list length, so the grid
+           row ends up sized by the form alone, and this panel then
+           stretches to match — with #myTasksList (flex:1 + its own
+           overflow-y:auto) filling and scrolling within whatever height
+           that turns out to be. Reset back to normal block layout on
+           mobile below, where the two panels stack instead of sharing a
+           row and this treatment isn't needed. -->
+      <div class="panel my-tasks-list-panel">
         <div class="panel-title" id="myTasksTitle">Submitted by me</div>
         <div id="myTasksList"><div class="placeholder-note">Loading…</div></div>
       </div>
@@ -3792,7 +3810,8 @@
     { date:'2026-09-10', summary:'Added a 4th theme, "Obsidian Glass" — the dark counterpart to Liquid Glass, from a second detailed prompt (deep obsidian bg, indigo/purple/cyan mesh glow, translucent dark glass cards with a multi-layer specular bevel, 20px radii, glowing glass dock, inset glass form fields with an indigo focus glow). Pure visual addition, same as Liquid Glass — no functionality touched. Chat bubbles needed zero extra code: sent/received already read var(--accent)/var(--surface-alt) directly in the existing chat rendering, so they automatically pick up this theme\'s indigo/dark-slate colors. One deliberate deviation from the prompt\'s literal rgba values: --surface/--surface-alt are solid opaque colors here (letting the existing vibrancy rule produce the actual glass translucency), not raw semi-transparent rgba — those two variables are relied on as solid fills in many other places (nav tabs, form cards, category dropdowns), so making them inherently transparent risked unpredictable double-transparency spreading well beyond the glass cards themselves.' },
     { date:'2026-09-10', summary:'Removed both glassmorphism themes (Liquid Glass and Obsidian Glass) entirely, not just hidden — back to 2 themes (Light, Dark). Same safe fallback pattern as every previous theme removal: anyone with either one saved from before lands on Light automatically instead of a broken/unstyled theme. Pure removal — no other change.' },
     { date:'2026-09-10', summary:'Fixed Restore appearing to do nothing ("no sign of activity") — it was relying entirely on native browser prompt()/alert() dialogs, which are known to render unreliably or not at all in some mobile browsers and PWA/in-app-webview contexts. Rebuilt as a proper in-page modal: the typed "RESTORE" confirmation, a visible "Restoring… please don\'t close this or refresh" loading state during the actual database call (there was no loading feedback at all before — a slow restore would have looked identical to a broken one), and a clear inline success/failure message before reloading. Same destructive-action safeguard as before (still requires typing RESTORE exactly), just delivered through in-page UI instead of native dialogs that can\'t be guaranteed to display everywhere.' },
-    { date:'2026-09-10', summary:'Backups now also capture the exact code running at that moment, bundled into the same snapshot (stored as a key inside the existing jsonb data, no schema change needed) — a new "Download code" button sits next to Download/Restore/Delete for each backup. Important limitation, explained directly in the Import Backup modal now: this can\'t make Restore automatically redeploy your GitHub Pages file — there\'s no way for this app to push to GitHub from the browser without embedding write-access credentials, which isn\'t something to add without a much bigger conversation about the security tradeoff. What this actually gives you: restoring a backup\'s data, then downloading and manually re-uploading that same backup\'s code, so the two are correctly paired instead of guessing which old code version matches the data you just restored. Backups made before this update won\'t have a code snapshot to download — data-only restore for those still works exactly as before.' }
+    { date:'2026-09-10', summary:'Backups now also capture the exact code running at that moment, bundled into the same snapshot (stored as a key inside the existing jsonb data, no schema change needed) — a new "Download code" button sits next to Download/Restore/Delete for each backup. Important limitation, explained directly in the Import Backup modal now: this can\'t make Restore automatically redeploy your GitHub Pages file — there\'s no way for this app to push to GitHub from the browser without embedding write-access credentials, which isn\'t something to add without a much bigger conversation about the security tradeoff. What this actually gives you: restoring a backup\'s data, then downloading and manually re-uploading that same backup\'s code, so the two are correctly paired instead of guessing which old code version matches the data you just restored. Backups made before this update won\'t have a code snapshot to download — data-only restore for those still works exactly as before.' },
+    { date:'2026-09-10', summary:'My Tasks, desktop only: "Submitted by me" now matches the height of "Log a task" instead of just growing to fit however many tasks exist (the .split-grid-tasks row used align-items:flex-start before, which explicitly opts out of height-matching). Long task lists now scroll within that matched height instead of stretching the page. The actual mechanism: the list panel got display:flex + overflow:hidden, which stops it from ever dictating a taller row itself — the row height ends up driven by the form alone, and the list panel stretches to match with its own internal scroll for the rest. Mobile is untouched — the two panels still stack and grow naturally there.' }
   ];
  
   let currentUser = null;   // Supabase auth user
