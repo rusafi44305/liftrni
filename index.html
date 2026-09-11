@@ -3790,7 +3790,9 @@
     { date:'2026-09-10', summary:'Home\'s Activity Trend panel and all 4 Profile Score/Time cards given a "floating opaque glass" treatment: still fully solid/opaque (not see-through), but now with a much bigger, softer shadow that visibly lifts them off the page, an inset top-edge highlight, and a slight saturation boost on their gradient. Category dropdown in My Tasks: tried darkening the background fill for Dark theme, but the actual preference was the opposite — kept the bright fill color and switched the text (and dropdown arrow) to dark instead of white, so it reads clearly against a light-colored background without dimming the color itself.' },
     { date:'2026-09-10', summary:'Added a 3rd theme, "Liquid Glass" — an iOS-style glassmorphism look (Light and Dark are untouched). Simpler to build than Steel was: both the page background and the card surface are light here, so text stays one consistent dark color everywhere with no special override system needed, unlike Steel\'s dark-bg/light-card split. Reuses the existing card-glass infrastructure (the shared vibrancy rule\'s color-mix-with-transparent already IS the "translucent white + blur" effect the spec asked for) rather than a parallel one-off system — every page gets it at once through that shared rule. Adds: a 3-blob colored mesh gradient background (exact hues from spec), translucent white specular borders/highlights on every card, a floating glass bottom nav with an active-tab glow, and glass-styled inputs/buttons. Honest caveat: WCAG contrast can\'t be strictly guaranteed the way a solid-color theme can, since the actual backdrop behind any given glass card varies with what part of the mesh gradient sits behind it — chose safe, high-contrast defaults (dark text throughout) rather than a formal guarantee.' },
     { date:'2026-09-10', summary:'Added a 4th theme, "Obsidian Glass" — the dark counterpart to Liquid Glass, from a second detailed prompt (deep obsidian bg, indigo/purple/cyan mesh glow, translucent dark glass cards with a multi-layer specular bevel, 20px radii, glowing glass dock, inset glass form fields with an indigo focus glow). Pure visual addition, same as Liquid Glass — no functionality touched. Chat bubbles needed zero extra code: sent/received already read var(--accent)/var(--surface-alt) directly in the existing chat rendering, so they automatically pick up this theme\'s indigo/dark-slate colors. One deliberate deviation from the prompt\'s literal rgba values: --surface/--surface-alt are solid opaque colors here (letting the existing vibrancy rule produce the actual glass translucency), not raw semi-transparent rgba — those two variables are relied on as solid fills in many other places (nav tabs, form cards, category dropdowns), so making them inherently transparent risked unpredictable double-transparency spreading well beyond the glass cards themselves.' },
-    { date:'2026-09-10', summary:'Removed both glassmorphism themes (Liquid Glass and Obsidian Glass) entirely, not just hidden — back to 2 themes (Light, Dark). Same safe fallback pattern as every previous theme removal: anyone with either one saved from before lands on Light automatically instead of a broken/unstyled theme. Pure removal — no other change.' }
+    { date:'2026-09-10', summary:'Removed both glassmorphism themes (Liquid Glass and Obsidian Glass) entirely, not just hidden — back to 2 themes (Light, Dark). Same safe fallback pattern as every previous theme removal: anyone with either one saved from before lands on Light automatically instead of a broken/unstyled theme. Pure removal — no other change.' },
+    { date:'2026-09-10', summary:'Fixed Restore appearing to do nothing ("no sign of activity") — it was relying entirely on native browser prompt()/alert() dialogs, which are known to render unreliably or not at all in some mobile browsers and PWA/in-app-webview contexts. Rebuilt as a proper in-page modal: the typed "RESTORE" confirmation, a visible "Restoring… please don\'t close this or refresh" loading state during the actual database call (there was no loading feedback at all before — a slow restore would have looked identical to a broken one), and a clear inline success/failure message before reloading. Same destructive-action safeguard as before (still requires typing RESTORE exactly), just delivered through in-page UI instead of native dialogs that can\'t be guaranteed to display everywhere.' },
+    { date:'2026-09-10', summary:'Backups now also capture the exact code running at that moment, bundled into the same snapshot (stored as a key inside the existing jsonb data, no schema change needed) — a new "Download code" button sits next to Download/Restore/Delete for each backup. Important limitation, explained directly in the Import Backup modal now: this can\'t make Restore automatically redeploy your GitHub Pages file — there\'s no way for this app to push to GitHub from the browser without embedding write-access credentials, which isn\'t something to add without a much bigger conversation about the security tradeoff. What this actually gives you: restoring a backup\'s data, then downloading and manually re-uploading that same backup\'s code, so the two are correctly paired instead of guessing which old code version matches the data you just restored. Backups made before this update won\'t have a code snapshot to download — data-only restore for those still works exactly as before.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5700,10 +5702,32 @@ for a competing inline style first.`;
       if(error){ alert(`Could not read ${table}: ${error.message}. Backup cancelled — nothing was saved.`); return; }
       snapshot[table] = data || [];
     }
+    // 2026-09-10: also snapshot the exact code running right now, bundled
+    // into the same backup. This can't make Restore automatically
+    // redeploy your GitHub Pages file — there's no way for this app to
+    // push to GitHub from the browser without embedding write-access
+    // credentials, which isn't something to add lightly. What this DOES
+    // give you: when you restore a backup's data, you can also download
+    // the exact code that was live at that same moment and manually
+    // redeploy it — same one-step upload as any other update, just
+    // correctly paired with the data instead of guessing which old code
+    // version matches. Fetched fresh from the URL (not the live DOM) for
+    // the same reason downloadRunningHtml() already does that — avoids
+    // baking whatever data happens to be on screen into the snapshot.
+    // Stored as a plain key inside the same jsonb blob rather than a new
+    // database column, so no schema migration is needed for this.
+    let codeSnapshot = null;
+    try{
+      const codeResp = await fetch(window.location.href, { cache: 'no-store' });
+      codeSnapshot = await codeResp.text();
+    }catch(e){
+      console.error('Could not capture code snapshot for this backup:', e.message);
+    }
+    snapshot.__code_snapshot = codeSnapshot;
     const label = new Date().toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
     const { error: insertError } = await sb.from('backups').insert({ created_by: currentUser.id, label, data: snapshot });
     if(insertError){ alert('Could not save backup: ' + insertError.message); return; }
-    alert(`Backup created (${label}). Automatically deleted after 30 days.`);
+    alert(`Backup created (${label}), including the code running right now. Automatically deleted after 30 days.`);
   }
 
   async function openImportBackupModal(){
@@ -5719,7 +5743,8 @@ for a competing inline style first.`;
           <div style="font-size:11px; color:var(--text-faint);">${timeAgo(b.created_at)}</div>
         </div>
         <div style="display:flex; gap:8px;">
-          <button class="btn" style="padding:7px;" onclick="downloadBackupJson('${b.id}')" title="Download backup" aria-label="Download backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></button>
+          <button class="btn" style="padding:7px;" onclick="downloadBackupJson('${b.id}')" title="Download database backup" aria-label="Download database backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></button>
+          <button class="btn" style="padding:7px;" onclick="downloadBackupCode('${b.id}')" title="Download the code that was running at this backup" aria-label="Download the code that was running at this backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M16 18l6-6-6-6"/><path d="M8 6l-6 6 6 6"/></svg></button>
           <button class="btn edit" style="padding:7px;" data-backup-id="${b.id}" data-backup-label="${escapeHtml(b.label || '')}" onclick="confirmRestoreBackup(this.dataset.backupId, this.dataset.backupLabel)" title="Restore this backup" aria-label="Restore this backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg></button>
           <button class="btn remove" style="padding:7px;" data-backup-id="${b.id}" data-backup-label="${escapeHtml(b.label || '')}" onclick="confirmDeleteBackup(this.dataset.backupId, this.dataset.backupLabel)" title="Delete this backup" aria-label="Delete this backup"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
         </div>
@@ -5735,7 +5760,7 @@ for a competing inline style first.`;
           <div class="panel-title" style="margin:0;">Import Backup</div>
           <span style="cursor:pointer; color:var(--text-faint);" onclick="document.getElementById('importBackupOverlay').remove()">✕</span>
         </div>
-        <div style="font-size:12.5px; color:var(--text-faint); margin-bottom:16px;">Your 3 most recent backups. Restoring rewinds your entire database to exactly how it was at that moment — anything created after that point will be lost.</div>
+        <div style="font-size:12.5px; color:var(--text-faint); margin-bottom:16px;">Your 3 most recent backups. Restoring rewinds your entire <b>database</b> to exactly how it was at that moment — anything created after that point will be lost. Each backup also has the exact <b>code</b> that was running at that moment (2nd icon) — download it and re-upload to GitHub if you want the code to match the data you're restoring, since Restore only ever touches the database, never your deployed files.</div>
         ${rows}
         <button class="btn" style="width:100%; margin-top:6px;" onclick="document.getElementById('importBackupOverlay').remove()">Close</button>
       </div>`;
@@ -5746,19 +5771,75 @@ for a competing inline style first.`;
   async function downloadBackupJson(id){
     const { data, error } = await sb.from('backups').select('*').eq('id', id).single();
     if(error){ alert('Could not load backup: ' + error.message); return; }
-    downloadTextFile(`backup_${(data.label||id).replace(/[^a-z0-9]/gi,'_')}.json`, JSON.stringify(data.data, null, 2));
+    // Excludes the code snapshot from this download — this is the
+    // database data only, matching what this button has always meant;
+    // downloadBackupCode() below is the counterpart for the code half.
+    const { __code_snapshot, ...dataOnly } = data.data || {};
+    downloadTextFile(`backup_${(data.label||id).replace(/[^a-z0-9]/gi,'_')}.json`, JSON.stringify(dataOnly, null, 2));
   }
 
-  async function confirmRestoreBackup(id, label){
-    // Deliberately a text-typed confirmation, not just a click-through —
-    // this is the single most destructive action anywhere in this app,
-    // rewriting every table in the live database at once.
-    const typed = prompt(`This will completely replace your current database with the backup from "${label}". Anything created since then will be permanently lost. This cannot be undone.\n\nType RESTORE to confirm:`);
-    if(typed !== 'RESTORE') return;
+  async function downloadBackupCode(id){
+    const { data, error } = await sb.from('backups').select('label, data').eq('id', id).single();
+    if(error){ alert('Could not load backup: ' + error.message); return; }
+    const code = data.data && data.data.__code_snapshot;
+    if(!code){ alert('This backup doesn\'t have a saved code snapshot — it was likely created before this feature was added. Only the database data is available for it.'); return; }
+    downloadTextFile(`index_at_${(data.label||id).replace(/[^a-z0-9]/gi,'_')}.html`, code);
+  }
+
+  // 2026-09-10: rebuilt to use an in-page modal instead of native
+  // prompt()/alert() — those are known to render unreliably (or not at
+  // all) in some mobile browsers and PWA/webview contexts, which is the
+  // likely explanation for a restore appearing to do nothing. This also
+  // adds a real loading state during the actual database operation,
+  // which the old version had none of at all — if the restore took even
+  // a few seconds, there was nothing on screen telling you it was
+  // working. Deliberately a text-typed confirmation, not just a
+  // click-through — this is the single most destructive action anywhere
+  // in this app, rewriting every table in the live database at once.
+  function confirmRestoreBackup(id, label){
+    document.getElementById('restoreBackupOverlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'restoreBackupOverlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:600; display:flex; align-items:center; justify-content:center; padding:20px;';
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:420px; width:100%;">
+        <div class="panel-title" style="margin-bottom:10px; color:var(--red);">Restore "${escapeHtml(label)}"?</div>
+        <div style="font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:14px;">This will completely replace your current database with this backup. Anything created since then will be <b>permanently lost</b>. This cannot be undone.</div>
+        <label style="font-size:11.5px; color:var(--text-faint); display:block; margin-bottom:5px;">Type RESTORE to confirm</label>
+        <input type="text" id="restoreConfirmInput" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface-alt); color:var(--text); font-size:13.5px; margin-bottom:12px;" autocomplete="off">
+        <div id="restoreStatusMsg" style="font-size:12.5px; margin-bottom:10px;"></div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="flex:1;" onclick="document.getElementById('restoreBackupOverlay').remove()">Cancel</button>
+          <button class="btn remove" id="restoreConfirmBtn" style="flex:1;" onclick="runBackupRestore('${id}')">Restore</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('restoreConfirmInput').focus();
+  }
+
+  async function runBackupRestore(id){
+    const typed = document.getElementById('restoreConfirmInput').value;
+    const statusEl = document.getElementById('restoreStatusMsg');
+    const btn = document.getElementById('restoreConfirmBtn');
+    if(typed !== 'RESTORE'){
+      statusEl.innerHTML = '<span style="color:var(--red);">Type RESTORE exactly (all caps) to confirm.</span>';
+      return;
+    }
+    // Visible, unmissable loading state — this is exactly the feedback
+    // that was missing before, so a restore that takes a few seconds no
+    // longer looks like nothing is happening.
+    btn.disabled = true;
+    btn.textContent = 'Restoring…';
+    statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Restoring your database — please don\'t close this or refresh…</span>';
     const { error } = await sb.rpc('restore_backup', { backup_id: id });
-    if(error){ alert('Restore failed: ' + error.message); return; }
-    alert('Restore complete. Reloading the page now.');
-    location.reload();
+    if(error){
+      btn.disabled = false;
+      btn.textContent = 'Restore';
+      statusEl.innerHTML = `<span style="color:var(--red);">Restore failed: ${escapeHtml(error.message)}</span>`;
+      return;
+    }
+    statusEl.innerHTML = '<span style="color:var(--green);">✓ Restore complete. Reloading…</span>';
+    setTimeout(() => location.reload(), 1200);
   }
 
   // Deleting a backup only removes that snapshot from the backups table
