@@ -88,156 +88,6 @@
     --wash-2:#202E37;
   }
 
-  /* "Liquid Glass" — an iOS-style glassmorphism theme, added as a 3rd
-     option (Light and Dark stay exactly as they are). Simpler to add
-     than Steel was: both --bg (the mesh gradient backdrop) and --surface
-     (the glass cards) are light here, so --text stays one consistent
-     dark value everywhere, unlike Steel's dark-bg/light-card split which
-     needed a whole separate override system. --surface is plain white —
-     the EXISTING vibrancy rule already renders every card at
-     color-mix(surface, 74%, transparent), which is exactly the
-     "rgba(255,255,255,0.45ish) + backdrop-blur" glass effect from the
-     spec, using infrastructure already built for every other theme
-     rather than a parallel one-off glass system.
-     --border is set to an actual translucent white (not a solid hex like
-     every other theme) for the specular-highlight look — valid since
-     these are just CSS custom property values, and the shared card rule
-     already does `border:1px solid var(--border)` directly. */
-  html[data-theme="liquid"]{
-    --bg:#EEF1F7; --surface:#FFFFFF; --surface-alt:#FFFFFF; --border:rgba(255,255,255,0.6);
-    --text:#1E2430; --text-dim:#454E5E; --text-faint:#646C7B; --bg-anim-ink:#8B9BC7;
-    --accent:#6366F1; --accent-rgb:99,102,241; --amber:#A85F00; --green:#0F7A4C; --red:#B3291E;
-    --c-rni:#6E4FD1; --c-presales:#1D6FD9; --c-client:#0C7979; --c-postsales:#167C51;
-    --c-install:#A15B18; --c-commission:#AF5200; --c-aftersales:#C23D74; --c-production:#4A50C9; --c-techsupport:#A15B18;
-    --c-requisition:#0C7788; --c-scm:#597600; --c-existingdev:#6B5B44; --c-surveyissues:#B31919;
-    --shadow:0 8px 32px rgba(31,41,55,0.10);
-    --header-bg:#EEF1F7;
-    /* Mesh gradient wash — 3 soft colored blobs per the spec's exact
-       hues (#e0e7ff, #dbeafe, #f8fafc), not just 2 like other themes,
-       for a more vividly "mesh" feel; content underneath genuinely has
-       color for the glass panels to visually refract. */
-    --wash-1:#e0e7ff;
-    --wash-2:#dbeafe;
-    --wash-3:#f8fafc;
-  }
-  /* Liquid Glass gets a 3rd wash blob (bottom-center) that no other
-     theme uses — --wash-3 is undefined everywhere else, so this rule
-     only ever paints anything for this theme; harmless no-op elsewhere. */
-  html[data-theme="liquid"] body{
-    background:
-      radial-gradient(ellipse 900px 650px at 20% 0%, var(--wash-1) 0%, transparent 92%),
-      radial-gradient(ellipse 900px 650px at 82% 4%, var(--wash-2) 0%, transparent 92%),
-      radial-gradient(ellipse 800px 600px at 50% 100%, var(--wash-3) 0%, transparent 88%),
-      var(--bg) !important;
-  }
-  /* Specular highlight — a soft light-catching edge, brighter than the
-     translucent border on its own. */
-  html[data-theme="liquid"] .panel, html[data-theme="liquid"] .stat-card, html[data-theme="liquid"] .mytask-item,
-  html[data-theme="liquid"] .feed-item, html[data-theme="liquid"] .approve-row, html[data-theme="liquid"] .form-card,
-  html[data-theme="liquid"] .role-card, html[data-theme="liquid"] .cat-tile, html[data-theme="liquid"] .t-card,
-  html[data-theme="liquid"] .lift-header, html[data-theme="liquid"] .queued-item, html[data-theme="liquid"] .gantt-wrap,
-  html[data-theme="liquid"] .chip-opt, html[data-theme="liquid"] .searchbar, html[data-theme="liquid"] .mt-desc-wrap,
-  html[data-theme="liquid"] .status-chip, html[data-theme="liquid"] .clock-pill, html[data-theme="liquid"] .pending-pill,
-  html[data-theme="liquid"] .devDetailPanel, html[data-theme="liquid"] .liquid-glass-card{
-    box-shadow:var(--shadow), inset 0 1px 0 rgba(255,255,255,0.7) !important;
-  }
-  /* Floating glass bottom nav with an active-tab glow, per the spec. */
-  html[data-theme="liquid"] nav.tabs.dock{
-    background:rgba(255,255,255,0.55) !important;
-    backdrop-filter:blur(24px) saturate(180%);
-    -webkit-backdrop-filter:blur(24px) saturate(180%);
-    border:1px solid rgba(255,255,255,0.6);
-    box-shadow:0 8px 32px rgba(0,0,0,0.12);
-  }
-  html[data-theme="liquid"] nav.tabs.dock button.active{
-    background:var(--accent) !important; color:#fff !important;
-    box-shadow:0 0 16px rgba(99,102,241,0.6);
-  }
-  /* Glass-styled inputs, selects, textareas, and buttons. */
-  html[data-theme="liquid"] input, html[data-theme="liquid"] select, html[data-theme="liquid"] textarea{
-    background:rgba(255,255,255,0.55) !important;
-    backdrop-filter:blur(10px);
-    -webkit-backdrop-filter:blur(10px);
-    border:1px solid rgba(255,255,255,0.6) !important;
-  }
-  html[data-theme="liquid"] .btn:not(.remove):not(.edit):not(.reject):not(.view-details):not(.approve){
-    background:rgba(99,102,241,0.16);
-    border:1px solid rgba(255,255,255,0.5);
-  }
-
-  /* "Obsidian Glass" — a 4th theme, the dark counterpart to Liquid Glass.
-     Same safe strategy as that one: --surface/--surface-alt are solid
-     opaque hex values (not raw rgba), so the EXISTING vibrancy rule's
-     color-mix-with-transparent produces the actual glass translucency —
-     not a change to what those two variables mean everywhere else they
-     get used as plain solid fills (nav.tabs, form-card, category
-     dropdowns, etc). Making --surface-alt itself semi-transparent would
-     have been a closer literal match to the prompt's exact rgba values,
-     but risks unpredictable double-transparency anywhere that variable
-     is already relied on as a solid color — not worth it for a purely
-     visual theme add. Chat bubbles need no separate work at all: sent/
-     received already read var(--accent)/var(--surface-alt) directly in
-     the existing chat code, so they pick up this theme\'s indigo/dark-
-     slate automatically. */
-  html[data-theme="obsidian"]{
-    --bg:#070A12; --surface:#0F172A; --surface-alt:#1E293B; --border:rgba(255,255,255,0.08);
-    --text:#F8FAFC; --text-dim:#94A3B8; --text-faint:#6B7686; --bg-anim-ink:#6366F1;
-    --accent:#6366F1; --accent-rgb:99,102,241; --amber:#E0A23D; --green:#10B981; --red:#F0685C;
-    --c-rni:#B7A6F5; --c-presales:#8CB7F9; --c-client:#76DADA; --c-postsales:#76E2B2;
-    --c-install:#EDBF8C; --c-commission:#F6B681; --c-aftersales:#F59BBF; --c-production:#B0B6F7; --c-techsupport:#EDBF8C;
-    --c-requisition:#76D6E5; --c-scm:#CEE880; --c-existingdev:#DDD1BB; --c-surveyissues:#F69090;
-    --shadow:0 16px 40px rgba(0,0,0,0.45);
-    --header-bg:#070A12;
-    /* Mesh glow colors exactly per spec: indigo, purple, cyan. */
-    --wash-1:#4f46e5;
-    --wash-2:#9333ea;
-    --wash-3:#0284c7;
-  }
-  html[data-theme="obsidian"] body{
-    background:
-      radial-gradient(ellipse 900px 650px at 15% 0%, var(--wash-1) 0%, transparent 85%),
-      radial-gradient(ellipse 900px 650px at 85% 5%, var(--wash-2) 0%, transparent 85%),
-      radial-gradient(ellipse 800px 600px at 50% 100%, var(--wash-3) 0%, transparent 80%),
-      var(--bg) !important;
-  }
-  /* Specular multi-layer glass bevel — a dim edge all around plus a
-     brighter top edge, per spec, and 20px radius (vs the shared 16px)
-     on the same card list used everywhere else. */
-  html[data-theme="obsidian"] .panel, html[data-theme="obsidian"] .stat-card, html[data-theme="obsidian"] .mytask-item,
-  html[data-theme="obsidian"] .feed-item, html[data-theme="obsidian"] .approve-row, html[data-theme="obsidian"] .form-card,
-  html[data-theme="obsidian"] .role-card, html[data-theme="obsidian"] .cat-tile, html[data-theme="obsidian"] .t-card,
-  html[data-theme="obsidian"] .lift-header, html[data-theme="obsidian"] .queued-item, html[data-theme="obsidian"] .gantt-wrap,
-  html[data-theme="obsidian"] .chip-opt, html[data-theme="obsidian"] .searchbar, html[data-theme="obsidian"] .mt-desc-wrap,
-  html[data-theme="obsidian"] .status-chip, html[data-theme="obsidian"] .clock-pill, html[data-theme="obsidian"] .pending-pill,
-  html[data-theme="obsidian"] .devDetailPanel, html[data-theme="obsidian"] .liquid-glass-card{
-    border-radius:20px !important;
-    box-shadow:0 16px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.22) !important;
-  }
-  /* Elevated glass capsule dock with a glowing active tab. */
-  html[data-theme="obsidian"] nav.tabs.dock{
-    background:rgba(30,41,59,0.65) !important;
-    backdrop-filter:blur(30px) saturate(190%);
-    -webkit-backdrop-filter:blur(30px) saturate(190%);
-    border:1px solid rgba(255,255,255,0.08);
-    border-radius:9999px;
-    box-shadow:0 16px 40px rgba(0,0,0,0.45);
-  }
-  html[data-theme="obsidian"] nav.tabs.dock button.active{
-    background:var(--accent) !important; color:#fff !important;
-    box-shadow:0 0 16px rgba(99,102,241,0.6);
-  }
-  /* Inset glass form fields with a soft indigo focus glow. */
-  html[data-theme="obsidian"] input, html[data-theme="obsidian"] select, html[data-theme="obsidian"] textarea{
-    background:rgba(255,255,255,0.04) !important;
-    border:1px solid rgba(255,255,255,0.12) !important;
-    color:#F8FAFC !important;
-  }
-  html[data-theme="obsidian"] input:focus, html[data-theme="obsidian"] select:focus, html[data-theme="obsidian"] textarea:focus{
-    outline:none;
-    box-shadow:0 0 12px rgba(99,102,241,0.4);
-    border-color:rgba(99,102,241,0.5) !important;
-  }
-
   /* 2026-09-10: replaced the earlier glow (text-shadow) treatment — asked
      to remove it and use a light accent-tinted text color instead, on
      the same set of elements (headings, section titles, big stat
@@ -1718,8 +1568,6 @@
           <div class="theme-switch" style="margin:0;">
             <button class="theme-dot" data-theme-name="white" style="background:linear-gradient(135deg, #DDDFE5, #FAFAFC);" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #282828);" onclick="setTheme('dark', this)" title="Dark"></button>
-            <button class="theme-dot" data-theme-name="liquid" style="background:linear-gradient(135deg, #e0e7ff, #dbeafe);" onclick="setTheme('liquid', this)" title="Liquid Glass"></button>
-            <button class="theme-dot" data-theme-name="obsidian" style="background:linear-gradient(135deg, #070A12, #4f46e5);" onclick="setTheme('obsidian', this)" title="Obsidian Glass"></button>
           </div>
         </div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="openTutorial()">
@@ -2108,13 +1956,11 @@
         <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0;">
           <div>
             <div style="font-size:13.5px; font-weight:600;">Theme</div>
-            <div style="font-size:11.5px; color:var(--text-faint);">Light, Dark, Liquid Glass, or Obsidian Glass</div>
+            <div style="font-size:11.5px; color:var(--text-faint);">Light or Dark</div>
           </div>
           <div class="theme-switch">
             <button class="theme-dot" data-theme-name="white" style="background:linear-gradient(135deg, #DDDFE5, #FAFAFC);" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #282828);" onclick="setTheme('dark', this)" title="Dark"></button>
-            <button class="theme-dot" data-theme-name="liquid" style="background:linear-gradient(135deg, #e0e7ff, #dbeafe);" onclick="setTheme('liquid', this)" title="Liquid Glass"></button>
-            <button class="theme-dot" data-theme-name="obsidian" style="background:linear-gradient(135deg, #070A12, #4f46e5);" onclick="setTheme('obsidian', this)" title="Obsidian Glass"></button>
           </div>
         </div>
         <div style="display:flex; align-items:center; justify-content:space-between; padding:12px 0 8px; border-top:1px solid var(--border); margin-top:8px;">
@@ -3424,7 +3270,7 @@
     // 2026-09-10: Midnight Blue was removed — anyone whose browser still
     // has it saved from before falls back to White here instead of
     // applying a data-theme value with no matching CSS left behind for it.
-    if(['midnightblue','midnight','steel','sunset'].includes(saved)) saved = 'white';
+    if(['midnightblue','midnight','steel','sunset','liquid','obsidian'].includes(saved)) saved = 'white';
     if(saved === 'white'){ document.documentElement.removeAttribute('data-theme'); }
     else{ document.documentElement.setAttribute('data-theme', saved); }
     document.documentElement.style.colorScheme = saved === 'white' ? 'light' : 'dark';
@@ -3943,7 +3789,8 @@
     { date:'2026-09-10', summary:'Removed the scroll-linked border-shine effect entirely (the moving light reflection that swept along each card\'s edge as you scrolled, tracked via --shine-pos and a scroll event listener) — both the CSS pseudo-element and its JS scroll handler are gone. Replaced with a plain, static, visible 1px border (var(--border)) on every card, .liquid-glass-card, and the account menu dropdown, in place of the fully transparent border from the "no border" look a few updates back.' },
     { date:'2026-09-10', summary:'Home\'s Activity Trend panel and all 4 Profile Score/Time cards given a "floating opaque glass" treatment: still fully solid/opaque (not see-through), but now with a much bigger, softer shadow that visibly lifts them off the page, an inset top-edge highlight, and a slight saturation boost on their gradient. Category dropdown in My Tasks: tried darkening the background fill for Dark theme, but the actual preference was the opposite — kept the bright fill color and switched the text (and dropdown arrow) to dark instead of white, so it reads clearly against a light-colored background without dimming the color itself.' },
     { date:'2026-09-10', summary:'Added a 3rd theme, "Liquid Glass" — an iOS-style glassmorphism look (Light and Dark are untouched). Simpler to build than Steel was: both the page background and the card surface are light here, so text stays one consistent dark color everywhere with no special override system needed, unlike Steel\'s dark-bg/light-card split. Reuses the existing card-glass infrastructure (the shared vibrancy rule\'s color-mix-with-transparent already IS the "translucent white + blur" effect the spec asked for) rather than a parallel one-off system — every page gets it at once through that shared rule. Adds: a 3-blob colored mesh gradient background (exact hues from spec), translucent white specular borders/highlights on every card, a floating glass bottom nav with an active-tab glow, and glass-styled inputs/buttons. Honest caveat: WCAG contrast can\'t be strictly guaranteed the way a solid-color theme can, since the actual backdrop behind any given glass card varies with what part of the mesh gradient sits behind it — chose safe, high-contrast defaults (dark text throughout) rather than a formal guarantee.' },
-    { date:'2026-09-10', summary:'Added a 4th theme, "Obsidian Glass" — the dark counterpart to Liquid Glass, from a second detailed prompt (deep obsidian bg, indigo/purple/cyan mesh glow, translucent dark glass cards with a multi-layer specular bevel, 20px radii, glowing glass dock, inset glass form fields with an indigo focus glow). Pure visual addition, same as Liquid Glass — no functionality touched. Chat bubbles needed zero extra code: sent/received already read var(--accent)/var(--surface-alt) directly in the existing chat rendering, so they automatically pick up this theme\'s indigo/dark-slate colors. One deliberate deviation from the prompt\'s literal rgba values: --surface/--surface-alt are solid opaque colors here (letting the existing vibrancy rule produce the actual glass translucency), not raw semi-transparent rgba — those two variables are relied on as solid fills in many other places (nav tabs, form cards, category dropdowns), so making them inherently transparent risked unpredictable double-transparency spreading well beyond the glass cards themselves.' }
+    { date:'2026-09-10', summary:'Added a 4th theme, "Obsidian Glass" — the dark counterpart to Liquid Glass, from a second detailed prompt (deep obsidian bg, indigo/purple/cyan mesh glow, translucent dark glass cards with a multi-layer specular bevel, 20px radii, glowing glass dock, inset glass form fields with an indigo focus glow). Pure visual addition, same as Liquid Glass — no functionality touched. Chat bubbles needed zero extra code: sent/received already read var(--accent)/var(--surface-alt) directly in the existing chat rendering, so they automatically pick up this theme\'s indigo/dark-slate colors. One deliberate deviation from the prompt\'s literal rgba values: --surface/--surface-alt are solid opaque colors here (letting the existing vibrancy rule produce the actual glass translucency), not raw semi-transparent rgba — those two variables are relied on as solid fills in many other places (nav tabs, form cards, category dropdowns), so making them inherently transparent risked unpredictable double-transparency spreading well beyond the glass cards themselves.' },
+    { date:'2026-09-10', summary:'Removed both glassmorphism themes (Liquid Glass and Obsidian Glass) entirely, not just hidden — back to 2 themes (Light, Dark). Same safe fallback pattern as every previous theme removal: anyone with either one saved from before lands on Light automatically instead of a broken/unstyled theme. Pure removal — no other change.' }
   ];
  
   let currentUser = null;   // Supabase auth user
