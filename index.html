@@ -632,8 +632,14 @@
   }
   .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:stretch; }
   @media (min-width: 861px){
-    .my-tasks-list-panel{ display:flex; flex-direction:column; overflow:hidden; }
-    .my-tasks-list-panel #myTasksList{ flex:1; overflow-y:auto; min-height:0; }
+    /* Actual height-matching is done in JS (syncMyTasksListHeight) —
+       CSS alone can't express "match sibling's natural height, then cap
+       and scroll" without an explicit size, which is exactly what broke
+       last time (overflow:hidden doesn't shrink an element's measured
+       height, it only clips content that's already overflowing a size
+       set some other way). This just gives the JS-set max-height
+       somewhere to apply. */
+    #myTasksList{ overflow-y:auto; }
   }
   .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow);}
   .panel-title{font-size:13.5px; font-weight:600; margin-bottom:16px; color:var(--text-dim);}
@@ -995,7 +1001,8 @@
        tight, since the date alone is what people actually glance for. */
     #navClockTimeWrap{ display:none; }
     .navright{gap:8px;}
-    .hero-title{font-size:32px;}
+    .hero-title{font-size:17px; white-space:nowrap; line-height:1.3;}
+    .hero-linebreak{ display:none; }
     .indicator-panel{padding:20px;}
     .digit{width:44px; height:64px; font-size:30px;}
     .cat-grid, .stat-row, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr) !important;}
@@ -1668,7 +1675,7 @@
     <div class="hero">
       <div>
         <div class="eyebrow">R&amp;I Operations</div>
-        <h1 class="hero-title">Every lift.<br>Every task, traced.</h1>
+        <h1 class="hero-title">Every lift.<br class="hero-linebreak">Every task, traced.</h1>
         <p class="hero-desc">Search any Lift ID to see its full history — from first survey to after sales support — logged by the engineer who ever did the work.</p>
         <div class="searchbar">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
@@ -3297,6 +3304,42 @@
   }
   initTheme();
 
+  // 2026-09-11: real fix for My Tasks' "Submitted by me" not matching
+  // the form's height on desktop. The previous attempt relied on CSS
+  // Grid stretch + overflow:hidden, which doesn't actually work —
+  // overflow:hidden only clips content once an element's size is
+  // already decided some other way; it doesn't reduce what the browser
+  // considers that element's own natural/preferred height, so Grid's
+  // sizing still measured the full (long) list and stretched everything
+  // to match IT, the opposite of what was wanted. There's no pure-CSS
+  // way to say "match this sibling's height, then cap and scroll" —
+  // so this measures the form panel's real rendered height in JS and
+  // applies it directly as the list's max-height.
+  // ResizeObserver catches the form changing height for its own reasons
+  // (switching category shows different fields); the resize listener
+  // catches the window crossing the desktop/mobile breakpoint, which
+  // might not otherwise change the form's own height and so might not
+  // fire the observer on its own.
+  function syncMyTasksListHeight(){
+    const formPanel = document.getElementById('taskFormPanel');
+    const listEl = document.getElementById('myTasksList');
+    if(!formPanel || !listEl) return;
+    if(window.innerWidth > 860){
+      listEl.style.maxHeight = formPanel.offsetHeight + 'px';
+    } else {
+      listEl.style.maxHeight = 'none';
+    }
+  }
+  (function setupMyTasksHeightSync(){
+    const formPanel = document.getElementById('taskFormPanel');
+    if(!formPanel) return;
+    if(window.ResizeObserver){
+      new ResizeObserver(syncMyTasksListHeight).observe(formPanel);
+    }
+    window.addEventListener('resize', syncMyTasksListHeight);
+    syncMyTasksListHeight();
+  })();
+
   function openTutorial(){
     // Point this at wherever the tutorial PDF is hosted in this repo/site,
     // e.g. a "tutorial.pdf" committed alongside index.html on GitHub Pages.
@@ -3811,7 +3854,9 @@
     { date:'2026-09-10', summary:'Removed both glassmorphism themes (Liquid Glass and Obsidian Glass) entirely, not just hidden — back to 2 themes (Light, Dark). Same safe fallback pattern as every previous theme removal: anyone with either one saved from before lands on Light automatically instead of a broken/unstyled theme. Pure removal — no other change.' },
     { date:'2026-09-10', summary:'Fixed Restore appearing to do nothing ("no sign of activity") — it was relying entirely on native browser prompt()/alert() dialogs, which are known to render unreliably or not at all in some mobile browsers and PWA/in-app-webview contexts. Rebuilt as a proper in-page modal: the typed "RESTORE" confirmation, a visible "Restoring… please don\'t close this or refresh" loading state during the actual database call (there was no loading feedback at all before — a slow restore would have looked identical to a broken one), and a clear inline success/failure message before reloading. Same destructive-action safeguard as before (still requires typing RESTORE exactly), just delivered through in-page UI instead of native dialogs that can\'t be guaranteed to display everywhere.' },
     { date:'2026-09-10', summary:'Backups now also capture the exact code running at that moment, bundled into the same snapshot (stored as a key inside the existing jsonb data, no schema change needed) — a new "Download code" button sits next to Download/Restore/Delete for each backup. Important limitation, explained directly in the Import Backup modal now: this can\'t make Restore automatically redeploy your GitHub Pages file — there\'s no way for this app to push to GitHub from the browser without embedding write-access credentials, which isn\'t something to add without a much bigger conversation about the security tradeoff. What this actually gives you: restoring a backup\'s data, then downloading and manually re-uploading that same backup\'s code, so the two are correctly paired instead of guessing which old code version matches the data you just restored. Backups made before this update won\'t have a code snapshot to download — data-only restore for those still works exactly as before.' },
-    { date:'2026-09-10', summary:'My Tasks, desktop only: "Submitted by me" now matches the height of "Log a task" instead of just growing to fit however many tasks exist (the .split-grid-tasks row used align-items:flex-start before, which explicitly opts out of height-matching). Long task lists now scroll within that matched height instead of stretching the page. The actual mechanism: the list panel got display:flex + overflow:hidden, which stops it from ever dictating a taller row itself — the row height ends up driven by the form alone, and the list panel stretches to match with its own internal scroll for the rest. Mobile is untouched — the two panels still stack and grow naturally there.' }
+    { date:'2026-09-10', summary:'My Tasks, desktop only: "Submitted by me" now matches the height of "Log a task" instead of just growing to fit however many tasks exist (the .split-grid-tasks row used align-items:flex-start before, which explicitly opts out of height-matching). Long task lists now scroll within that matched height instead of stretching the page. The actual mechanism: the list panel got display:flex + overflow:hidden, which stops it from ever dictating a taller row itself — the row height ends up driven by the form alone, and the list panel stretches to match with its own internal scroll for the rest. Mobile is untouched — the two panels still stack and grow naturally there.' },
+    { date:'2026-09-11', summary:'Real fix for the above — the CSS-only approach (align-items:stretch + overflow:hidden) didn\'t actually work: overflow:hidden clips content once a size is already decided some other way, it doesn\'t reduce what the browser considers an element\'s own natural height, so Grid still measured the full task list and stretched everything to match IT — the opposite of the goal, confirmed by a screenshot showing the list running far past the form. There\'s no pure-CSS way to say "match this sibling\'s height, then cap and scroll" — switched to JS: measures the form panel\'s real rendered height and applies it directly as the list\'s max-height, kept in sync via ResizeObserver (catches the form changing height when switching category) and a window resize listener (catches crossing the desktop/mobile breakpoint). Mobile still fully untouched — max-height only applies above 860px width.' },
+    { date:'2026-09-11', summary:'Home hero title ("Every lift. Every task, traced.") forced onto a single line on mobile (was wrapping to 3 lines) — font size dropped to 17px and the line break hidden, mobile-only; desktop\'s 2-line layout at its original size is untouched. Also confirmed and documented: Schema download and Project Briefing are both already fully live by construction — schema calls a database function that reads the live schema fresh every time, and the briefing reads the CHANGELOG array from whichever index.html is currently running plus real typeof checks against the live code, not hardcoded claims — neither can drift from what\'s actually deployed. While verifying this, fixed one small inaccuracy: the briefing\'s "Backup / Restore system" line was checking an unrelated function\'s existence (downloadSchemaSql) rather than an actual backup/restore function — happened to work by coincidence, now checks createBackup/confirmRestoreBackup directly.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5547,7 +5592,7 @@
       ['Project PPTX report export', typeof exportProjectReportPptx === 'function'],
       ['Category Links / Upload feature', typeof updateCategoryLinksButton === 'function'],
       ['Custom Fields (dynamic per-category fields)', typeof loadCustomFieldsPanel === 'function'],
-      ['Backup / Restore system', typeof downloadSchemaSql === 'function'],
+      ['Backup / Restore system', typeof createBackup === 'function' && typeof confirmRestoreBackup === 'function'],
       ['Excel export', typeof XLSX !== 'undefined'],
       ['PPTX generation library loaded', typeof PptxGenJS !== 'undefined']
     ];
