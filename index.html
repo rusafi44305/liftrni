@@ -252,6 +252,16 @@
  
  
   main{max-width:1180px; margin:0 auto; padding:24px 20px 70px;}
+  /* 2026-09-11: universal gap-to-dock safety net. The actual bug behind
+     "the gap isn't the same on every page" was several pages having
+     their own leftover large margin-bottom on their last section
+     (32-44px in places) stacking on top of main's own bottom padding —
+     fixed those directly, but this rule is a backstop for whatever the
+     true last child of any page turns out to be, present or future: it
+     shouldn't add its own extra trailing margin at all. main's own
+     padding-bottom is the single, only source of that gap, everywhere,
+     by construction rather than by remembering to check every page. */
+  .view > *:last-child{ margin-bottom:0 !important; }
   .view{display:none;}
   .view.active{display:block; animation:fade .35s ease;}
   @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -321,7 +331,7 @@
     font-family:'IBM Plex Mono'; font-weight:600; font-size:38px; color:#5B9CFF;
     text-shadow:0 0 18px rgba(91,156,255,0.7);
   }
-  .indicator-caption{font-size:12.5px; color:#7B87A3; position:relative; z-index:1; margin-bottom:22px;}
+  .indicator-caption{font-size:12.5px; color:#7B87A3; position:relative; z-index:1; margin-bottom:14px;}
   .indicator-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; position:relative; z-index:1;}
   .trend-range-row{display:flex; align-items:center; gap:8px; margin:14px 0 16px; position:relative; z-index:1; flex-wrap:wrap;}
   .trend-date-input{background:#141B2B; border:1px solid #2A3548; border-radius:8px; padding:6px 10px; color:#E7ECF5; font-size:12px; font-family:'IBM Plex Mono'; color-scheme:dark;}
@@ -338,7 +348,7 @@
   .mini-stat .lbl{font-size:11px; color:#8391AE; margin-top:2px;}
  
   /* ---------- STAT ROW ---------- */
-  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:22px;}
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;}
   .stat-card{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
     padding:18px 20px; box-shadow:var(--shadow);
@@ -348,7 +358,7 @@
   .stat-card .delta{font-size:11.5px; font-weight:600; margin-top:8px; display:inline-block;}
   .delta.up{color:var(--green);} .delta.flat{color:var(--text-faint);}
  
-  section.block{margin-bottom:44px;}
+  section.block{margin-bottom:16px;}
   .block-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px;}
   .block-title{font-family:'Space Grotesk'; font-size:19px; font-weight:600;}
   .block-sub{font-size:12.5px; color:var(--text-faint);}
@@ -492,7 +502,7 @@
   .t-emp{font-size:11.5px; color:var(--text-faint); margin-top:8px;}
  
   /* ---------- PROFILE ---------- */
-  .profile-head{display:flex; align-items:center; gap:18px; margin-bottom:30px;}
+  .profile-head{display:flex; align-items:center; gap:18px; margin-bottom:16px;}
   .p-avatar{
     width:64px; height:64px; border-radius:16px;
     background:linear-gradient(160deg, var(--accent), #14306E);
@@ -661,7 +671,7 @@
   .bar-val{font-size:11.5px; font-family:'IBM Plex Mono'; color:var(--text-faint); width:22px; text-align:right;}
  
   /* ---------- DASHBOARD FILTERS ---------- */
-  .filter-row{display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap;}
+  .filter-row{display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
   .fselect{
     background:var(--surface); border:1px solid var(--border); border-radius:9px;
     padding:9px 14px; font-size:13px; font-weight:600; color:var(--text-dim);
@@ -1771,7 +1781,7 @@
          options are built from whoever actually appears in the current
          results, not the whole company roster, since that's the only
          list that's ever useful here. -->
-    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
+    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
       <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
       <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
       <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
@@ -2063,8 +2073,8 @@
     </div>
  
     <!-- new dev task input zone: full-width, organized as numbered cards -->
-    <button class="submit-btn" id="showAddProjectBtn" style="margin-bottom:20px;" onclick="showAddProjectPanel()">+ Add a Project</button>
-    <div class="panel" id="devTaskPanel" style="display:none; margin-bottom:36px;">
+    <button class="submit-btn" id="showAddProjectBtn" style="margin-bottom:12px;" onclick="showAddProjectPanel()">+ Add a Project</button>
+    <div class="panel" id="devTaskPanel" style="display:none; margin-bottom:14px;">
       <div class="panel-title" id="devTaskPanelTitle">Add a development task</div>
  
       <div class="dev-form-grid">
@@ -2160,7 +2170,7 @@
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
     <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
-    <div class="role-grid" style="margin-bottom:32px;">
+    <div class="role-grid" style="margin-bottom:14px;">
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
         <div class="role-name">User (Engineer)</div>
@@ -2179,13 +2189,13 @@
     </div>
  
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div></div>
-    <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel" id="kpiWeightsPanel" style="display:none; padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head" id="fieldGuideBlock" style="display:none;">
       <div><div class="block-title">How to add a field or sub-category</div><div class="block-sub">Superadmin only — a short guide for the "Task fields" section below</div></div>
       <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleFieldGuideVisibility(this)">Show guide</button>
     </div>
-    <div class="panel" id="fieldGuidePanel" style="display:none; margin-bottom:32px;">
+    <div class="panel" id="fieldGuidePanel" style="display:none; margin-bottom:14px;">
       <div style="font-size:13.5px; line-height:1.7;">
         <div style="font-weight:700; margin-bottom:6px;">Adding a field</div>
         <ol style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
@@ -2239,15 +2249,15 @@
         <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
       </div>
     </div>
-    <div id="customFieldsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div id="customFieldsPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head" id="categoryLinksBlock" style="display:none;">
       <div><div class="block-title">Category Links</div><div class="block-sub">Superadmin only — the "Links" button on the task-entry form (currently just Post-Sales Activity and Reports) shows whatever's added here for that category.</div></div>
     </div>
-    <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
-    <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel" id="pendingSigninsPanel" style="padding:6px 14px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div></div>
     <div class="panel no-shine" style="padding:8px 20px;">
@@ -3885,7 +3895,8 @@
     { date:'2026-09-10', summary:'My Tasks, desktop only: "Submitted by me" now matches the height of "Log a task" instead of just growing to fit however many tasks exist (the .split-grid-tasks row used align-items:flex-start before, which explicitly opts out of height-matching). Long task lists now scroll within that matched height instead of stretching the page. The actual mechanism: the list panel got display:flex + overflow:hidden, which stops it from ever dictating a taller row itself — the row height ends up driven by the form alone, and the list panel stretches to match with its own internal scroll for the rest. Mobile is untouched — the two panels still stack and grow naturally there.' },
     { date:'2026-09-11', summary:'Real fix for the above — the CSS-only approach (align-items:stretch + overflow:hidden) didn\'t actually work: overflow:hidden clips content once a size is already decided some other way, it doesn\'t reduce what the browser considers an element\'s own natural height, so Grid still measured the full task list and stretched everything to match IT — the opposite of the goal, confirmed by a screenshot showing the list running far past the form. There\'s no pure-CSS way to say "match this sibling\'s height, then cap and scroll" — switched to JS: measures the form panel\'s real rendered height and applies it directly as the list\'s max-height, kept in sync via ResizeObserver (catches the form changing height when switching category) and a window resize listener (catches crossing the desktop/mobile breakpoint). Mobile still fully untouched — max-height only applies above 860px width.' },
     { date:'2026-09-11', summary:'Home hero title ("Every lift. Every task, traced.") forced onto a single line on mobile (was wrapping to 3 lines) — font size dropped to 17px and the line break hidden, mobile-only; desktop\'s 2-line layout at its original size is untouched. Also confirmed and documented: Schema download and Project Briefing are both already fully live by construction — schema calls a database function that reads the live schema fresh every time, and the briefing reads the CHANGELOG array from whichever index.html is currently running plus real typeof checks against the live code, not hardcoded claims — neither can drift from what\'s actually deployed. While verifying this, fixed one small inaccuracy: the briefing\'s "Backup / Restore system" line was checking an unrelated function\'s existence (downloadSchemaSql) rather than an actual backup/restore function — happened to work by coincidence, now checks createBackup/confirmRestoreBackup directly.' },
-    { date:'2026-09-11', summary:'Fixed a regression from yesterday\'s My Tasks height-matching fix: the left "Log a task" form was gaining a large empty gap at the bottom whenever the task list on the right was long. Root cause: .split-grid-tasks still had align-items:stretch, which makes BOTH grid columns match whichever is naturally taller — so a long list on the right was inflating the form panel\'s height too, and the height-sync JS was then measuring that already-inflated height, compounding the problem further. Switched to align-items:start so the form takes only its own natural height, completely unaffected by the list\'s length. Also refined the sync math to subtract the list panel\'s own title/padding from the target height, so the two panels\' TOTAL heights actually match rather than the list panel ending up taller by roughly its own title\'s height.' }
+    { date:'2026-09-11', summary:'Fixed a regression from yesterday\'s My Tasks height-matching fix: the left "Log a task" form was gaining a large empty gap at the bottom whenever the task list on the right was long. Root cause: .split-grid-tasks still had align-items:stretch, which makes BOTH grid columns match whichever is naturally taller — so a long list on the right was inflating the form panel\'s height too, and the height-sync JS was then measuring that already-inflated height, compounding the problem further. Switched to align-items:start so the form takes only its own natural height, completely unaffected by the list\'s length. Also refined the sync math to subtract the list panel\'s own title/padding from the target height, so the two panels\' TOTAL heights actually match rather than the list panel ending up taller by roughly its own title\'s height.' },
+    { date:'2026-09-11', summary:'Fixed the gap-to-dock not being universal across pages, screenshotted on Home/Dashboard/Projects/Admin — this was a real regression from choosing an earlier checkpoint file a few updates back, which reverted several margin fixes made after that point without anyone noticing (section.block was back to 44px, several Admin panels back to 32px, and others). Re-applied all of those fixes. This time also added a structural safety net rather than just fixing what was visible: any page\'s true last section now has its own trailing margin forced to 0, so main\'s shared bottom padding is the ONLY source of that gap everywhere, by construction — a future page or panel that happens to add its own trailing margin can\'t reintroduce this same inconsistency again.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -7380,7 +7391,7 @@ for a competing inline style first.`;
           }).join('')}
         </div>`;
 
-      return `<div style="margin-bottom:32px;">${header}${timeline}</div>`;
+      return `<div style="margin-bottom:18px;">${header}${timeline}</div>`;
     }).join('');
   }
  
