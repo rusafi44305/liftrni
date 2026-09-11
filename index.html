@@ -630,7 +630,17 @@
   @media (min-width: 861px){
     #customFieldsPanel .split-grid{ grid-template-columns:1fr 1fr; }
   }
-  .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:stretch; }
+  /* 2026-09-11: align-items:stretch was the actual bug behind the left
+     panel gaining empty space at the bottom — Grid stretch makes BOTH
+     sides match whichever is naturally taller, so a long task list on
+     the right was inflating the LEFT form panel's height too, and the
+     height-sync JS was then measuring that already-inflated height,
+     compounding it further. Switched to align-items:start so the form
+     takes only its own natural height, completely unaffected by
+     anything on the right — the JS below is now the only thing that
+     ties the two together, in one direction only (right matches left,
+     never the other way). */
+  .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:start; }
   @media (min-width: 861px){
     /* Actual height-matching is done in JS (syncMyTasksListHeight) —
        CSS alone can't express "match sibling's natural height, then cap
@@ -3315,6 +3325,17 @@
   // way to say "match this sibling's height, then cap and scroll" —
   // so this measures the form panel's real rendered height in JS and
   // applies it directly as the list's max-height.
+  // 2026-09-11 (follow-up): align-items:stretch on the grid (see the CSS
+  // rule) was ALSO part of the bug — it let a long list inflate the
+  // form's height too, which this function would then measure and
+  // compound further. Switched the CSS to align-items:start so the form
+  // is never affected by the right side at all; this function is now
+  // the only link between them, one-directional only.
+  // Also now subtracts the list panel's own title/padding ("chrome")
+  // from the target, so the TOTAL height of both panels actually
+  // matches — without this, the list panel would end up taller than the
+  // form by roughly its own title's height, even with the list itself
+  // correctly capped.
   // ResizeObserver catches the form changing height for its own reasons
   // (switching category shows different fields); the resize listener
   // catches the window crossing the desktop/mobile breakpoint, which
@@ -3322,10 +3343,17 @@
   // fire the observer on its own.
   function syncMyTasksListHeight(){
     const formPanel = document.getElementById('taskFormPanel');
+    const listPanel = document.querySelector('.my-tasks-list-panel');
     const listEl = document.getElementById('myTasksList');
-    if(!formPanel || !listEl) return;
+    if(!formPanel || !listPanel || !listEl) return;
     if(window.innerWidth > 860){
-      listEl.style.maxHeight = formPanel.offsetHeight + 'px';
+      // How much of the list panel's own height is title/padding rather
+      // than the list itself — computed by subtraction so it's correct
+      // regardless of whether the list currently has a max-height
+      // applied yet or not.
+      const chrome = listPanel.offsetHeight - listEl.offsetHeight;
+      const target = formPanel.offsetHeight - chrome;
+      listEl.style.maxHeight = Math.max(target, 100) + 'px';
     } else {
       listEl.style.maxHeight = 'none';
     }
@@ -3856,7 +3884,8 @@
     { date:'2026-09-10', summary:'Backups now also capture the exact code running at that moment, bundled into the same snapshot (stored as a key inside the existing jsonb data, no schema change needed) — a new "Download code" button sits next to Download/Restore/Delete for each backup. Important limitation, explained directly in the Import Backup modal now: this can\'t make Restore automatically redeploy your GitHub Pages file — there\'s no way for this app to push to GitHub from the browser without embedding write-access credentials, which isn\'t something to add without a much bigger conversation about the security tradeoff. What this actually gives you: restoring a backup\'s data, then downloading and manually re-uploading that same backup\'s code, so the two are correctly paired instead of guessing which old code version matches the data you just restored. Backups made before this update won\'t have a code snapshot to download — data-only restore for those still works exactly as before.' },
     { date:'2026-09-10', summary:'My Tasks, desktop only: "Submitted by me" now matches the height of "Log a task" instead of just growing to fit however many tasks exist (the .split-grid-tasks row used align-items:flex-start before, which explicitly opts out of height-matching). Long task lists now scroll within that matched height instead of stretching the page. The actual mechanism: the list panel got display:flex + overflow:hidden, which stops it from ever dictating a taller row itself — the row height ends up driven by the form alone, and the list panel stretches to match with its own internal scroll for the rest. Mobile is untouched — the two panels still stack and grow naturally there.' },
     { date:'2026-09-11', summary:'Real fix for the above — the CSS-only approach (align-items:stretch + overflow:hidden) didn\'t actually work: overflow:hidden clips content once a size is already decided some other way, it doesn\'t reduce what the browser considers an element\'s own natural height, so Grid still measured the full task list and stretched everything to match IT — the opposite of the goal, confirmed by a screenshot showing the list running far past the form. There\'s no pure-CSS way to say "match this sibling\'s height, then cap and scroll" — switched to JS: measures the form panel\'s real rendered height and applies it directly as the list\'s max-height, kept in sync via ResizeObserver (catches the form changing height when switching category) and a window resize listener (catches crossing the desktop/mobile breakpoint). Mobile still fully untouched — max-height only applies above 860px width.' },
-    { date:'2026-09-11', summary:'Home hero title ("Every lift. Every task, traced.") forced onto a single line on mobile (was wrapping to 3 lines) — font size dropped to 17px and the line break hidden, mobile-only; desktop\'s 2-line layout at its original size is untouched. Also confirmed and documented: Schema download and Project Briefing are both already fully live by construction — schema calls a database function that reads the live schema fresh every time, and the briefing reads the CHANGELOG array from whichever index.html is currently running plus real typeof checks against the live code, not hardcoded claims — neither can drift from what\'s actually deployed. While verifying this, fixed one small inaccuracy: the briefing\'s "Backup / Restore system" line was checking an unrelated function\'s existence (downloadSchemaSql) rather than an actual backup/restore function — happened to work by coincidence, now checks createBackup/confirmRestoreBackup directly.' }
+    { date:'2026-09-11', summary:'Home hero title ("Every lift. Every task, traced.") forced onto a single line on mobile (was wrapping to 3 lines) — font size dropped to 17px and the line break hidden, mobile-only; desktop\'s 2-line layout at its original size is untouched. Also confirmed and documented: Schema download and Project Briefing are both already fully live by construction — schema calls a database function that reads the live schema fresh every time, and the briefing reads the CHANGELOG array from whichever index.html is currently running plus real typeof checks against the live code, not hardcoded claims — neither can drift from what\'s actually deployed. While verifying this, fixed one small inaccuracy: the briefing\'s "Backup / Restore system" line was checking an unrelated function\'s existence (downloadSchemaSql) rather than an actual backup/restore function — happened to work by coincidence, now checks createBackup/confirmRestoreBackup directly.' },
+    { date:'2026-09-11', summary:'Fixed a regression from yesterday\'s My Tasks height-matching fix: the left "Log a task" form was gaining a large empty gap at the bottom whenever the task list on the right was long. Root cause: .split-grid-tasks still had align-items:stretch, which makes BOTH grid columns match whichever is naturally taller — so a long list on the right was inflating the form panel\'s height too, and the height-sync JS was then measuring that already-inflated height, compounding the problem further. Switched to align-items:start so the form takes only its own natural height, completely unaffected by the list\'s length. Also refined the sync math to subtract the list panel\'s own title/padding from the target height, so the two panels\' TOTAL heights actually match rather than the list panel ending up taller by roughly its own title\'s height.' }
   ];
  
   let currentUser = null;   // Supabase auth user
