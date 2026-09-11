@@ -251,7 +251,7 @@
   .switch input:checked + .switch-track::before{ transform:translateX(20px); }
  
  
-  main{max-width:1180px; margin:0 auto; padding:24px 20px 70px;}
+  main{max-width:1180px; margin:0 auto; padding:18px 18px 60px;}
   .view{display:none;}
   .view.active{display:block; animation:fade .35s ease;}
   @keyframes fade{from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);}}
@@ -321,7 +321,7 @@
     font-family:'IBM Plex Mono'; font-weight:600; font-size:38px; color:#5B9CFF;
     text-shadow:0 0 18px rgba(91,156,255,0.7);
   }
-  .indicator-caption{font-size:12.5px; color:#7B87A3; position:relative; z-index:1; margin-bottom:22px;}
+  .indicator-caption{font-size:12.5px; color:#7B87A3; position:relative; z-index:1; margin-bottom:14px;}
   .indicator-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; position:relative; z-index:1;}
   .trend-range-row{display:flex; align-items:center; gap:8px; margin:14px 0 16px; position:relative; z-index:1; flex-wrap:wrap;}
   .trend-date-input{background:#141B2B; border:1px solid #2A3548; border-radius:8px; padding:6px 10px; color:#E7ECF5; font-size:12px; font-family:'IBM Plex Mono'; color-scheme:dark;}
@@ -338,17 +338,17 @@
   .mini-stat .lbl{font-size:11px; color:#8391AE; margin-top:2px;}
  
   /* ---------- STAT ROW ---------- */
-  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:22px;}
+  .stat-row{display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px;}
   .stat-card{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:18px 20px; box-shadow:var(--shadow);
+    padding:13px 15px; box-shadow:var(--shadow);
   }
   .stat-card .n{font-family:'Space Grotesk'; font-size:26px; font-weight:700;}
   .stat-card .l{font-size:12.5px; color:var(--text-dim); margin-top:4px;}
   .stat-card .delta{font-size:11.5px; font-weight:600; margin-top:8px; display:inline-block;}
   .delta.up{color:var(--green);} .delta.flat{color:var(--text-faint);}
  
-  section.block{margin-bottom:44px;}
+  section.block{margin-bottom:16px;}
   .block-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px;}
   .block-title{font-family:'Space Grotesk'; font-size:19px; font-weight:600;}
   .block-sub{font-size:12.5px; color:var(--text-faint);}
@@ -356,6 +356,18 @@
  
   /* ---------- CATEGORY GRID ---------- */
   .cat-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:12px;}
+  /* 2026-09-10: Home's Task Categories + Recent Activity side-by-side on
+     desktop. home-cat-grid overrides the tile grid to 2 columns instead
+     of the usual 3 — at half page width, 3 columns would make each tile
+     cramped, so this matches what .cat-grid already falls back to on
+     mobile anyway (see the 860px rule further below), just applied here
+     too since this section is effectively "mobile-width" once it's
+     sharing horizontal space with Recent Activity. */
+  .home-two-col{ display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start; }
+  .home-cat-grid{ grid-template-columns:repeat(2, 1fr) !important; }
+  @media (max-width: 860px){
+    .home-two-col{ grid-template-columns:1fr; }
+  }
   .cat-tile{
     background:var(--surface); border:1px solid var(--border);
     border-radius:14px; padding:16px; cursor:pointer; transition:all .18s ease;
@@ -428,7 +440,7 @@
      between each item read as genuinely identical. */
   #homeFeed{ display:flex; flex-direction:column; gap:20px; }
   .feed-item{
-    display:flex; gap:10px; padding:11px;
+    display:flex; gap:8px; padding:9px;
     background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:var(--shadow);
     transition:transform .15s ease, border-color .15s ease;
   }
@@ -466,7 +478,7 @@
   /* ---------- LIFT SEARCH RESULT ---------- */
   .lift-header{
     background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
-    padding:24px 26px; margin-bottom:28px; box-shadow:var(--shadow);
+    padding:16px 18px; margin-bottom:14px; box-shadow:var(--shadow);
   }
   .lift-id-row{display:flex; align-items:center; gap:12px; margin-bottom:6px;}
   .lift-id{font-family:'IBM Plex Mono'; font-size:22px; font-weight:600;}
@@ -492,7 +504,7 @@
   .t-emp{font-size:11.5px; color:var(--text-faint); margin-top:8px;}
  
   /* ---------- PROFILE ---------- */
-  .profile-head{display:flex; align-items:center; gap:18px; margin-bottom:30px;}
+  .profile-head{display:flex; align-items:center; gap:18px; margin-bottom:16px;}
   .p-avatar{
     width:64px; height:64px; border-radius:16px;
     background:linear-gradient(160deg, var(--accent), #14306E);
@@ -515,15 +527,15 @@
  
   .kpi-card{
     background:linear-gradient(135deg, #0E1420, #1B2745);
-    border-radius:var(--radius); padding:22px 26px; color:#fff;
-    display:flex; align-items:center; justify-content:space-between; margin-bottom:28px;
+    border-radius:var(--radius); padding:18px 22px; color:#fff;
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;
   }
   .kpi-num{font-family:'Space Grotesk'; font-size:40px; font-weight:700;}
   .kpi-lbl{font-size:12.5px; color:#93A0C2; margin-top:2px;}
   .kpi-spark{display:flex; align-items:flex-end; gap:4px; height:44px;}
   .kpi-spark div{width:7px; background:var(--accent); border-radius:2px 2px 0 0;}
  
-  .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:14px;}
+  .split-grid{display:grid; grid-template-columns:1.3fr 1fr; gap:10px;}
   /* Grid items default to min-width:auto, which means a child with long
      unbroken content (a full URL with no spaces to wrap at, in this
      case) can force the whole grid track wider than its column — wider
@@ -631,8 +643,14 @@
     #customFieldsPanel .split-grid{ grid-template-columns:1fr 1fr; }
   }
   .split-grid-tasks{ grid-template-columns:1fr 1.15fr; align-items:flex-start; }
-  .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px; box-shadow:var(--shadow);}
-  .panel-title{font-size:13.5px; font-weight:600; margin-bottom:16px; color:var(--text-dim);}
+  .panel{background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:13px; box-shadow:var(--shadow);}
+  /* 2026-09-10: "pure aesthetic compact" pass — section titles moved
+     from a bigger card-style heading to a small uppercase label with
+     letter-spacing, a common pattern for denser layouts that still read
+     as intentional rather than cramped. Applied globally since
+     .panel-title is reused on every page — this was demoed on the
+     Dashboard specifically but the same principle holds everywhere. */
+  .panel-title{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:10px; color:var(--text-dim);}
  
   .bar-row{display:flex; align-items:center; gap:10px; margin-bottom:11px;}
   .bar-label{font-size:12px; width:150px; color:var(--text-dim); flex-shrink:0;}
@@ -641,7 +659,7 @@
   .bar-val{font-size:11.5px; font-family:'IBM Plex Mono'; color:var(--text-faint); width:22px; text-align:right;}
  
   /* ---------- DASHBOARD FILTERS ---------- */
-  .filter-row{display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap;}
+  .filter-row{display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
   .fselect{
     background:var(--surface); border:1px solid var(--border); border-radius:9px;
     padding:9px 14px; font-size:13px; font-weight:600; color:var(--text-dim);
@@ -871,7 +889,7 @@
   .chip-hint{font-size:10.5px; color:var(--text-faint); font-weight:500; text-transform:none; letter-spacing:0; margin-left:5px;}
   .form-note{font-size:11.5px; color:var(--text-faint); margin-top:10px; text-align:center;}
   .field-warning{ font-size:11.5px; color:var(--red); margin-top:4px; }
-  .mytask-item{padding:10px 14px; margin-bottom:7px;}
+  .mytask-item{padding:8px 11px; margin-bottom:5px;}
   .mytask-item:last-of-type{margin-bottom:0;}
   .mt-top{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;}
   .mt-title{font-size:13.5px; font-weight:600; margin-bottom:3px;}
@@ -940,7 +958,17 @@
     .stat-row, .cat-grid, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr);}
     .split-grid, .split-grid-tasks, .dev-form-grid{grid-template-columns:1fr;}
     .form-row-2{grid-template-columns:1fr;}
-    main{padding:16px 12px 100px;}
+    main{padding:12px 10px 90px;}
+    /* 2026-09-10: extra mobile-only tightening on top of the global pass
+       above — matches the approved mobile compact demo's numbers, which
+       were deliberately tighter than what works on desktop's wider,
+       lower-density layout. */
+    .panel{padding:10px;}
+    .panel-title{font-size:10px; margin-bottom:7px;}
+    .mytask-item{padding:7px 10px; margin-bottom:4px;}
+    .feed-item{padding:7px; gap:7px;}
+    .stat-row{gap:6px; margin-bottom:9px;}
+    .stat-card{padding:9px 6px;}
     header.topnav{padding:7px 16px;}
     nav.tabs.dock button span{ display:none; }
     nav.tabs.dock button{ padding:10px; }
@@ -1702,35 +1730,45 @@
       <div class="stat-card"><div class="n" id="homeStatEngineers">—</div><div class="l">Active engineers</div><div class="delta flat" id="homeStatEngineersDelta">—</div></div>
     </div>
  
-    <section class="block">
-      <div class="block-head">
-        <div>
-          <div class="block-title">Task categories</div>
-          <div class="block-sub">Every form your team fills, in one place</div>
+    <!-- 2026-09-10: Task categories + Recent activity placed side-by-side
+         on desktop (was two full-width stacked sections) — uses
+         horizontal space instead of a long vertical stack. Falls back to
+         stacked below 860px via home-two-col's own rule, same breakpoint
+         .cat-grid/.stat-row already use elsewhere. Structurally this is
+         just a new wrapping grid around the two existing sections —
+         neither section's own content, ids, or onclick handlers changed
+         at all, so nothing that already worked can have stopped working. -->
+    <div class="home-two-col">
+      <section class="block">
+        <div class="block-head">
+          <div>
+            <div class="block-title">Task categories</div>
+            <div class="block-sub">Every form your team fills, in one place</div>
+          </div>
+          <div class="link-more" onclick="showView('dashboard')">View breakdown →</div>
         </div>
-        <div class="link-more" onclick="showView('dashboard')">View breakdown →</div>
-      </div>
-      <div class="cat-grid">
-        <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-bottom-row"><div><div class="cat-name">Team Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div><span class="cat-pct-badge" id="catPct-rni">—%</span></div></div>
-        <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-bottom-row"><div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div><span class="cat-pct-badge" id="catPct-presales">—%</span></div></div>
-        <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-bottom-row"><div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div><span class="cat-pct-badge" id="catPct-postsales">—%</span></div></div>
-        <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-bottom-row"><div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-techsupport">—%</span></div></div>
-        <div class="cat-tile cc-generalsupport" onclick="showCategoryLog('generalsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'generalsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-bottom-row"><div><div class="cat-name">General Support</div><div class="cat-count" id="catCount-generalsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-generalsupport">—%</span></div></div>
-        <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">Reports</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
-      </div>
-    </section>
- 
-    <section class="block">
-      <div class="block-head">
-        <div>
-          <div class="block-title">Recent activity</div>
-          <div class="block-sub">Latest entries across all categories</div>
+        <div class="cat-grid home-cat-grid">
+          <div class="cat-tile cc-rni" onclick="showCategoryLog('rni')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'rni')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">01</div><div class="cat-bottom-row"><div><div class="cat-name">Team Activity</div><div class="cat-count" id="catCount-rni">— logged</div></div><span class="cat-pct-badge" id="catPct-rni">—%</span></div></div>
+          <div class="cat-tile cc-presales" onclick="showCategoryLog('presales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'presales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">02</div><div class="cat-bottom-row"><div><div class="cat-name">Pre-Sales Support</div><div class="cat-count" id="catCount-presales">— logged</div></div><span class="cat-pct-badge" id="catPct-presales">—%</span></div></div>
+          <div class="cat-tile cc-postsales" onclick="showCategoryLog('postsales')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'postsales')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">03</div><div class="cat-bottom-row"><div><div class="cat-name">Post-Sales Activity</div><div class="cat-count" id="catCount-postsales">— logged</div></div><span class="cat-pct-badge" id="catPct-postsales">—%</span></div></div>
+          <div class="cat-tile cc-techsupport" onclick="showCategoryLog('techsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'techsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">04</div><div class="cat-bottom-row"><div><div class="cat-name">Technical Support</div><div class="cat-count" id="catCount-techsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-techsupport">—%</span></div></div>
+          <div class="cat-tile cc-generalsupport" onclick="showCategoryLog('generalsupport')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'generalsupport')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">05</div><div class="cat-bottom-row"><div><div class="cat-name">General Support</div><div class="cat-count" id="catCount-generalsupport">— logged</div></div><span class="cat-pct-badge" id="catPct-generalsupport">—%</span></div></div>
+          <div class="cat-tile cc-surveyissues" onclick="showCategoryLog('surveyissues')"><button class="cat-search-btn" title="Search in this category" onclick="goToCategorySearch(event, 'surveyissues')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button><div class="cat-icon">06</div><div class="cat-bottom-row"><div><div class="cat-name">Reports</div><div class="cat-count" id="catCount-surveyissues">— logged</div></div><span class="cat-pct-badge" id="catPct-surveyissues">—%</span></div></div>
         </div>
-      </div>
-      <div class="panel" style="padding:20px;">
-        <div id="homeFeed"><div class="placeholder-note">Loading…</div></div>
-      </div>
-    </section>
+      </section>
+
+      <section class="block">
+        <div class="block-head">
+          <div>
+            <div class="block-title">Recent activity</div>
+            <div class="block-sub">Latest entries across all categories</div>
+          </div>
+        </div>
+        <div class="panel" style="padding:14px;">
+          <div id="homeFeed" style="max-height:420px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;"><div class="placeholder-note">Loading…</div></div>
+        </div>
+      </section>
+    </div>
   </div>
  
   <!-- ============ LIFT SEARCH ============ -->
@@ -1750,7 +1788,7 @@
          options are built from whoever actually appears in the current
          results, not the whole company roster, since that's the only
          list that's ever useful here. -->
-    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:22px;">
+    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
       <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
       <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
       <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
@@ -1845,10 +1883,10 @@
       <div><div class="block-title">Team Chat</div><div class="block-sub">One shared conversation — everyone approved is already in it. Type @ to mention someone.</div></div>
     </div>
     <div class="panel" style="padding:0; display:flex; flex-direction:column; height:62vh; max-height:640px; overflow:hidden;">
-      <div id="chatMessages" style="flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px;">
+      <div id="chatMessages" style="flex:1; overflow-y:auto; padding:12px 14px; display:flex; flex-direction:column; gap:10px;">
         <div class="placeholder-note">Loading…</div>
       </div>
-      <div style="position:relative; border-top:1px solid var(--border); padding:12px 16px; flex-shrink:0;">
+      <div style="position:relative; border-top:1px solid var(--border); padding:10px 12px; flex-shrink:0;">
         <div id="chatMentionDropdown" style="display:none; position:absolute; bottom:100%; left:16px; right:16px; margin-bottom:6px; background:var(--surface); border:1.5px solid var(--border); border-radius:10px; max-height:200px; overflow-y:auto; box-shadow:0 -8px 20px rgba(0,0,0,0.2); z-index:50;"></div>
         <div id="chatEditingNotice" style="display:none; font-size:11.5px; color:var(--accent); margin-bottom:6px;">Editing message… <span style="text-decoration:underline; cursor:pointer;" onclick="cancelEditChatMessage()">Cancel</span></div>
         <div style="display:flex; gap:10px; align-items:flex-end;">
@@ -1866,7 +1904,7 @@
     </div>
     <div class="panel">
       <div id="notebookEditingNotice" style="display:none; font-size:11.5px; color:var(--accent); margin-bottom:8px;">Editing task… <span style="text-decoration:underline; cursor:pointer;" onclick="cancelEditNotebookTask()">Cancel</span></div>
-      <div style="display:flex; gap:8px; margin-bottom:18px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; align-items:flex-end;">
         <div style="flex:1; min-width:180px;">
           <label for="notebookTaskInput" style="display:block; font-size:10.5px; color:var(--text-faint); margin-bottom:4px;">Task</label>
           <input type="text" id="notebookTaskInput" placeholder="Add a task..." style="width:100%; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:13.5px;" onkeydown="if(event.key==='Enter') addNotebookTask();">
@@ -2028,8 +2066,8 @@
     </div>
  
     <!-- new dev task input zone: full-width, organized as numbered cards -->
-    <button class="submit-btn" id="showAddProjectBtn" style="margin-bottom:20px;" onclick="showAddProjectPanel()">+ Add a Project</button>
-    <div class="panel" id="devTaskPanel" style="display:none; margin-bottom:36px;">
+    <button class="submit-btn" id="showAddProjectBtn" style="margin-bottom:12px;" onclick="showAddProjectPanel()">+ Add a Project</button>
+    <div class="panel" id="devTaskPanel" style="display:none; margin-bottom:14px;">
       <div class="panel-title" id="devTaskPanelTitle">Add a development task</div>
  
       <div class="dev-form-grid">
@@ -2125,7 +2163,7 @@
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
     <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
-    <div class="role-grid" style="margin-bottom:32px;">
+    <div class="role-grid" style="margin-bottom:14px;">
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
         <div class="role-name">User (Engineer)</div>
@@ -2144,13 +2182,13 @@
     </div>
  
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div></div>
-    <div class="panel" id="kpiWeightsPanel" style="display:none; padding:16px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel" id="kpiWeightsPanel" style="display:none; padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head" id="fieldGuideBlock" style="display:none;">
       <div><div class="block-title">How to add a field or sub-category</div><div class="block-sub">Superadmin only — a short guide for the "Task fields" section below</div></div>
       <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleFieldGuideVisibility(this)">Show guide</button>
     </div>
-    <div class="panel" id="fieldGuidePanel" style="display:none; margin-bottom:32px;">
+    <div class="panel" id="fieldGuidePanel" style="display:none; margin-bottom:14px;">
       <div style="font-size:13.5px; line-height:1.7;">
         <div style="font-weight:700; margin-bottom:6px;">Adding a field</div>
         <ol style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
@@ -2204,15 +2242,15 @@
         <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
       </div>
     </div>
-    <div id="customFieldsPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div id="customFieldsPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head" id="categoryLinksBlock" style="display:none;">
       <div><div class="block-title">Category Links</div><div class="block-sub">Superadmin only — the "Links" button on the task-entry form (currently just Post-Sales Activity and Reports) shows whatever's added here for that category.</div></div>
     </div>
-    <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
-    <div class="panel" id="pendingSigninsPanel" style="padding:6px 20px; margin-bottom:32px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel" id="pendingSigninsPanel" style="padding:6px 14px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div></div>
     <div class="panel no-shine" style="padding:8px 20px;">
@@ -3790,7 +3828,10 @@
     { date:'2026-09-10', summary:'Home\'s Activity Trend panel and all 4 Profile Score/Time cards given a "floating opaque glass" treatment: still fully solid/opaque (not see-through), but now with a much bigger, softer shadow that visibly lifts them off the page, an inset top-edge highlight, and a slight saturation boost on their gradient. Category dropdown in My Tasks: tried darkening the background fill for Dark theme, but the actual preference was the opposite — kept the bright fill color and switched the text (and dropdown arrow) to dark instead of white, so it reads clearly against a light-colored background without dimming the color itself.' },
     { date:'2026-09-10', summary:'Added a 3rd theme, "Liquid Glass" — an iOS-style glassmorphism look (Light and Dark are untouched). Simpler to build than Steel was: both the page background and the card surface are light here, so text stays one consistent dark color everywhere with no special override system needed, unlike Steel\'s dark-bg/light-card split. Reuses the existing card-glass infrastructure (the shared vibrancy rule\'s color-mix-with-transparent already IS the "translucent white + blur" effect the spec asked for) rather than a parallel one-off system — every page gets it at once through that shared rule. Adds: a 3-blob colored mesh gradient background (exact hues from spec), translucent white specular borders/highlights on every card, a floating glass bottom nav with an active-tab glow, and glass-styled inputs/buttons. Honest caveat: WCAG contrast can\'t be strictly guaranteed the way a solid-color theme can, since the actual backdrop behind any given glass card varies with what part of the mesh gradient sits behind it — chose safe, high-contrast defaults (dark text throughout) rather than a formal guarantee.' },
     { date:'2026-09-10', summary:'Added a 4th theme, "Obsidian Glass" — the dark counterpart to Liquid Glass, from a second detailed prompt (deep obsidian bg, indigo/purple/cyan mesh glow, translucent dark glass cards with a multi-layer specular bevel, 20px radii, glowing glass dock, inset glass form fields with an indigo focus glow). Pure visual addition, same as Liquid Glass — no functionality touched. Chat bubbles needed zero extra code: sent/received already read var(--accent)/var(--surface-alt) directly in the existing chat rendering, so they automatically pick up this theme\'s indigo/dark-slate colors. One deliberate deviation from the prompt\'s literal rgba values: --surface/--surface-alt are solid opaque colors here (letting the existing vibrancy rule produce the actual glass translucency), not raw semi-transparent rgba — those two variables are relied on as solid fills in many other places (nav tabs, form cards, category dropdowns), so making them inherently transparent risked unpredictable double-transparency spreading well beyond the glass cards themselves.' },
-    { date:'2026-09-10', summary:'Removed both glassmorphism themes (Liquid Glass and Obsidian Glass) entirely, not just hidden — back to 2 themes (Light, Dark). Same safe fallback pattern as every previous theme removal: anyone with either one saved from before lands on Light automatically instead of a broken/unstyled theme. Pure removal — no other change.' }
+    { date:'2026-09-10', summary:'Removed both glassmorphism themes (Liquid Glass and Obsidian Glass) entirely, not just hidden — back to 2 themes (Light, Dark). Same safe fallback pattern as every previous theme removal: anyone with either one saved from before lands on Light automatically instead of a broken/unstyled theme. Pure removal — no other change.' },
+    { date:'2026-09-10', summary:'Compact pass across every page, mobile and desktop. Tightened the widely-shared layout rules that affect most pages at once: main content padding, .panel padding, .stat-card padding, .stat-row/.split-grid gaps, .mytask-item/.feed-item padding. Section titles (.panel-title, used everywhere) changed from a bigger card-style heading to a small uppercase label with letter-spacing — reads as intentionally dense rather than cramped. Mobile gets an additional, more aggressive layer of tightening on top of the shared pass, matching the approved mobile demo\'s numbers. Dashboard\'s Team Overview ring grid and Category/Engineer section also tightened specifically (smaller ring cards, tighter gaps) without rebuilding the floating-glass card structure from earlier updates. Scope note: this covers the broadly-shared spacing/typography rules, not a line-by-line pass over every individual inline style in the file — the leaderboard table\'s row height specifically wasn\'t hunted down and left as-is.' },
+    { date:'2026-09-10', summary:'Follow-up consistency pass: went through Notebook, Team Chat, Projects, Admin, Profile, and Lift Trace specifically hunting for leftover large gaps that weren\'t touched by the shared compact-pass rules (since those only cover a handful of common classes, not every individual inline style) and now looked visibly loose next to everything else that got tightened. Found and fixed real ones: section.block (used on Home/Dashboard) was 44px, several Admin panels had 32px gaps, .lift-header/.kpi-card/.profile-head/.filter-row/.indicator-caption were all still at their pre-compact sizes (24-30px), and Projects had a stray 36px panel gap. Login/auth-gate screens deliberately left untouched — they\'re standalone landing screens, not part of the dense in-app rhythm this pass is about.' },
+    { date:'2026-09-10', summary:'First actual layout reorganization (not just spacing): Home\'s "Task categories" and "Recent activity" now sit side-by-side on desktop instead of stacked as two full-width sections, using horizontal space that was previously empty. Falls back to stacked on mobile below 860px, same breakpoint the rest of the app already uses. Category tile grid narrowed from 3 to 2 columns in this half-width context so tiles don\'t get cramped; Recent Activity given a bounded scroll height (420px) so the two columns stay visually balanced regardless of feed length. Deliberately conservative in scope: this is a new wrapping grid around two sections whose own content, ids, and onclick handlers are completely unchanged — verified directly (every category tile\'s id, all 6 goToCategorySearch/showCategoryLog handlers, and homeFeed all confirmed present exactly once, no duplicates). Other pages\' layouts (My Tasks\' form+list split, Dashboard\'s two-section layout, Admin\'s stacked panels) were reviewed but left as they already are — no clear compactness win from reshuffling them further without more risk than the gain justified.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -7206,7 +7247,7 @@ for a competing inline style first.`;
           }).join('')}
         </div>`;
 
-      return `<div style="margin-bottom:32px;">${header}${timeline}</div>`;
+      return `<div style="margin-bottom:18px;">${header}${timeline}</div>`;
     }).join('');
   }
  
@@ -7963,43 +8004,43 @@ for a competing inline style first.`;
         </div>`;
     } else {
       container.innerHTML = `
-        <div class="panel liquid-glass-card" style="margin-bottom:16px;">
-          <div class="panel-title" style="text-align:center; margin-bottom:16px;">Team overview</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+        <div class="panel liquid-glass-card" style="margin-bottom:12px;">
+          <div class="panel-title" style="text-align:center; margin-bottom:10px;">Team overview</div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+              <div class="liquid-glass-card" style="padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;">
                 <div id="dashRingScore"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Team score</p>
+                <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Team score</p>
               </div>
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+              <div class="liquid-glass-card" style="padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;">
                 <div id="dashRingActivities"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Activities</p>
+                <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Activities</p>
               </div>
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+              <div class="liquid-glass-card" style="padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;">
                 <div id="dashRingLifts"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
+                <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
               </div>
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
+              <div class="liquid-glass-card" style="padding:10px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px;">
                 <div id="dashRingTime"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Time logged</p>
+                <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Time logged</p>
               </div>
             </div>
             <div class="trend-fill" style="display:flex; flex-direction:column;">
-              <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+              <div class="field-label" style="margin-bottom:6px;">Weekly trend</div>
               <div id="dashHeroTrendChart" style="flex:1; display:flex; flex-direction:column;"></div>
             </div>
           </div>
         </div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 16px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
-        <div class="panel liquid-glass-card" style="margin-bottom:18px;">
-          <div class="panel-title" style="text-align:center; margin-bottom:16px;">Category &amp; engineer performance</div>
-          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start;">
+        <div style="font-size:10.5px; color:var(--text-faint); text-align:center; margin:-4px 0 12px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
+        <div class="panel liquid-glass-card" style="margin-bottom:12px;">
+          <div class="panel-title" style="text-align:center; margin-bottom:10px;">Category &amp; engineer performance</div>
+          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:14px; align-items:start;">
             <div>
-              <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
+              <div class="field-label" style="margin-bottom:6px;" id="breakdownTitle">By category</div>
               <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
             </div>
-            <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:22px;">
-              <div class="field-label" style="margin-bottom:8px;">Top engineers by score</div>
+            <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:14px;">
+              <div class="field-label" style="margin-bottom:6px;">Top engineers by score</div>
               <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
             </div>
           </div>
