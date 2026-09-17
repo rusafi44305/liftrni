@@ -549,6 +549,15 @@
      ("Overall Score — average of every performed month") pushed the
      grid item wider than its column, overflowing the page. */
   .profile-kpi-row > *{ min-width:0; }
+  /* 2026-09-11: explicit, symmetric gap (was inheriting from .stat-row,
+     correct in value but made explicit here so it's not accidentally
+     dependent on that unrelated rule going forward). Desktop fits all 4
+     cards in one row; mobile's existing 2x2 (set inline, untouched) is
+     preserved by only overriding above the 860px breakpoint. */
+  .profile-kpi-row{ gap:10px; }
+  @media (min-width: 861px){
+    .profile-kpi-row{ grid-template-columns:1fr 1fr 1fr 1fr !important; }
+  }
   /* Liquid glass treatment for the Dashboard's overview cards — same
      blur/translucency/border pattern already used by the dock and the
      account menu elsewhere in this app (color-mix on --surface/--border
@@ -671,13 +680,30 @@
   .bar-val{font-size:11.5px; font-family:'IBM Plex Mono'; color:var(--text-faint); width:22px; text-align:right;}
  
   /* ---------- DASHBOARD FILTERS ---------- */
-  .filter-row{display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap;}
+  .filter-row{display:flex; gap:10px; margin-bottom:12px; flex-wrap:wrap; align-items:center;}
+  /* 2026-09-11: selects/date-inputs in a filter row now stretch to share
+     the row's available width evenly (buttons and the search box, which
+     already has its own sensible max-width, are excluded) — otherwise a
+     handful of compact dropdowns just hug the left edge while every card
+     below spans the full width, which is what looked disorganized. */
+  .filter-row select.fselect, .filter-row input[type="month"]{ flex:1 1 140px; }
   .fselect{
     background:var(--surface); border:1px solid var(--border); border-radius:9px;
     padding:9px 14px; font-size:13px; font-weight:600; color:var(--text-dim);
     display:flex; align-items:center; gap:8px; cursor:pointer;
   }
   .fselect:hover{border-color:var(--accent); color:var(--text);}
+  /* 2026-09-11: filter/date controls (Category Log, Lift Trace, Dashboard,
+     My Tasks — anything using .fselect) used to each take their own
+     natural/intrinsic width, which looks ragged and inconsistent once
+     several sit together in a wrapping row, especially against the
+     clean-edged cards below them. On narrower screens, let them flex to
+     fill available width evenly instead. */
+  @media (max-width: 860px){
+    .filter-row .fselect, #catLogFilters .fselect, #liftTraceFilters .fselect{
+      flex:1 1 130px; min-width:110px;
+    }
+  }
  
   table.data{width:100%; border-collapse:collapse;}
   table.data th{
@@ -1204,6 +1230,11 @@
     box-shadow:0 32px 70px -18px rgba(0,0,0,0.55), 0 8px 20px -6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
     filter:saturate(125%);
     border-radius:18px !important;
+    /* 2026-09-11: all 4 Profile cards now have identical minimum height
+       — without this, two cards with slightly different content lengths
+       could make one grid row taller than the other, breaking the
+       symmetry of the 2x2 layout even with an equal grid gap. */
+    min-height:78px;
     color:#fff !important;
   }
   .kpi-card .kpi-num, .kpi-card .kpi-lbl, .kpi-card *{ color:#fff !important; }
@@ -1816,6 +1847,20 @@
       <input type="month" id="catToMonth" class="fselect" style="cursor:pointer;">
       <button class="queue-btn" onclick="showCategoryLog(currentCatKey)">Apply range</button>
       <button class="queue-btn" onclick="exportCategoryToExcel()">⬇ Export to Excel</button>
+    </div>
+    <!-- 2026-09-11: By Section/Engineer/Sub-category filters, same pattern
+         already used on Lift Trace — client-side only, populated from
+         whatever's actually in the currently-loaded rows rather than a
+         fixed master list. Sub-category filter only appears at all when
+         this category actually has one (checked in JS, not assumed). -->
+    <div id="catLogFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
+      <select id="catFilterSection" class="fselect" style="cursor:pointer;" onchange="filterCategoryLog()">
+        <option value="">All sections</option>
+        <option value="Mechanical">Mechanical</option>
+        <option value="Electrical">Electrical</option>
+      </select>
+      <select id="catFilterEngineer" class="fselect" style="cursor:pointer;" onchange="filterCategoryLog()"><option value="">All engineers</option></select>
+      <select id="catFilterSubtype" class="fselect" style="display:none; cursor:pointer;" onchange="filterCategoryLog()"><option value="">All sub-categories</option></select>
     </div>
     <div class="placeholder-note" id="catLogNoLiftNote" style="display:none; text-align:left; max-width:420px; margin-bottom:20px;">This category isn't tied to a Lift ID — entries are general activity.</div>
  
@@ -3899,7 +3944,8 @@
     { date:'2026-09-11', summary:'Fixed a regression from yesterday\'s My Tasks height-matching fix: the left "Log a task" form was gaining a large empty gap at the bottom whenever the task list on the right was long. Root cause: .split-grid-tasks still had align-items:stretch, which makes BOTH grid columns match whichever is naturally taller — so a long list on the right was inflating the form panel\'s height too, and the height-sync JS was then measuring that already-inflated height, compounding the problem further. Switched to align-items:start so the form takes only its own natural height, completely unaffected by the list\'s length. Also refined the sync math to subtract the list panel\'s own title/padding from the target height, so the two panels\' TOTAL heights actually match rather than the list panel ending up taller by roughly its own title\'s height.' },
     { date:'2026-09-11', summary:'Fixed the gap-to-dock not being universal across pages, screenshotted on Home/Dashboard/Projects/Admin — this was a real regression from choosing an earlier checkpoint file a few updates back, which reverted several margin fixes made after that point without anyone noticing (section.block was back to 44px, several Admin panels back to 32px, and others). Re-applied all of those fixes. This time also added a structural safety net rather than just fixing what was visible: any page\'s true last section now has its own trailing margin forced to 0, so main\'s shared bottom padding is the ONLY source of that gap everywhere, by construction — a future page or panel that happens to add its own trailing margin can\'t reintroduce this same inconsistency again.' },
     { date:'2026-09-11', summary:'Real bug found in yesterday\'s "single line hero title on mobile" fix: it never actually took effect. The base rule was written as h1.hero-title (element+class), while the mobile override was just .hero-title (class only) — lower CSS specificity always loses to higher specificity regardless of media query matching or which one appears later in the file, so the 32px desktop size was winning on mobile the whole time, confirmed by a screenshot showing the text overflowing the screen. Fixed by matching the exact same selector specificity (h1.hero-title) in the mobile override. Also removed the hero description paragraph ("Search any Lift ID...") on mobile only, per request — desktop keeps it exactly as before.' },
-    { date:'2026-09-11', summary:'Found the real cause of the gap-to-dock still looking inconsistent on desktop after the previous fix: main\'s bottom padding was 70px on desktop but 100px on mobile — a genuine asymmetry, not something that could be fixed by the per-page margin cleanup alone. The dock is a fixed, floating element (bottom:18px + its own ~50px height), so 70px was barely enough to clear it at all, let alone leave a visible gap — confirmed by a screenshot showing the last card\'s text nearly touching/overlapped by the dock. Raised desktop to 100px to match mobile\'s already-generous value. Also bumped the mobile hero title font size up 2pt (17px→19px) per request, still fitting on one line.' }
+    { date:'2026-09-11', summary:'Found the real cause of the gap-to-dock still looking inconsistent on desktop after the previous fix: main\'s bottom padding was 70px on desktop but 100px on mobile — a genuine asymmetry, not something that could be fixed by the per-page margin cleanup alone. The dock is a fixed, floating element (bottom:18px + its own ~50px height), so 70px was barely enough to clear it at all, let alone leave a visible gap — confirmed by a screenshot showing the last card\'s text nearly touching/overlapped by the dock. Raised desktop to 100px to match mobile\'s already-generous value. Also bumped the mobile hero title font size up 2pt (17px→19px) per request, still fitting on one line.' },
+    { date:'2026-09-11', summary:'Audited two things per request and confirmed both were already correctly built (Category Log\'s By Section/Engineer/Sub-category filters, and Profile\'s symmetric-gap desktop-4-in-a-row score cards) — checked specifically for the same kind of CSS specificity bug that silently broke the hero title fix earlier, and neither has that problem. If either isn\'t showing correctly, the deployed file is likely out of date rather than a code issue. Actual new fix: filter/date controls on Category Log, Lift Trace, Dashboard, and My Tasks (anything using .fselect) used to each take their own ragged natural width once several sat together in a wrapping row on narrower screens — now flex evenly to fill the available width, fixed once for all of them since they share one class.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4554,6 +4600,29 @@
     document.getElementById('catLogSub').textContent = meta.hasLift
       ? `${currentCatRows.length} entries shown · search below to trace by Lift ID`
       : `${currentCatRows.length} entries shown · not tied to a Lift ID`;
+
+    // Engineer options built from who actually appears here, not the
+    // whole company roster — same reasoning as Lift Trace's filters.
+    const engineersPresent = new Map();
+    currentCatRows.forEach(r => { if(r.employee_id && !engineersPresent.has(r.employee_id)) engineersPresent.set(r.employee_id, r.profiles ? displayName(r.profiles) : '—'); });
+    document.getElementById('catFilterEngineer').innerHTML = '<option value="">All engineers</option>' +
+      [...engineersPresent.entries()].sort((a,b) => a[1].localeCompare(b[1])).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
+
+    // Sub-category filter only shows up if this category actually has
+    // one AND at least one loaded row has a real value for it — no point
+    // offering an empty dropdown for a category with no sub-categories.
+    const subtypeKey = SUBTYPE_DETAILS_KEY[key];
+    const subtypeSelect = document.getElementById('catFilterSubtype');
+    const subtypesPresent = subtypeKey ? [...new Set(currentCatRows.map(r => (r.details||{})[subtypeKey]).filter(Boolean))].sort() : [];
+    if(subtypesPresent.length){
+      subtypeSelect.innerHTML = '<option value="">All sub-categories</option>' + subtypesPresent.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+      subtypeSelect.style.display = '';
+    } else {
+      subtypeSelect.style.display = 'none';
+    }
+    document.getElementById('catFilterSection').value = '';
+    document.getElementById('catLogFilters').style.display = 'flex';
+
     renderCategoryRows(currentCatRows, meta.hasLift);
   }
  
@@ -4759,8 +4828,18 @@
  
   function filterCategoryLog(){
     const q = document.getElementById('catLogSearch').value.trim().toLowerCase();
+    const section = document.getElementById('catFilterSection').value;
+    const engineer = document.getElementById('catFilterEngineer').value;
+    const subtypeKey = SUBTYPE_DETAILS_KEY[currentCatKey];
+    const subtypeVal = document.getElementById('catFilterSubtype').value;
     const meta = catMeta[currentCatKey];
-    const filtered = q ? currentCatRows.filter(r => rowMatchesKeyword(r, q)) : currentCatRows;
+    const filtered = currentCatRows.filter(r => {
+      if(q && !rowMatchesKeyword(r, q)) return false;
+      if(section && (r.details || {})['Discipline'] !== section) return false;
+      if(engineer && r.employee_id !== engineer) return false;
+      if(subtypeKey && subtypeVal && (r.details || {})[subtypeKey] !== subtypeVal) return false;
+      return true;
+    });
     renderCategoryRows(filtered, meta.hasLift);
   }
 
