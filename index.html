@@ -15,6 +15,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   :root{
     --bg:#DDDFE5;
@@ -677,6 +678,12 @@
   .bar-label{font-size:12px; width:150px; color:var(--text-dim); flex-shrink:0;}
   .bar-track{flex:1; height:8px; background:var(--surface-alt); border-radius:4px; overflow:hidden;}
   .bar-fill{height:100%; background:var(--accent); border-radius:4px;}
+  /* 2026-09-18: bars grow from 0 to their real width on load, same
+     "settling into place" feel as the ring sweep animation above.
+     Shared by every percentage-width bar in the app (Profile's task
+     breakdown, Dashboard's category/engineer bars) via one class rather
+     than duplicating the same transition three times. */
+  .anim-bar-fill{ width:0 !important; transition:width 1s cubic-bezier(0.25,0.1,0.25,1); }
   .bar-val{font-size:11.5px; font-family:'IBM Plex Mono'; color:var(--text-faint); width:22px; text-align:right;}
  
   /* ---------- DASHBOARD FILTERS ---------- */
@@ -2301,6 +2308,25 @@
       <div><div class="block-title">Category Links</div><div class="block-sub">Superadmin only — the "Links" button on the task-entry form (currently just Post-Sales Activity and Reports) shows whatever's added here for that category.</div></div>
     </div>
     <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
+ 
+    <div class="block-head" id="dataArchiveBlock" style="display:none;">
+      <div><div class="block-title">Data Archive</div><div class="block-sub">Superadmin only — moves old tasks/projects to an Excel file on your Google Drive, then deletes them from the live database to free up space. Uses your own Google sign-in, not a shared credential.</div></div>
+    </div>
+    <div class="panel" id="dataArchivePanel" style="display:none; margin-bottom:14px;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+        <button class="submit-btn" id="archiveBtn6" onclick="runDataArchive(6, this)">Archive last 6 months</button>
+        <button class="submit-btn" id="archiveBtn12" onclick="runDataArchive(12, this)">Archive last 12 months</button>
+      </div>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+        <span style="font-size:12.5px; color:var(--text-faint);">Or a custom period:</span>
+        <input type="number" id="archiveCustomMonths" min="1" max="240" placeholder="e.g. 4" style="width:70px; padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text); font-size:13px;">
+        <span style="font-size:12.5px; color:var(--text-faint);">months</span>
+        <button class="submit-btn" id="archiveBtnCustom" style="padding:8px 14px;" onclick="const n=parseInt(document.getElementById('archiveCustomMonths').value,10); if(!n || n<1){ alert('Enter a number of months (1 or more).'); return; } runDataArchive(n, this);">Archive</button>
+      </div>
+      <div id="archiveStatusMsg" style="font-size:12.5px; margin-bottom:12px;"></div>
+      <div class="field-label" style="margin-bottom:8px;">Past archives</div>
+      <div id="archivesList"><div class="placeholder-note">Loading…</div></div>
+    </div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 14px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
@@ -3945,7 +3971,11 @@
     { date:'2026-09-11', summary:'Fixed the gap-to-dock not being universal across pages, screenshotted on Home/Dashboard/Projects/Admin — this was a real regression from choosing an earlier checkpoint file a few updates back, which reverted several margin fixes made after that point without anyone noticing (section.block was back to 44px, several Admin panels back to 32px, and others). Re-applied all of those fixes. This time also added a structural safety net rather than just fixing what was visible: any page\'s true last section now has its own trailing margin forced to 0, so main\'s shared bottom padding is the ONLY source of that gap everywhere, by construction — a future page or panel that happens to add its own trailing margin can\'t reintroduce this same inconsistency again.' },
     { date:'2026-09-11', summary:'Real bug found in yesterday\'s "single line hero title on mobile" fix: it never actually took effect. The base rule was written as h1.hero-title (element+class), while the mobile override was just .hero-title (class only) — lower CSS specificity always loses to higher specificity regardless of media query matching or which one appears later in the file, so the 32px desktop size was winning on mobile the whole time, confirmed by a screenshot showing the text overflowing the screen. Fixed by matching the exact same selector specificity (h1.hero-title) in the mobile override. Also removed the hero description paragraph ("Search any Lift ID...") on mobile only, per request — desktop keeps it exactly as before.' },
     { date:'2026-09-11', summary:'Found the real cause of the gap-to-dock still looking inconsistent on desktop after the previous fix: main\'s bottom padding was 70px on desktop but 100px on mobile — a genuine asymmetry, not something that could be fixed by the per-page margin cleanup alone. The dock is a fixed, floating element (bottom:18px + its own ~50px height), so 70px was barely enough to clear it at all, let alone leave a visible gap — confirmed by a screenshot showing the last card\'s text nearly touching/overlapped by the dock. Raised desktop to 100px to match mobile\'s already-generous value. Also bumped the mobile hero title font size up 2pt (17px→19px) per request, still fitting on one line.' },
-    { date:'2026-09-11', summary:'Audited two things per request and confirmed both were already correctly built (Category Log\'s By Section/Engineer/Sub-category filters, and Profile\'s symmetric-gap desktop-4-in-a-row score cards) — checked specifically for the same kind of CSS specificity bug that silently broke the hero title fix earlier, and neither has that problem. If either isn\'t showing correctly, the deployed file is likely out of date rather than a code issue. Actual new fix: filter/date controls on Category Log, Lift Trace, Dashboard, and My Tasks (anything using .fselect) used to each take their own ragged natural width once several sat together in a wrapping row on narrower screens — now flex evenly to fill the available width, fixed once for all of them since they share one class.' }
+    { date:'2026-09-11', summary:'Audited two things per request and confirmed both were already correctly built (Category Log\'s By Section/Engineer/Sub-category filters, and Profile\'s symmetric-gap desktop-4-in-a-row score cards) — checked specifically for the same kind of CSS specificity bug that silently broke the hero title fix earlier, and neither has that problem. If either isn\'t showing correctly, the deployed file is likely out of date rather than a code issue. Actual new fix: filter/date controls on Category Log, Lift Trace, Dashboard, and My Tasks (anything using .fselect) used to each take their own ragged natural width once several sat together in a wrapping row on narrower screens — now flex evenly to fill the available width, fixed once for all of them since they share one class.' },
+    { date:'2026-09-11', summary:'New Superadmin-only Data Archive feature (Admin panel): archive the last 6 or 12 months of tasks + R&I projects to an Excel file uploaded straight to Google Drive, then delete those same records from the live database to reclaim space on the 500MB free-tier limit. Deliberately per-user OAuth (each Superadmin connects their OWN Drive via a normal Google login popup, scoped to only ever see files this app itself creates) rather than one shared credential baked into the app — the same safety reasoning as why an auto-push-to-GitHub feature was declined earlier. A running list shows past archives with Download (pulls the file back from Drive) and Delete (removes it from Drive too) per period. Upload always happens BEFORE the database delete, never the reverse, so a failed upload can never mean lost data with nothing to show for it. Needs a one-time Google Cloud OAuth Client ID paste-in before it\'s functional — see the setup steps in the code comment, and the accompanying SQL migration that creates the new archives tracking table.' },
+    { date:'2026-09-11', summary:'Google Drive OAuth Client ID configured for the Data Archive feature — reused the existing "liftrni" client already set up for Google Sign-In, with the drive.file scope added to it and the app published (not left in Testing mode), so any Superadmin can connect their Drive without needing to be pre-listed as a test user. The Archive buttons in Admin should now actually work end to end rather than showing the "not set up yet" message.' },
+    { date:'2026-09-18', summary:'Rings and bars now sweep in from 0 to their real value on load, like a speedometer needle settling into place, instead of just appearing already at their final position — Profile and Dashboard rings (via the one shared scoreRingSvg function, so both got it in one change) use a native SVG animate element on stroke-dasharray; Profile\'s task breakdown bar, Dashboard\'s Top Engineers chart, and the leaderboard\'s score bars all use a shared CSS transition class instead, triggered a frame after insertion so the transition actually has something to animate from. Also investigated a report of uneven red/blue line marks on Profile\'s score cards on mobile — found no code anywhere (ring SVGs, card CSS, connector elements) that would draw anything like that; most likely an Android text-selection handle caught in the screenshot rather than something the app is rendering, pending a fresh screenshot to confirm.' },
+    { date:'2026-09-18', summary:'Data Archive: added a custom-period option (type any number of months — 2, 4, 15, whatever) alongside the existing 6/12 month presets. The underlying archive function already accepted any month value generically, it just had no way to be told anything besides those two fixed numbers before. Along the way, fixed how the function found its own button to disable during the operation — it looked up a fixed id pattern (archiveBtn6/archiveBtn12) that a custom value has no equivalent of, which would have silently left the button clickable during a custom-period run; now the button element itself is passed in directly from the click instead, correct for any value.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4306,11 +4336,39 @@
   // the track behind it still uses var(--border) safely since that part
   // never needs to change color.
   let ringGradientCounter = 0;
+  // 2026-09-18: rings sweep in from 0 to their real value on load/insert
+  // (like a car/bike speedometer settling into place) rather than just
+  // appearing already at their final position. Uses a native SVG
+  // <animate> element rather than a CSS transition — the ring's own
+  // stroke-dasharray starts at "0 circumference" and animates to the
+  // real dash value once, self-contained in the SVG itself, so it works
+  // correctly however/whenever this HTML gets inserted (innerHTML swaps
+  // don't reliably trigger CSS transitions the way appending a fresh
+  // element does).
+  // Call this right after inserting any HTML containing .anim-bar-fill
+  // elements (they start at width:0 via CSS). Reads each one's real
+  // target width from data-w and applies it one frame later — waiting a
+  // frame is required for the transition to actually animate rather
+  // than jump straight to the end value, since setting width:0 and its
+  // real value in the same paint gives the browser nothing to
+  // transition between.
+  function animateBars(){
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document.querySelectorAll('.anim-bar-fill').forEach(el => {
+          el.style.setProperty('width', el.dataset.w + '%', 'important');
+        });
+      });
+    });
+  }
+
   function scoreRingSvg(percent, color, size, label, trackColor, textColor, displayText, plain){
     const pct = Math.max(0, Math.min(100, percent));
     const r = 16.5;
     const circumference = 2 * Math.PI * r;
     const dash = (pct / 100) * circumference;
+    const dashAttr = `${dash.toFixed(1)} ${circumference.toFixed(1)}`;
+    const sweepAnimate = `<animate attributeName="stroke-dasharray" from="0 ${circumference.toFixed(1)}" to="${dashAttr}" dur="1.1s" fill="freeze" calcMode="spline" keySplines="0.25 0.1 0.25 1"/>`;
     const ariaText = displayText != null ? `${label || 'Value'}: ${displayText}` : `${label || 'Score'}: ${pct.toFixed(0)} percent`;
     // plain=true skips the gradient/glow entirely for a flat, simple ring
     // — used on the Dashboard, which wants a plain-infographic look;
@@ -4319,7 +4377,7 @@
     if(plain){
       return `<svg width="${size}" height="${size}" viewBox="0 0 42 42" role="img" aria-label="${ariaText}">
         <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${trackColor || 'var(--border)'}" stroke-width="4"></circle>
-        <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${color}" stroke-width="4" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)"></circle>
+        <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${color}" stroke-width="4" stroke-dasharray="0 ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)">${sweepAnimate}</circle>
         <text x="21" y="24.5" text-anchor="middle" style="font-size:9px; font-weight:700; font-family:'Inter', sans-serif;" fill="${textColor || 'var(--text)'}">${displayText != null ? displayText : pct.toFixed(0) + '%'}</text>
       </svg>`;
     }
@@ -4347,7 +4405,7 @@
         </filter>
       </defs>
       <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="${trackColor || 'var(--border)'}" stroke-width="3.5"></circle>
-      <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="3.5" stroke-dasharray="${dash.toFixed(1)} ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)" filter="url(#${fid})"></circle>
+      <circle cx="21" cy="21" r="${r}" fill="transparent" stroke="url(#${gid})" stroke-width="3.5" stroke-dasharray="0 ${circumference.toFixed(1)}" stroke-linecap="round" transform="rotate(-90 21 21)" filter="url(#${fid})">${sweepAnimate}</circle>
       <text x="21" y="24.5" text-anchor="middle" style="font-size:9px; font-weight:700; font-family:'Inter', sans-serif;" fill="${textColor || 'var(--text)'}">${displayText != null ? displayText : pct.toFixed(0) + '%'}</text>
     </svg>`;
   }
@@ -5648,6 +5706,231 @@
   // Backup/Restore actually works end to end, not just that the button
   // runs without erroring. The server-side restore_backup() function
   // needed the matching fix too — see the SQL migration for this update.
+  // ============ DATA ARCHIVE (Google Drive) ============
+  // 2026-09-11: lets a Superadmin move an old period's tasks + R&I
+  // projects out of the live database and into an Excel file on their
+  // own Google Drive, then delete those rows from Supabase to reclaim
+  // space on the free tier's 500MB limit. Deliberately per-user OAuth
+  // (each Superadmin connects their OWN Drive via a standard Google
+  // login popup) rather than one shared credential baked into the app —
+  // same reasoning as why this is safer than the "auto-push to GitHub"
+  // idea discussed earlier: nothing secret is embedded in this file,
+  // it's revocable by the user anytime from their own Google account
+  // settings, and the drive.file scope means this app can only ever see
+  // files it itself created — never the rest of their Drive.
+  //
+  // ⚠️ SETUP NEEDED: replace the placeholder below with a real OAuth
+  // Client ID from Google Cloud Console before this works. Steps:
+  // 1. console.cloud.google.com → create a project (free)
+  // 2. APIs & Services → Library → enable "Google Drive API"
+  // 3. APIs & Services → OAuth consent screen → External → fill in app
+  //    name/email → Scopes → add "https://www.googleapis.com/auth/drive.file"
+  //    (the narrow one — only sees files this app creates, not the whole Drive)
+  // 4. APIs & Services → Credentials → Create Credentials → OAuth client ID
+  //    → Application type: Web application → Authorized JavaScript origins:
+  //    add your GitHub Pages URL (e.g. https://rusafi44305.github.io)
+  // 5. Copy the Client ID it gives you and paste it below.
+  const GOOGLE_DRIVE_CLIENT_ID = '36119817827-eea1ie107kbgfruhvll6s5b4394ap2d4.apps.googleusercontent.com';
+  const GOOGLE_DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+  let googleDriveAccessToken = null;
+  let googleDriveTokenClient = null;
+
+  function ensureGoogleDriveAuth(){
+    return new Promise((resolve, reject) => {
+      if(GOOGLE_DRIVE_CLIENT_ID.startsWith('YOUR_CLIENT_ID')){
+        reject(new Error('Google Drive isn\'t set up yet — see the setup steps in the code comment above GOOGLE_DRIVE_CLIENT_ID.'));
+        return;
+      }
+      if(googleDriveAccessToken){ resolve(googleDriveAccessToken); return; }
+      if(!window.google || !window.google.accounts){
+        reject(new Error('Google sign-in script hasn\'t loaded yet — try again in a moment.'));
+        return;
+      }
+      if(!googleDriveTokenClient){
+        googleDriveTokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_DRIVE_CLIENT_ID,
+          scope: GOOGLE_DRIVE_SCOPE,
+          callback: (resp) => {
+            if(resp.error){ reject(new Error(resp.error)); return; }
+            googleDriveAccessToken = resp.access_token;
+            resolve(googleDriveAccessToken);
+          },
+        });
+      }
+      googleDriveTokenClient.requestAccessToken();
+    });
+  }
+
+  // Multipart upload — metadata (filename) + file content in one request,
+  // Drive API's standard approach for smaller files like these exports.
+  async function uploadFileToDrive(filename, blob){
+    const token = await ensureGoogleDriveAuth();
+    const metadata = { name: filename, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+    const form = new FormData();
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+    form.append('file', blob);
+    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: form,
+    });
+    if(!resp.ok) throw new Error(`Drive upload failed (${resp.status}): ${await resp.text()}`);
+    return resp.json(); // { id, name }
+  }
+
+  async function downloadFileFromDrive(fileId, filename){
+    const token = await ensureGoogleDriveAuth();
+    const resp = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if(!resp.ok) throw new Error(`Drive download failed (${resp.status}): ${await resp.text()}`);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function deleteFileFromDrive(fileId){
+    const token = await ensureGoogleDriveAuth();
+    const resp = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    // 404 is fine here — the file may have already been removed manually
+    // from Drive by the user; that shouldn't block deleting our own
+    // record of it.
+    if(!resp.ok && resp.status !== 404) throw new Error(`Drive delete failed (${resp.status}): ${await resp.text()}`);
+  }
+
+  // The actual archive-then-purge flow: fetch matching rows, build the
+  // Excel file (same flattening pattern as the existing Excel exports),
+  // upload it, THEN delete from Supabase only after the upload succeeds
+  // — never the other way around, so a failed upload can never mean
+  // lost data with nothing to show for it.
+  // 2026-09-18: takes the button element directly (passed as `this` from
+  // the onclick) rather than looking it up via a fixed id like
+  // `archiveBtn${months}` — that pattern only worked for the 2 preset
+  // buttons (6/12), and would have silently done nothing for a custom
+  // month value with no matching id to find.
+  async function runDataArchive(months, btn){
+    if(!currentProfile || currentProfile.role !== 'superadmin') return;
+    const statusEl = document.getElementById('archiveStatusMsg');
+    const periodEnd = new Date();
+    const periodStart = new Date();
+    periodStart.setMonth(periodStart.getMonth() - months);
+    const startStr = periodStart.toISOString().slice(0,10);
+    const endStr = periodEnd.toISOString().slice(0,10);
+    const periodLabel = `${periodStart.toLocaleDateString('en-GB',{month:'short',year:'numeric'})} – ${periodEnd.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}`;
+
+    const { data: taskRows, error: taskErr } = await sb.from('tasks').select('*, profiles(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr);
+    if(taskErr){ alert('Could not read tasks for this period: ' + taskErr.message); return; }
+    const { data: projectRows, error: projErr } = await sb.from('dev_projects').select('*').gte('created_at', startStr).lte('created_at', endStr);
+    if(projErr){ alert('Could not read projects for this period: ' + projErr.message); return; }
+
+    if(!taskRows.length && !projectRows.length){
+      alert(`No tasks or projects found in ${periodLabel} — nothing to archive.`);
+      return;
+    }
+    if(!confirm(`Archive ${taskRows.length} task(s) and ${projectRows.length} project(s) from ${periodLabel}?\n\nThis will upload an Excel file to your Google Drive, then PERMANENTLY DELETE these records from the live database. This cannot be undone.`)) return;
+
+    if(btn){ btn.disabled = true; }
+    if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Building the archive file…</span>';
+
+    try{
+      const wb = XLSX.utils.book_new();
+      if(taskRows.length){
+        const flatTasks = taskRows.map(row => {
+          const base = {
+            'Employee': row.profiles ? displayName(row.profiles) : '',
+            'Category': catMeta[row.category]?.name || row.category,
+            'Date': new Date(row.created_at).toLocaleDateString('en-GB'),
+            'Lift ID': row.lift_id || '',
+            'Project / Subject': row.project_name || '',
+          };
+          const details = row.details || {};
+          Object.entries(details).forEach(([k,v]) => { base[k] = Array.isArray(v) ? v.join(', ') : (v ?? ''); });
+          return base;
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(flatTasks), 'Tasks');
+      }
+      if(projectRows.length){
+        const flatProjects = projectRows.map(p => ({
+          'Project name': p.name || '', 'Status': p.status || '', 'Progress %': p.progress ?? '',
+          'Created': new Date(p.created_at).toLocaleDateString('en-GB'),
+        }));
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(flatProjects), 'Projects');
+      }
+      const excelBlob = new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const filename = `Archive_${startStr}_to_${endStr}.xlsx`;
+
+      if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Sign in to Google if prompted, then uploading to Drive…</span>';
+      const uploaded = await uploadFileToDrive(filename, excelBlob);
+
+      if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Upload done — removing archived records from the database…</span>';
+      if(taskRows.length){
+        const { error: delTaskErr } = await sb.from('tasks').delete().gte('created_at', startStr).lte('created_at', endStr);
+        if(delTaskErr) throw new Error('Uploaded to Drive successfully, but could not delete tasks from the database: ' + delTaskErr.message + '. Your data is safe in Drive either way — retry the delete manually or contact support.');
+      }
+      if(projectRows.length){
+        const { error: delProjErr } = await sb.from('dev_projects').delete().gte('created_at', startStr).lte('created_at', endStr);
+        if(delProjErr) throw new Error('Uploaded to Drive successfully, but could not delete projects from the database: ' + delProjErr.message);
+      }
+
+      const { error: metaErr } = await sb.from('archives').insert({
+        period_label: periodLabel, period_start: startStr, period_end: endStr,
+        drive_file_id: uploaded.id, drive_file_name: uploaded.name,
+        task_count: taskRows.length, project_count: projectRows.length,
+        created_by: currentUser.id,
+      });
+      if(metaErr) console.error('Archive succeeded but could not save its record in the archives list:', metaErr.message);
+
+      if(statusEl) statusEl.innerHTML = `<span style="color:var(--green);">✓ Archived ${taskRows.length} task(s) and ${projectRows.length} project(s) to Drive.</span>`;
+      loadArchivesList();
+    }catch(err){
+      if(statusEl) statusEl.innerHTML = `<span style="color:var(--red);">${escapeHtml(err.message)}</span>`;
+    }finally{
+      if(btn) btn.disabled = false;
+    }
+  }
+
+  async function loadArchivesList(){
+    const listEl = document.getElementById('archivesList');
+    if(!listEl) return;
+    const { data, error } = await sb.from('archives').select('*').order('created_at', { ascending: false });
+    if(error){ listEl.innerHTML = `<div class="placeholder-note">Could not load archives: ${error.message}</div>`; return; }
+    if(!data.length){ listEl.innerHTML = '<div class="placeholder-note">No archives yet.</div>'; return; }
+    listEl.innerHTML = data.map(a => `
+      <div style="padding:10px 12px; border:1px solid var(--border); border-radius:9px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div>
+          <div style="font-weight:600; font-size:13px;">${escapeHtml(a.period_label)}</div>
+          <div style="font-size:11px; color:var(--text-faint);">${a.task_count} tasks · ${a.project_count} projects · archived ${new Date(a.created_at).toLocaleDateString('en-GB')}</div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" style="padding:7px;" onclick="downloadArchive('${a.id}', '${a.drive_file_id}', '${escapeHtml(a.drive_file_name).replace(/'/g,"\\'")}')" title="Download from Drive" aria-label="Download from Drive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></button>
+          <button class="btn remove" style="padding:7px;" onclick="deleteArchive('${a.id}', '${a.drive_file_id}', '${escapeHtml(a.period_label).replace(/'/g,"\\'")}')" title="Delete this archive" aria-label="Delete this archive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        </div>
+      </div>`).join('');
+  }
+
+  async function downloadArchive(id, driveFileId, filename){
+    try{ await downloadFileFromDrive(driveFileId, filename); }
+    catch(err){ alert('Could not download from Drive: ' + err.message); }
+  }
+
+  async function deleteArchive(id, driveFileId, label){
+    if(!confirm(`Delete the archive "${label}"? This removes the file from Google Drive too — the task/project data it contained was already removed from the database when it was archived, so this deletes the last copy of that data.`)) return;
+    try{
+      await deleteFileFromDrive(driveFileId);
+      const { error } = await sb.from('archives').delete().eq('id', id);
+      if(error){ alert('Removed from Drive, but could not remove the archive record: ' + error.message); return; }
+      loadArchivesList();
+    }catch(err){
+      alert('Could not delete: ' + err.message);
+    }
+  }
+
   const BACKUP_TABLES = ['profiles','tasks','activity_log','notifications','notebook_tasks','chat_messages',
     'chip_options','installation_wings','data_issue_types','kpi_weights','app_settings','dev_projects','dev_project_tasks',
     'custom_fields','custom_subtypes','category_links'];
@@ -6061,6 +6344,9 @@ for a competing inline style first.`;
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('categoryLinksBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('categoryLinksAdminPanel').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('dataArchiveBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    document.getElementById('dataArchivePanel').style.display = isSuperadmin ? 'block' : 'none';
+    if(isSuperadmin) loadArchivesList();
     // customFieldsPanel deliberately stays hidden by default too, gated
     // by its own "Show section" toggle — only actually fetched
     // (loadCustomFieldsPanel) the first time someone opens it, not on
@@ -8157,10 +8443,11 @@ for a competing inline style first.`;
     bEl.innerHTML = sorted.length ? sorted.map(([cat,count], i) => `
       <div class="bar-row">
         <div class="bar-label" style="display:flex; align-items:center; gap:7px;">${categoryIconSvg(cat, 15, 'var(--text-faint)')}${catMeta[cat]?.name || cat}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(count/max*100)}%; background:${profileBarColors[i % profileBarColors.length]};"></div></div>
+        <div class="bar-track"><div class="bar-fill anim-bar-fill" data-w="${Math.round(count/max*100)}" style="width:0%; background:${profileBarColors[i % profileBarColors.length]};"></div></div>
         <div class="bar-val">${count}</div>
       </div>
     `).join('') : '<div class="placeholder-note">No tasks logged yet.</div>';
+    animateBars();
   }
  
   // ============ DASHBOARD (real data, Admin/Superadmin) ============
@@ -8520,12 +8807,13 @@ for a competing inline style first.`;
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
               <span style="font-size:10.5px; color:var(--text-faint); width:78px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${e.name}">${e.name}</span>
               <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; min-width:0;">
-                <div style="width:${Math.max(pct/maxKpi*100, 4)}%; height:100%; background:linear-gradient(90deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:99px; box-shadow:0 0 6px ${c}80;"></div>
+                <div class="anim-bar-fill" data-w="${Math.max(pct/maxKpi*100, 4)}" style="width:0%; height:100%; background:linear-gradient(90deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:99px; box-shadow:0 0 6px ${c}80;"></div>
               </div>
               <span style="font-size:10.5px; color:var(--text-faint); width:32px; text-align:right; flex-shrink:0;">${e.kpi.toFixed(1)}</span>
             </div>`;
           }).join('');
           topEngineersEl.innerHTML = rowsHtml;
+          animateBars();
         }
       }
     }
@@ -8543,7 +8831,7 @@ for a competing inline style first.`;
             // meter instead.
             return `<div style="display:flex; align-items:center; gap:8px;">
               <div style="width:46px; height:6px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; flex-shrink:0;">
-                <div style="width:${Math.max(pct, 6)}%; height:100%; background:#1D9E75; border-radius:99px;"></div>
+                <div class="anim-bar-fill" data-w="${Math.max(pct, 6)}" style="width:0%; height:100%; background:#1D9E75; border-radius:99px;"></div>
               </div>
               <span>${e.kpi.toFixed(1)}</span>
             </div>`;
@@ -8558,6 +8846,7 @@ for a competing inline style first.`;
         <td><button class="btn inspect" style="padding:4px 12px; font-size:11.5px;" onclick="event.stopPropagation(); document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">Inspect</button></td>
       </tr>`;
     }).join('') : '<tr><td colspan="7" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
+    animateBars();
 
     // Inspecting a specific engineer also surfaces their real individual
     // entries below — not just re-shown summary numbers the dropdown filter
