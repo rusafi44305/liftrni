@@ -3998,7 +3998,8 @@
     { date:'2026-09-18', summary:'Added Show/Hide toggle buttons to 4 more Admin sections — Score category weights, Category Links, Data Archive, Approved users — matching the pattern already used for Field Guide and Task Fields, via one new shared toggleAdminSection function rather than 4 more near-duplicate ones. All 4 now default to hidden/collapsed, reducing Admin\'s length considerably; Score category weights and Category Links also switched to lazy-loading their data only when actually opened, the same efficiency Task Fields already had, instead of fetching on every single Admin visit regardless of whether anyone looks at that section. Data Archive also reworked per feedback: removed the 6-month preset (redundant now that a custom option exists), kept 12 months, and replaced the "type a number of months" input with a precise month/year range picker (two native month pickers, "from" and "to") — archive labels now read like "January 2026 – June 2026" instead of a vague "X months back from today".' },
     { date:'2026-09-18', summary:'Three follow-up fixes. (1) Score category weights\' new Show/Hide button was wrapping onto its own line below the title instead of sitting to the right like every other section\'s — found the cause: its visibility was toggled with display:block while every correctly-behaving block-head uses display:flex, which is what actually keeps title and button on one row. (2) Data Archive\'s "Archive last 12 months" button and the precise month/year picker were stacked on separate rows with a large empty gap next to the first button — merged into one wrapping row so they share the space, on both desktop and mobile. (3) Added a manual "Delete DB data" button per archive in the Past Archives list — deliberately only ever appears attached to an existing archive row, so it\'s inherently only available for periods that already have a matching Drive backup, never as a free-standing delete-any-range tool. Exists for the rare case where an archive\'s upload succeeded but its automatic database delete step failed, leaving live data that should already be gone; normally unnecessary since archiving already deletes on success.' },
     { date:'2026-09-18', summary:'Replaced the "Delete DB data" button above after the actual goal turned out to be different: confirming an archive is genuinely intact, not deleting anything. New "Verify" button per archive is entirely read-only — downloads the real file from Drive, opens it with the same XLSX library used to create it, and compares its actual row counts against what was recorded at archive time, showing a clear match/mismatch result inline. Never touches Supabase\'s tasks or dev_projects tables in any way; nothing about this feature can delete or modify data anywhere.' },
-    { date:'2026-09-18', summary:'Found and fixed the real gap Verify couldn\'t solve on its own: Archive always did upload-then-delete as one atomic action, so by the time an archive existed to Verify, its data was already gone from Supabase — there was no way to actually test the flow safely. Split it into genuinely separate steps: a new checkbox ("also delete once the backup succeeds"), unchecked by default, controls whether a given run deletes anything at all — backup-only is now the default, verifiable with zero risk to live data. Added a new archives.data_deleted column to track which archives still have live data; the list now shows either "✓ Removed from the database" or "● Still live — backup only" per archive, with a deliberate "Delete from database" button appearing only for the latter — a genuine 3-step flow now: back up, Verify, then delete on purpose once confident, rather than one irreversible click.' }
+    { date:'2026-09-18', summary:'Found and fixed the real gap Verify couldn\'t solve on its own: Archive always did upload-then-delete as one atomic action, so by the time an archive existed to Verify, its data was already gone from Supabase — there was no way to actually test the flow safely. Split it into genuinely separate steps: a new checkbox ("also delete once the backup succeeds"), unchecked by default, controls whether a given run deletes anything at all — backup-only is now the default, verifiable with zero risk to live data. Added a new archives.data_deleted column to track which archives still have live data; the list now shows either "✓ Removed from the database" or "● Still live — backup only" per archive, with a deliberate "Delete from database" button appearing only for the latter — a genuine 3-step flow now: back up, Verify, then delete on purpose once confident, rather than one irreversible click.' },
+    { date:'2026-09-18', summary:'Fixed a real bug behind "stuck on Sign in to Google... forever, nothing happens": the sign-in flow had no error_callback and no timeout, so if the Google sign-in popup got blocked by the browser (common on mobile especially), neither success nor failure ever fired — the promise just hung forever with no way to know anything had gone wrong. Added Google\'s own error_callback for a blocked popup specifically, plus a 25-second timeout as a backstop, both giving a real, visible error message instead of an endless spinner. Also added the requested dedicated Drive folder — archives now go into "Lift RnI Website Archive" (created automatically on first use, found and reused after that, checked by exact name so re-running never creates duplicates) instead of landing loose at the top level of "My Drive".' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5758,6 +5759,14 @@
   let googleDriveAccessToken = null;
   let googleDriveTokenClient = null;
 
+  // 2026-09-18: fixed a real bug — if the sign-in popup gets blocked
+  // (common on mobile browsers especially), neither the success callback
+  // NOR any error ever fired, so this promise just hung forever with
+  // "Sign in to Google if prompted..." stuck on screen with nothing
+  // actually happening. Two fixes: error_callback (Google's own hook for
+  // exactly this — a popup that failed to open) and a timeout as a
+  // backstop in case something else goes silently wrong that even
+  // error_callback doesn't catch.
   function ensureGoogleDriveAuth(){
     return new Promise((resolve, reject) => {
       if(GOOGLE_DRIVE_CLIENT_ID.startsWith('YOUR_CLIENT_ID')){
@@ -5769,26 +5778,73 @@
         reject(new Error('Google sign-in script hasn\'t loaded yet — try again in a moment.'));
         return;
       }
-      if(!googleDriveTokenClient){
-        googleDriveTokenClient = google.accounts.oauth2.initTokenClient({
-          client_id: GOOGLE_DRIVE_CLIENT_ID,
-          scope: GOOGLE_DRIVE_SCOPE,
-          callback: (resp) => {
-            if(resp.error){ reject(new Error(resp.error)); return; }
-            googleDriveAccessToken = resp.access_token;
-            resolve(googleDriveAccessToken);
-          },
-        });
-      }
+      let settled = false;
+      const timeout = setTimeout(() => {
+        if(settled) return;
+        settled = true;
+        reject(new Error('Google sign-in didn\'t complete after 25 seconds — the sign-in popup was likely blocked by your browser. Try allowing popups for this site, or try again on desktop, then retry.'));
+      }, 25000);
+      googleDriveTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_DRIVE_CLIENT_ID,
+        scope: GOOGLE_DRIVE_SCOPE,
+        callback: (resp) => {
+          if(settled) return;
+          settled = true;
+          clearTimeout(timeout);
+          if(resp.error){ reject(new Error(resp.error)); return; }
+          googleDriveAccessToken = resp.access_token;
+          resolve(googleDriveAccessToken);
+        },
+        error_callback: (err) => {
+          if(settled) return;
+          settled = true;
+          clearTimeout(timeout);
+          reject(new Error(`Google sign-in couldn't open (${err.type || 'unknown reason'}) — this usually means the sign-in popup was blocked. Check your browser's popup-blocker settings for this site and try again.`));
+        },
+      });
       googleDriveTokenClient.requestAccessToken();
     });
   }
 
+  // Finds (or creates, on first use) a dedicated "Lift RnI Website
+  // Archive" folder in the user's Drive, so every archive lands in one
+  // place instead of scattered at the top level of "My Drive". Searches
+  // by exact name first — only creates a new one if genuinely none
+  // exists yet, so re-running this doesn't create duplicate folders.
+  let archiveFolderId = null;
+  async function ensureArchiveFolder(){
+    if(archiveFolderId) return archiveFolderId;
+    const token = await ensureGoogleDriveAuth();
+    const folderName = 'Lift RnI Website Archive';
+    const query = encodeURIComponent(`name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    const searchResp = await fetch(`https://www.googleapis.com/drive/v3/files?q=${query}&fields=files(id,name)`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if(!searchResp.ok) throw new Error(`Could not search Drive for the archive folder (${searchResp.status}): ${await searchResp.text()}`);
+    const searchData = await searchResp.json();
+    if(searchData.files && searchData.files.length){
+      archiveFolderId = searchData.files[0].id;
+      return archiveFolderId;
+    }
+    const createResp = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: folderName, mimeType: 'application/vnd.google-apps.folder' }),
+    });
+    if(!createResp.ok) throw new Error(`Could not create the archive folder (${createResp.status}): ${await createResp.text()}`);
+    const created = await createResp.json();
+    archiveFolderId = created.id;
+    return archiveFolderId;
+  }
+
   // Multipart upload — metadata (filename) + file content in one request,
   // Drive API's standard approach for smaller files like these exports.
+  // Now always places the file inside the dedicated archive folder
+  // rather than the root of "My Drive".
   async function uploadFileToDrive(filename, blob){
     const token = await ensureGoogleDriveAuth();
-    const metadata = { name: filename, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+    const folderId = await ensureArchiveFolder();
+    const metadata = { name: filename, mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', parents: [folderId] };
     const form = new FormData();
     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
     form.append('file', blob);
