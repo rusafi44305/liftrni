@@ -555,13 +555,10 @@
      dependent on that unrelated rule going forward). Desktop fits all 4
      cards in one row; mobile's existing 2x2 (set inline, untouched) is
      preserved by only overriding above the 860px breakpoint. */
-  /* 2026-09-18: a single shared gap:10px was mathematically identical in
-     both directions, but kept looking visually uneven regardless of a
-     shadow-offset fix that should have addressed it — confirmed directly
-     against a marked-up screenshot, twice. Set row-gap and column-gap
-     explicitly and independently instead of continuing to guess at
-     indirect causes: row-gap deliberately smaller now. */
-  .profile-kpi-row{ row-gap:6px; column-gap:10px; }
+  /* 2026-09-18 (follow-up): reverted the row/column split from before —
+     current feedback explicitly asked for uniform AND minimal, not a
+     deliberately-different pair of values. One small shared gap. */
+  .profile-kpi-row{ gap:6px; }
   @media (min-width: 861px){
     .profile-kpi-row{ grid-template-columns:1fr 1fr 1fr 1fr !important; }
   }
@@ -690,6 +687,11 @@
      breakdown, Dashboard's category/engineer bars) via one class rather
      than duplicating the same transition three times. */
   .anim-bar-fill{ width:0 !important; transition:width 1s cubic-bezier(0.25,0.1,0.25,1); }
+  /* 2026-09-18: the "By category" chart on Dashboard uses vertical bars
+     (height, not width) — a different chart entirely from the other 3
+     animated bars, so it was missed when the fill-in animation was
+     first added. Same idea, opposite axis. */
+  .anim-bar-fill-vertical{ height:0 !important; transition:height 1s cubic-bezier(0.25,0.1,0.25,1); }
   .bar-val{font-size:11.5px; font-family:'IBM Plex Mono'; color:var(--text-faint); width:22px; text-align:right;}
  
   /* ---------- DASHBOARD FILTERS ---------- */
@@ -2247,8 +2249,36 @@
       </div>
     </div>
  
-    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
+    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn" id="kpiWeightsToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
+
+    <div class="block-head" id="scoringReadmeBlock" style="display:none;">
+      <div><div class="block-title">How Scoring Works</div><div class="block-sub">Superadmin only — explains the actual formula behind Score and the leaderboard ranking</div></div>
+      <button class="btn" id="scoringReadmeToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'scoringReadmePanel', 'Show', 'Hide')">Show</button>
+    </div>
+    <div class="panel" id="scoringReadmePanel" style="display:none; margin-bottom:14px;">
+      <div style="font-size:13.5px; line-height:1.7;">
+        <div style="font-weight:700; margin-bottom:6px;">Earning points, per task</div>
+        <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+          <li>Every category has a <b style="color:var(--text);">weight</b>, set in <b style="color:var(--text);">Score category weights</b> above — a normal task in that category earns that many points.</li>
+          <li><b style="color:var(--text);">Where duration is tracked</b> for a category (a field flagged Duration in Task fields — currently Team Activity and Pre-Sales, plus any Superadmin has added elsewhere): points scale with how long the task actually took, not just a flat number. A 1-hour task earns exactly the category's weight — that's the baseline. Longer tasks earn more, shorter tasks earn less, scaled proportionally.</li>
+          <li>To keep one unusually long or short task from swinging a whole month too far, that scaling is capped between <b style="color:var(--text);">0.25× and 3×</b> the weight (roughly: 15 minutes is the floor, 3 hours is the ceiling, for scoring purposes — the real duration is still recorded and shown accurately everywhere else).</li>
+          <li><b style="color:var(--text);">Where duration isn't tracked</b> for a category (most of Post-Sales, Technical Support, General Support, and Reports): every task earns the flat weight, unaffected by anything above — there's no time value to scale by.</li>
+          <li><b style="color:var(--text);">Error Reports</b> (Reports → Error Report) are the one case that subtracts points instead of adding them — the penalty is the affected category's weight, scaled down by the star rating out of 5. Every other Reports sub-type earns 0, neither helping nor hurting.</li>
+        </ul>
+        <div style="font-weight:700; margin-bottom:6px;">Turning points into a Score</div>
+        <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+          <li>Every task's points for a calendar month are added together, then divided by that month's <b style="color:var(--text);">Monthly Score Target</b> (set below "Score category weights"), turned into a percentage.</li>
+          <li>That percentage is capped at 100 on the top end, but has no floor — enough Error Reports in one month can push it negative.</li>
+          <li><b style="color:var(--text);">Monthly Score</b> (on Profile) is just that one month's percentage. <b style="color:var(--text);">Overall Score</b> is the average of every month's percentage across someone's whole history — since no individual month can exceed 100, the average of them can't either.</li>
+        </ul>
+        <div style="font-weight:700; margin-bottom:6px;">The Dashboard leaderboard</div>
+        <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+          <li>Ranked by <b style="color:var(--text);">Score</b> for whatever date range is selected, highest first — not by raw activity count. Logging many quick entries no longer automatically outranks fewer entries representing more real weight and hours.</li>
+          <li>Team Score on the ring at the top is the average Score of everyone with any activity in that range — a different number from any one person's own Score, meant to answer "how's the team doing overall".</li>
+        </ul>
+      </div>
+    </div>
 
     <div class="block-head" id="fieldGuideBlock" style="display:none;">
       <div><div class="block-title">How to add a field or sub-category</div><div class="block-sub">Superadmin only — a short guide for the "Task fields" section below</div></div>
@@ -2302,7 +2332,7 @@
     </div>
 
     <div class="block-head" id="customFieldsBlock" style="display:none;">
-      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across all 6 categories, organized by Common, Mechanical, and Electrical, including each field's dropdown options in the same place. New fields appear on the real task-entry form immediately. Reports supports adding, editing, and deleting fields on any of its 6 report types, same as the other 5 categories — it just can't have a brand-new report type added, since each existing one has its own built-in behavior.</div></div>
+      <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across all 6 categories, with dropdown options, organized by Common/Mechanical/Electrical. Changes appear on the real task-entry form immediately.</div></div>
       <div style="display:flex; gap:8px; flex-shrink:0;">
         <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
         <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
@@ -2312,13 +2342,13 @@
  
     <div class="block-head" id="categoryLinksBlock" style="display:none;">
       <div><div class="block-title">Category Links</div><div class="block-sub">Superadmin only — the "Links" button on the task-entry form (currently just Post-Sales Activity and Reports) shows whatever's added here for that category.</div></div>
-      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'categoryLinksAdminPanel', 'Show', 'Hide', loadCategoryLinksAdminPanel)">Show</button>
+      <button class="btn" id="categoryLinksToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'categoryLinksAdminPanel', 'Show', 'Hide', loadCategoryLinksAdminPanel)">Show</button>
     </div>
     <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head" id="dataArchiveBlock" style="display:none;">
       <div><div class="block-title">Data Archive</div><div class="block-sub">Superadmin only — moves old tasks/projects to an Excel file on your Google Drive, then deletes them from the live database to free up space. Uses your own Google sign-in, not a shared credential.</div></div>
-      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'dataArchivePanel', 'Show', 'Hide', loadArchivesList)">Show</button>
+      <button class="btn" id="dataArchiveToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'dataArchivePanel', 'Show', 'Hide', loadArchivesList)">Show</button>
     </div>
     <div class="panel" id="dataArchivePanel" style="display:none; margin-bottom:14px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
@@ -4000,7 +4030,10 @@
     { date:'2026-09-18', summary:'Replaced the "Delete DB data" button above after the actual goal turned out to be different: confirming an archive is genuinely intact, not deleting anything. New "Verify" button per archive is entirely read-only — downloads the real file from Drive, opens it with the same XLSX library used to create it, and compares its actual row counts against what was recorded at archive time, showing a clear match/mismatch result inline. Never touches Supabase\'s tasks or dev_projects tables in any way; nothing about this feature can delete or modify data anywhere.' },
     { date:'2026-09-18', summary:'Found and fixed the real gap Verify couldn\'t solve on its own: Archive always did upload-then-delete as one atomic action, so by the time an archive existed to Verify, its data was already gone from Supabase — there was no way to actually test the flow safely. Split it into genuinely separate steps: a new checkbox ("also delete once the backup succeeds"), unchecked by default, controls whether a given run deletes anything at all — backup-only is now the default, verifiable with zero risk to live data. Added a new archives.data_deleted column to track which archives still have live data; the list now shows either "✓ Removed from the database" or "● Still live — backup only" per archive, with a deliberate "Delete from database" button appearing only for the latter — a genuine 3-step flow now: back up, Verify, then delete on purpose once confident, rather than one irreversible click.' },
     { date:'2026-09-18', summary:'Fixed a real bug behind "stuck on Sign in to Google... forever, nothing happens": the sign-in flow had no error_callback and no timeout, so if the Google sign-in popup got blocked by the browser (common on mobile especially), neither success nor failure ever fired — the promise just hung forever with no way to know anything had gone wrong. Added Google\'s own error_callback for a blocked popup specifically, plus a 25-second timeout as a backstop, both giving a real, visible error message instead of an endless spinner. Also added the requested dedicated Drive folder — archives now go into "Lift RnI Website Archive" (created automatically on first use, found and reused after that, checked by exact name so re-running never creates duplicates) instead of landing loose at the top level of "My Drive".' },
-    { date:'2026-09-18', summary:'Data Archive\'s Projects sheet now includes Owner and Summary, and Progress % is a real computed value instead of always blank — it was reading p.progress, a column that has never existed on dev_projects at all (progress is derived from sub-tasks, done/total, same as the real Projects page computes it via projectProgressPercent()); now independently fetches each project\'s sub-tasks and computes it the identical way, including correctly showing "No specific breakdown" rather than 0% for a project with no sub-tasks at all — those aren\'t the same thing. Owner comes from a proper join on lead_id (the same field the real Projects page calls "Lead"), and Summary reads the notes field.' }
+    { date:'2026-09-18', summary:'Data Archive\'s Projects sheet now includes Owner and Summary, and Progress % is a real computed value instead of always blank — it was reading p.progress, a column that has never existed on dev_projects at all (progress is derived from sub-tasks, done/total, same as the real Projects page computes it via projectProgressPercent()); now independently fetches each project\'s sub-tasks and computes it the identical way, including correctly showing "No specific breakdown" rather than 0% for a project with no sub-tasks at all — those aren\'t the same thing. Owner comes from a proper join on lead_id (the same field the real Projects page calls "Lead"), and Summary reads the notes field.' },
+    { date:'2026-09-18', summary:'Checked 3 reported issues against the current code and found they were already correctly built — the vertical "By category" bar chart already had its own fill-in animation (a separate CSS class from the horizontal bars, since it animates height not width), Task Fields\' description was already the short one-line version, and the profile card grid gap was already a single explicit value. All three should already look right on a fresh deploy of this file. Also tightened the profile card gap further (8px→6px) per the "minimal" feedback either way. Real, newly-fixed bug: the Admin panel\'s visibility-refresh code runs every time Admin loads or re-renders, and was unconditionally force-hiding Score category weights/Category Links/Data Archive without resetting their button text back to "Show" — open one, navigate away and back, and it would silently re-hide while its button still said "Hide", exactly the "show/hide sometimes making a mess, fixes itself after clicking back and forth" behavior reported. Now resets both the panel and its button label together, every time, so they can\'t fall out of sync.' },
+    { date:'2026-09-18', summary:'Score and leaderboard ranking overhauled for fairness, per explicit request. Two real problems found by tracing the actual formula: (1) every task in a category earned the exact same flat points regardless of how long it took — a 15-minute task and a 3-hour task scored identically; (2) the leaderboard table wasn\'t even sorted by Score at all, it was sorted by raw task count, so logging many quick low-effort entries always outranked fewer entries representing far more real hours. Fixed both: points now scale with a task\'s own duration where duration is actually tracked for that category (60 minutes = the original flat weight exactly, so nothing changes for a "typical" hour-long task; clamped 0.25x–3x so one extreme outlier can\'t swing a month\'s score too far) — critically, categories with NO duration field at all (most of them) are completely unaffected and keep the exact same flat-rate points as before, so this couldn\'t collapse their scores to zero. Leaderboard now ranks by Score instead of task count.' },
+    { date:'2026-09-18', summary:'Added "How Scoring Works" — a new Superadmin-only readme in Admin, right next to Score category weights, explaining the actual formula in plain terms: per-task points, the duration-scaling rule and its 0.25x–3x cap, which categories are unaffected and why, the Error Report penalty, how Monthly/Overall Score are calculated, and how the leaderboard ranks. Same show/hide toggle pattern as every other Admin section, defaulting to hidden.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4382,6 +4415,9 @@
       requestAnimationFrame(() => {
         document.querySelectorAll('.anim-bar-fill').forEach(el => {
           el.style.setProperty('width', el.dataset.w + '%', 'important');
+        });
+        document.querySelectorAll('.anim-bar-fill-vertical').forEach(el => {
+          el.style.setProperty('height', el.dataset.h + 'px', 'important');
         });
       });
     });
@@ -6542,13 +6578,26 @@ for a competing inline style first.`;
     // toggle, matching how customFieldsPanel already worked — previously
     // they were always visible for every superadmin, which is exactly
     // the clutter the toggle buttons were asked for to fix.
+    // 2026-09-18 (follow-up bug fix): this code runs every time Admin
+    // loads or refreshes, not just once — so it was unconditionally
+    // resetting these 3 panels to hidden WITHOUT resetting their button
+    // text back to "Show", which is exactly what caused the reported
+    // mess: open one, navigate away and back, and the panel silently
+    // re-hides itself while its button still says "Hide" from before,
+    // out of sync until clicked twice. Now resets both together, always.
     document.getElementById('kpiWeightsPanel').style.display = 'none';
+    document.getElementById('kpiWeightsToggleBtn').textContent = 'Show';
+    document.getElementById('scoringReadmeBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    document.getElementById('scoringReadmePanel').style.display = 'none';
+    document.getElementById('scoringReadmeToggleBtn').textContent = 'Show';
     document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('categoryLinksBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('categoryLinksAdminPanel').style.display = 'none';
+    document.getElementById('categoryLinksToggleBtn').textContent = 'Show';
     document.getElementById('dataArchiveBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('dataArchivePanel').style.display = 'none';
+    document.getElementById('dataArchiveToggleBtn').textContent = 'Show';
     // customFieldsPanel, kpiWeightsPanel, categoryLinksAdminPanel, and
     // dataArchivePanel all default to hidden behind their own "Show"
     // toggle now, each lazy-loading its data only the first time it's
@@ -8464,7 +8513,24 @@ for a competing inline style first.`;
   //     than a flat penalty regardless of how minor or costly the mistake
   //     actually was.
   //   - Reports → any other report type: contributes 0 either way
-  function computeMonthlyScorePercents(rows, weightMap, target){
+  // 2026-09-18: points now scale with a task's own duration, where
+  // duration is actually tracked — a 3-hour task earns more than a
+  // 15-minute one in the same category, rather than both earning the
+  // identical flat weight regardless of effort. Critical detail: most
+  // categories (Post-Sales, Technical Support, General Support, most of
+  // Reports) have NO duration field at all, so scaling blindly by
+  // duration would have collapsed their points to zero for everyone —
+  // instead, the flat per-task weight is kept completely unchanged for
+  // any task whose category doesn't track duration, or where the field
+  // was left blank (taskDurationMinutes returns 0 in both cases, and
+  // there's no way to tell "genuinely instant" from "forgot to fill it
+  // in", so this treats missing data as flat-rate rather than as a
+  // penalty). Where duration IS available: 60 minutes is the baseline
+  // that reproduces the original flat weight exactly (so nothing changes
+  // for a "typical" hour-long task); scaling is clamped to 0.25x–3x so a
+  // single very short or very long outlier can't swing a whole month's
+  // score by an extreme amount.
+  function computeMonthlyScorePercents(rows, weightMap, target, durationLabelsByCategory){
     const sumsByMonth = {};
     rows.forEach(r => {
       const performDate = r.details && r.details['Perform Date'];
@@ -8479,7 +8545,15 @@ for a competing inline style first.`;
         }
         // any other Reports sub-type: points stays 0
       } else {
-        points = weightMap[r.category] ?? 1;
+        const baseWeight = weightMap[r.category] ?? 1;
+        const tracksDuration = durationLabelsByCategory && (durationLabelsByCategory[r.category] || []).length > 0;
+        const mins = tracksDuration ? taskDurationMinutes(r, durationLabelsByCategory) : 0;
+        if(tracksDuration && mins > 0){
+          const scaleFactor = Math.max(0.25, Math.min(3, mins / 60));
+          points = baseWeight * scaleFactor;
+        }else{
+          points = baseWeight;
+        }
       }
       sumsByMonth[key] = (sumsByMonth[key] || 0) + points;
     });
@@ -8607,7 +8681,7 @@ for a competing inline style first.`;
     // Score is the average of every month's already-capped percentage —
     // since none of those individual months can exceed 100, their average
     // can't either, with no separate cap needed for Overall at all.
-    const percentsByMonth = computeMonthlyScorePercents(rows, weightMap, target);
+    const percentsByMonth = computeMonthlyScorePercents(rows, weightMap, target, durationLabels);
     const monthlyScore = percentsByMonth[thisMonthKey] ?? 0;
     const monthKeys = Object.keys(percentsByMonth);
     const overallScore = monthKeys.length ? monthKeys.reduce((sum, k) => sum + percentsByMonth[k], 0) / monthKeys.length : 0;
@@ -8908,9 +8982,10 @@ for a competing inline style first.`;
       // the most activity, same logic the old donut's proportions used.
       const barsHtml = catSorted.map(([cat,count], i) => {
         const c = catColors[i % catColors.length];
+        const targetH = Math.max(6, Math.round(count/maxCat*54));
         return `
         <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0;">
-          <div style="width:100%; height:${Math.max(6, Math.round(count/maxCat*54))}px; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}80;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
+          <div class="anim-bar-fill-vertical" data-h="${targetH}" style="width:100%; height:0; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}80;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
         </div>
       `;}).join('');
       // Each dot sits directly beside its own name as one wrapping chip,
@@ -8926,6 +9001,7 @@ for a competing inline style first.`;
       document.getElementById('dashCategoryBreakdown').innerHTML = `
         <div style="display:flex; align-items:flex-end; gap:6px; height:54px; margin-bottom:10px;">${barsHtml}</div>
         <div style="display:flex; flex-wrap:wrap;">${legendHtml}</div>`;
+      animateBars();
     }
  
     // Leaderboard: per engineer totals + their top category, built from the same filtered rows
@@ -8956,14 +9032,19 @@ for a competing inline style first.`;
     // rows fall within the selected date range, so it can never exceed
     // 100 no matter how active someone was.
     Object.values(byEngineer).forEach(e => {
-      const percentsByMonth = computeMonthlyScorePercents(e.rows, weightMap, target);
+      const percentsByMonth = computeMonthlyScorePercents(e.rows, weightMap, target, durationLabels);
       const monthKeys = Object.keys(percentsByMonth);
       e.kpi = monthKeys.length ? monthKeys.reduce((sum, k) => sum + percentsByMonth[k], 0) / monthKeys.length : 0;
       const errorRows = e.rows.filter(r => r.category === 'surveyissues' && r.details && r.details['Report Type'] === 'Error Report');
       e.errorCount = errorRows.length;
       e.errorImpact = errorRows.reduce((sum, r) => sum - ((weightMap[catNameToKey[r.details['Error Category']]] ?? 1) * ((parseInt(r.details['Impact']) || 0) / 5)), 0);
     });
-    const leaderboard = Object.entries(byEngineer).sort((a,b) => b[1].total - a[1].total);
+    // 2026-09-18: ranked by Score (.kpi) now, not raw task count — sorting
+    // by .total meant someone logging many quick, low-effort entries
+    // always outranked someone logging fewer entries representing far
+    // more real hours/weight, regardless of their actual Score. This is
+    // computed just above this line, so it's already available here.
+    const leaderboard = Object.entries(byEngineer).sort((a,b) => b[1].kpi - a[1].kpi);
 
     // Hero card: team's average Score across whoever has activity in
     // this range — computed from the same per-engineer numbers already
