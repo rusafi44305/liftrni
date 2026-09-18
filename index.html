@@ -2247,7 +2247,7 @@
       </div>
     </div>
  
-    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div></div>
+    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head" id="fieldGuideBlock" style="display:none;">
@@ -2312,22 +2312,24 @@
  
     <div class="block-head" id="categoryLinksBlock" style="display:none;">
       <div><div class="block-title">Category Links</div><div class="block-sub">Superadmin only — the "Links" button on the task-entry form (currently just Post-Sales Activity and Reports) shows whatever's added here for that category.</div></div>
+      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'categoryLinksAdminPanel', 'Show', 'Hide', loadCategoryLinksAdminPanel)">Show</button>
     </div>
     <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head" id="dataArchiveBlock" style="display:none;">
       <div><div class="block-title">Data Archive</div><div class="block-sub">Superadmin only — moves old tasks/projects to an Excel file on your Google Drive, then deletes them from the live database to free up space. Uses your own Google sign-in, not a shared credential.</div></div>
+      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'dataArchivePanel', 'Show', 'Hide', loadArchivesList)">Show</button>
     </div>
     <div class="panel" id="dataArchivePanel" style="display:none; margin-bottom:14px;">
-      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
-        <button class="submit-btn" id="archiveBtn6" onclick="runDataArchive(6, this)">Archive last 6 months</button>
-        <button class="submit-btn" id="archiveBtn12" onclick="runDataArchive(12, this)">Archive last 12 months</button>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
+        <button class="submit-btn" id="archiveBtn12" onclick="const e=new Date(), s=new Date(); s.setMonth(s.getMonth()-12); const r=computeMonthRange(s.toISOString().slice(0,7), e.toISOString().slice(0,7)); runDataArchive(r.startStr, r.endStr, r.periodLabel, this);">Archive last 12 months</button>
       </div>
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-        <span style="font-size:12.5px; color:var(--text-faint);">Or a custom period:</span>
-        <input type="number" id="archiveCustomMonths" min="1" max="240" placeholder="e.g. 4" style="width:70px; padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text); font-size:13px;">
-        <span style="font-size:12.5px; color:var(--text-faint);">months</span>
-        <button class="submit-btn" id="archiveBtnCustom" style="padding:8px 14px;" onclick="const n=parseInt(document.getElementById('archiveCustomMonths').value,10); if(!n || n<1){ alert('Enter a number of months (1 or more).'); return; } runDataArchive(n, this);">Archive</button>
+        <span style="font-size:12.5px; color:var(--text-faint);">Or a precise period:</span>
+        <input type="month" id="archiveFromMonth" style="padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text); font-size:13px;">
+        <span style="font-size:12.5px; color:var(--text-faint);">to</span>
+        <input type="month" id="archiveToMonth" style="padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text); font-size:13px;">
+        <button class="submit-btn" id="archiveBtnCustom" style="padding:8px 14px;" onclick="const r=computeMonthRange(document.getElementById('archiveFromMonth').value, document.getElementById('archiveToMonth').value); if(!r){ alert('Pick both a \'from\' and \'to\' month.'); return; } if(r.error){ alert(r.error); return; } runDataArchive(r.startStr, r.endStr, r.periodLabel, this);">Archive</button>
       </div>
       <div id="archiveStatusMsg" style="font-size:12.5px; margin-bottom:12px;"></div>
       <div class="field-label" style="margin-bottom:8px;">Past archives</div>
@@ -2337,8 +2339,8 @@
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 14px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
-    <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div></div>
-    <div class="panel no-shine" style="padding:8px 20px;">
+    <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div><button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'approvedUsersPanel', 'Show', 'Hide')">Show</button></div>
+    <div class="panel no-shine" id="approvedUsersPanel" style="display:none; padding:8px 20px;">
       <table class="data">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Discipline</th><th>Status</th><th></th></tr></thead>
         <tbody>
@@ -3983,7 +3985,8 @@
     { date:'2026-09-18', summary:'Rings and bars now sweep in from 0 to their real value on load, like a speedometer needle settling into place, instead of just appearing already at their final position — Profile and Dashboard rings (via the one shared scoreRingSvg function, so both got it in one change) use a native SVG animate element on stroke-dasharray; Profile\'s task breakdown bar, Dashboard\'s Top Engineers chart, and the leaderboard\'s score bars all use a shared CSS transition class instead, triggered a frame after insertion so the transition actually has something to animate from. Also investigated a report of uneven red/blue line marks on Profile\'s score cards on mobile — found no code anywhere (ring SVGs, card CSS, connector elements) that would draw anything like that; most likely an Android text-selection handle caught in the screenshot rather than something the app is rendering, pending a fresh screenshot to confirm.' },
     { date:'2026-09-18', summary:'Data Archive: added a custom-period option (type any number of months — 2, 4, 15, whatever) alongside the existing 6/12 month presets. The underlying archive function already accepted any month value generically, it just had no way to be told anything besides those two fixed numbers before. Along the way, fixed how the function found its own button to disable during the operation — it looked up a fixed id pattern (archiveBtn6/archiveBtn12) that a custom value has no equivalent of, which would have silently left the button clickable during a custom-period run; now the button element itself is passed in directly from the click instead, correct for any value.' },
     { date:'2026-09-18', summary:'Found the real cause of Profile\'s score cards looking like they had unequal horizontal/vertical gaps on mobile: the grid gap itself was already identical in both directions, but the "floating glass" shadow added a while back (0 32px 70px, a strong downward offset for the "lifted" look) spread noticeably further below each card than beside it, visually skewing how the gaps looked even though the numbers were the same. Reduced the shadow\'s offset/blur to be far less directionally biased in both places it\'s used (Activity Trend panel and all 4 Profile score cards) — same floating-glass feel, without the asymmetric visual weight. Also moved Dashboard\'s "Team overview" ring labels on mobile from beside each ring to below it, matching how desktop already does it — more symmetric, and consistent between the two layouts instead of only one of them doing it that way.' },
-    { date:'2026-09-18', summary:'The shadow-offset fix above wasn\'t enough — confirmed directly against a marked-up screenshot that the vertical gap between rows of Profile\'s score cards still looked bigger than the horizontal gap between columns. Stopped guessing at indirect causes and set row-gap/column-gap explicitly and independently instead of one shared gap value: row-gap is now deliberately smaller (6px vs 10px) to directly correct the visual imbalance rather than relying on shadow tuning to compensate for it.' }
+    { date:'2026-09-18', summary:'The shadow-offset fix above wasn\'t enough — confirmed directly against a marked-up screenshot that the vertical gap between rows of Profile\'s score cards still looked bigger than the horizontal gap between columns. Stopped guessing at indirect causes and set row-gap/column-gap explicitly and independently instead of one shared gap value: row-gap is now deliberately smaller (6px vs 10px) to directly correct the visual imbalance rather than relying on shadow tuning to compensate for it.' },
+    { date:'2026-09-18', summary:'Added Show/Hide toggle buttons to 4 more Admin sections — Score category weights, Category Links, Data Archive, Approved users — matching the pattern already used for Field Guide and Task Fields, via one new shared toggleAdminSection function rather than 4 more near-duplicate ones. All 4 now default to hidden/collapsed, reducing Admin\'s length considerably; Score category weights and Category Links also switched to lazy-loading their data only when actually opened, the same efficiency Task Fields already had, instead of fetching on every single Admin visit regardless of whether anyone looks at that section. Data Archive also reworked per feedback: removed the 6-month preset (redundant now that a custom option exists), kept 12 months, and replaced the "type a number of months" input with a precise month/year range picker (two native month pickers, "from" and "to") — archive labels now read like "January 2026 – June 2026" instead of a vague "X months back from today".' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5822,15 +5825,31 @@
   // `archiveBtn${months}` — that pattern only worked for the 2 preset
   // buttons (6/12), and would have silently done nothing for a custom
   // month value with no matching id to find.
-  async function runDataArchive(months, btn){
+  // 2026-09-18: refactored to take explicit start/end dates rather than
+  // a "months back from today" number — the precise month/year picker
+  // in the UI computes the exact calendar range (first day of the "from"
+  // month to last day of the "to" month) and passes it straight in,
+  // rather than this function guessing a range from an arbitrary count.
+  // Converts two <input type="month"> values ("YYYY-MM") into a precise
+  // calendar range — first day of the "from" month through the last day
+  // of the "to" month — plus a matching label like "January 2026 – June
+  // 2026". Used by the precise month/year archive picker.
+  function computeMonthRange(fromMonth, toMonth){
+    if(!fromMonth || !toMonth) return null;
+    const [fy, fm] = fromMonth.split('-').map(Number);
+    const [ty, tm] = toMonth.split('-').map(Number);
+    const startDate = new Date(fy, fm - 1, 1);
+    const endDate = new Date(ty, tm, 0); // day 0 of next month = last day of this month
+    if(startDate > endDate) return { error: '"From" month must be before or the same as "To" month.' };
+    const startStr = startDate.toISOString().slice(0,10);
+    const endStr = endDate.toISOString().slice(0,10);
+    const periodLabel = `${startDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'})} – ${endDate.toLocaleDateString('en-GB',{month:'long',year:'numeric'})}`;
+    return { startStr, endStr, periodLabel };
+  }
+
+  async function runDataArchive(startStr, endStr, periodLabel, btn){
     if(!currentProfile || currentProfile.role !== 'superadmin') return;
     const statusEl = document.getElementById('archiveStatusMsg');
-    const periodEnd = new Date();
-    const periodStart = new Date();
-    periodStart.setMonth(periodStart.getMonth() - months);
-    const startStr = periodStart.toISOString().slice(0,10);
-    const endStr = periodEnd.toISOString().slice(0,10);
-    const periodLabel = `${periodStart.toLocaleDateString('en-GB',{month:'short',year:'numeric'})} – ${periodEnd.toLocaleDateString('en-GB',{month:'short',year:'numeric'})}`;
 
     const { data: taskRows, error: taskErr } = await sb.from('tasks').select('*, profiles(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr);
     if(taskErr){ alert('Could not read tasks for this period: ' + taskErr.message); return; }
@@ -6347,21 +6366,23 @@ for a competing inline style first.`;
     document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
     const backupSection = document.getElementById('accountMenuBackupSection');
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
-    document.getElementById('kpiWeightsPanel').style.display = isSuperadmin ? 'block' : 'none';
+    // 2026-09-18: these 3 now default to hidden behind their own "Show"
+    // toggle, matching how customFieldsPanel already worked — previously
+    // they were always visible for every superadmin, which is exactly
+    // the clutter the toggle buttons were asked for to fix.
+    document.getElementById('kpiWeightsPanel').style.display = 'none';
     document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('categoryLinksBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('categoryLinksAdminPanel').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('categoryLinksAdminPanel').style.display = 'none';
     document.getElementById('dataArchiveBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('dataArchivePanel').style.display = isSuperadmin ? 'block' : 'none';
-    if(isSuperadmin) loadArchivesList();
-    // customFieldsPanel deliberately stays hidden by default too, gated
-    // by its own "Show section" toggle — only actually fetched
-    // (loadCustomFieldsPanel) the first time someone opens it, not on
-    // every single Admin panel visit. Category Links is small enough
-    // (just 2 categories' worth) that it doesn't need that same gate —
-    // loaded eagerly here instead, same as the KPI weights right above.
-    if(isSuperadmin){ await loadAppSettings(); loadKpiWeights(); loadCategoryLinksAdminPanel(); }
+    document.getElementById('dataArchivePanel').style.display = 'none';
+    // customFieldsPanel, kpiWeightsPanel, categoryLinksAdminPanel, and
+    // dataArchivePanel all default to hidden behind their own "Show"
+    // toggle now, each lazy-loading its data only the first time it's
+    // actually opened rather than fetching on every single Admin visit
+    // whether or not anyone looks at that section.
+    if(isSuperadmin){ await loadAppSettings(); }
  
     const pendWrap = document.getElementById('pendingSigninsPanel');
     if(pendWrap){
@@ -6512,6 +6533,23 @@ for a competing inline style first.`;
   // dedicated rendering that used to live here is gone; there's nothing
   // left to render that the per-field Options modal doesn't already
   // cover.
+
+  // 2026-09-18: generic version of the toggleFieldGuideVisibility /
+  // toggleCustomFieldsSectionVisibility pattern already used elsewhere —
+  // rather than writing 4 more near-identical functions for Score
+  // category weights, Category Links, Data Archive, and Approved users,
+  // this one function covers all of them. onShow is optional, for
+  // panels that need to lazy-load their data the first time they're
+  // actually opened rather than fetching it on every Admin page visit
+  // whether or not anyone looks at that section.
+  function toggleAdminSection(btn, panelId, showLabel, hideLabel, onShow){
+    const panel = document.getElementById(panelId);
+    if(!panel) return;
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    btn.textContent = isHidden ? hideLabel : showLabel;
+    if(isHidden && onShow) onShow();
+  }
 
   function toggleFieldGuideVisibility(btn){
     const panel = document.getElementById('fieldGuidePanel');
