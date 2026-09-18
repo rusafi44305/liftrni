@@ -2321,14 +2321,25 @@
       <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'dataArchivePanel', 'Show', 'Hide', loadArchivesList)">Show</button>
     </div>
     <div class="panel" id="dataArchivePanel" style="display:none; margin-bottom:14px;">
-      <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
-        <button class="submit-btn" id="archiveBtn12" onclick="const e=new Date(), s=new Date(); s.setMonth(s.getMonth()-12); const r=computeMonthRange(s.toISOString().slice(0,7), e.toISOString().slice(0,7)); runDataArchive(r.startStr, r.endStr, r.periodLabel, this);">Archive last 12 months</button>
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+        <button class="submit-btn" id="archiveBtn12" onclick="const e=new Date(), s=new Date(); s.setMonth(s.getMonth()-12); const r=computeMonthRange(s.toISOString().slice(0,7), e.toISOString().slice(0,7)); runDataArchive(r.startStr, r.endStr, r.periodLabel, this, document.getElementById('archiveAlsoDelete').checked);">Archive last 12 months</button>
         <span style="font-size:12.5px; color:var(--text-faint);">or a precise period:</span>
         <input type="month" id="archiveFromMonth" style="padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text); font-size:13px;">
         <span style="font-size:12.5px; color:var(--text-faint);">to</span>
         <input type="month" id="archiveToMonth" style="padding:7px 10px; border-radius:8px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text); font-size:13px;">
-        <button class="submit-btn" id="archiveBtnCustom" style="padding:8px 14px;" onclick="const r=computeMonthRange(document.getElementById('archiveFromMonth').value, document.getElementById('archiveToMonth').value); if(!r){ alert('Pick both a \'from\' and \'to\' month.'); return; } if(r.error){ alert(r.error); return; } runDataArchive(r.startStr, r.endStr, r.periodLabel, this);">Archive</button>
+        <button class="submit-btn" id="archiveBtnCustom" style="padding:8px 14px;" onclick="const r=computeMonthRange(document.getElementById('archiveFromMonth').value, document.getElementById('archiveToMonth').value); if(!r){ alert('Pick both a \'from\' and \'to\' month.'); return; } if(r.error){ alert(r.error); return; } runDataArchive(r.startStr, r.endStr, r.periodLabel, this, document.getElementById('archiveAlsoDelete').checked);">Archive</button>
       </div>
+      <!-- 2026-09-18: split "Archive" into two genuinely separate steps —
+           this checkbox controls whether THIS run also deletes from the
+           database, defaulting unchecked (backup-only). That means an
+           archive can be created, then checked with Verify, with the
+           live data still fully intact the whole time — there was
+           previously no way to do that, since upload and delete always
+           happened together as one atomic action. -->
+      <label style="display:flex; align-items:center; gap:7px; font-size:12.5px; color:var(--text-dim); margin-bottom:12px; cursor:pointer;">
+        <input type="checkbox" id="archiveAlsoDelete" style="width:15px; height:15px; cursor:pointer;">
+        Also delete this period's data from the database once the backup succeeds (unchecked = backup only, nothing deleted — recommended until you've verified it)
+      </label>
       <div id="archiveStatusMsg" style="font-size:12.5px; margin-bottom:12px;"></div>
       <div class="field-label" style="margin-bottom:8px;">Past archives</div>
       <div id="archivesList"><div class="placeholder-note">Loading…</div></div>
@@ -3986,7 +3997,8 @@
     { date:'2026-09-18', summary:'The shadow-offset fix above wasn\'t enough — confirmed directly against a marked-up screenshot that the vertical gap between rows of Profile\'s score cards still looked bigger than the horizontal gap between columns. Stopped guessing at indirect causes and set row-gap/column-gap explicitly and independently instead of one shared gap value: row-gap is now deliberately smaller (6px vs 10px) to directly correct the visual imbalance rather than relying on shadow tuning to compensate for it.' },
     { date:'2026-09-18', summary:'Added Show/Hide toggle buttons to 4 more Admin sections — Score category weights, Category Links, Data Archive, Approved users — matching the pattern already used for Field Guide and Task Fields, via one new shared toggleAdminSection function rather than 4 more near-duplicate ones. All 4 now default to hidden/collapsed, reducing Admin\'s length considerably; Score category weights and Category Links also switched to lazy-loading their data only when actually opened, the same efficiency Task Fields already had, instead of fetching on every single Admin visit regardless of whether anyone looks at that section. Data Archive also reworked per feedback: removed the 6-month preset (redundant now that a custom option exists), kept 12 months, and replaced the "type a number of months" input with a precise month/year range picker (two native month pickers, "from" and "to") — archive labels now read like "January 2026 – June 2026" instead of a vague "X months back from today".' },
     { date:'2026-09-18', summary:'Three follow-up fixes. (1) Score category weights\' new Show/Hide button was wrapping onto its own line below the title instead of sitting to the right like every other section\'s — found the cause: its visibility was toggled with display:block while every correctly-behaving block-head uses display:flex, which is what actually keeps title and button on one row. (2) Data Archive\'s "Archive last 12 months" button and the precise month/year picker were stacked on separate rows with a large empty gap next to the first button — merged into one wrapping row so they share the space, on both desktop and mobile. (3) Added a manual "Delete DB data" button per archive in the Past Archives list — deliberately only ever appears attached to an existing archive row, so it\'s inherently only available for periods that already have a matching Drive backup, never as a free-standing delete-any-range tool. Exists for the rare case where an archive\'s upload succeeded but its automatic database delete step failed, leaving live data that should already be gone; normally unnecessary since archiving already deletes on success.' },
-    { date:'2026-09-18', summary:'Replaced the "Delete DB data" button above after the actual goal turned out to be different: confirming an archive is genuinely intact, not deleting anything. New "Verify" button per archive is entirely read-only — downloads the real file from Drive, opens it with the same XLSX library used to create it, and compares its actual row counts against what was recorded at archive time, showing a clear match/mismatch result inline. Never touches Supabase\'s tasks or dev_projects tables in any way; nothing about this feature can delete or modify data anywhere.' }
+    { date:'2026-09-18', summary:'Replaced the "Delete DB data" button above after the actual goal turned out to be different: confirming an archive is genuinely intact, not deleting anything. New "Verify" button per archive is entirely read-only — downloads the real file from Drive, opens it with the same XLSX library used to create it, and compares its actual row counts against what was recorded at archive time, showing a clear match/mismatch result inline. Never touches Supabase\'s tasks or dev_projects tables in any way; nothing about this feature can delete or modify data anywhere.' },
+    { date:'2026-09-18', summary:'Found and fixed the real gap Verify couldn\'t solve on its own: Archive always did upload-then-delete as one atomic action, so by the time an archive existed to Verify, its data was already gone from Supabase — there was no way to actually test the flow safely. Split it into genuinely separate steps: a new checkbox ("also delete once the backup succeeds"), unchecked by default, controls whether a given run deletes anything at all — backup-only is now the default, verifiable with zero risk to live data. Added a new archives.data_deleted column to track which archives still have live data; the list now shows either "✓ Removed from the database" or "● Still live — backup only" per archive, with a deliberate "Delete from database" button appearing only for the latter — a genuine 3-step flow now: back up, Verify, then delete on purpose once confident, rather than one irreversible click.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5847,7 +5859,7 @@
     return { startStr, endStr, periodLabel };
   }
 
-  async function runDataArchive(startStr, endStr, periodLabel, btn){
+  async function runDataArchive(startStr, endStr, periodLabel, btn, alsoDelete){
     if(!currentProfile || currentProfile.role !== 'superadmin') return;
     const statusEl = document.getElementById('archiveStatusMsg');
 
@@ -5860,7 +5872,14 @@
       alert(`No tasks or projects found in ${periodLabel} — nothing to archive.`);
       return;
     }
-    if(!confirm(`Archive ${taskRows.length} task(s) and ${projectRows.length} project(s) from ${periodLabel}?\n\nThis will upload an Excel file to your Google Drive, then PERMANENTLY DELETE these records from the live database. This cannot be undone.`)) return;
+    // 2026-09-18: confirmation text now genuinely differs based on
+    // alsoDelete, rather than always warning about permanent deletion —
+    // the backup-only path (the new default) doesn't touch live data at
+    // all, so it shouldn't be confirmed with destructive-sounding language.
+    const confirmMsg = alsoDelete
+      ? `Archive ${taskRows.length} task(s) and ${projectRows.length} project(s) from ${periodLabel}?\n\nThis will upload an Excel file to your Google Drive, then PERMANENTLY DELETE these records from the live database. This cannot be undone.`
+      : `Back up ${taskRows.length} task(s) and ${projectRows.length} project(s) from ${periodLabel} to Google Drive?\n\nNothing will be deleted — your live data stays exactly as it is. You can verify the backup afterward, then delete it separately whenever you're ready.`;
+    if(!confirm(confirmMsg)) return;
 
     if(btn){ btn.disabled = true; }
     if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Building the archive file…</span>';
@@ -5895,25 +5914,33 @@
       if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Sign in to Google if prompted, then uploading to Drive…</span>';
       const uploaded = await uploadFileToDrive(filename, excelBlob);
 
-      if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Upload done — removing archived records from the database…</span>';
-      if(taskRows.length){
-        const { error: delTaskErr } = await sb.from('tasks').delete().gte('created_at', startStr).lte('created_at', endStr);
-        if(delTaskErr) throw new Error('Uploaded to Drive successfully, but could not delete tasks from the database: ' + delTaskErr.message + '. Your data is safe in Drive either way — retry the delete manually or contact support.');
-      }
-      if(projectRows.length){
-        const { error: delProjErr } = await sb.from('dev_projects').delete().gte('created_at', startStr).lte('created_at', endStr);
-        if(delProjErr) throw new Error('Uploaded to Drive successfully, but could not delete projects from the database: ' + delProjErr.message);
+      // Only reached (and only deletes anything) when alsoDelete is
+      // explicitly true — the default, unchecked path skips this
+      // entirely, leaving every row exactly as it was before.
+      if(alsoDelete){
+        if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Upload done — removing archived records from the database…</span>';
+        if(taskRows.length){
+          const { error: delTaskErr } = await sb.from('tasks').delete().gte('created_at', startStr).lte('created_at', endStr);
+          if(delTaskErr) throw new Error('Uploaded to Drive successfully, but could not delete tasks from the database: ' + delTaskErr.message + '. Your data is safe in Drive either way — this archive will show as "not yet deleted" in the list, and you can retry deleting it from there.');
+        }
+        if(projectRows.length){
+          const { error: delProjErr } = await sb.from('dev_projects').delete().gte('created_at', startStr).lte('created_at', endStr);
+          if(delProjErr) throw new Error('Uploaded to Drive successfully, but could not delete projects from the database: ' + delProjErr.message);
+        }
       }
 
       const { error: metaErr } = await sb.from('archives').insert({
         period_label: periodLabel, period_start: startStr, period_end: endStr,
         drive_file_id: uploaded.id, drive_file_name: uploaded.name,
         task_count: taskRows.length, project_count: projectRows.length,
+        data_deleted: !!alsoDelete,
         created_by: currentUser.id,
       });
       if(metaErr) console.error('Archive succeeded but could not save its record in the archives list:', metaErr.message);
 
-      if(statusEl) statusEl.innerHTML = `<span style="color:var(--green);">✓ Archived ${taskRows.length} task(s) and ${projectRows.length} project(s) to Drive.</span>`;
+      if(statusEl) statusEl.innerHTML = alsoDelete
+        ? `<span style="color:var(--green);">✓ Archived ${taskRows.length} task(s) and ${projectRows.length} project(s) — uploaded to Drive and removed from the database.</span>`
+        : `<span style="color:var(--green);">✓ Backed up ${taskRows.length} task(s) and ${projectRows.length} project(s) to Drive. Nothing was deleted — verify it below, then delete it separately whenever you're ready.</span>`;
       loadArchivesList();
     }catch(err){
       if(statusEl) statusEl.innerHTML = `<span style="color:var(--red);">${escapeHtml(err.message)}</span>`;
@@ -5933,21 +5960,39 @@
         <div>
           <div style="font-weight:600; font-size:13px;">${escapeHtml(a.period_label)}</div>
           <div style="font-size:11px; color:var(--text-faint);">${a.task_count} tasks · ${a.project_count} projects · archived ${new Date(a.created_at).toLocaleDateString('en-GB')}</div>
+          <div style="font-size:11px; margin-top:2px; color:${a.data_deleted ? 'var(--text-faint)' : 'var(--amber)'};">${a.data_deleted ? '✓ Removed from the database' : '● Still live in the database — backup only'}</div>
           <div id="verifyResult-${a.id}" style="font-size:11.5px; margin-top:4px;"></div>
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn" style="padding:7px;" onclick="downloadArchive('${a.id}', '${a.drive_file_id}', '${escapeHtml(a.drive_file_name).replace(/'/g,"\\'")}')" title="Download from Drive" aria-label="Download from Drive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg></button>
-          <!-- 2026-09-18 (replaces an earlier "Delete DB data" button):
-               the actual goal turned out to be confirming an archive is
-               genuinely intact, not deleting anything — this button is
-               entirely read-only. It opens the real file from Drive,
-               parses it, and checks its row counts against what was
-               recorded at archive time. Never touches Supabase's tasks/
-               dev_projects tables in any way, on purpose. -->
+          <!-- Entirely read-only — opens the real file from Drive, parses
+               it, and checks its row counts against what was recorded at
+               archive time. Never touches Supabase's tasks/dev_projects
+               tables in any way, on purpose. -->
           <button class="btn edit" style="padding:7px 10px; font-size:11.5px;" id="verifyBtn-${a.id}" onclick="verifyArchive('${a.id}', '${a.drive_file_id}', ${a.task_count}, ${a.project_count}, '${escapeHtml(a.period_label).replace(/'/g,"\\'")}')" title="Open the real file from Drive and confirm it matches what was recorded — doesn't touch the database">Verify</button>
+          ${!a.data_deleted ? `<button class="btn remove" style="padding:7px 10px; font-size:11.5px;" onclick="deleteArchivedDataNow('${a.id}', '${a.period_start}', '${a.period_end}', '${escapeHtml(a.period_label).replace(/'/g,"\\'")}', this)" title="Delete this period's data from the live database now that you've verified the backup">Delete from database</button>` : ''}
           <button class="btn remove" style="padding:7px;" onclick="deleteArchive('${a.id}', '${a.drive_file_id}', '${escapeHtml(a.period_label).replace(/'/g,"\\'")}')" title="Delete this archive" aria-label="Delete this archive"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
         </div>
       </div>`).join('');
+  }
+
+  // The deliberate, second-step delete — only ever shown for an archive
+  // whose data hasn't been deleted yet (data_deleted:false), i.e. one
+  // created with the "also delete" checkbox left unchecked. This is the
+  // actual mechanism that closes the loop: back up, Verify, then delete
+  // here once you're confident — three distinct, separately-triggered
+  // steps instead of one irreversible action.
+  async function deleteArchivedDataNow(archiveId, startDate, endDate, label, btn){
+    if(!currentProfile || currentProfile.role !== 'superadmin') return;
+    if(!confirm(`Delete ${label}'s task/project data from the live database now?\n\nThe backup already sitting in Google Drive is unaffected either way. This only removes the live copy. This cannot be undone.`)) return;
+    if(btn) btn.disabled = true;
+    const { error: delTaskErr } = await sb.from('tasks').delete().gte('created_at', startDate).lte('created_at', endDate);
+    if(delTaskErr){ alert('Could not delete tasks: ' + delTaskErr.message); if(btn) btn.disabled = false; return; }
+    const { error: delProjErr } = await sb.from('dev_projects').delete().gte('created_at', startDate).lte('created_at', endDate);
+    if(delProjErr){ alert('Could not delete projects: ' + delProjErr.message); if(btn) btn.disabled = false; return; }
+    const { error: updateErr } = await sb.from('archives').update({ data_deleted: true }).eq('id', archiveId);
+    if(updateErr) console.error('Data deleted, but could not update the archive record:', updateErr.message);
+    loadArchivesList();
   }
 
   // Entirely read-only against both Drive and Supabase: downloads the
