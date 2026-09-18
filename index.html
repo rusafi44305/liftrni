@@ -3999,7 +3999,8 @@
     { date:'2026-09-18', summary:'Three follow-up fixes. (1) Score category weights\' new Show/Hide button was wrapping onto its own line below the title instead of sitting to the right like every other section\'s — found the cause: its visibility was toggled with display:block while every correctly-behaving block-head uses display:flex, which is what actually keeps title and button on one row. (2) Data Archive\'s "Archive last 12 months" button and the precise month/year picker were stacked on separate rows with a large empty gap next to the first button — merged into one wrapping row so they share the space, on both desktop and mobile. (3) Added a manual "Delete DB data" button per archive in the Past Archives list — deliberately only ever appears attached to an existing archive row, so it\'s inherently only available for periods that already have a matching Drive backup, never as a free-standing delete-any-range tool. Exists for the rare case where an archive\'s upload succeeded but its automatic database delete step failed, leaving live data that should already be gone; normally unnecessary since archiving already deletes on success.' },
     { date:'2026-09-18', summary:'Replaced the "Delete DB data" button above after the actual goal turned out to be different: confirming an archive is genuinely intact, not deleting anything. New "Verify" button per archive is entirely read-only — downloads the real file from Drive, opens it with the same XLSX library used to create it, and compares its actual row counts against what was recorded at archive time, showing a clear match/mismatch result inline. Never touches Supabase\'s tasks or dev_projects tables in any way; nothing about this feature can delete or modify data anywhere.' },
     { date:'2026-09-18', summary:'Found and fixed the real gap Verify couldn\'t solve on its own: Archive always did upload-then-delete as one atomic action, so by the time an archive existed to Verify, its data was already gone from Supabase — there was no way to actually test the flow safely. Split it into genuinely separate steps: a new checkbox ("also delete once the backup succeeds"), unchecked by default, controls whether a given run deletes anything at all — backup-only is now the default, verifiable with zero risk to live data. Added a new archives.data_deleted column to track which archives still have live data; the list now shows either "✓ Removed from the database" or "● Still live — backup only" per archive, with a deliberate "Delete from database" button appearing only for the latter — a genuine 3-step flow now: back up, Verify, then delete on purpose once confident, rather than one irreversible click.' },
-    { date:'2026-09-18', summary:'Fixed a real bug behind "stuck on Sign in to Google... forever, nothing happens": the sign-in flow had no error_callback and no timeout, so if the Google sign-in popup got blocked by the browser (common on mobile especially), neither success nor failure ever fired — the promise just hung forever with no way to know anything had gone wrong. Added Google\'s own error_callback for a blocked popup specifically, plus a 25-second timeout as a backstop, both giving a real, visible error message instead of an endless spinner. Also added the requested dedicated Drive folder — archives now go into "Lift RnI Website Archive" (created automatically on first use, found and reused after that, checked by exact name so re-running never creates duplicates) instead of landing loose at the top level of "My Drive".' }
+    { date:'2026-09-18', summary:'Fixed a real bug behind "stuck on Sign in to Google... forever, nothing happens": the sign-in flow had no error_callback and no timeout, so if the Google sign-in popup got blocked by the browser (common on mobile especially), neither success nor failure ever fired — the promise just hung forever with no way to know anything had gone wrong. Added Google\'s own error_callback for a blocked popup specifically, plus a 25-second timeout as a backstop, both giving a real, visible error message instead of an endless spinner. Also added the requested dedicated Drive folder — archives now go into "Lift RnI Website Archive" (created automatically on first use, found and reused after that, checked by exact name so re-running never creates duplicates) instead of landing loose at the top level of "My Drive".' },
+    { date:'2026-09-18', summary:'Data Archive\'s Projects sheet now includes Owner and Summary, and Progress % is a real computed value instead of always blank — it was reading p.progress, a column that has never existed on dev_projects at all (progress is derived from sub-tasks, done/total, same as the real Projects page computes it via projectProgressPercent()); now independently fetches each project\'s sub-tasks and computes it the identical way, including correctly showing "No specific breakdown" rather than 0% for a project with no sub-tasks at all — those aren\'t the same thing. Owner comes from a proper join on lead_id (the same field the real Projects page calls "Lead"), and Summary reads the notes field.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5921,8 +5922,20 @@
 
     const { data: taskRows, error: taskErr } = await sb.from('tasks').select('*, profiles(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr);
     if(taskErr){ alert('Could not read tasks for this period: ' + taskErr.message); return; }
-    const { data: projectRows, error: projErr } = await sb.from('dev_projects').select('*').gte('created_at', startStr).lte('created_at', endStr);
+    const { data: projectRows, error: projErr } = await sb.from('dev_projects').select('*, profiles!lead_id(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr);
     if(projErr){ alert('Could not read projects for this period: ' + projErr.message); return; }
+    // Progress isn't a stored column — it's computed from each project's
+    // sub-tasks (done / total), same as the real Projects page does via
+    // projectProgressPercent(). That function relies on a page-level
+    // cache that may not be populated when archiving from Admin without
+    // ever having visited Projects, so this fetches the sub-tasks fresh
+    // and computes it the same way, independently.
+    let projectTaskRows = [];
+    if(projectRows.length){
+      const { data: subTasks, error: subTaskErr } = await sb.from('dev_project_tasks').select('project_id, status').in('project_id', projectRows.map(p => p.id));
+      if(subTaskErr){ alert('Could not read project sub-tasks for progress: ' + subTaskErr.message); return; }
+      projectTaskRows = subTasks || [];
+    }
 
     if(!taskRows.length && !projectRows.length){
       alert(`No tasks or projects found in ${periodLabel} — nothing to archive.`);
@@ -5958,10 +5971,23 @@
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(flatTasks), 'Tasks');
       }
       if(projectRows.length){
-        const flatProjects = projectRows.map(p => ({
-          'Project name': p.name || '', 'Status': p.status || '', 'Progress %': p.progress ?? '',
-          'Created': new Date(p.created_at).toLocaleDateString('en-GB'),
-        }));
+        const flatProjects = projectRows.map(p => {
+          const subTasksForThis = projectTaskRows.filter(t => t.project_id === p.id);
+          const doneCount = subTasksForThis.filter(t => t.status === 'Done').length;
+          // Matches projectProgressPercent() on the real Projects page
+          // exactly: null (shown as "No specific breakdown") when a
+          // project has no sub-tasks at all, not 0% — those aren't the
+          // same thing.
+          const progress = subTasksForThis.length ? Math.round((doneCount / subTasksForThis.length) * 100) : null;
+          return {
+            'Project name': p.name || '',
+            'Owner': p.profiles ? displayName(p.profiles) : '—',
+            'Status': p.status || '',
+            'Progress %': progress !== null ? progress : 'No specific breakdown',
+            'Summary': p.notes || '',
+            'Created': new Date(p.created_at).toLocaleDateString('en-GB'),
+          };
+        });
         XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(flatProjects), 'Projects');
       }
       const excelBlob = new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
