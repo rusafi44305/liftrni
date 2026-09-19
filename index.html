@@ -107,6 +107,13 @@
   }
   html{transition:background .2s ease;}
   body{transition:background-color .2s ease, color .2s ease;}
+  @keyframes gradientDrift{
+    0%, 100%{ background-position:20% 0%, 82% 4%, 0 0; }
+    50%{ background-position:32% 14%, 70% 18%, 0 0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    body{ animation:none !important; }
+  }
   *{box-sizing:border-box; margin:0; padding:0;}
   body{
     font-family:'Inter',sans-serif;
@@ -124,10 +131,22 @@
        ellipses and a much later fade-out (65%→92%) so the wash actually
        reaches most of the visible viewport instead of fading out near
        the top corners where it started. */
+    /* 2026-09-19: converted from a static wash into a slow, continuously
+       drifting one — "light moving behind the glass". A radial-gradient's
+       own "at X% Y%" position can't be animated directly (it's baked
+       into the gradient function itself, not a separate property), so
+       this is restructured to define each gradient at its own natural
+       center and instead animate background-position — background-size
+       is oversized (200%) so there's room for that position to actually
+       move within, without ever revealing an edge. Same starting look as
+       before (20%/0% and 82%/4%), now drifting gently rather than static. */
     background:
-      radial-gradient(ellipse 900px 650px at 20% 0%, var(--wash-1) 0%, transparent 92%),
-      radial-gradient(ellipse 900px 650px at 82% 4%, var(--wash-2) 0%, transparent 92%),
+      radial-gradient(ellipse 900px 650px, var(--wash-1) 0%, transparent 92%),
+      radial-gradient(ellipse 900px 650px, var(--wash-2) 0%, transparent 92%),
       var(--bg);
+    background-size:200% 200%, 200% 200%, auto;
+    background-position:20% 0%, 82% 4%, 0 0;
+    animation:gradientDrift 28s ease-in-out infinite;
     background-attachment:fixed;
     color:var(--text);
     -webkit-font-smoothing:antialiased;
@@ -377,6 +396,29 @@
      nothing to push against. margin-left:auto keeps it pinned to the
      right regardless of whether it shares a line with the title or not. */
   .block-head > *:last-child:not(:only-child){ margin-left:auto; }
+  /* 2026-09-19: real fold/unfold animation for every collapsible Admin
+     section, plus visually merging the header and its panel into one
+     connected box while open, instead of two separately-bordered boxes
+     stacked with a gap. max-height (not display:none/block) is what
+     actually allows this to animate at all — display can't transition
+     smoothly, height-to-0-and-back can. 2000px is a generous ceiling
+     since exact content height isn't known ahead of time in plain CSS;
+     it doesn't affect the resting (open) height, only how much room the
+     transition has to animate through. */
+  .admin-fold-panel{
+    max-height:0; overflow:hidden; opacity:0;
+    transition:max-height 0.4s cubic-bezier(0.25,0.1,0.25,1), opacity 0.3s ease;
+    border-top:none !important; border-top-left-radius:0 !important; border-top-right-radius:0 !important;
+    margin-top:-1px;
+  }
+  .admin-fold-panel.open{ max-height:2000px; opacity:1; }
+  .block-head.section-open{
+    border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none; margin-bottom:0; padding-bottom:12px;
+  }
+  /* Bordered toggle buttons, per request — .btn has no border by default
+     (border:none), which made every Show/Hide button blend into its own
+     header rather than reading as a distinct, clickable control. */
+  .btn-toggle{ border:1px solid var(--border) !important; }
   .block-title{font-family:'Space Grotesk'; font-size:19px; font-weight:600;}
   .block-sub{font-size:12.5px; color:var(--text-faint);}
   .link-more{font-size:13px; font-weight:600; color:var(--accent); cursor:pointer;}
@@ -640,6 +682,14 @@
     .profile-kpi-row .kpi-card{
       flex-direction:column; justify-content:center; text-align:center; gap:10px !important;
       padding:14px;
+      /* 2026-09-19: the shared "floating glass" shadow has a Y-offset
+         (0 14px 34px), which by definition spreads more shadow below a
+         card than beside it — no gap-tuning could ever fully cancel that
+         out. Overriding with a centered, non-directional shadow here
+         (0 0, no offset) removes the directional bias entirely, so the
+         space above/below/left/right of each card should now look
+         genuinely even, not just numerically even. */
+      box-shadow:0 0 24px -4px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.14) !important;
     }
     .profile-kpi-row .kpi-detail-text{ display:none; }
     .profile-kpi-row .kpi-mobile-caption{
@@ -2265,14 +2315,14 @@
       </div>
     </div>
  
-    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn" id="kpiWeightsToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
-    <div class="panel" id="kpiWeightsPanel" style="display:none; padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn btn-toggle" id="kpiWeightsToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
+    <div class="panel admin-fold-panel" id="kpiWeightsPanel" style="padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
 
     <div class="block-head" id="fieldGuideBlock" style="display:none;">
       <div><div class="block-title">How to add a field or sub-category</div><div class="block-sub">Superadmin only — a short guide for the "Task fields" section below</div></div>
-      <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleFieldGuideVisibility(this)">Show guide</button>
+      <button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleFieldGuideVisibility(this)">Show guide</button>
     </div>
-    <div class="panel" id="fieldGuidePanel" style="display:none; margin-bottom:14px;">
+    <div class="panel admin-fold-panel" id="fieldGuidePanel" style="margin-bottom:14px;">
       <div style="font-size:13.5px; line-height:1.7;">
         <div style="font-weight:700; margin-bottom:6px;">Adding a field</div>
         <ol style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
@@ -2323,22 +2373,22 @@
       <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across all 6 categories, with dropdown options, organized by Common/Mechanical/Electrical. Changes appear on the real task-entry form immediately.</div></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
-        <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
+        <button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
       </div>
     </div>
-    <div id="customFieldsPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel admin-fold-panel" id="customFieldsPanel" style="margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head" id="categoryLinksBlock" style="display:none;">
       <div><div class="block-title">Category Links</div><div class="block-sub">Superadmin only — the "Links" button on the task-entry form (currently just Post-Sales Activity and Reports) shows whatever's added here for that category.</div></div>
-      <button class="btn" id="categoryLinksToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'categoryLinksAdminPanel', 'Show', 'Hide', loadCategoryLinksAdminPanel)">Show</button>
+      <button class="btn btn-toggle" id="categoryLinksToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'categoryLinksAdminPanel', 'Show', 'Hide', loadCategoryLinksAdminPanel)">Show</button>
     </div>
-    <div class="panel" id="categoryLinksAdminPanel" style="display:none; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="panel admin-fold-panel" id="categoryLinksAdminPanel" style="margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
     <div class="block-head" id="dataArchiveBlock" style="display:none;">
       <div><div class="block-title">Data Archive</div><div class="block-sub">Superadmin only — moves old tasks/projects to an Excel file on your Google Drive, then deletes them from the live database to free up space. Uses your own Google sign-in, not a shared credential.</div></div>
-      <button class="btn" id="dataArchiveToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'dataArchivePanel', 'Show', 'Hide', loadArchivesList)">Show</button>
+      <button class="btn btn-toggle" id="dataArchiveToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'dataArchivePanel', 'Show', 'Hide', loadArchivesList)">Show</button>
     </div>
-    <div class="panel" id="dataArchivePanel" style="display:none; margin-bottom:14px;">
+    <div class="panel admin-fold-panel" id="dataArchivePanel" style="margin-bottom:14px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
         <button class="submit-btn" id="archiveBtn12" onclick="const e=new Date(), s=new Date(); s.setMonth(s.getMonth()-12); const r=computeMonthRange(s.toISOString().slice(0,7), e.toISOString().slice(0,7)); runDataArchive(r.startStr, r.endStr, r.periodLabel, this, document.getElementById('archiveAlsoDelete').checked);">Archive last 12 months</button>
         <span style="font-size:12.5px; color:var(--text-faint);">or a precise period:</span>
@@ -2366,8 +2416,8 @@
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 14px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
-    <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div><button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'approvedUsersPanel', 'Show', 'Hide')">Show</button></div>
-    <div class="panel no-shine" id="approvedUsersPanel" style="display:none; padding:8px 20px;">
+    <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div><button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'approvedUsersPanel', 'Show', 'Hide')">Show</button></div>
+    <div class="panel no-shine admin-fold-panel" id="approvedUsersPanel" style="padding:8px 20px;">
       <table class="data">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Discipline</th><th>Status</th><th></th></tr></thead>
         <tbody>
@@ -4073,7 +4123,8 @@
     { date:'2026-09-18', summary:'Added "How Scoring Works" — a new Superadmin-only readme in Admin, right next to Score category weights, explaining the actual formula in plain terms: per-task points, the duration-scaling rule and its 0.25x–3x cap, which categories are unaffected and why, the Error Report penalty, how Monthly/Overall Score are calculated, and how the leaderboard ranks. Same show/hide toggle pattern as every other Admin section, defaulting to hidden.' },
     { date:'2026-09-18', summary:'Three fixes. (1) Actually found the real cause of Profile\'s card-gap asymmetry this time, with an actual number rather than another theory: the card\'s own padding was 20px top/bottom vs 14px left/right — nearly 50% more vertical padding than horizontal, which was adding extra visual weight vertically regardless of how the grid gap itself was tuned. Made the card\'s padding uniform (14px all around). (2) Task Fields\' block-head (title + "+ Add Field" + "Show section") was overflowing off-screen on mobile — .block-head had no flex-wrap at all; added it globally, which protects every other section using this same class from the identical issue, not just this one. (3) "How Scoring Works" relocated out of the Superadmin-only Admin panel entirely, into the account menu (replacing the Tutorial entry) as a modal anyone can open — understanding your own Score isn\'t something that should require admin access. Scrollable content area matches the notification panel\'s own approach, with an explicit Close button fixed at the bottom.' },
     { date:'2026-09-18', summary:'Re-verified Project Briefing, Schema download, and index.html download after the recent round of changes — all 3 confirmed still correct (none of the functions they depend on were touched). Found one real completeness gap while checking, though: the briefing\'s feature checklist had never been updated to include Data Archive/Google Drive at all, despite it being one of the largest features added recently — added a check for it (runDataArchive + verifyArchive) so the briefing actually reflects everything significant, not just the older features.' },
-    { date:'2026-09-18', summary:'Two fixes. (1) Data Archive\'s Show button was appearing left-aligned instead of right-aligned like every other section — a real side effect of the earlier flex-wrap fix: space-between only distributes space across items sharing one line, so when a section\'s description is long enough to force its button onto its own wrapped line (which only happens to Data Archive, since its description is unusually long), that lone item just sits at flex-start with nothing to push against. Fixed with margin-left:auto on the button specifically when a button exists, carefully excluded from sections that only have a title and no button at all (there are several), so those weren\'t accidentally pushed rightward instead. (2) Added a simple card-style border to every section header (.block-head), matching the border already on its content panel directly below — the two now read as one cohesive header-card + content-card pair per section, requested for clearer visual separation between sections.' }
+    { date:'2026-09-18', summary:'Two fixes. (1) Data Archive\'s Show button was appearing left-aligned instead of right-aligned like every other section — a real side effect of the earlier flex-wrap fix: space-between only distributes space across items sharing one line, so when a section\'s description is long enough to force its button onto its own wrapped line (which only happens to Data Archive, since its description is unusually long), that lone item just sits at flex-start with nothing to push against. Fixed with margin-left:auto on the button specifically when a button exists, carefully excluded from sections that only have a title and no button at all (there are several), so those weren\'t accidentally pushed rightward instead. (2) Added a simple card-style border to every section header (.block-head), matching the border already on its content panel directly below — the two now read as one cohesive header-card + content-card pair per section, requested for clearer visual separation between sections.' },
+    { date:'2026-09-19', summary:'Three changes. (1) Profile card gaps on mobile — after ruling out the grid gap itself and the card\'s own padding in the last two rounds, isolated the actual remaining cause: the shared "floating glass" shadow has a Y-offset by definition, which spreads more shadow below a card than beside it regardless of how any gap number is tuned. Gave mobile profile cards their own centered, non-directional shadow instead, removing that bias entirely. (2) Real fold/unfold animation for every collapsible Admin section, replacing the previous instant display:none/block snap — switched to a max-height/opacity class transition, and the header now visually merges with its panel into one connected box while open (shared border, no gap, square inner corners) instead of two separately-bordered boxes stacked apart. Also added a visible border to every Show/Hide toggle button, which had none before. (3) The background gradient wash now drifts slowly and continuously (28s loop) instead of sitting static — "light moving behind the glass" — done by animating background-position rather than the gradient\'s own baked-in coordinates, which can\'t be animated directly; respects prefers-reduced-motion for anyone who has that accessibility setting on.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -6626,15 +6677,22 @@ for a competing inline style first.`;
     // mess: open one, navigate away and back, and the panel silently
     // re-hides itself while its button still says "Hide" from before,
     // out of sync until clicked twice. Now resets both together, always.
-    document.getElementById('kpiWeightsPanel').style.display = 'none';
+    // 2026-09-19: updated for the new fold/unfold mechanism — removes
+    // .open (and the matching .section-open on each block-head) instead
+    // of setting display:none, since visibility is now class-driven to
+    // allow animation.
+    document.getElementById('kpiWeightsPanel').classList.remove('open');
+    document.getElementById('kpiWeightsBlock').classList.remove('section-open');
     document.getElementById('kpiWeightsToggleBtn').textContent = 'Show';
     document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('categoryLinksBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('categoryLinksAdminPanel').style.display = 'none';
+    document.getElementById('categoryLinksAdminPanel').classList.remove('open');
+    document.getElementById('categoryLinksBlock').classList.remove('section-open');
     document.getElementById('categoryLinksToggleBtn').textContent = 'Show';
     document.getElementById('dataArchiveBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('dataArchivePanel').style.display = 'none';
+    document.getElementById('dataArchivePanel').classList.remove('open');
+    document.getElementById('dataArchiveBlock').classList.remove('section-open');
     document.getElementById('dataArchiveToggleBtn').textContent = 'Show';
     // customFieldsPanel, kpiWeightsPanel, categoryLinksAdminPanel, and
     // dataArchivePanel all default to hidden behind their own "Show"
@@ -6801,11 +6859,20 @@ for a competing inline style first.`;
   // panels that need to lazy-load their data the first time they're
   // actually opened rather than fetching it on every Admin page visit
   // whether or not anyone looks at that section.
+  // 2026-09-19: switched from display:none/block to toggling an .open
+  // class (see .admin-fold-panel in <style>) — display can't animate,
+  // max-height can, which is what actually makes this fold/unfold rather
+  // than snap open/closed. Also finds this button's own block-head
+  // (btn.closest) and toggles .section-open on it in sync, which is what
+  // visually merges the header and its panel into one connected box
+  // while open rather than two separately-bordered boxes with a gap.
   function toggleAdminSection(btn, panelId, showLabel, hideLabel, onShow){
     const panel = document.getElementById(panelId);
     if(!panel) return;
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'block' : 'none';
+    const isHidden = !panel.classList.contains('open');
+    panel.classList.toggle('open', isHidden);
+    const head = btn.closest('.block-head');
+    if(head) head.classList.toggle('section-open', isHidden);
     btn.textContent = isHidden ? hideLabel : showLabel;
     if(isHidden && onShow) onShow();
   }
@@ -6813,16 +6880,20 @@ for a competing inline style first.`;
   function toggleFieldGuideVisibility(btn){
     const panel = document.getElementById('fieldGuidePanel');
     if(!panel) return;
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'block' : 'none';
+    const isHidden = !panel.classList.contains('open');
+    panel.classList.toggle('open', isHidden);
+    const head = btn.closest('.block-head');
+    if(head) head.classList.toggle('section-open', isHidden);
     btn.textContent = isHidden ? 'Hide guide' : 'Show guide';
   }
 
   function toggleCustomFieldsSectionVisibility(btn){
     const panel = document.getElementById('customFieldsPanel');
     if(!panel) return;
-    const isHidden = panel.style.display === 'none';
-    panel.style.display = isHidden ? 'block' : 'none';
+    const isHidden = !panel.classList.contains('open');
+    panel.classList.toggle('open', isHidden);
+    const head = btn.closest('.block-head');
+    if(head) head.classList.toggle('section-open', isHidden);
     btn.textContent = isHidden ? 'Hide section' : 'Show section';
     if(isHidden) loadCustomFieldsPanel();
   }
