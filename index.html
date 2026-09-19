@@ -360,7 +360,7 @@
   .delta.up{color:var(--green);} .delta.flat{color:var(--text-faint);}
  
   section.block{margin-bottom:16px;}
-  .block-head{display:flex; align-items:baseline; justify-content:space-between; margin-bottom:18px;}
+  .block-head{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; row-gap:8px; margin-bottom:18px;}
   .block-title{font-family:'Space Grotesk'; font-size:19px; font-weight:600;}
   .block-sub{font-size:12.5px; color:var(--text-faint);}
   .link-more{font-size:13px; font-weight:600; color:var(--accent); cursor:pointer;}
@@ -623,7 +623,7 @@
   @media (max-width: 700px){
     .profile-kpi-row .kpi-card{
       flex-direction:column; justify-content:center; text-align:center; gap:10px !important;
-      padding:20px 14px;
+      padding:14px;
     }
     .profile-kpi-row .kpi-detail-text{ display:none; }
     .profile-kpi-row .kpi-mobile-caption{
@@ -1648,9 +1648,9 @@
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #282828);" onclick="setTheme('dark', this)" title="Dark"></button>
           </div>
         </div>
-        <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="openTutorial()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
-          Tutorial (PDF)
+        <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); openScoringInfoModal();">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 17v-5"/><circle cx="12" cy="8.3" r="0.7" fill="currentColor" stroke="none"/></svg>
+          How Scoring Works
         </div>
         <div id="accountMenuPending" style="display:none; padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; color:var(--amber); align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--amber-dim)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); showView('admin'); onViewShown('admin');">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
@@ -2252,34 +2252,6 @@
     <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn" id="kpiWeightsToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
     <div class="panel" id="kpiWeightsPanel" style="display:none; padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
 
-    <div class="block-head" id="scoringReadmeBlock" style="display:none;">
-      <div><div class="block-title">How Scoring Works</div><div class="block-sub">Superadmin only — explains the actual formula behind Score and the leaderboard ranking</div></div>
-      <button class="btn" id="scoringReadmeToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'scoringReadmePanel', 'Show', 'Hide')">Show</button>
-    </div>
-    <div class="panel" id="scoringReadmePanel" style="display:none; margin-bottom:14px;">
-      <div style="font-size:13.5px; line-height:1.7;">
-        <div style="font-weight:700; margin-bottom:6px;">Earning points, per task</div>
-        <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
-          <li>Every category has a <b style="color:var(--text);">weight</b>, set in <b style="color:var(--text);">Score category weights</b> above — a normal task in that category earns that many points.</li>
-          <li><b style="color:var(--text);">Where duration is tracked</b> for a category (a field flagged Duration in Task fields — currently Team Activity and Pre-Sales, plus any Superadmin has added elsewhere): points scale with how long the task actually took, not just a flat number. A 1-hour task earns exactly the category's weight — that's the baseline. Longer tasks earn more, shorter tasks earn less, scaled proportionally.</li>
-          <li>To keep one unusually long or short task from swinging a whole month too far, that scaling is capped between <b style="color:var(--text);">0.25× and 3×</b> the weight (roughly: 15 minutes is the floor, 3 hours is the ceiling, for scoring purposes — the real duration is still recorded and shown accurately everywhere else).</li>
-          <li><b style="color:var(--text);">Where duration isn't tracked</b> for a category (most of Post-Sales, Technical Support, General Support, and Reports): every task earns the flat weight, unaffected by anything above — there's no time value to scale by.</li>
-          <li><b style="color:var(--text);">Error Reports</b> (Reports → Error Report) are the one case that subtracts points instead of adding them — the penalty is the affected category's weight, scaled down by the star rating out of 5. Every other Reports sub-type earns 0, neither helping nor hurting.</li>
-        </ul>
-        <div style="font-weight:700; margin-bottom:6px;">Turning points into a Score</div>
-        <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
-          <li>Every task's points for a calendar month are added together, then divided by that month's <b style="color:var(--text);">Monthly Score Target</b> (set below "Score category weights"), turned into a percentage.</li>
-          <li>That percentage is capped at 100 on the top end, but has no floor — enough Error Reports in one month can push it negative.</li>
-          <li><b style="color:var(--text);">Monthly Score</b> (on Profile) is just that one month's percentage. <b style="color:var(--text);">Overall Score</b> is the average of every month's percentage across someone's whole history — since no individual month can exceed 100, the average of them can't either.</li>
-        </ul>
-        <div style="font-weight:700; margin-bottom:6px;">The Dashboard leaderboard</div>
-        <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
-          <li>Ranked by <b style="color:var(--text);">Score</b> for whatever date range is selected, highest first — not by raw activity count. Logging many quick entries no longer automatically outranks fewer entries representing more real weight and hours.</li>
-          <li>Team Score on the ring at the top is the average Score of everyone with any activity in that range — a different number from any one person's own Score, meant to answer "how's the team doing overall".</li>
-        </ul>
-      </div>
-    </div>
-
     <div class="block-head" id="fieldGuideBlock" style="display:none;">
       <div><div class="block-title">How to add a field or sub-category</div><div class="block-sub">Superadmin only — a short guide for the "Task fields" section below</div></div>
       <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleFieldGuideVisibility(this)">Show guide</button>
@@ -2333,7 +2305,7 @@
 
     <div class="block-head" id="customFieldsBlock" style="display:none;">
       <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across all 6 categories, with dropdown options, organized by Common/Mechanical/Electrical. Changes appear on the real task-entry form immediately.</div></div>
-      <div style="display:flex; gap:8px; flex-shrink:0;">
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
         <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
       </div>
@@ -3497,6 +3469,55 @@
     syncMyTasksListHeight();
   })();
 
+  // 2026-09-18: moved here from a Superadmin-only Admin panel section —
+  // understanding how your own Score works is something every engineer
+  // should be able to see, not just Superadmins, so this is now a plain
+  // account-menu item with no role check at all. Scrollable content area
+  // matches #notifPanel's own approach (max-height + overflow-y:auto)
+  // rather than inventing a different scroll pattern, plus an explicit
+  // Close button fixed at the bottom, per request.
+  function openScoringInfoModal(){
+    document.getElementById('scoringInfoOverlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'scoringInfoOverlay';
+    overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:500; display:flex; align-items:center; justify-content:center; padding:20px;';
+    overlay.innerHTML = `
+      <div class="panel" style="max-width:480px; width:100%; max-height:85vh; display:flex; flex-direction:column; padding:0; overflow:hidden;">
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px 18px 12px; flex-shrink:0;">
+          <div class="panel-title" style="margin:0;">How Scoring Works</div>
+          <span style="cursor:pointer; color:var(--text-faint);" onclick="document.getElementById('scoringInfoOverlay').remove()">✕</span>
+        </div>
+        <div style="overflow-y:auto; padding:0 18px 16px; flex:1;">
+          <div style="font-size:13.5px; line-height:1.7;">
+            <div style="font-weight:700; margin-bottom:6px;">Earning points, per task</div>
+            <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+              <li>Every category has a <b style="color:var(--text);">weight</b>, set by a Superadmin — a normal task in that category earns that many points.</li>
+              <li><b style="color:var(--text);">Where duration is tracked</b> for a category (currently Team Activity and Pre-Sales, plus any others a Superadmin has added): points scale with how long the task actually took, not just a flat number. A 1-hour task earns exactly the category's weight — that's the baseline. Longer tasks earn more, shorter tasks earn less, scaled proportionally.</li>
+              <li>To keep one unusually long or short task from swinging a whole month too far, that scaling is capped between <b style="color:var(--text);">0.25× and 3×</b> the weight (roughly: 15 minutes is the floor, 3 hours is the ceiling, for scoring purposes — the real duration is still recorded and shown accurately everywhere else).</li>
+              <li><b style="color:var(--text);">Where duration isn't tracked</b> for a category (most of Post-Sales, Technical Support, General Support, and Reports): every task earns the flat weight, unaffected by anything above — there's no time value to scale by.</li>
+              <li><b style="color:var(--text);">Error Reports</b> (Reports → Error Report) are the one case that subtracts points instead of adding them — the penalty is the affected category's weight, scaled down by the star rating out of 5. Every other Reports sub-type earns 0, neither helping nor hurting.</li>
+            </ul>
+            <div style="font-weight:700; margin-bottom:6px;">Turning points into a Score</div>
+            <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+              <li>Every task's points for a calendar month are added together, then divided by that month's Monthly Score Target, turned into a percentage.</li>
+              <li>That percentage is capped at 100 on the top end, but has no floor — enough Error Reports in one month can push it negative.</li>
+              <li><b style="color:var(--text);">Monthly Score</b> (on Profile) is just that one month's percentage. <b style="color:var(--text);">Overall Score</b> is the average of every month's percentage across your whole history — since no individual month can exceed 100, the average of them can't either.</li>
+            </ul>
+            <div style="font-weight:700; margin-bottom:6px;">The Dashboard leaderboard</div>
+            <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
+              <li>Ranked by <b style="color:var(--text);">Score</b> for whatever date range is selected, highest first — not by raw activity count. Logging many quick entries no longer automatically outranks fewer entries representing more real weight and hours.</li>
+              <li>Team Score on the ring at the top is the average Score of everyone with any activity in that range — a different number from any one person's own Score, meant to answer "how's the team doing overall".</li>
+            </ul>
+          </div>
+        </div>
+        <div style="padding:12px 18px; border-top:1px solid var(--border); flex-shrink:0;">
+          <button class="btn" style="width:100%;" onclick="document.getElementById('scoringInfoOverlay').remove()">Close</button>
+        </div>
+      </div>`;
+    overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+    document.body.appendChild(overlay);
+  }
+
   function openTutorial(){
     // Point this at wherever the tutorial PDF is hosted in this repo/site,
     // e.g. a "tutorial.pdf" committed alongside index.html on GitHub Pages.
@@ -4033,7 +4054,9 @@
     { date:'2026-09-18', summary:'Data Archive\'s Projects sheet now includes Owner and Summary, and Progress % is a real computed value instead of always blank — it was reading p.progress, a column that has never existed on dev_projects at all (progress is derived from sub-tasks, done/total, same as the real Projects page computes it via projectProgressPercent()); now independently fetches each project\'s sub-tasks and computes it the identical way, including correctly showing "No specific breakdown" rather than 0% for a project with no sub-tasks at all — those aren\'t the same thing. Owner comes from a proper join on lead_id (the same field the real Projects page calls "Lead"), and Summary reads the notes field.' },
     { date:'2026-09-18', summary:'Checked 3 reported issues against the current code and found they were already correctly built — the vertical "By category" bar chart already had its own fill-in animation (a separate CSS class from the horizontal bars, since it animates height not width), Task Fields\' description was already the short one-line version, and the profile card grid gap was already a single explicit value. All three should already look right on a fresh deploy of this file. Also tightened the profile card gap further (8px→6px) per the "minimal" feedback either way. Real, newly-fixed bug: the Admin panel\'s visibility-refresh code runs every time Admin loads or re-renders, and was unconditionally force-hiding Score category weights/Category Links/Data Archive without resetting their button text back to "Show" — open one, navigate away and back, and it would silently re-hide while its button still said "Hide", exactly the "show/hide sometimes making a mess, fixes itself after clicking back and forth" behavior reported. Now resets both the panel and its button label together, every time, so they can\'t fall out of sync.' },
     { date:'2026-09-18', summary:'Score and leaderboard ranking overhauled for fairness, per explicit request. Two real problems found by tracing the actual formula: (1) every task in a category earned the exact same flat points regardless of how long it took — a 15-minute task and a 3-hour task scored identically; (2) the leaderboard table wasn\'t even sorted by Score at all, it was sorted by raw task count, so logging many quick low-effort entries always outranked fewer entries representing far more real hours. Fixed both: points now scale with a task\'s own duration where duration is actually tracked for that category (60 minutes = the original flat weight exactly, so nothing changes for a "typical" hour-long task; clamped 0.25x–3x so one extreme outlier can\'t swing a month\'s score too far) — critically, categories with NO duration field at all (most of them) are completely unaffected and keep the exact same flat-rate points as before, so this couldn\'t collapse their scores to zero. Leaderboard now ranks by Score instead of task count.' },
-    { date:'2026-09-18', summary:'Added "How Scoring Works" — a new Superadmin-only readme in Admin, right next to Score category weights, explaining the actual formula in plain terms: per-task points, the duration-scaling rule and its 0.25x–3x cap, which categories are unaffected and why, the Error Report penalty, how Monthly/Overall Score are calculated, and how the leaderboard ranks. Same show/hide toggle pattern as every other Admin section, defaulting to hidden.' }
+    { date:'2026-09-18', summary:'Added "How Scoring Works" — a new Superadmin-only readme in Admin, right next to Score category weights, explaining the actual formula in plain terms: per-task points, the duration-scaling rule and its 0.25x–3x cap, which categories are unaffected and why, the Error Report penalty, how Monthly/Overall Score are calculated, and how the leaderboard ranks. Same show/hide toggle pattern as every other Admin section, defaulting to hidden.' },
+    { date:'2026-09-18', summary:'Three fixes. (1) Actually found the real cause of Profile\'s card-gap asymmetry this time, with an actual number rather than another theory: the card\'s own padding was 20px top/bottom vs 14px left/right — nearly 50% more vertical padding than horizontal, which was adding extra visual weight vertically regardless of how the grid gap itself was tuned. Made the card\'s padding uniform (14px all around). (2) Task Fields\' block-head (title + "+ Add Field" + "Show section") was overflowing off-screen on mobile — .block-head had no flex-wrap at all; added it globally, which protects every other section using this same class from the identical issue, not just this one. (3) "How Scoring Works" relocated out of the Superadmin-only Admin panel entirely, into the account menu (replacing the Tutorial entry) as a modal anyone can open — understanding your own Score isn\'t something that should require admin access. Scrollable content area matches the notification panel\'s own approach, with an explicit Close button fixed at the bottom.' },
+    { date:'2026-09-18', summary:'Re-verified Project Briefing, Schema download, and index.html download after the recent round of changes — all 3 confirmed still correct (none of the functions they depend on were touched). Found one real completeness gap while checking, though: the briefing\'s feature checklist had never been updated to include Data Archive/Google Drive at all, despite it being one of the largest features added recently — added a check for it (runDataArchive + verifyArchive) so the briefing actually reflects everything significant, not just the older features.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -6233,6 +6256,7 @@
       ['Category Links / Upload feature', typeof updateCategoryLinksButton === 'function'],
       ['Custom Fields (dynamic per-category fields)', typeof loadCustomFieldsPanel === 'function'],
       ['Backup / Restore system', typeof createBackup === 'function' && typeof confirmRestoreBackup === 'function'],
+      ['Data Archive (Google Drive backup/verify)', typeof runDataArchive === 'function' && typeof verifyArchive === 'function'],
       ['Excel export', typeof XLSX !== 'undefined'],
       ['PPTX generation library loaded', typeof PptxGenJS !== 'undefined']
     ];
@@ -6587,9 +6611,6 @@ for a competing inline style first.`;
     // out of sync until clicked twice. Now resets both together, always.
     document.getElementById('kpiWeightsPanel').style.display = 'none';
     document.getElementById('kpiWeightsToggleBtn').textContent = 'Show';
-    document.getElementById('scoringReadmeBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('scoringReadmePanel').style.display = 'none';
-    document.getElementById('scoringReadmeToggleBtn').textContent = 'Show';
     document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
     document.getElementById('categoryLinksBlock').style.display = isSuperadmin ? 'flex' : 'none';
