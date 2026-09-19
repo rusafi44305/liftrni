@@ -2900,12 +2900,12 @@
       // for financial impact, rather than free text, so it can be turned
       // into a consistent, comparable penalty weight for scoring instead
       // of something that would need to be manually judged per entry.
-      const stars = [1,2,3,4,5].map(n => `<span class="star-pick" data-star="${n}" onclick="setStarRating(this, ${n})" style="cursor:pointer; font-size:26px; color:var(--border); transition:color .1s ease;">★</span>`).join('');
+      const stars = [1,2,3,4,5].map(n => `<span class="star-pick" data-star="${n}" onclick="setStarRating(this, ${n})" style="cursor:pointer; font-size:26px; color:var(--border); transition:color .1s ease;">●</span>`).join('');
       return `<div class="form-field">
         <div class="field-label">${f.l}${reqStar(f)}</div>
         <div class="star-rating-group" data-value="0">${stars}</div>
         <div style="font-size:11px; color:var(--text-faint); margin-top:6px; line-height:1.6;">
-          ★☆☆☆☆ Under ৳5,000 &nbsp;·&nbsp; ★★☆☆☆ ৳5,000–10,000 &nbsp;·&nbsp; ★★★☆☆ ৳10,001–15,000 &nbsp;·&nbsp; ★★★★☆ ৳15,001–20,000 &nbsp;·&nbsp; ★★★★★ Over ৳20,000
+          ●○○○○ Under ৳5,000 &nbsp;·&nbsp; ●●○○○ ৳5,000–10,000 &nbsp;·&nbsp; ●●●○○ ৳10,001–15,000 &nbsp;·&nbsp; ●●●●○ ৳15,001–20,000 &nbsp;·&nbsp; ●●●●● Over ৳20,000
         </div>
       </div>`;
     }
@@ -4144,7 +4144,8 @@
     { date:'2026-09-18', summary:'Re-verified Project Briefing, Schema download, and index.html download after the recent round of changes — all 3 confirmed still correct (none of the functions they depend on were touched). Found one real completeness gap while checking, though: the briefing\'s feature checklist had never been updated to include Data Archive/Google Drive at all, despite it being one of the largest features added recently — added a check for it (runDataArchive + verifyArchive) so the briefing actually reflects everything significant, not just the older features.' },
     { date:'2026-09-18', summary:'Two fixes. (1) Data Archive\'s Show button was appearing left-aligned instead of right-aligned like every other section — a real side effect of the earlier flex-wrap fix: space-between only distributes space across items sharing one line, so when a section\'s description is long enough to force its button onto its own wrapped line (which only happens to Data Archive, since its description is unusually long), that lone item just sits at flex-start with nothing to push against. Fixed with margin-left:auto on the button specifically when a button exists, carefully excluded from sections that only have a title and no button at all (there are several), so those weren\'t accidentally pushed rightward instead. (2) Added a simple card-style border to every section header (.block-head), matching the border already on its content panel directly below — the two now read as one cohesive header-card + content-card pair per section, requested for clearer visual separation between sections.' },
     { date:'2026-09-19', summary:'Three changes. (1) Profile card gaps on mobile — after ruling out the grid gap itself and the card\'s own padding in the last two rounds, isolated the actual remaining cause: the shared "floating glass" shadow has a Y-offset by definition, which spreads more shadow below a card than beside it regardless of how any gap number is tuned. Gave mobile profile cards their own centered, non-directional shadow instead, removing that bias entirely. (2) Real fold/unfold animation for every collapsible Admin section, replacing the previous instant display:none/block snap — switched to a max-height/opacity class transition, and the header now visually merges with its panel into one connected box while open (shared border, no gap, square inner corners) instead of two separately-bordered boxes stacked apart. Also added a visible border to every Show/Hide toggle button, which had none before. (3) The background gradient wash now drifts slowly and continuously (28s loop) instead of sitting static — "light moving behind the glass" — done by animating background-position rather than the gradient\'s own baked-in coordinates, which can\'t be animated directly; respects prefers-reduced-motion for anyone who has that accessibility setting on.' },
-    { date:'2026-09-19', summary:'Follow-up: the corner-merge fix above still showed a visible glitch where header met panel, confirmed against a screenshot circling the exact spot — the underlying approach (two separately-bordered elements trying to match corners precisely) was inherently fragile. Rebuilt properly: header + panel for each of the 6 collapsible Admin sections now share ONE wrapping container that alone carries the border/radius/background, with the inner elements borderless — structurally impossible for two corners to mismatch when there is only one border to begin with. Also added a new "Export to PPTX" button on Dashboard: a modern multi-slide deck (title, KPI overview, a real native bar chart for category breakdown, a real native bar chart for top engineers, a full leaderboard table) built from currentDashRows — the exact same already-filtered data the page itself is showing for whatever date range/engineer is currently selected, with Score computed the identical way the real leaderboard does (same weight/duration/target lookups), so the export never drifts from what\'s on screen.' }
+    { date:'2026-09-19', summary:'Follow-up: the corner-merge fix above still showed a visible glitch where header met panel, confirmed against a screenshot circling the exact spot — the underlying approach (two separately-bordered elements trying to match corners precisely) was inherently fragile. Rebuilt properly: header + panel for each of the 6 collapsible Admin sections now share ONE wrapping container that alone carries the border/radius/background, with the inner elements borderless — structurally impossible for two corners to mismatch when there is only one border to begin with. Also added a new "Export to PPTX" button on Dashboard: a modern multi-slide deck (title, KPI overview, a real native bar chart for category breakdown, a real native bar chart for top engineers, a full leaderboard table) built from currentDashRows — the exact same already-filtered data the page itself is showing for whatever date range/engineer is currently selected, with Score computed the identical way the real leaderboard does (same weight/duration/target lookups), so the export never drifts from what\'s on screen.' },
+    { date:'2026-09-19', summary:'Four fixes. (1) The new PPTX export was triggering PowerPoint\'s "found a problem, attempt repair" prompt — found the exact cause: the category chart\'s colors array had a leading # on each hex value, but PptxGenJS requires raw hex without it for chartColors specifically; that mismatch produces malformed XML inside the file, which is exactly what PowerPoint flags as needing repair. Fixed, and reviewed every other color in the export for the same mistake (none found). (2) Verified the Error Report penalty end to end rather than just describing it: it subtracts (affected category\'s weight × impact/5) from that report\'s own employee_id for that month, and the category-name-to-key mapping it depends on is generated directly from the same catMeta the Error Category dropdown\'s own options come from — structurally can\'t drift out of sync, confirmed functional. (3) Found a real, genuine bug behind Notebook\'s "random refresh while typing": a 60-second background timer (checkPersonalReminders) was unconditionally reloading the whole Notebook list whenever that tab was open, including while someone was mid-typing in an input — destroying the focused field and whatever was typed with no warning. Now skips that reload specifically when the currently-focused element is an input/textarea inside Notebook, waiting for the next cycle instead. (4) Replaced the star-rating icons on Error Report\'s Impact field with plain circles — the underlying color-toggle logic needed no changes at all, since it already worked by recoloring one repeated character rather than swapping star types.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4982,7 +4983,7 @@
     const catCounts = {};
     currentDashRows.forEach(r => { catCounts[r.category] = (catCounts[r.category]||0) + 1; });
     const catSorted = Object.entries(catCounts).sort((a,b) => b[1]-a[1]);
-    const catColorsLocal = ['#378ADD','#1D9E75','#D85A30','#D4537E','#B98900','#8A63D2'];
+    const catColorsLocal = ['378ADD','1D9E75','D85A30','D4537E','B98900','8A63D2'];
 
     const byEngineer = {};
     currentDashRows.forEach(r => {
@@ -5652,7 +5653,21 @@
     try{
       await sb.rpc('check_personal_notebook_reminders');
       loadNotifications();
-      if(document.getElementById('view-notebook')?.classList.contains('active')) loadNotebook();
+      // 2026-09-19: real bug fix — this used to unconditionally call
+      // loadNotebook() every 60 seconds whenever Notebook was the active
+      // tab, which re-renders the whole list via innerHTML. If someone
+      // was mid-typing a new task/subtask in an input field right as this
+      // timer fired, that re-render destroyed the focused input (and
+      // whatever they'd typed) with no warning — exactly the "random
+      // refresh glitch" reported. Now skips the reload entirely if the
+      // currently-focused element is an input/textarea inside Notebook;
+      // the reminder check itself still runs every cycle regardless
+      // (nothing time-sensitive is lost), it just waits for the next
+      // cycle to actually refresh the visible list rather than doing it
+      // while someone's actively typing.
+      const activeEl = document.activeElement;
+      const isTypingInNotebook = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA') && document.getElementById('view-notebook')?.contains(activeEl);
+      if(!isTypingInNotebook && document.getElementById('view-notebook')?.classList.contains('active')) loadNotebook();
     } catch(e){ /* silent — background convenience check, not user-facing */ }
   }
 
