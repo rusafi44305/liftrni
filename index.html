@@ -360,7 +360,23 @@
   .delta.up{color:var(--green);} .delta.flat{color:var(--text-faint);}
  
   section.block{margin-bottom:16px;}
-  .block-head{display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; row-gap:8px; margin-bottom:18px;}
+  .block-head{
+    display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; row-gap:8px; margin-bottom:18px;
+    /* 2026-09-18: simple card-style border per section, matching the
+       .panel border already sitting directly below it — the two
+       together read as one cohesive "header card + content card" pair
+       per section instead of a bare title floating above a bordered box. */
+    border:1px solid var(--border); border-radius:12px; padding:12px 14px; background:var(--surface);
+  }
+  /* 2026-09-18: fixes Data Archive\'s button showing up left-aligned
+     instead of right-aligned like every other section\'s — caused by my
+     own earlier flex-wrap fix: space-between only distributes space
+     across multiple items sharing one line, so a lone item that wraps
+     onto its own line (which happens when a section\'s description is
+     long enough, like Data Archive\'s) just sits at flex-start with
+     nothing to push against. margin-left:auto keeps it pinned to the
+     right regardless of whether it shares a line with the title or not. */
+  .block-head > *:last-child:not(:only-child){ margin-left:auto; }
   .block-title{font-family:'Space Grotesk'; font-size:19px; font-weight:600;}
   .block-sub{font-size:12.5px; color:var(--text-faint);}
   .link-more{font-size:13px; font-weight:600; color:var(--accent); cursor:pointer;}
@@ -4056,7 +4072,8 @@
     { date:'2026-09-18', summary:'Score and leaderboard ranking overhauled for fairness, per explicit request. Two real problems found by tracing the actual formula: (1) every task in a category earned the exact same flat points regardless of how long it took — a 15-minute task and a 3-hour task scored identically; (2) the leaderboard table wasn\'t even sorted by Score at all, it was sorted by raw task count, so logging many quick low-effort entries always outranked fewer entries representing far more real hours. Fixed both: points now scale with a task\'s own duration where duration is actually tracked for that category (60 minutes = the original flat weight exactly, so nothing changes for a "typical" hour-long task; clamped 0.25x–3x so one extreme outlier can\'t swing a month\'s score too far) — critically, categories with NO duration field at all (most of them) are completely unaffected and keep the exact same flat-rate points as before, so this couldn\'t collapse their scores to zero. Leaderboard now ranks by Score instead of task count.' },
     { date:'2026-09-18', summary:'Added "How Scoring Works" — a new Superadmin-only readme in Admin, right next to Score category weights, explaining the actual formula in plain terms: per-task points, the duration-scaling rule and its 0.25x–3x cap, which categories are unaffected and why, the Error Report penalty, how Monthly/Overall Score are calculated, and how the leaderboard ranks. Same show/hide toggle pattern as every other Admin section, defaulting to hidden.' },
     { date:'2026-09-18', summary:'Three fixes. (1) Actually found the real cause of Profile\'s card-gap asymmetry this time, with an actual number rather than another theory: the card\'s own padding was 20px top/bottom vs 14px left/right — nearly 50% more vertical padding than horizontal, which was adding extra visual weight vertically regardless of how the grid gap itself was tuned. Made the card\'s padding uniform (14px all around). (2) Task Fields\' block-head (title + "+ Add Field" + "Show section") was overflowing off-screen on mobile — .block-head had no flex-wrap at all; added it globally, which protects every other section using this same class from the identical issue, not just this one. (3) "How Scoring Works" relocated out of the Superadmin-only Admin panel entirely, into the account menu (replacing the Tutorial entry) as a modal anyone can open — understanding your own Score isn\'t something that should require admin access. Scrollable content area matches the notification panel\'s own approach, with an explicit Close button fixed at the bottom.' },
-    { date:'2026-09-18', summary:'Re-verified Project Briefing, Schema download, and index.html download after the recent round of changes — all 3 confirmed still correct (none of the functions they depend on were touched). Found one real completeness gap while checking, though: the briefing\'s feature checklist had never been updated to include Data Archive/Google Drive at all, despite it being one of the largest features added recently — added a check for it (runDataArchive + verifyArchive) so the briefing actually reflects everything significant, not just the older features.' }
+    { date:'2026-09-18', summary:'Re-verified Project Briefing, Schema download, and index.html download after the recent round of changes — all 3 confirmed still correct (none of the functions they depend on were touched). Found one real completeness gap while checking, though: the briefing\'s feature checklist had never been updated to include Data Archive/Google Drive at all, despite it being one of the largest features added recently — added a check for it (runDataArchive + verifyArchive) so the briefing actually reflects everything significant, not just the older features.' },
+    { date:'2026-09-18', summary:'Two fixes. (1) Data Archive\'s Show button was appearing left-aligned instead of right-aligned like every other section — a real side effect of the earlier flex-wrap fix: space-between only distributes space across items sharing one line, so when a section\'s description is long enough to force its button onto its own wrapped line (which only happens to Data Archive, since its description is unusually long), that lone item just sits at flex-start with nothing to push against. Fixed with margin-left:auto on the button specifically when a button exists, carefully excluded from sections that only have a title and no button at all (there are several), so those weren\'t accidentally pushed rightward instead. (2) Added a simple card-style border to every section header (.block-head), matching the border already on its content panel directly below — the two now read as one cohesive header-card + content-card pair per section, requested for clearer visual separation between sections.' }
   ];
  
   let currentUser = null;   // Supabase auth user
