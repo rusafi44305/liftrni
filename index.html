@@ -396,25 +396,31 @@
      nothing to push against. margin-left:auto keeps it pinned to the
      right regardless of whether it shares a line with the title or not. */
   .block-head > *:last-child:not(:only-child){ margin-left:auto; }
-  /* 2026-09-19: real fold/unfold animation for every collapsible Admin
-     section, plus visually merging the header and its panel into one
-     connected box while open, instead of two separately-bordered boxes
-     stacked with a gap. max-height (not display:none/block) is what
-     actually allows this to animate at all — display can't transition
-     smoothly, height-to-0-and-back can. 2000px is a generous ceiling
-     since exact content height isn't known ahead of time in plain CSS;
-     it doesn't affect the resting (open) height, only how much room the
-     transition has to animate through. */
+  /* 2026-09-19 (rebuilt): the previous approach tried to precisely zero
+     out matching corners on TWO separately-bordered elements (header and
+     panel), which produced a visible corner glitch where they met —
+     confirmed directly against a screenshot circling the exact spot.
+     Replaced with a structurally different, bulletproof approach: wrap
+     header+panel in ONE shared container that alone carries the border/
+     radius/background; the header and panel themselves become borderless
+     inside it. With only one border in existence per section, there is
+     no second corner to ever mismatch against. */
+  .admin-section-card{
+    border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden; margin-bottom:14px;
+  }
+  .admin-section-card .block-head{
+    border:none; background:transparent; border-radius:0; margin-bottom:0; padding:12px 14px;
+  }
+  .admin-section-card .admin-fold-panel{
+    border:none !important; background:transparent !important; border-radius:0 !important; margin:0 !important;
+    border-top:1px solid transparent;
+  }
+  .admin-section-card .admin-fold-panel.open{ border-top-color:var(--border); }
   .admin-fold-panel{
     max-height:0; overflow:hidden; opacity:0;
     transition:max-height 0.4s cubic-bezier(0.25,0.1,0.25,1), opacity 0.3s ease;
-    border-top:none !important; border-top-left-radius:0 !important; border-top-right-radius:0 !important;
-    margin-top:-1px;
   }
   .admin-fold-panel.open{ max-height:2000px; opacity:1; }
-  .block-head.section-open{
-    border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom:none; margin-bottom:0; padding-bottom:12px;
-  }
   /* Bordered toggle buttons, per request — .btn has no border by default
      (border:none), which made every Show/Hide button blend into its own
      header rather than reading as a distinct, clickable control. */
@@ -2163,6 +2169,7 @@
       <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
       <button class="queue-btn" onclick="loadDashboard()">Apply</button>
       <button class="queue-btn" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
+      <button class="queue-btn" onclick="exportDashboardToPptx()">⬇ Export to PPTX</button>
       <div id="dashKpiTriggerWrap" style="display:none;">
         <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate team Score</button>
       </div>
@@ -2315,14 +2322,17 @@
       </div>
     </div>
  
-    <div class="block-head" id="kpiWeightsBlock" style="display:none;"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn btn-toggle" id="kpiWeightsToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
-    <div class="panel admin-fold-panel" id="kpiWeightsPanel" style="padding:13px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
+    <div class="admin-section-card" id="kpiWeightsBlock" style="display:none;">
+    <div class="block-head"><div><div class="block-title">Score category weights</div><div class="block-sub">Superadmin only — controls how each category counts toward an engineer's Score</div></div><button class="btn btn-toggle" id="kpiWeightsToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'kpiWeightsPanel', 'Show', 'Hide', loadKpiWeights)">Show</button></div>
+    <div class="admin-fold-panel" id="kpiWeightsPanel" style="padding:13px;"><div class="placeholder-note">Loading…</div></div>
+    </div>
 
-    <div class="block-head" id="fieldGuideBlock" style="display:none;">
+    <div class="admin-section-card" id="fieldGuideBlock" style="display:none;">
+    <div class="block-head">
       <div><div class="block-title">How to add a field or sub-category</div><div class="block-sub">Superadmin only — a short guide for the "Task fields" section below</div></div>
       <button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleFieldGuideVisibility(this)">Show guide</button>
     </div>
-    <div class="panel admin-fold-panel" id="fieldGuidePanel" style="margin-bottom:14px;">
+    <div class="admin-fold-panel" id="fieldGuidePanel">
       <div style="font-size:13.5px; line-height:1.7;">
         <div style="font-weight:700; margin-bottom:6px;">Adding a field</div>
         <ol style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
@@ -2368,27 +2378,33 @@
         <div style="font-size:11.5px; color:var(--text-faint); margin-top:12px; border-top:1px solid var(--border); padding-top:10px;">Reports can now have fields added, edited, and deleted the same way as the other 5 categories, for any of its 6 report types. New sub-categories still can't be added to Reports though — each of its 6 types has its own built-in scoring and structure (Error Report especially), so a brand-new one wouldn't have any real behavior behind it.</div>
       </div>
     </div>
+    </div>
 
-    <div class="block-head" id="customFieldsBlock" style="display:none;">
+    <div class="admin-section-card" id="customFieldsBlock" style="display:none;">
+    <div class="block-head">
       <div><div class="block-title">Task fields</div><div class="block-sub">Superadmin only — every field across all 6 categories, with dropdown options, organized by Common/Mechanical/Electrical. Changes appear on the real task-entry form immediately.</div></div>
       <div style="display:flex; gap:8px; flex-wrap:wrap;">
         <button class="queue-btn" onclick="openAddFieldModal()">+ Add Field</button>
         <button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px;" onclick="toggleCustomFieldsSectionVisibility(this)">Show section</button>
       </div>
     </div>
-    <div class="panel admin-fold-panel" id="customFieldsPanel" style="margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
- 
-    <div class="block-head" id="categoryLinksBlock" style="display:none;">
+    <div class="admin-fold-panel" id="customFieldsPanel"><div class="placeholder-note">Loading…</div></div>
+    </div>
+
+    <div class="admin-section-card" id="categoryLinksBlock" style="display:none;">
+    <div class="block-head">
       <div><div class="block-title">Category Links</div><div class="block-sub">Superadmin only — the "Links" button on the task-entry form (currently just Post-Sales Activity and Reports) shows whatever's added here for that category.</div></div>
       <button class="btn btn-toggle" id="categoryLinksToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'categoryLinksAdminPanel', 'Show', 'Hide', loadCategoryLinksAdminPanel)">Show</button>
     </div>
-    <div class="panel admin-fold-panel" id="categoryLinksAdminPanel" style="margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
- 
-    <div class="block-head" id="dataArchiveBlock" style="display:none;">
+    <div class="admin-fold-panel" id="categoryLinksAdminPanel"><div class="placeholder-note">Loading…</div></div>
+    </div>
+
+    <div class="admin-section-card" id="dataArchiveBlock" style="display:none;">
+    <div class="block-head">
       <div><div class="block-title">Data Archive</div><div class="block-sub">Superadmin only — moves old tasks/projects to an Excel file on your Google Drive, then deletes them from the live database to free up space. Uses your own Google sign-in, not a shared credential.</div></div>
       <button class="btn btn-toggle" id="dataArchiveToggleBtn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'dataArchivePanel', 'Show', 'Hide', loadArchivesList)">Show</button>
     </div>
-    <div class="panel admin-fold-panel" id="dataArchivePanel" style="margin-bottom:14px;">
+    <div class="admin-fold-panel" id="dataArchivePanel" style="padding:13px;">
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
         <button class="submit-btn" id="archiveBtn12" onclick="const e=new Date(), s=new Date(); s.setMonth(s.getMonth()-12); const r=computeMonthRange(s.toISOString().slice(0,7), e.toISOString().slice(0,7)); runDataArchive(r.startStr, r.endStr, r.periodLabel, this, document.getElementById('archiveAlsoDelete').checked);">Archive last 12 months</button>
         <span style="font-size:12.5px; color:var(--text-faint);">or a precise period:</span>
@@ -2412,12 +2428,14 @@
       <div class="field-label" style="margin-bottom:8px;">Past archives</div>
       <div id="archivesList"><div class="placeholder-note">Loading…</div></div>
     </div>
+    </div>
  
     <div class="block-head"><div><div class="block-title">Pending sign-ins</div><div class="block-sub">Anyone can register with Gmail — choose a role, then approve to grant access</div></div></div>
     <div class="panel" id="pendingSigninsPanel" style="padding:6px 14px; margin-bottom:14px;"><div class="placeholder-note">Loading…</div></div>
  
+    <div class="admin-section-card">
     <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div><button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'approvedUsersPanel', 'Show', 'Hide')">Show</button></div>
-    <div class="panel no-shine admin-fold-panel" id="approvedUsersPanel" style="padding:8px 20px;">
+    <div class="no-shine admin-fold-panel" id="approvedUsersPanel" style="padding:8px 20px;">
       <table class="data">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Discipline</th><th>Status</th><th></th></tr></thead>
         <tbody>
@@ -2427,6 +2445,7 @@
           <tr><td class="rank-name">Arun (66636)</td><td class="mono" style="font-size:12px;">arun@gmail.com</td><td><span class="tag gold">Superadmin</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" style="padding:6px;" onclick="removeUser('Arun (66636)', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></td></tr>
         </tbody>
       </table>
+    </div>
     </div>
   </div>
  
@@ -4124,7 +4143,8 @@
     { date:'2026-09-18', summary:'Three fixes. (1) Actually found the real cause of Profile\'s card-gap asymmetry this time, with an actual number rather than another theory: the card\'s own padding was 20px top/bottom vs 14px left/right — nearly 50% more vertical padding than horizontal, which was adding extra visual weight vertically regardless of how the grid gap itself was tuned. Made the card\'s padding uniform (14px all around). (2) Task Fields\' block-head (title + "+ Add Field" + "Show section") was overflowing off-screen on mobile — .block-head had no flex-wrap at all; added it globally, which protects every other section using this same class from the identical issue, not just this one. (3) "How Scoring Works" relocated out of the Superadmin-only Admin panel entirely, into the account menu (replacing the Tutorial entry) as a modal anyone can open — understanding your own Score isn\'t something that should require admin access. Scrollable content area matches the notification panel\'s own approach, with an explicit Close button fixed at the bottom.' },
     { date:'2026-09-18', summary:'Re-verified Project Briefing, Schema download, and index.html download after the recent round of changes — all 3 confirmed still correct (none of the functions they depend on were touched). Found one real completeness gap while checking, though: the briefing\'s feature checklist had never been updated to include Data Archive/Google Drive at all, despite it being one of the largest features added recently — added a check for it (runDataArchive + verifyArchive) so the briefing actually reflects everything significant, not just the older features.' },
     { date:'2026-09-18', summary:'Two fixes. (1) Data Archive\'s Show button was appearing left-aligned instead of right-aligned like every other section — a real side effect of the earlier flex-wrap fix: space-between only distributes space across items sharing one line, so when a section\'s description is long enough to force its button onto its own wrapped line (which only happens to Data Archive, since its description is unusually long), that lone item just sits at flex-start with nothing to push against. Fixed with margin-left:auto on the button specifically when a button exists, carefully excluded from sections that only have a title and no button at all (there are several), so those weren\'t accidentally pushed rightward instead. (2) Added a simple card-style border to every section header (.block-head), matching the border already on its content panel directly below — the two now read as one cohesive header-card + content-card pair per section, requested for clearer visual separation between sections.' },
-    { date:'2026-09-19', summary:'Three changes. (1) Profile card gaps on mobile — after ruling out the grid gap itself and the card\'s own padding in the last two rounds, isolated the actual remaining cause: the shared "floating glass" shadow has a Y-offset by definition, which spreads more shadow below a card than beside it regardless of how any gap number is tuned. Gave mobile profile cards their own centered, non-directional shadow instead, removing that bias entirely. (2) Real fold/unfold animation for every collapsible Admin section, replacing the previous instant display:none/block snap — switched to a max-height/opacity class transition, and the header now visually merges with its panel into one connected box while open (shared border, no gap, square inner corners) instead of two separately-bordered boxes stacked apart. Also added a visible border to every Show/Hide toggle button, which had none before. (3) The background gradient wash now drifts slowly and continuously (28s loop) instead of sitting static — "light moving behind the glass" — done by animating background-position rather than the gradient\'s own baked-in coordinates, which can\'t be animated directly; respects prefers-reduced-motion for anyone who has that accessibility setting on.' }
+    { date:'2026-09-19', summary:'Three changes. (1) Profile card gaps on mobile — after ruling out the grid gap itself and the card\'s own padding in the last two rounds, isolated the actual remaining cause: the shared "floating glass" shadow has a Y-offset by definition, which spreads more shadow below a card than beside it regardless of how any gap number is tuned. Gave mobile profile cards their own centered, non-directional shadow instead, removing that bias entirely. (2) Real fold/unfold animation for every collapsible Admin section, replacing the previous instant display:none/block snap — switched to a max-height/opacity class transition, and the header now visually merges with its panel into one connected box while open (shared border, no gap, square inner corners) instead of two separately-bordered boxes stacked apart. Also added a visible border to every Show/Hide toggle button, which had none before. (3) The background gradient wash now drifts slowly and continuously (28s loop) instead of sitting static — "light moving behind the glass" — done by animating background-position rather than the gradient\'s own baked-in coordinates, which can\'t be animated directly; respects prefers-reduced-motion for anyone who has that accessibility setting on.' },
+    { date:'2026-09-19', summary:'Follow-up: the corner-merge fix above still showed a visible glitch where header met panel, confirmed against a screenshot circling the exact spot — the underlying approach (two separately-bordered elements trying to match corners precisely) was inherently fragile. Rebuilt properly: header + panel for each of the 6 collapsible Admin sections now share ONE wrapping container that alone carries the border/radius/background, with the inner elements borderless — structurally impossible for two corners to mismatch when there is only one border to begin with. Also added a new "Export to PPTX" button on Dashboard: a modern multi-slide deck (title, KPI overview, a real native bar chart for category breakdown, a real native bar chart for top engineers, a full leaderboard table) built from currentDashRows — the exact same already-filtered data the page itself is showing for whatever date range/engineer is currently selected, with Score computed the identical way the real leaderboard does (same weight/duration/target lookups), so the export never drifts from what\'s on screen.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4909,6 +4929,15 @@
     XLSX.writeFile(wb, `${meta.name.replace(/\s+/g,'_')}_${fromVal}_to_${toVal}.xlsx`);
   }
 
+  // 2026-09-19: modern multi-slide PPTX export for the Dashboard, using
+  // currentDashRows — the same already-filtered rows the live page is
+  // showing, respecting whatever date range and engineer filter is
+  // currently selected, rather than re-querying separately and risking
+  // a mismatch with what's actually on screen. Uses PptxGenJS's real
+  // native charts (addChart), not static images of the on-screen bars —
+  // genuinely editable, resizable charts in the resulting file. Category
+  // colors and names are pulled from catColors/catMeta, the same source
+  // the live page's own bars use, so the deck visually matches the app.
   function exportDashboardToExcel(){
     if(!currentDashRows.length){ alert('No entries to export for this range.'); return; }
     const flat = currentDashRows.map(row => {
@@ -4932,7 +4961,134 @@
     const engineerLabel = engineerId ? (document.getElementById('dashEngineerSelect').selectedOptions[0]?.textContent || 'engineer').replace(/[^\w]+/g, '_') : 'whole_team';
     XLSX.writeFile(wb, `Dashboard_${engineerLabel}_${fromVal}_to_${toVal}.xlsx`);
   }
- 
+
+  async function exportDashboardToPptx(){
+    if(!currentDashRows.length){ alert('No entries to export for this range.'); return; }
+    const fromVal = document.getElementById('dashFromMonth').value || null;
+    const toVal = document.getElementById('dashToMonth').value || null;
+    const engineerSel = document.getElementById('dashEngineerSelect');
+    const engineerLabel = engineerSel.value ? (engineerSel.selectedOptions[0]?.textContent || 'Engineer') : 'Whole Team';
+    const periodLabel = (fromVal && toVal) ? `${fromVal} to ${toVal}` : 'All time';
+
+    // Same weight/duration/target lookups the live leaderboard uses, so
+    // Score here matches what the app itself would show for this exact
+    // set of rows — not a simplified stand-in metric.
+    const { data: weightData } = await sb.from('kpi_weights').select('*');
+    const weightMap = {};
+    (weightData||[]).forEach(w => weightMap[w.category] = w.weight);
+    const durationLabels = await getDurationLabelsByCategory();
+    const target = appSettings.monthly_score_target ?? 20;
+
+    const catCounts = {};
+    currentDashRows.forEach(r => { catCounts[r.category] = (catCounts[r.category]||0) + 1; });
+    const catSorted = Object.entries(catCounts).sort((a,b) => b[1]-a[1]);
+    const catColorsLocal = ['#378ADD','#1D9E75','#D85A30','#D4537E','#B98900','#8A63D2'];
+
+    const byEngineer = {};
+    currentDashRows.forEach(r => {
+      const id = r.employee_id;
+      if(!byEngineer[id]) byEngineer[id] = { name: r.profiles ? displayName(r.profiles) : '—', total:0, cats:{}, rows:[] };
+      byEngineer[id].total++;
+      byEngineer[id].cats[r.category] = (byEngineer[id].cats[r.category]||0) + 1;
+      byEngineer[id].rows.push(r);
+    });
+    Object.values(byEngineer).forEach(e => {
+      const percentsByMonth = computeMonthlyScorePercents(e.rows, weightMap, target, durationLabels);
+      const vals = Object.values(percentsByMonth);
+      e.score = vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : 0;
+      e.topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    });
+    const leaderboard = Object.entries(byEngineer).sort((a,b) => b[1].score - a[1].score);
+    const teamAvgScoreLocal = leaderboard.length ? leaderboard.reduce((sum,[,e]) => sum + e.score, 0) / leaderboard.length : 0;
+    const liftSetLocal = new Set(currentDashRows.filter(r => r.lift_id).map(r => r.lift_id));
+
+    const pptx = new PptxGenJS();
+    pptx.defineLayout({ name: 'WIDE', width: 13.33, height: 7.5 });
+    pptx.layout = 'WIDE';
+    const DARK = '0D1218', CARD = '1C1C1C', ACCENT = '5B8DEF', TEXT = 'F8FAFC', DIM = '94A3B8';
+
+    // Slide 1 — title
+    let slide = pptx.addSlide();
+    slide.background = { color: DARK };
+    slide.addText('Team Dashboard', { x:0.7, y:2.7, w:11.9, h:1, fontSize:44, bold:true, color:TEXT, fontFace:'Arial' });
+    slide.addText(`${engineerLabel} · ${periodLabel}`, { x:0.7, y:3.7, w:11.9, h:0.6, fontSize:20, color:ACCENT, fontFace:'Arial' });
+    slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}`, { x:0.7, y:6.6, w:11.9, h:0.4, fontSize:12, color:DIM, fontFace:'Arial' });
+
+    // Slide 2 — KPI overview
+    slide = pptx.addSlide();
+    slide.background = { color: DARK };
+    slide.addText('Team Overview', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    const kpis = [
+      { label:'Team Score', value:`${teamAvgScoreLocal.toFixed(1)}%`, color:'1D9E75' },
+      { label:'Activities', value:String(currentDashRows.length), color:ACCENT },
+      { label:'Lifts Touched', value:String(liftSetLocal.size), color:'D85A30' },
+      { label:'Engineers Active', value:String(leaderboard.length), color:'8A63D2' },
+    ];
+    kpis.forEach((k, i) => {
+      const x = 0.6 + i * 3.08;
+      slide.addShape(pptx.ShapeType.roundRect, { x, y:1.4, w:2.85, h:2.1, fill:{color:CARD}, line:{color:k.color, width:1.5}, rectRadius:0.12 });
+      slide.addText(k.value, { x, y:1.7, w:2.85, h:1, align:'center', fontSize:36, bold:true, color:k.color, fontFace:'Arial' });
+      slide.addText(k.label, { x, y:2.7, w:2.85, h:0.5, align:'center', fontSize:13, color:DIM, fontFace:'Arial' });
+    });
+
+    // Slide 3 — category breakdown, a real native bar chart
+    slide = pptx.addSlide();
+    slide.background = { color: DARK };
+    slide.addText('Activity by Category', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    slide.addChart(pptx.ChartType.bar, [{
+      name: 'Activities',
+      labels: catSorted.map(([cat]) => catMeta[cat]?.name || cat),
+      values: catSorted.map(([,count]) => count),
+    }], {
+      x:0.8, y:1.3, w:11.7, h:5.6,
+      chartColors: catSorted.map((_,i) => catColorsLocal[i % catColorsLocal.length]),
+      barDir:'col', showLegend:false, showValue:true,
+      valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
+      chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
+    });
+
+    // Slide 4 — top engineers by score, a real native bar chart
+    const topEngineers = leaderboard.slice(0, 10);
+    slide = pptx.addSlide();
+    slide.background = { color: DARK };
+    slide.addText('Top Engineers by Score', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    slide.addChart(pptx.ChartType.bar, [{
+      name: 'Score',
+      labels: topEngineers.map(([,e]) => e.name),
+      values: topEngineers.map(([,e]) => Math.round(e.score * 10) / 10),
+    }], {
+      x:0.8, y:1.3, w:11.7, h:5.6,
+      barDir:'bar', chartColors:[ACCENT], showLegend:false, showValue:true,
+      valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
+      chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
+    });
+
+    // Slide 5 — full leaderboard table
+    slide = pptx.addSlide();
+    slide.background = { color: DARK };
+    slide.addText('Engineer Leaderboard', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    const tableRows = [
+      [
+        { text:'#', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Engineer', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Top Category', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Activities', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Score', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+      ],
+      ...leaderboard.slice(0, 15).map(([, e], i) => [
+        { text:String(i+1), options:{ color:DIM, fill:{color:DARK} } },
+        { text:e.name, options:{ color:TEXT, fill:{color:DARK} } },
+        { text:catMeta[e.topCat]?.name || '—', options:{ color:DIM, fill:{color:DARK} } },
+        { text:String(e.total), options:{ color:DIM, fill:{color:DARK} } },
+        { text:`${e.score.toFixed(1)}%`, options:{ color:'1D9E75', bold:true, fill:{color:DARK} } },
+      ]),
+    ];
+    slide.addTable(tableRows, { x:0.6, y:1.3, w:12.1, h:5.6, fontSize:13, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.7,4,3,2,2.4] });
+
+    pptx.writeFile({ fileName: `Dashboard_${engineerLabel.replace(/\s+/g,'_')}_${(fromVal||'all')}_to_${(toVal||'all')}.pptx` });
+  }
+
+
   // ============ EDIT TASK (own entries only, with history trail) ============
   let editingTaskRow = null;
  
@@ -6663,7 +6819,7 @@ for a competing inline style first.`;
     }
  
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
-    document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
     const backupSection = document.getElementById('accountMenuBackupSection');
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
     // 2026-09-18: these 3 now default to hidden behind their own "Show"
@@ -6678,21 +6834,18 @@ for a competing inline style first.`;
     // re-hides itself while its button still says "Hide" from before,
     // out of sync until clicked twice. Now resets both together, always.
     // 2026-09-19: updated for the new fold/unfold mechanism — removes
-    // .open (and the matching .section-open on each block-head) instead
-    // of setting display:none, since visibility is now class-driven to
-    // allow animation.
+    // .open instead of setting display:none, since visibility is now
+    // class-driven to allow animation. The wrapper-based border merge
+    // needs no separate header class anymore.
     document.getElementById('kpiWeightsPanel').classList.remove('open');
-    document.getElementById('kpiWeightsBlock').classList.remove('section-open');
     document.getElementById('kpiWeightsToggleBtn').textContent = 'Show';
-    document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'flex' : 'none';
-    document.getElementById('categoryLinksBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    document.getElementById('fieldGuideBlock').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('customFieldsBlock').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('categoryLinksBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('categoryLinksAdminPanel').classList.remove('open');
-    document.getElementById('categoryLinksBlock').classList.remove('section-open');
     document.getElementById('categoryLinksToggleBtn').textContent = 'Show';
-    document.getElementById('dataArchiveBlock').style.display = isSuperadmin ? 'flex' : 'none';
+    document.getElementById('dataArchiveBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('dataArchivePanel').classList.remove('open');
-    document.getElementById('dataArchiveBlock').classList.remove('section-open');
     document.getElementById('dataArchiveToggleBtn').textContent = 'Show';
     // customFieldsPanel, kpiWeightsPanel, categoryLinksAdminPanel, and
     // dataArchivePanel all default to hidden behind their own "Show"
@@ -6862,17 +7015,16 @@ for a competing inline style first.`;
   // 2026-09-19: switched from display:none/block to toggling an .open
   // class (see .admin-fold-panel in <style>) — display can't animate,
   // max-height can, which is what actually makes this fold/unfold rather
-  // than snap open/closed. Also finds this button's own block-head
-  // (btn.closest) and toggles .section-open on it in sync, which is what
-  // visually merges the header and its panel into one connected box
-  // while open rather than two separately-bordered boxes with a gap.
+  // than snap open/closed. The visual "one connected box" merge is
+  // handled entirely by CSS now (.admin-section-card wraps header+panel
+  // in one shared border), so this function only needs to manage the
+  // panel's own open state — nothing to keep in sync on a separate
+  // header element anymore.
   function toggleAdminSection(btn, panelId, showLabel, hideLabel, onShow){
     const panel = document.getElementById(panelId);
     if(!panel) return;
     const isHidden = !panel.classList.contains('open');
     panel.classList.toggle('open', isHidden);
-    const head = btn.closest('.block-head');
-    if(head) head.classList.toggle('section-open', isHidden);
     btn.textContent = isHidden ? hideLabel : showLabel;
     if(isHidden && onShow) onShow();
   }
@@ -6882,8 +7034,6 @@ for a competing inline style first.`;
     if(!panel) return;
     const isHidden = !panel.classList.contains('open');
     panel.classList.toggle('open', isHidden);
-    const head = btn.closest('.block-head');
-    if(head) head.classList.toggle('section-open', isHidden);
     btn.textContent = isHidden ? 'Hide guide' : 'Show guide';
   }
 
@@ -6892,8 +7042,6 @@ for a competing inline style first.`;
     if(!panel) return;
     const isHidden = !panel.classList.contains('open');
     panel.classList.toggle('open', isHidden);
-    const head = btn.closest('.block-head');
-    if(head) head.classList.toggle('section-open', isHidden);
     btn.textContent = isHidden ? 'Hide section' : 'Show section';
     if(isHidden) loadCustomFieldsPanel();
   }
