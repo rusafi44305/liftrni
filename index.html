@@ -4145,7 +4145,9 @@
     { date:'2026-09-18', summary:'Two fixes. (1) Data Archive\'s Show button was appearing left-aligned instead of right-aligned like every other section — a real side effect of the earlier flex-wrap fix: space-between only distributes space across items sharing one line, so when a section\'s description is long enough to force its button onto its own wrapped line (which only happens to Data Archive, since its description is unusually long), that lone item just sits at flex-start with nothing to push against. Fixed with margin-left:auto on the button specifically when a button exists, carefully excluded from sections that only have a title and no button at all (there are several), so those weren\'t accidentally pushed rightward instead. (2) Added a simple card-style border to every section header (.block-head), matching the border already on its content panel directly below — the two now read as one cohesive header-card + content-card pair per section, requested for clearer visual separation between sections.' },
     { date:'2026-09-19', summary:'Three changes. (1) Profile card gaps on mobile — after ruling out the grid gap itself and the card\'s own padding in the last two rounds, isolated the actual remaining cause: the shared "floating glass" shadow has a Y-offset by definition, which spreads more shadow below a card than beside it regardless of how any gap number is tuned. Gave mobile profile cards their own centered, non-directional shadow instead, removing that bias entirely. (2) Real fold/unfold animation for every collapsible Admin section, replacing the previous instant display:none/block snap — switched to a max-height/opacity class transition, and the header now visually merges with its panel into one connected box while open (shared border, no gap, square inner corners) instead of two separately-bordered boxes stacked apart. Also added a visible border to every Show/Hide toggle button, which had none before. (3) The background gradient wash now drifts slowly and continuously (28s loop) instead of sitting static — "light moving behind the glass" — done by animating background-position rather than the gradient\'s own baked-in coordinates, which can\'t be animated directly; respects prefers-reduced-motion for anyone who has that accessibility setting on.' },
     { date:'2026-09-19', summary:'Follow-up: the corner-merge fix above still showed a visible glitch where header met panel, confirmed against a screenshot circling the exact spot — the underlying approach (two separately-bordered elements trying to match corners precisely) was inherently fragile. Rebuilt properly: header + panel for each of the 6 collapsible Admin sections now share ONE wrapping container that alone carries the border/radius/background, with the inner elements borderless — structurally impossible for two corners to mismatch when there is only one border to begin with. Also added a new "Export to PPTX" button on Dashboard: a modern multi-slide deck (title, KPI overview, a real native bar chart for category breakdown, a real native bar chart for top engineers, a full leaderboard table) built from currentDashRows — the exact same already-filtered data the page itself is showing for whatever date range/engineer is currently selected, with Score computed the identical way the real leaderboard does (same weight/duration/target lookups), so the export never drifts from what\'s on screen.' },
-    { date:'2026-09-19', summary:'Four fixes. (1) The new PPTX export was triggering PowerPoint\'s "found a problem, attempt repair" prompt — found the exact cause: the category chart\'s colors array had a leading # on each hex value, but PptxGenJS requires raw hex without it for chartColors specifically; that mismatch produces malformed XML inside the file, which is exactly what PowerPoint flags as needing repair. Fixed, and reviewed every other color in the export for the same mistake (none found). (2) Verified the Error Report penalty end to end rather than just describing it: it subtracts (affected category\'s weight × impact/5) from that report\'s own employee_id for that month, and the category-name-to-key mapping it depends on is generated directly from the same catMeta the Error Category dropdown\'s own options come from — structurally can\'t drift out of sync, confirmed functional. (3) Found a real, genuine bug behind Notebook\'s "random refresh while typing": a 60-second background timer (checkPersonalReminders) was unconditionally reloading the whole Notebook list whenever that tab was open, including while someone was mid-typing in an input — destroying the focused field and whatever was typed with no warning. Now skips that reload specifically when the currently-focused element is an input/textarea inside Notebook, waiting for the next cycle instead. (4) Replaced the star-rating icons on Error Report\'s Impact field with plain circles — the underlying color-toggle logic needed no changes at all, since it already worked by recoloring one repeated character rather than swapping star types.' }
+    { date:'2026-09-19', summary:'Four fixes. (1) The new PPTX export was triggering PowerPoint\'s "found a problem, attempt repair" prompt — found the exact cause: the category chart\'s colors array had a leading # on each hex value, but PptxGenJS requires raw hex without it for chartColors specifically; that mismatch produces malformed XML inside the file, which is exactly what PowerPoint flags as needing repair. Fixed, and reviewed every other color in the export for the same mistake (none found). (2) Verified the Error Report penalty end to end rather than just describing it: it subtracts (affected category\'s weight × impact/5) from that report\'s own employee_id for that month, and the category-name-to-key mapping it depends on is generated directly from the same catMeta the Error Category dropdown\'s own options come from — structurally can\'t drift out of sync, confirmed functional. (3) Found a real, genuine bug behind Notebook\'s "random refresh while typing": a 60-second background timer (checkPersonalReminders) was unconditionally reloading the whole Notebook list whenever that tab was open, including while someone was mid-typing in an input — destroying the focused field and whatever was typed with no warning. Now skips that reload specifically when the currently-focused element is an input/textarea inside Notebook, waiting for the next cycle instead. (4) Replaced the star-rating icons on Error Report\'s Impact field with plain circles — the underlying color-toggle logic needed no changes at all, since it already worked by recoloring one repeated character rather than swapping star types.' },
+    { date:'2026-09-19', summary:'Dashboard\'s "X engineers active" count now excludes people with the Admin (Manager) role specifically — Superadmins and regular Users/Engineers still count normally, only Admin is excluded, per explicit request, so a manager logging the occasional task doesn\'t inflate a number meant to represent how many engineers are actually active. Needed role added to the existing profiles join (it was already fetching name/nickname, just not role) rather than a separate query.' },
+    { date:'2026-09-19', summary:'Dashboard PPTX export upgraded on 3 fronts. (1) Added a "Category Details" table slide, one row per category — activity count, % of total, top contributing engineer, and time logged (using the app\'s own duration data for categories that track it, an honest "—" for the ones that don\'t) — real category-wise depth beyond the existing bar chart. (2) Added the real Walton Lift logo, referenced by path (logo.png) rather than embedded, so PptxGenJS fetches it fresh from wherever the export actually runs — always your current, real logo, not a stale copy: large on the title slide, a consistent small watermark on every other slide. (3) Visual polish pass — a thin accent-colored underline under every slide\'s title, a subtle drop shadow on the KPI cards, and a centered, more considered title-slide layout — aiming for a more deliberate, modern look throughout rather than only the first slide getting attention.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5003,22 +5005,62 @@
     const teamAvgScoreLocal = leaderboard.length ? leaderboard.reduce((sum,[,e]) => sum + e.score, 0) / leaderboard.length : 0;
     const liftSetLocal = new Set(currentDashRows.filter(r => r.lift_id).map(r => r.lift_id));
 
+    // 2026-09-19: per-category detail, not just a bar chart's raw count —
+    // for each category, works out its share of total activity, which
+    // engineer contributed most to it, and total time logged where that
+    // category actually tracks duration (shown as "—" where it doesn't,
+    // same honesty as the app itself about which categories have that
+    // data and which don't).
+    const catDetails = catSorted.map(([cat, count]) => {
+      const catRows = currentDashRows.filter(r => r.category === cat);
+      const byEng = {};
+      catRows.forEach(r => { byEng[r.employee_id] = (byEng[r.employee_id]||0) + 1; });
+      const topEngId = Object.entries(byEng).sort((a,b)=>b[1]-a[1])[0]?.[0];
+      const tracksDuration = (durationLabels[cat] || []).length > 0;
+      const totalMins = tracksDuration ? catRows.reduce((sum,r) => sum + taskDurationMinutes(r, durationLabels), 0) : null;
+      return {
+        cat, count,
+        pct: ((count / currentDashRows.length) * 100).toFixed(1),
+        topEngineer: topEngId ? (byEngineer[topEngId]?.name || '—') : '—',
+        timeLabel: totalMins !== null ? formatDurationShort(totalMins) : '—',
+      };
+    });
+
     const pptx = new PptxGenJS();
     pptx.defineLayout({ name: 'WIDE', width: 13.33, height: 7.5 });
     pptx.layout = 'WIDE';
     const DARK = '0D1218', CARD = '1C1C1C', ACCENT = '5B8DEF', TEXT = 'F8FAFC', DIM = '94A3B8';
+    // Referenced by relative path rather than embedded — PptxGenJS fetches
+    // it fresh from wherever this code is actually running (your live
+    // GitHub Pages site, where logo.png is a real sibling file next to
+    // index.html), so the exported deck always carries your real, current
+    // logo rather than a copy baked in at some earlier point.
+    const LOGO_PATH = 'logo.png';
+
+    // Consistent header treatment used on every content slide — a small
+    // watermark logo top-right, and a thin accent underline beneath the
+    // title, rather than a bare heading with nothing to anchor it. This
+    // is what carries the "modern, polished deck" feel across all 6
+    // slides instead of it only showing up on the title slide.
+    function addSlideHeader(slide, title){
+      slide.background = { color: DARK };
+      slide.addText(title, { x:0.6, y:0.4, w:10, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+      slide.addShape(pptx.ShapeType.rect, { x:0.62, y:1.05, w:1.3, h:0.045, fill:{color:ACCENT}, line:{type:'none'} });
+      try{ slide.addImage({ path: LOGO_PATH, x:12.15, y:0.35, w:0.7, h:0.7 }); }catch(e){ /* logo optional — deck still works without it */ }
+    }
 
     // Slide 1 — title
     let slide = pptx.addSlide();
     slide.background = { color: DARK };
-    slide.addText('Team Dashboard', { x:0.7, y:2.7, w:11.9, h:1, fontSize:44, bold:true, color:TEXT, fontFace:'Arial' });
-    slide.addText(`${engineerLabel} · ${periodLabel}`, { x:0.7, y:3.7, w:11.9, h:0.6, fontSize:20, color:ACCENT, fontFace:'Arial' });
-    slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}`, { x:0.7, y:6.6, w:11.9, h:0.4, fontSize:12, color:DIM, fontFace:'Arial' });
+    try{ slide.addImage({ path: LOGO_PATH, x:5.67, y:1.3, w:2, h:2 }); }catch(e){ /* logo optional */ }
+    slide.addText('Team Dashboard', { x:0.7, y:3.5, w:11.9, h:1, align:'center', fontSize:44, bold:true, color:TEXT, fontFace:'Arial' });
+    slide.addShape(pptx.ShapeType.rect, { x:5.87, y:4.55, w:1.6, h:0.05, fill:{color:ACCENT}, line:{type:'none'} });
+    slide.addText(`${engineerLabel}  ·  ${periodLabel}`, { x:0.7, y:4.75, w:11.9, h:0.6, align:'center', fontSize:20, color:ACCENT, fontFace:'Arial' });
+    slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}`, { x:0.7, y:6.7, w:11.9, h:0.4, align:'center', fontSize:12, color:DIM, fontFace:'Arial' });
 
     // Slide 2 — KPI overview
     slide = pptx.addSlide();
-    slide.background = { color: DARK };
-    slide.addText('Team Overview', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    addSlideHeader(slide, 'Team Overview');
     const kpis = [
       { label:'Team Score', value:`${teamAvgScoreLocal.toFixed(1)}%`, color:'1D9E75' },
       { label:'Activities', value:String(currentDashRows.length), color:ACCENT },
@@ -5027,47 +5069,68 @@
     ];
     kpis.forEach((k, i) => {
       const x = 0.6 + i * 3.08;
-      slide.addShape(pptx.ShapeType.roundRect, { x, y:1.4, w:2.85, h:2.1, fill:{color:CARD}, line:{color:k.color, width:1.5}, rectRadius:0.12 });
-      slide.addText(k.value, { x, y:1.7, w:2.85, h:1, align:'center', fontSize:36, bold:true, color:k.color, fontFace:'Arial' });
-      slide.addText(k.label, { x, y:2.7, w:2.85, h:0.5, align:'center', fontSize:13, color:DIM, fontFace:'Arial' });
+      slide.addShape(pptx.ShapeType.roundRect, { x, y:1.6, w:2.85, h:2.1, fill:{color:CARD}, line:{color:k.color, width:1.5}, rectRadius:0.12, shadow:{ type:'outer', color:'000000', opacity:0.35, blur:6, offset:3, angle:90 } });
+      slide.addText(k.value, { x, y:1.9, w:2.85, h:1, align:'center', fontSize:36, bold:true, color:k.color, fontFace:'Arial' });
+      slide.addText(k.label, { x, y:2.9, w:2.85, h:0.5, align:'center', fontSize:13, color:DIM, fontFace:'Arial' });
     });
 
     // Slide 3 — category breakdown, a real native bar chart
     slide = pptx.addSlide();
-    slide.background = { color: DARK };
-    slide.addText('Activity by Category', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    addSlideHeader(slide, 'Activity by Category');
     slide.addChart(pptx.ChartType.bar, [{
       name: 'Activities',
       labels: catSorted.map(([cat]) => catMeta[cat]?.name || cat),
       values: catSorted.map(([,count]) => count),
     }], {
-      x:0.8, y:1.3, w:11.7, h:5.6,
+      x:0.8, y:1.5, w:11.7, h:5.4,
       chartColors: catSorted.map((_,i) => catColorsLocal[i % catColorsLocal.length]),
       barDir:'col', showLegend:false, showValue:true,
       valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
       chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
     });
 
-    // Slide 4 — top engineers by score, a real native bar chart
+    // Slide 4 — category details table (the "as much category-wise
+    // information as possible" request) — count, share of total, top
+    // contributing engineer, and time logged where that category
+    // actually tracks it, one row per category.
+    slide = pptx.addSlide();
+    addSlideHeader(slide, 'Category Details');
+    const catTableRows = [
+      [
+        { text:'Category', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Activities', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'% of Total', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Top Engineer', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Time Logged', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+      ],
+      ...catDetails.map((c, i) => [
+        { text: catMeta[c.cat]?.name || c.cat, options:{ color:catColorsLocal[i % catColorsLocal.length], bold:true, fill:{color:DARK} } },
+        { text: String(c.count), options:{ color:TEXT, fill:{color:DARK} } },
+        { text: `${c.pct}%`, options:{ color:DIM, fill:{color:DARK} } },
+        { text: c.topEngineer, options:{ color:DIM, fill:{color:DARK} } },
+        { text: c.timeLabel, options:{ color:DIM, fill:{color:DARK} } },
+      ]),
+    ];
+    slide.addTable(catTableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:14, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[3.3,2.2,2.2,2.7,1.7] });
+
+    // Slide 5 — top engineers by score, a real native bar chart
     const topEngineers = leaderboard.slice(0, 10);
     slide = pptx.addSlide();
-    slide.background = { color: DARK };
-    slide.addText('Top Engineers by Score', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    addSlideHeader(slide, 'Top Engineers by Score');
     slide.addChart(pptx.ChartType.bar, [{
       name: 'Score',
       labels: topEngineers.map(([,e]) => e.name),
       values: topEngineers.map(([,e]) => Math.round(e.score * 10) / 10),
     }], {
-      x:0.8, y:1.3, w:11.7, h:5.6,
+      x:0.8, y:1.5, w:11.7, h:5.4,
       barDir:'bar', chartColors:[ACCENT], showLegend:false, showValue:true,
       valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
       chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
     });
 
-    // Slide 5 — full leaderboard table
+    // Slide 6 — full leaderboard table
     slide = pptx.addSlide();
-    slide.background = { color: DARK };
-    slide.addText('Engineer Leaderboard', { x:0.6, y:0.4, w:12, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
+    addSlideHeader(slide, 'Engineer Leaderboard');
     const tableRows = [
       [
         { text:'#', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
@@ -5084,7 +5147,7 @@
         { text:`${e.score.toFixed(1)}%`, options:{ color:'1D9E75', bold:true, fill:{color:DARK} } },
       ]),
     ];
-    slide.addTable(tableRows, { x:0.6, y:1.3, w:12.1, h:5.6, fontSize:13, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.7,4,3,2,2.4] });
+    slide.addTable(tableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:13, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.7,4,3,2,2.4] });
 
     pptx.writeFile({ fileName: `Dashboard_${engineerLabel.replace(/\s+/g,'_')}_${(fromVal||'all')}_to_${(toVal||'all')}.pptx` });
   }
@@ -9152,7 +9215,7 @@ for a competing inline style first.`;
     const toVal = document.getElementById('dashToMonth').value;
     const engineerId = document.getElementById('dashEngineerSelect').value;
  
-    let query = sb.from('tasks').select('*, profiles(full_name, nickname)');
+    let query = sb.from('tasks').select('*, profiles(full_name, nickname, role)');
     if(fromVal) query = query.gte('created_at', fromVal + '-01');
     if(toVal){
       const [y,m] = toVal.split('-').map(Number);
@@ -9169,7 +9232,12 @@ for a competing inline style first.`;
     currentDashRows = rows;
     const durationLabels = await getDurationLabelsByCategory();
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
-    const engineerSet = new Set(rows.map(r=>r.employee_id));
+    // 2026-09-19: excludes Admin-role people specifically from this count
+    // — Superadmins and regular Users/Engineers still count, only the
+    // Admin (Manager) role is excluded, per explicit request. Managers
+    // logging the occasional task shouldn't inflate a number meant to
+    // represent how many engineers are actually active.
+    const engineerSet = new Set(rows.filter(r => r.profiles?.role !== 'admin').map(r=>r.employee_id));
     const catCounts = {};
     rows.forEach(r => { catCounts[r.category] = (catCounts[r.category]||0) + 1; });
  
