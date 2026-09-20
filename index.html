@@ -2750,7 +2750,7 @@
       {t:'text', l:'Task Name', req:true, ph:'e.g. Fire exit door — UL test study', section:'identity'},
       {t:'chips', l:'Task Category', hint:'select all that apply', source:'rni:task_category_mechanical', section:'details'},
       {t:'row2text', l1:'Task Start Date', l2:'Task Completion Date', ph1:'dd/mm/yyyy', ph2:'dd/mm/yyyy', section:'details'},
-      {t:'text', l:'Duration (min) — for meetings/training', ph:'e.g. 90', numeric:true, isDuration:true, section:'details'},
+      {t:'text', l:'Duration (min)', req:true, ph:'e.g. 90', numeric:true, isDuration:true, section:'details'},
       {t:'chips', l:'Status', source:'rni:status_mechanical', section:'details'},
       {t:'textarea', l:'Notes / Challenges / Achievements', section:'description'}
     ],
@@ -2758,7 +2758,7 @@
       {t:'text', l:'Client / Project Name', req:true, section:'identity'},
       {t:'chips', l:'Support Medium', hint:'select all that apply', source:'presales:support_medium', section:'details'},
       {t:'chips', l:'Support Type', hint:'select all that apply', source:'presales:client_support_task', section:'details'},
-      {t:'text', l:'Deployed Time (min)', ph:'e.g. 60', numeric:true, isDuration:true, section:'details'},
+      {t:'text', l:'Duration (min)', req:true, ph:'e.g. 60', numeric:true, isDuration:true, section:'details'},
       {t:'textarea', l:'Summary of support provided', section:'description'}
     ],
     postsales: [
@@ -4181,7 +4181,8 @@
     { date:'2026-09-19', summary:'Three changes. (1) Removed individual scores from the Dashboard PPTX export per request — the "Top Engineers by Score" chart slide is gone entirely, and the leaderboard table\'s Score column is removed, re-sorted by activity count instead since that\'s the only visible ranking metric left; Team Score (the aggregate) on the overview slide is untouched, only per-person figures were hidden. (2) Added total time spent per category to the Dashboard itself, not just the PPTX export — sits right under the existing "By category" bars, showing only categories that actually track duration (the rest are left out entirely rather than shown as a misleading 0h), mirroring the same Time Logged data already in the PPTX\'s Category Details table so the app and the export tell the same story. (3) Re-verified index.html download, schema download, and Project Briefing after this session\'s extensive changes — combined and parsed every script block in the file together as one unit (a stronger check than validating each in isolation) to confirm nothing was left broken; all confirmed working. Also added Dashboard PPTX export to the Briefing\'s feature checklist, which hadn\'t been updated to mention it since it was built.' },
     { date:'2026-09-19', summary:'Rewrote "How Scoring Works" (account menu) as a step-by-step walkthrough with worked numeric examples throughout, rather than a more abstract bullet-point description — e.g. "80 points ÷ 100 target × 100 = 80% for that month" and a worked 3-month average, plus a plain explanation of why two people with very different activity counts can land on the identical Overall Score once both are hitting the 100% cap most months.' },
     { date:'2026-09-19', summary:'Two changes. (1) Provided SQL (add_duration_to_3_categories.sql) adding a "Duration (min)" field to Post-Sales, Technical Support, and General Support — the 3 of 5 non-Reports categories that didn\'t track duration yet. No app code changes were needed for this: getDurationLabelsByCategory() already picks up ANY custom_fields row flagged is_duration for ANY category, fully dynamically — Dashboard\'s time breakdown, Profile\'s Time Logged, and duration-based scoring all pick these 3 categories up automatically once the SQL is run. (2) Converted Dashboard\'s and Category Log\'s date filters from month-only pickers to real day-level date pickers, so a range can be set to an exact day rather than only whole calendar months. Data Archive\'s own month picker was deliberately left as-is — that one governs which whole months get archived to Excel, a genuinely different, month-shaped operation.' },
-    { date:'2026-09-20', summary:'Fixed Task Fields silently not showing all fields — the fold/unfold animation added a while back capped its open height at max-height:2000px, which worked fine at the time but started clipping once enough duration fields were added across categories and sub-types that the real content grew taller than that. Raised the cap drastically (100,000px) rather than measuring precisely, since Task Fields\' content also changes while open (adding/editing/deleting a field live) — a height measured once at toggle-time would go stale the moment another field was added, reproducing the same bug. A generous, realistically-unreachable cap sidesteps that; the animation\'s perceived speed comes from its transition duration, not this number, so nothing about the fold/unfold feel changes.' }
+    { date:'2026-09-20', summary:'Fixed Task Fields silently not showing all fields — the fold/unfold animation added a while back capped its open height at max-height:2000px, which worked fine at the time but started clipping once enough duration fields were added across categories and sub-types that the real content grew taller than that. Raised the cap drastically (100,000px) rather than measuring precisely, since Task Fields\' content also changes while open (adding/editing/deleting a field live) — a height measured once at toggle-time would go stale the moment another field was added, reproducing the same bug. A generous, realistically-unreachable cap sidesteps that; the animation\'s perceived speed comes from its transition duration, not this number, so nothing about the fold/unfold feel changes.' },
+    { date:'2026-09-20', summary:'Confirmed exactly the limitation flagged earlier: editing a built-in field through Task Fields\' catalog (e.g. marking Team Activity\'s Duration required there) doesn\'t touch the real form at all — the catalog entry for a built-in field is a display-only mirror, the actual field lives in code. Fixed for real this time, directly in code: Team Activity\'s "Duration (min) — for meetings/training" and Pre-Sales\' "Deployed Time (min)" are now both just "Duration (min)" and both required. Critically, also updated BUILTIN_DURATION_FIELDS — the hardcoded map scoring/Dashboard use to recognize these two fields by exact name — to match the new names; skipping that step would have silently broken duration tracking for both categories the moment the labels changed, exactly the kind of quiet breakage flagged as a risk of renaming built-in fields several turns ago. Scoring\'s duration-scaling continues to apply automatically, unaffected by the rename.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -8981,7 +8982,8 @@ for a competing inline style first.`;
   // here automatically and rolled into that person's Time Logged, with
   // zero code changes needed for a brand new one going forward. Only 2
   // built-in fields exist today (Team Activity's "Duration (min)" and
-  // Pre-Sales' "Deployed Time (min)") — hardcoded here since built-in
+  // Pre-Sales' "Duration (min)", renamed 2026-09-20 from "Deployed Time
+  // (min)" for consistency) — hardcoded here since built-in
   // fields' real behavior always lives in code, same limitation as every
   // other built-in field in this app (see Task Fields catalog note).
   // Superadmin-added Duration fields are picked up live from custom_fields
@@ -8990,8 +8992,8 @@ for a competing inline style first.`;
   // consistent with how weightMap/appSettings are already fetched fresh
   // on each Profile/Dashboard load rather than kept in a stale cache.
   const BUILTIN_DURATION_FIELDS = {
-    rni: ['Duration (min) — for meetings/training'],
-    presales: ['Deployed Time (min)']
+    rni: ['Duration (min)'],
+    presales: ['Duration (min)']
   };
   async function getDurationLabelsByCategory(){
     const map = {};
