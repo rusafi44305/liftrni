@@ -381,11 +381,6 @@
   section.block{margin-bottom:16px;}
   .block-head{
     display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; row-gap:8px; margin-bottom:18px;
-    /* 2026-09-18: simple card-style border per section, matching the
-       .panel border already sitting directly below it — the two
-       together read as one cohesive "header card + content card" pair
-       per section instead of a bare title floating above a bordered box. */
-    border:1px solid var(--border); border-radius:12px; padding:12px 14px; background:var(--surface);
   }
   /* 2026-09-18: fixes Data Archive\'s button showing up left-aligned
      instead of right-aligned like every other section\'s — caused by my
@@ -2436,6 +2431,7 @@
     <div class="admin-section-card">
     <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div><button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'approvedUsersPanel', 'Show', 'Hide')">Show</button></div>
     <div class="no-shine admin-fold-panel" id="approvedUsersPanel" style="padding:8px 20px;">
+      <div style="overflow-x:auto;">
       <table class="data">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Discipline</th><th>Status</th><th></th></tr></thead>
         <tbody>
@@ -2445,6 +2441,7 @@
           <tr><td class="rank-name">Arun (66636)</td><td class="mono" style="font-size:12px;">arun@gmail.com</td><td><span class="tag gold">Superadmin</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" style="padding:6px;" onclick="removeUser('Arun (66636)', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></td></tr>
         </tbody>
       </table>
+      </div>
     </div>
     </div>
   </div>
@@ -4147,7 +4144,10 @@
     { date:'2026-09-19', summary:'Follow-up: the corner-merge fix above still showed a visible glitch where header met panel, confirmed against a screenshot circling the exact spot — the underlying approach (two separately-bordered elements trying to match corners precisely) was inherently fragile. Rebuilt properly: header + panel for each of the 6 collapsible Admin sections now share ONE wrapping container that alone carries the border/radius/background, with the inner elements borderless — structurally impossible for two corners to mismatch when there is only one border to begin with. Also added a new "Export to PPTX" button on Dashboard: a modern multi-slide deck (title, KPI overview, a real native bar chart for category breakdown, a real native bar chart for top engineers, a full leaderboard table) built from currentDashRows — the exact same already-filtered data the page itself is showing for whatever date range/engineer is currently selected, with Score computed the identical way the real leaderboard does (same weight/duration/target lookups), so the export never drifts from what\'s on screen.' },
     { date:'2026-09-19', summary:'Four fixes. (1) The new PPTX export was triggering PowerPoint\'s "found a problem, attempt repair" prompt — found the exact cause: the category chart\'s colors array had a leading # on each hex value, but PptxGenJS requires raw hex without it for chartColors specifically; that mismatch produces malformed XML inside the file, which is exactly what PowerPoint flags as needing repair. Fixed, and reviewed every other color in the export for the same mistake (none found). (2) Verified the Error Report penalty end to end rather than just describing it: it subtracts (affected category\'s weight × impact/5) from that report\'s own employee_id for that month, and the category-name-to-key mapping it depends on is generated directly from the same catMeta the Error Category dropdown\'s own options come from — structurally can\'t drift out of sync, confirmed functional. (3) Found a real, genuine bug behind Notebook\'s "random refresh while typing": a 60-second background timer (checkPersonalReminders) was unconditionally reloading the whole Notebook list whenever that tab was open, including while someone was mid-typing in an input — destroying the focused field and whatever was typed with no warning. Now skips that reload specifically when the currently-focused element is an input/textarea inside Notebook, waiting for the next cycle instead. (4) Replaced the star-rating icons on Error Report\'s Impact field with plain circles — the underlying color-toggle logic needed no changes at all, since it already worked by recoloring one repeated character rather than swapping star types.' },
     { date:'2026-09-19', summary:'Dashboard\'s "X engineers active" count now excludes people with the Admin (Manager) role specifically — Superadmins and regular Users/Engineers still count normally, only Admin is excluded, per explicit request, so a manager logging the occasional task doesn\'t inflate a number meant to represent how many engineers are actually active. Needed role added to the existing profiles join (it was already fetching name/nickname, just not role) rather than a separate query.' },
-    { date:'2026-09-19', summary:'Dashboard PPTX export upgraded on 3 fronts. (1) Added a "Category Details" table slide, one row per category — activity count, % of total, top contributing engineer, and time logged (using the app\'s own duration data for categories that track it, an honest "—" for the ones that don\'t) — real category-wise depth beyond the existing bar chart. (2) Added the real Walton Lift logo, referenced by path (logo.png) rather than embedded, so PptxGenJS fetches it fresh from wherever the export actually runs — always your current, real logo, not a stale copy: large on the title slide, a consistent small watermark on every other slide. (3) Visual polish pass — a thin accent-colored underline under every slide\'s title, a subtle drop shadow on the KPI cards, and a centered, more considered title-slide layout — aiming for a more deliberate, modern look throughout rather than only the first slide getting attention.' }
+    { date:'2026-09-19', summary:'Dashboard PPTX export upgraded on 3 fronts. (1) Added a "Category Details" table slide, one row per category — activity count, % of total, top contributing engineer, and time logged (using the app\'s own duration data for categories that track it, an honest "—" for the ones that don\'t) — real category-wise depth beyond the existing bar chart. (2) Added the real Walton Lift logo, referenced by path (logo.png) rather than embedded, so PptxGenJS fetches it fresh from wherever the export actually runs — always your current, real logo, not a stale copy: large on the title slide, a consistent small watermark on every other slide. (3) Visual polish pass — a thin accent-colored underline under every slide\'s title, a subtle drop shadow on the KPI cards, and a centered, more considered title-slide layout — aiming for a more deliberate, modern look throughout rather than only the first slide getting attention.' },
+    { date:'2026-09-19', summary:'Five fixes/findings. (1)+(3) The section-header border added for Admin\'s toggle sections had been applied to .block-head globally rather than scoped to Admin — it was showing up everywhere that class is used app-wide, including Home\'s "Recent activity" and Dashboard\'s "Task categories", making them look like a separate bordered header floating above disconnected content. Removed the border from the generic rule entirely; Admin\'s 6 sections keep their correct look via their own dedicated wrapper, untouched by this. (2) Approved users\' table lost the ability to swipe horizontally on mobile — a side effect of overflow:hidden needed on its wrapping panel for the fold animation, which was also blocking the table\'s own horizontal scroll. Fixed by giving the table its own inner scrollable wrapper, which can coexist with the outer vertical clipping. (4) Re-verified the Admin exclusion on Dashboard\'s "X engineers active" text — confirmed still correctly in place. Found something important while checking though: Home page\'s separate "Active engineers" stat is a different counter entirely, computed by a server-side SQL function (get_home_stats) that was never touched by that fix and likely still includes Admins — flagged for the user rather than guessed at, since editing that function blind without seeing its current definition would be risky. (5) Found a real gap behind "single input becomes double, refresh fixes it": neither the Notebook task Add/Save button nor the subtask Add button had any protection against firing twice — a slow connection plus an impatient second tap could genuinely insert the same task or subtask twice, especially subtasks, which read-modify-write a shared array and were more exposed to a real duplicate from two near-simultaneous calls. Both buttons now disable themselves for the duration of their request.' },
+    { date:'2026-09-19', summary:'Clarified: the "single input becomes double, refresh fixes it" report was actually about Home\'s Recent Activity feed after logging a task, not Notebook. Found the real mechanism, explained in a comment left during an earlier session: submitTask() adds the submitter\'s own new entry to the feed instantly (an optimistic update, so they see it without waiting), but the realtime listener watching activity_log for everyone\'s activity was ALSO adding that same row a second time once the server caught up — two independently-correct code paths both firing for the same submission, producing a genuine visible duplicate until a refresh re-fetched the true single-row state. Fixed by having the realtime listener skip rows matching the current user\'s own name (activity_log has no employee_id column to compare against — it stores employee_full_name/nickname directly, the same fields the optimistic path already uses), so a person\'s own submissions are only ever added once, while everyone else\'s activity still streams in live exactly as before.' },
+    { date:'2026-09-19', summary:'Three changes. (1) Removed individual scores from the Dashboard PPTX export per request — the "Top Engineers by Score" chart slide is gone entirely, and the leaderboard table\'s Score column is removed, re-sorted by activity count instead since that\'s the only visible ranking metric left; Team Score (the aggregate) on the overview slide is untouched, only per-person figures were hidden. (2) Added total time spent per category to the Dashboard itself, not just the PPTX export — sits right under the existing "By category" bars, showing only categories that actually track duration (the rest are left out entirely rather than shown as a misleading 0h), mirroring the same Time Logged data already in the PPTX\'s Category Details table so the app and the export tell the same story. (3) Re-verified index.html download, schema download, and Project Briefing after this session\'s extensive changes — combined and parsed every script block in the file together as one unit (a stronger check than validating each in isolation) to confirm nothing was left broken; all confirmed working. Also added Dashboard PPTX export to the Briefing\'s feature checklist, which hadn\'t been updated to mention it since it was built.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5113,41 +5113,32 @@
     ];
     slide.addTable(catTableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:14, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[3.3,2.2,2.2,2.7,1.7] });
 
-    // Slide 5 — top engineers by score, a real native bar chart
-    const topEngineers = leaderboard.slice(0, 10);
-    slide = pptx.addSlide();
-    addSlideHeader(slide, 'Top Engineers by Score');
-    slide.addChart(pptx.ChartType.bar, [{
-      name: 'Score',
-      labels: topEngineers.map(([,e]) => e.name),
-      values: topEngineers.map(([,e]) => Math.round(e.score * 10) / 10),
-    }], {
-      x:0.8, y:1.5, w:11.7, h:5.4,
-      barDir:'bar', chartColors:[ACCENT], showLegend:false, showValue:true,
-      valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
-      chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
-    });
+    // 2026-09-19: removed the "Top Engineers by Score" chart entirely
+    // and the Score column below, per explicit request not to show
+    // individual scores in this deck. Team-wide Score on the overview
+    // slide is unaffected — only per-person scores are hidden. Re-sorted
+    // this table by activity count instead, since that's the only
+    // visible ranking metric left once Score isn't shown.
+    const byActivity = [...leaderboard].sort((a,b) => b[1].total - a[1].total);
 
-    // Slide 6 — full leaderboard table
+    // Slide 5 — engineer activity summary (no individual scores)
     slide = pptx.addSlide();
-    addSlideHeader(slide, 'Engineer Leaderboard');
+    addSlideHeader(slide, 'Engineer Activity');
     const tableRows = [
       [
         { text:'#', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
         { text:'Engineer', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
         { text:'Top Category', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
         { text:'Activities', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Score', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
       ],
-      ...leaderboard.slice(0, 15).map(([, e], i) => [
+      ...byActivity.slice(0, 15).map(([, e], i) => [
         { text:String(i+1), options:{ color:DIM, fill:{color:DARK} } },
         { text:e.name, options:{ color:TEXT, fill:{color:DARK} } },
         { text:catMeta[e.topCat]?.name || '—', options:{ color:DIM, fill:{color:DARK} } },
-        { text:String(e.total), options:{ color:DIM, fill:{color:DARK} } },
-        { text:`${e.score.toFixed(1)}%`, options:{ color:'1D9E75', bold:true, fill:{color:DARK} } },
+        { text:String(e.total), options:{ color:ACCENT, bold:true, fill:{color:DARK} } },
       ]),
     ];
-    slide.addTable(tableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:13, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.7,4,3,2,2.4] });
+    slide.addTable(tableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:14, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.7,4.5,4.4,2.5] });
 
     pptx.writeFile({ fileName: `Dashboard_${engineerLabel.replace(/\s+/g,'_')}_${(fromVal||'all')}_to_${(toVal||'all')}.pptx` });
   }
@@ -5617,32 +5608,47 @@
         <span style="font-size:11.5px; color:var(--accent); cursor:pointer;" onclick="toggleSubtaskInput('${t.id}')">+ Add subtask</span>
         <div id="subtaskInputWrap-${t.id}" style="display:none; gap:8px; margin-top:6px;">
           <input type="text" id="subtaskInput-${t.id}" placeholder="Subtask..." style="flex:1; padding:6px 10px; border-radius:8px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-size:12.5px;" onkeydown="if(event.key==='Enter') addSubtask('${t.id}')">
-          <button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="addSubtask('${t.id}')">Add</button>
+          <button class="btn" id="subtaskAddBtn-${t.id}" style="padding:5px 12px; font-size:11.5px;" onclick="addSubtask('${t.id}')">Add</button>
         </div>
       </div>
     </div>`;
   }
 
+  // 2026-09-19: added real double-submission protection — previously
+  // nothing stopped the Add/Save button (or the input's Enter-key
+  // handler) from firing a second time while the first request was still
+  // in flight, e.g. on a slow connection where a tap doesn't look like
+  // it did anything yet. That could genuinely insert the same task
+  // twice, not just a rendering glitch. The button now disables itself
+  // for the duration of the request and always re-enables afterward,
+  // success or failure.
   async function addNotebookTask(){
+    const btn = document.getElementById('notebookAddBtn');
+    if(btn && btn.disabled) return; // already mid-submission — ignore a second trigger entirely
     const textEl = document.getElementById('notebookTaskInput');
     const dueEl = document.getElementById('notebookDueInput');
     const text = textEl.value.trim();
     if(!text || !currentUser) return;
     const dueIso = dueEl.value ? new Date(dueEl.value).toISOString() : null;
+    if(btn) btn.disabled = true;
 
-    if(editingNotebookTaskId){
-      const { error } = await sb.from('notebook_tasks').update({ text, due_at: dueIso, notified: false }).eq('id', editingNotebookTaskId);
-      if(error){ alert('Could not save changes: ' + error.message); return; }
-      cancelEditNotebookTask();
+    try{
+      if(editingNotebookTaskId){
+        const { error } = await sb.from('notebook_tasks').update({ text, due_at: dueIso, notified: false }).eq('id', editingNotebookTaskId);
+        if(error){ alert('Could not save changes: ' + error.message); return; }
+        cancelEditNotebookTask();
+        loadNotebook();
+        return;
+      }
+
+      const { error } = await sb.from('notebook_tasks').insert({ user_id: currentUser.id, text, due_at: dueIso });
+      if(error){ alert('Could not add task: ' + error.message); return; }
+      textEl.value = '';
+      dueEl.value = '';
       loadNotebook();
-      return;
+    } finally {
+      if(btn) btn.disabled = false;
     }
-
-    const { error } = await sb.from('notebook_tasks').insert({ user_id: currentUser.id, text, due_at: dueIso });
-    if(error){ alert('Could not add task: ' + error.message); return; }
-    textEl.value = '';
-    dueEl.value = '';
-    loadNotebook();
   }
 
   function editNotebookTask(id, text, dueAt){
@@ -5681,14 +5687,28 @@
     if(opening) document.getElementById(`subtaskInput-${taskId}`).focus();
   }
 
+  // 2026-09-19: same double-submission protection as addNotebookTask —
+  // this one was actually more exposed to a genuine duplicate than the
+  // main task add, since it reads the current subtasks array from a
+  // local cache, appends to it, and writes the whole array back. Two
+  // near-simultaneous calls could each read before either write landed,
+  // then each append their own copy of the same text, producing a real
+  // visible duplicate in the saved array — not just a rendering glitch.
   async function addSubtask(taskId){
+    const btn = document.getElementById(`subtaskAddBtn-${taskId}`);
+    if(btn && btn.disabled) return;
     const input = document.getElementById(`subtaskInput-${taskId}`);
     const text = input.value.trim();
     if(!text) return;
-    const task = notebookTasksCache.find(t => t.id === taskId);
-    const subtasks = [...(task?.subtasks || []), { id: Date.now().toString(36), text, done: false }];
-    await sb.from('notebook_tasks').update({ subtasks }).eq('id', taskId);
-    loadNotebook();
+    if(btn) btn.disabled = true;
+    try{
+      const task = notebookTasksCache.find(t => t.id === taskId);
+      const subtasks = [...(task?.subtasks || []), { id: Date.now().toString(36), text, done: false }];
+      await sb.from('notebook_tasks').update({ subtasks }).eq('id', taskId);
+      loadNotebook();
+    } finally {
+      if(btn) btn.disabled = false;
+    }
   }
 
   async function toggleSubtask(taskId, index){
@@ -5757,6 +5777,21 @@
   // Real-time: whenever ANYONE logs a task, everyone's home feed gets a generic "someone logged X" line — no names or details
   sb.channel('public:activity-feed')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
+      // 2026-09-19: real bug fix — submitTask() already adds the
+      // submitter's own new entry to the feed instantly (an optimistic
+      // update, so they don't wait on this realtime round-trip at all).
+      // This listener was ALSO adding it a second time once the server
+      // caught up, producing exactly the "I see my own submission
+      // twice, refresh fixes it" report — a genuine visible duplicate
+      // from two correct-on-their-own code paths both firing for the
+      // same submission. activity_log has no employee_id column to
+      // compare against — it stores employee_full_name/nickname
+      // directly, the same two fields submitTask()'s optimistic insert
+      // already uses, so matching against currentProfile's own name
+      // here is the correct, consistent comparison. Skipping the
+      // submitter's own rows leaves everyone else's live activity
+      // working exactly as before.
+      if(currentProfile && payload.new.employee_full_name === currentProfile.full_name && payload.new.employee_nickname === currentProfile.nickname) return;
       const el = document.getElementById('homeFeed');
       if(!el) return;
       if(el.querySelector('.placeholder-note')) el.innerHTML = '';
@@ -6559,6 +6594,7 @@
       ['Custom Fields (dynamic per-category fields)', typeof loadCustomFieldsPanel === 'function'],
       ['Backup / Restore system', typeof createBackup === 'function' && typeof confirmRestoreBackup === 'function'],
       ['Data Archive (Google Drive backup/verify)', typeof runDataArchive === 'function' && typeof verifyArchive === 'function'],
+      ['Dashboard PPTX export', typeof exportDashboardToPptx === 'function'],
       ['Excel export', typeof XLSX !== 'undefined'],
       ['PPTX generation library loaded', typeof PptxGenJS !== 'undefined']
     ];
@@ -9139,6 +9175,7 @@ for a competing inline style first.`;
           <div class="panel-title" style="text-align:center; margin-bottom:12px;">Category &amp; engineer performance</div>
           <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
           <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+          <div id="dashCategoryTimeBreakdown" style="margin-top:10px;"></div>
           <div class="field-label" style="margin:16px 0 8px;">Top engineers by score</div>
           <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
         </div>`;
@@ -9178,6 +9215,7 @@ for a competing inline style first.`;
             <div>
               <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
               <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+          <div id="dashCategoryTimeBreakdown" style="margin-top:10px;"></div>
             </div>
             <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:22px;">
               <div class="field-label" style="margin-bottom:8px;">Top engineers by score</div>
@@ -9342,6 +9380,36 @@ for a competing inline style first.`;
         <div style="display:flex; align-items:flex-end; gap:6px; height:54px; margin-bottom:10px;">${barsHtml}</div>
         <div style="display:flex; flex-wrap:wrap;">${legendHtml}</div>`;
       animateBars();
+
+      // 2026-09-19: total time spent per category, for whichever
+      // categories actually track duration — mirrors the same info
+      // already shown in the Dashboard PPTX export's Category Details
+      // table, so the app and the export tell the same story rather
+      // than the export knowing something the live page doesn't show.
+      // Categories with no duration field at all are left out entirely
+      // here rather than shown as a confusing "0h".
+      const timeByCategory = catSorted
+        .map(([cat]) => {
+          const tracksDuration = (durationLabels[cat] || []).length > 0;
+          if(!tracksDuration) return null;
+          const mins = rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0);
+          return { cat, mins };
+        })
+        .filter(Boolean);
+      const timeEl = document.getElementById('dashCategoryTimeBreakdown');
+      if(timeEl){
+        timeEl.innerHTML = timeByCategory.length ? `
+          <div style="font-size:10.5px; color:var(--text-faint); margin-bottom:6px;">Time spent (tracked categories)</div>
+          <div style="display:flex; flex-wrap:wrap; gap:8px;">
+            ${timeByCategory.map(({cat, mins}) => {
+              const i = catSorted.findIndex(([c]) => c === cat);
+              return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:4px 9px; border-radius:20px; background:var(--surface-alt); border:1px solid var(--border);">
+                <span style="width:6px; height:6px; border-radius:50%; background:${catColors[i % catColors.length]}; flex-shrink:0;"></span>
+                ${catMeta[cat]?.name || cat}: <b style="color:var(--text);">${formatDurationShort(mins)}</b>
+              </span>`;
+            }).join('')}
+          </div>` : '';
+      }
     }
  
     // Leaderboard: per engineer totals + their top category, built from the same filtered rows
