@@ -768,7 +768,7 @@
      already has its own sensible max-width, are excluded) — otherwise a
      handful of compact dropdowns just hug the left edge while every card
      below spans the full width, which is what looked disorganized. */
-  .filter-row select.fselect, .filter-row input[type="month"]{ flex:1 1 140px; }
+  .filter-row select.fselect, .filter-row input[type="month"], .filter-row input[type="date"]{ flex:1 1 140px; }
   .fselect{
     background:var(--surface); border:1px solid var(--border); border-radius:9px;
     padding:9px 14px; font-size:13px; font-weight:600; color:var(--text-dim);
@@ -1924,9 +1924,9 @@
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="catLogSearch" placeholder="Search in this category..." oninput="filterCategoryLog()" style="font-family:'Inter'; font-weight:400; font-size:13.5px;">
       </div>
-      <input type="month" id="catFromMonth" class="fselect" style="cursor:pointer;">
+      <input type="date" id="catFromMonth" class="fselect" style="cursor:pointer;">
       <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
-      <input type="month" id="catToMonth" class="fselect" style="cursor:pointer;">
+      <input type="date" id="catToMonth" class="fselect" style="cursor:pointer;">
       <button class="queue-btn" onclick="showCategoryLog(currentCatKey)">Apply range</button>
       <button class="queue-btn" onclick="exportCategoryToExcel()">⬇ Export to Excel</button>
     </div>
@@ -2158,9 +2158,9 @@
       <div><div class="block-title">Team dashboard</div><div class="block-sub">Org-wide activity · <span id="dashAsOf" class="mono">as of —</span></div></div>
     </div>
     <div class="filter-row">
-      <input type="month" id="dashFromMonth" class="fselect" style="cursor:pointer;">
+      <input type="date" id="dashFromMonth" class="fselect" style="cursor:pointer;">
       <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
-      <input type="month" id="dashToMonth" class="fselect" style="cursor:pointer;">
+      <input type="date" id="dashToMonth" class="fselect" style="cursor:pointer;">
       <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
       <button class="queue-btn" onclick="loadDashboard()">Apply</button>
       <button class="queue-btn" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
@@ -3571,25 +3571,45 @@
         </div>
         <div style="overflow-y:auto; padding:0 18px 16px; flex:1;">
           <div style="font-size:13.5px; line-height:1.7;">
-            <div style="font-weight:700; margin-bottom:6px;">Earning points, per task</div>
-            <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
-              <li>Every category has a <b style="color:var(--text);">weight</b>, set by a Superadmin — a normal task in that category earns that many points.</li>
-              <li><b style="color:var(--text);">Where duration is tracked</b> for a category (currently Team Activity and Pre-Sales, plus any others a Superadmin has added): points scale with how long the task actually took, not just a flat number. A 1-hour task earns exactly the category's weight — that's the baseline. Longer tasks earn more, shorter tasks earn less, scaled proportionally.</li>
-              <li>To keep one unusually long or short task from swinging a whole month too far, that scaling is capped between <b style="color:var(--text);">0.25× and 3×</b> the weight (roughly: 15 minutes is the floor, 3 hours is the ceiling, for scoring purposes — the real duration is still recorded and shown accurately everywhere else).</li>
-              <li><b style="color:var(--text);">Where duration isn't tracked</b> for a category (most of Post-Sales, Technical Support, General Support, and Reports): every task earns the flat weight, unaffected by anything above — there's no time value to scale by.</li>
-              <li><b style="color:var(--text);">Error Reports</b> (Reports → Error Report) are the one case that subtracts points instead of adding them — the penalty is the affected category's weight, scaled down by the star rating out of 5. Every other Reports sub-type earns 0, neither helping nor hurting.</li>
-            </ul>
-            <div style="font-weight:700; margin-bottom:6px;">Turning points into a Score</div>
-            <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
-              <li>Every task's points for a calendar month are added together, then divided by that month's Monthly Score Target, turned into a percentage.</li>
-              <li>That percentage is capped at 100 on the top end, but has no floor — enough Error Reports in one month can push it negative.</li>
-              <li><b style="color:var(--text);">Monthly Score</b> (on Profile) is just that one month's percentage. <b style="color:var(--text);">Overall Score</b> is the average of every month's percentage across your whole history — since no individual month can exceed 100, the average of them can't either.</li>
-            </ul>
-            <div style="font-weight:700; margin-bottom:6px;">The Dashboard leaderboard</div>
-            <ul style="margin:0 0 16px 20px; padding:0; color:var(--text-faint);">
-              <li>Ranked by <b style="color:var(--text);">Score</b> for whatever date range is selected, highest first — not by raw activity count. Logging many quick entries no longer automatically outranks fewer entries representing more real weight and hours.</li>
-              <li>Team Score on the ring at the top is the average Score of everyone with any activity in that range — a different number from any one person's own Score, meant to answer "how's the team doing overall".</li>
-            </ul>
+            <div style="font-weight:700; margin-bottom:4px;">Step 1 — every task earns points</div>
+            <div style="color:var(--text-faint); margin-bottom:10px;">
+              Each category has a <b style="color:var(--text);">weight</b> (set by a Superadmin). A task in that category earns that many points. Example: if Team Activity's weight is <b style="color:var(--text);">25</b>, logging one Team Activity task earns <b style="color:var(--text);">25 points</b>.
+            </div>
+            <div style="color:var(--text-faint); margin-bottom:10px;">
+              <b style="color:var(--text);">If that category tracks duration</b> (like Team Activity or Pre-Sales): <b style="color:var(--text);">1 hour = the full weight, exactly.</b> Longer tasks earn more, shorter tasks earn less, scaled to that. A 3-hour Team Activity task earns up to <b style="color:var(--text);">75 points</b> (3× the weight); a 15-minute one earns as little as <b style="color:var(--text);">~6 points</b> (¼ the weight) — that's the floor and ceiling, so one unusually long or short task can't swing a whole month too far.
+            </div>
+            <div style="color:var(--text-faint); margin-bottom:14px;">
+              <b style="color:var(--text);">If it doesn't track duration</b> (most of Post-Sales, Technical Support, General Support, Reports): every task earns the flat weight, no matter how long it took.
+            </div>
+
+            <div style="font-weight:700; margin-bottom:4px;">Step 2 — points become a monthly percentage</div>
+            <div style="background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:10px; font-size:12.5px;">
+              Say this month you earn <b style="color:var(--text);">80 points</b> total, and the <b style="color:var(--text);">Monthly Target</b> is <b style="color:var(--text);">100</b>:<br>
+              <span style="color:var(--text-faint);">80 ÷ 100 × 100 = </span><b style="color:#1D9E75;">80% for that month</b>
+            </div>
+            <div style="color:var(--text-faint); margin-bottom:14px;">
+              Capped at <b style="color:var(--text);">100%</b> — earning more than the target that month doesn't push it any higher. No floor, though: enough Error Report penalties can make a month go negative.
+            </div>
+
+            <div style="font-weight:700; margin-bottom:4px;">Step 3 — Monthly vs. Overall Score</div>
+            <div style="color:var(--text-faint); margin-bottom:6px;">
+              <b style="color:var(--text);">Monthly Score</b> (on your Profile) is just that one month's percentage.
+            </div>
+            <div style="background:var(--surface-alt); border:1px solid var(--border); border-radius:10px; padding:10px 12px; margin-bottom:14px; font-size:12.5px;">
+              <b style="color:var(--text);">Overall Score</b> = the average of every month's percentage.<br>
+              <span style="color:var(--text-faint);">3 months at 100%, 100%, 60% → </span><b style="color:#1D9E75;">(100+100+60)÷3 = 86.7% overall</b><br>
+              <span style="color:var(--text-faint); font-size:11.5px;">This is why two people with very different activity counts can land on the same Overall Score — if both hit the 100% cap most months, their average ends up the same, even though one did noticeably more.</span>
+            </div>
+
+            <div style="font-weight:700; margin-bottom:4px;">Error Reports — the one thing that subtracts</div>
+            <div style="color:var(--text-faint); margin-bottom:10px;">
+              penalty = (affected category's weight) × (impact rating ÷ 5). Example: Team Activity (weight 25) with impact 4/5 → <b style="color:var(--text);">25 × 0.8 = 20 points deducted</b> that month. Every other Reports sub-type earns 0 — neither helps nor hurts.
+            </div>
+
+            <div style="font-weight:700; margin-bottom:4px;">The Dashboard leaderboard</div>
+            <div style="color:var(--text-faint);">
+              Ranked by Score for whatever date range is selected, highest first — not raw activity count. Team Score at the top is the average Score across everyone active in that range, a different number from any one person's own Score.
+            </div>
           </div>
         </div>
         <div style="padding:12px 18px; border-top:1px solid var(--border); flex-shrink:0;">
@@ -4147,7 +4167,9 @@
     { date:'2026-09-19', summary:'Dashboard PPTX export upgraded on 3 fronts. (1) Added a "Category Details" table slide, one row per category — activity count, % of total, top contributing engineer, and time logged (using the app\'s own duration data for categories that track it, an honest "—" for the ones that don\'t) — real category-wise depth beyond the existing bar chart. (2) Added the real Walton Lift logo, referenced by path (logo.png) rather than embedded, so PptxGenJS fetches it fresh from wherever the export actually runs — always your current, real logo, not a stale copy: large on the title slide, a consistent small watermark on every other slide. (3) Visual polish pass — a thin accent-colored underline under every slide\'s title, a subtle drop shadow on the KPI cards, and a centered, more considered title-slide layout — aiming for a more deliberate, modern look throughout rather than only the first slide getting attention.' },
     { date:'2026-09-19', summary:'Five fixes/findings. (1)+(3) The section-header border added for Admin\'s toggle sections had been applied to .block-head globally rather than scoped to Admin — it was showing up everywhere that class is used app-wide, including Home\'s "Recent activity" and Dashboard\'s "Task categories", making them look like a separate bordered header floating above disconnected content. Removed the border from the generic rule entirely; Admin\'s 6 sections keep their correct look via their own dedicated wrapper, untouched by this. (2) Approved users\' table lost the ability to swipe horizontally on mobile — a side effect of overflow:hidden needed on its wrapping panel for the fold animation, which was also blocking the table\'s own horizontal scroll. Fixed by giving the table its own inner scrollable wrapper, which can coexist with the outer vertical clipping. (4) Re-verified the Admin exclusion on Dashboard\'s "X engineers active" text — confirmed still correctly in place. Found something important while checking though: Home page\'s separate "Active engineers" stat is a different counter entirely, computed by a server-side SQL function (get_home_stats) that was never touched by that fix and likely still includes Admins — flagged for the user rather than guessed at, since editing that function blind without seeing its current definition would be risky. (5) Found a real gap behind "single input becomes double, refresh fixes it": neither the Notebook task Add/Save button nor the subtask Add button had any protection against firing twice — a slow connection plus an impatient second tap could genuinely insert the same task or subtask twice, especially subtasks, which read-modify-write a shared array and were more exposed to a real duplicate from two near-simultaneous calls. Both buttons now disable themselves for the duration of their request.' },
     { date:'2026-09-19', summary:'Clarified: the "single input becomes double, refresh fixes it" report was actually about Home\'s Recent Activity feed after logging a task, not Notebook. Found the real mechanism, explained in a comment left during an earlier session: submitTask() adds the submitter\'s own new entry to the feed instantly (an optimistic update, so they see it without waiting), but the realtime listener watching activity_log for everyone\'s activity was ALSO adding that same row a second time once the server caught up — two independently-correct code paths both firing for the same submission, producing a genuine visible duplicate until a refresh re-fetched the true single-row state. Fixed by having the realtime listener skip rows matching the current user\'s own name (activity_log has no employee_id column to compare against — it stores employee_full_name/nickname directly, the same fields the optimistic path already uses), so a person\'s own submissions are only ever added once, while everyone else\'s activity still streams in live exactly as before.' },
-    { date:'2026-09-19', summary:'Three changes. (1) Removed individual scores from the Dashboard PPTX export per request — the "Top Engineers by Score" chart slide is gone entirely, and the leaderboard table\'s Score column is removed, re-sorted by activity count instead since that\'s the only visible ranking metric left; Team Score (the aggregate) on the overview slide is untouched, only per-person figures were hidden. (2) Added total time spent per category to the Dashboard itself, not just the PPTX export — sits right under the existing "By category" bars, showing only categories that actually track duration (the rest are left out entirely rather than shown as a misleading 0h), mirroring the same Time Logged data already in the PPTX\'s Category Details table so the app and the export tell the same story. (3) Re-verified index.html download, schema download, and Project Briefing after this session\'s extensive changes — combined and parsed every script block in the file together as one unit (a stronger check than validating each in isolation) to confirm nothing was left broken; all confirmed working. Also added Dashboard PPTX export to the Briefing\'s feature checklist, which hadn\'t been updated to mention it since it was built.' }
+    { date:'2026-09-19', summary:'Three changes. (1) Removed individual scores from the Dashboard PPTX export per request — the "Top Engineers by Score" chart slide is gone entirely, and the leaderboard table\'s Score column is removed, re-sorted by activity count instead since that\'s the only visible ranking metric left; Team Score (the aggregate) on the overview slide is untouched, only per-person figures were hidden. (2) Added total time spent per category to the Dashboard itself, not just the PPTX export — sits right under the existing "By category" bars, showing only categories that actually track duration (the rest are left out entirely rather than shown as a misleading 0h), mirroring the same Time Logged data already in the PPTX\'s Category Details table so the app and the export tell the same story. (3) Re-verified index.html download, schema download, and Project Briefing after this session\'s extensive changes — combined and parsed every script block in the file together as one unit (a stronger check than validating each in isolation) to confirm nothing was left broken; all confirmed working. Also added Dashboard PPTX export to the Briefing\'s feature checklist, which hadn\'t been updated to mention it since it was built.' },
+    { date:'2026-09-19', summary:'Rewrote "How Scoring Works" (account menu) as a step-by-step walkthrough with worked numeric examples throughout, rather than a more abstract bullet-point description — e.g. "80 points ÷ 100 target × 100 = 80% for that month" and a worked 3-month average, plus a plain explanation of why two people with very different activity counts can land on the identical Overall Score once both are hitting the 100% cap most months.' },
+    { date:'2026-09-19', summary:'Two changes. (1) Provided SQL (add_duration_to_3_categories.sql) adding a "Duration (min)" field to Post-Sales, Technical Support, and General Support — the 3 of 5 non-Reports categories that didn\'t track duration yet. No app code changes were needed for this: getDurationLabelsByCategory() already picks up ANY custom_fields row flagged is_duration for ANY category, fully dynamically — Dashboard\'s time breakdown, Profile\'s Time Logged, and duration-based scoring all pick these 3 categories up automatically once the SQL is run. (2) Converted Dashboard\'s and Category Log\'s date filters from month-only pickers to real day-level date pickers, so a range can be set to an exact day rather than only whole calendar months. Data Archive\'s own month picker was deliberately left as-is — that one governs which whole months get archived to Excel, a genuinely different, month-shaped operation.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4820,12 +4842,15 @@
     showView('category');
  
     let query = sb.from('tasks').select('*, profiles(full_name, nickname)').eq('category', key).order('created_at', { ascending: false });
+    // 2026-09-19: day-level filtering, same as Dashboard's — fromVal/toVal
+    // are real dates now, not month strings.
     const fromVal = document.getElementById('catFromMonth').value;
     const toVal = document.getElementById('catToMonth').value;
-    if(fromVal) query = query.gte('created_at', fromVal + '-01');
+    if(fromVal) query = query.gte('created_at', fromVal);
     if(toVal){
-      const [y,m] = toVal.split('-').map(Number);
-      query = query.lt('created_at', new Date(y, m, 1).toISOString().slice(0,10));
+      const nextDay = new Date(toVal + 'T00:00:00');
+      nextDay.setDate(nextDay.getDate() + 1);
+      query = query.lt('created_at', nextDay.toISOString().slice(0,10));
     }
  
     const { data, error } = await query;
@@ -9249,16 +9274,22 @@ for a competing inline style first.`;
     try{ await populateDashEngineerSelect(); } catch(e){ console.error('populateDashEngineerSelect failed:', e); }
     try{ await loadAppSettings(); } catch(e){ console.error('loadAppSettings failed:', e); }
     renderKpiTriggerButton();
-    const fromVal = document.getElementById('dashFromMonth').value; // "2026-01"
+    // 2026-09-19: switched from month-only to full day-level filtering —
+    // fromVal/toVal are now real "YYYY-MM-DD" dates, not "YYYY-MM". gte
+    // works directly on the from-date now (no need to append "-01"); the
+    // to-date is made inclusive of its whole day by advancing to the
+    // start of the next calendar day and filtering strictly before that,
+    // same pattern as before just at day granularity instead of month.
+    const fromVal = document.getElementById('dashFromMonth').value; // "2026-01-15"
     const toVal = document.getElementById('dashToMonth').value;
     const engineerId = document.getElementById('dashEngineerSelect').value;
  
     let query = sb.from('tasks').select('*, profiles(full_name, nickname, role)');
-    if(fromVal) query = query.gte('created_at', fromVal + '-01');
+    if(fromVal) query = query.gte('created_at', fromVal);
     if(toVal){
-      const [y,m] = toVal.split('-').map(Number);
-      const nextMonth = new Date(y, m, 1).toISOString().slice(0,10); // first day of month AFTER "to"
-      query = query.lt('created_at', nextMonth);
+      const nextDay = new Date(toVal + 'T00:00:00');
+      nextDay.setDate(nextDay.getDate() + 1);
+      query = query.lt('created_at', nextDay.toISOString().slice(0,10));
     }
     if(engineerId) query = query.eq('employee_id', engineerId);
  
