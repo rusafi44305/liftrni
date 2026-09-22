@@ -780,6 +780,16 @@
      handful of compact dropdowns just hug the left edge while every card
      below spans the full width, which is what looked disorganized. */
   .filter-row select.fselect, .filter-row input[type="month"], .filter-row input[type="date"]{ flex:1 1 140px; }
+  /* 2026-09-22: filter-row action buttons (Apply, Export to Excel/PPTX)
+     were visually mismatched against the date/select inputs beside them
+     — taller padding and a dashed accent border from .queue-btn's
+     default look, versus the inputs' shorter padding and solid neutral
+     border. Scoped to .filter-row specifically so .queue-btn's own
+     dashed style is untouched everywhere else it's used. */
+  .filter-row .queue-btn{
+    padding:9px 14px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text-dim);
+  }
+  .filter-row .queue-btn:hover{ border-color:var(--accent); color:var(--text); background:var(--surface); }
   .fselect{
     background:var(--surface); border:1px solid var(--border); border-radius:9px;
     padding:9px 14px; font-size:13px; font-weight:600; color:var(--text-dim);
@@ -2187,7 +2197,7 @@
       <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
       <div class="panel no-shine" style="padding:8px 20px;">
         <table class="data">
-          <thead><tr><th>Engineer</th><th>Top category</th><th>Activities</th><th>Time</th><th>Score</th><th>Error Reports</th><th></th></tr></thead>
+          <thead><tr id="leaderboardHeaderRow"><th>Engineer</th><th>Top category</th><th>Activities</th><th>Time</th><th>Score</th><th>Error Reports</th><th></th></tr></thead>
           <tbody id="dashLeaderboardBody"><tr><td colspan="7" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
         </table>
       </div>
@@ -2795,8 +2805,17 @@
   // after a Superadmin adds/removes one in the Admin panel).
   let dynamicFieldOptions = { installationWings: [], dataIssueTypes: [], chips: {}, customSubtypes: {}, customFields: {} };
   let dynamicFieldOptionsLoaded = false;
+  let dynamicFieldOptionsLoadedAt = 0;
+  // 2026-09-22: real bug fix — dynamicFieldOptionsLoaded used to be a
+  // one-time-only flag, true forever once set, so a field a Superadmin
+  // added mid-session never reached anyone whose session was already
+  // open — they'd only see it after a full page reload, which re-runs
+  // this from scratch. Added a staleness window instead: still only
+  // fetches once per open, but now re-fetches again after 2 minutes,
+  // so someone browsing the task-entry form for a while eventually
+  // picks up a field added elsewhere without needing to reload at all.
   async function loadDynamicFieldOptions(force){
-    if(dynamicFieldOptionsLoaded && !force) return;
+    if(dynamicFieldOptionsLoaded && !force && (Date.now() - dynamicFieldOptionsLoadedAt) < 120000) return;
     const [{ data: wings, error: wingsErr }, { data: types, error: typesErr }, { data: chipRows, error: chipErr }, { data: subtypeRows, error: subtypeErr }, { data: customFieldRows, error: customFieldErr }] = await Promise.all([
       sb.from('installation_wings').select('*').order('name'),
       sb.from('data_issue_types').select('*').order('name'),
@@ -2835,7 +2854,7 @@
     // succeeded. If any failed (a network blip, a timing hiccup — anything),
     // leave the flag false so the NEXT time this form is opened, it tries
     // fetching again instead of permanently trusting an empty result.
-    if(!wingsErr && !typesErr && !chipErr && !subtypeErr && !customFieldErr) dynamicFieldOptionsLoaded = true;
+    if(!wingsErr && !typesErr && !chipErr && !subtypeErr && !customFieldErr){ dynamicFieldOptionsLoaded = true; dynamicFieldOptionsLoadedAt = Date.now(); }
   }
 
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
@@ -3324,7 +3343,14 @@
     // Survey Report Issues, and only ever "worked" for Superadmin by
     // accident, since opening the Admin panel happens to warm the same
     // cache as a side effect. Everyone else always saw an empty list.
-    if(fields.some(f => f.t === 'select' || f.t === 'chipselect' || (f.t === 'chips' && f.source)) && !dynamicFieldOptionsLoaded){
+    // 2026-09-22: removed the external !dynamicFieldOptionsLoaded check
+    // here — it used to skip calling the function at all once loaded
+    // even once, which bypassed the staleness window added to the
+    // function itself and was the actual reason a newly-added field
+    // never reached anyone whose form was already open. Now always
+    // calls it; the function's own internal check decides whether a
+    // real re-fetch is actually needed.
+    if(fields.some(f => f.t === 'select' || f.t === 'chipselect' || (f.t === 'chips' && f.source))){
       await loadDynamicFieldOptions();
     }
 
@@ -3978,6 +4004,22 @@
     }
   }
 
+  // 2026-09-22: deliberately one-way — there is no unpublishDevProject
+  // function anywhere in this file, matching the explicit request that
+  // a published project can't be unpublished. The owner can still
+  // delete the project entirely regardless of published state (see
+  // deleteDevProject below), which remains the only way to remove a
+  // published project from view.
+  async function publishDevProject(id){
+    const project = devProjectsCache.find(p => p.id === id);
+    if(!project) return;
+    if(!currentUser || (project.created_by !== currentUser.id && project.lead_id !== currentUser.id)) return;
+    if(!confirm('Publish this project? It will become visible to everyone, and this cannot be undone.')) return;
+    const { error } = await sb.from('dev_projects').update({ published: true }).eq('id', id);
+    if(error){ alert('Could not publish: ' + error.message); return; }
+    loadDevDashboard();
+  }
+
   async function deleteDevProject(id){
     if(!confirm('Delete this entire project, including its task breakdown? This cannot be undone.')) return;
     const { error } = await sb.from('dev_projects').delete().eq('id', id);
@@ -4182,7 +4224,8 @@
     { date:'2026-09-19', summary:'Rewrote "How Scoring Works" (account menu) as a step-by-step walkthrough with worked numeric examples throughout, rather than a more abstract bullet-point description — e.g. "80 points ÷ 100 target × 100 = 80% for that month" and a worked 3-month average, plus a plain explanation of why two people with very different activity counts can land on the identical Overall Score once both are hitting the 100% cap most months.' },
     { date:'2026-09-19', summary:'Two changes. (1) Provided SQL (add_duration_to_3_categories.sql) adding a "Duration (min)" field to Post-Sales, Technical Support, and General Support — the 3 of 5 non-Reports categories that didn\'t track duration yet. No app code changes were needed for this: getDurationLabelsByCategory() already picks up ANY custom_fields row flagged is_duration for ANY category, fully dynamically — Dashboard\'s time breakdown, Profile\'s Time Logged, and duration-based scoring all pick these 3 categories up automatically once the SQL is run. (2) Converted Dashboard\'s and Category Log\'s date filters from month-only pickers to real day-level date pickers, so a range can be set to an exact day rather than only whole calendar months. Data Archive\'s own month picker was deliberately left as-is — that one governs which whole months get archived to Excel, a genuinely different, month-shaped operation.' },
     { date:'2026-09-20', summary:'Fixed Task Fields silently not showing all fields — the fold/unfold animation added a while back capped its open height at max-height:2000px, which worked fine at the time but started clipping once enough duration fields were added across categories and sub-types that the real content grew taller than that. Raised the cap drastically (100,000px) rather than measuring precisely, since Task Fields\' content also changes while open (adding/editing/deleting a field live) — a height measured once at toggle-time would go stale the moment another field was added, reproducing the same bug. A generous, realistically-unreachable cap sidesteps that; the animation\'s perceived speed comes from its transition duration, not this number, so nothing about the fold/unfold feel changes.' },
-    { date:'2026-09-20', summary:'Confirmed exactly the limitation flagged earlier: editing a built-in field through Task Fields\' catalog (e.g. marking Team Activity\'s Duration required there) doesn\'t touch the real form at all — the catalog entry for a built-in field is a display-only mirror, the actual field lives in code. Fixed for real this time, directly in code: Team Activity\'s "Duration (min) — for meetings/training" and Pre-Sales\' "Deployed Time (min)" are now both just "Duration (min)" and both required. Critically, also updated BUILTIN_DURATION_FIELDS — the hardcoded map scoring/Dashboard use to recognize these two fields by exact name — to match the new names; skipping that step would have silently broken duration tracking for both categories the moment the labels changed, exactly the kind of quiet breakage flagged as a risk of renaming built-in fields several turns ago. Scoring\'s duration-scaling continues to apply automatically, unaffected by the rename.' }
+    { date:'2026-09-20', summary:'Confirmed exactly the limitation flagged earlier: editing a built-in field through Task Fields\' catalog (e.g. marking Team Activity\'s Duration required there) doesn\'t touch the real form at all — the catalog entry for a built-in field is a display-only mirror, the actual field lives in code. Fixed for real this time, directly in code: Team Activity\'s "Duration (min) — for meetings/training" and Pre-Sales\' "Deployed Time (min)" are now both just "Duration (min)" and both required. Critically, also updated BUILTIN_DURATION_FIELDS — the hardcoded map scoring/Dashboard use to recognize these two fields by exact name — to match the new names; skipping that step would have silently broken duration tracking for both categories the moment the labels changed, exactly the kind of quiet breakage flagged as a risk of renaming built-in fields several turns ago. Scoring\'s duration-scaling continues to apply automatically, unaffected by the rename.' },
+    { date:'2026-09-22', summary:'A large round of fixes and one new feature, all requested together. (1) Filter-row buttons (Apply, Export to Excel/PPTX) were visually mismatched against the date/select inputs beside them — fixed with padding/border matching, scoped to .filter-row so .queue-btn\'s look elsewhere is untouched; this incidentally also fixed the same mismatch on Category Log\'s buttons, since both use the same classes. (2) Dashboard\'s category time figures moved from a separate pills row onto each bar directly, and the By category / Top engineers panels now stretch to equal height on desktop (align-items:stretch instead of start, which let each column size independently before). (3) Found a real, confirmed bug: Category Log\'s Section/Engineer/search filters were only ever applied to what\'s displayed, never to what export reads — export always pulled the full unfiltered set regardless of active filters. Now tracks exactly what\'s on screen (currentCatRowsFiltered) and exports that. (4) Score/Error Reports columns for Admins without permission are now genuinely absent — header and every row — rather than present with a lock icon inside. (5) Found and fixed a real caching bug behind "duration only shows after a refresh": the custom fields used by the real form were cached once per session with no expiry at all — a field added mid-session by a Superadmin never reached anyone whose session was already open. Added a 2-minute staleness window and removed a redundant external check that was bypassing it. (6) New: Publish/Unpublish — actually just Publish, deliberately one-way per request (no unpublish function exists anywhere in the file). Projects now default to unpublished (visible only to their owner and Superadmins) until the owner explicitly publishes; existing projects were grandfathered as already-published via SQL so nothing currently visible suddenly disappeared. The owner can still delete a project regardless of published state, unchanged from before. (7) Dashboard PPTX export gained a per-engineer slide for each person (their own category chart, task count, categories touched, time logged) after reviewing a much more elaborate reference deck the user shared — deliberately the structured/numeric half of that reference\'s spirit, not an attempt to reproduce its hand-written narrative lines per person, which need human interpretation of whatever the data shows and can\'t be reliably generated the same way twice.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -4775,6 +4818,12 @@
  
   // ============ REAL TASK LOGGING (overrides mockup versions) ============
   let currentCatRows = []; // raw rows currently loaded for this category (used by export + search)
+  // 2026-09-22: tracks exactly what's currently ON SCREEN after search/
+  // section/engineer/sub-category filters are applied — currentCatRows
+  // above is only ever the date-range query result, never touched by
+  // those filters, which is exactly why export was exporting everything
+  // regardless of what was actually being filtered to on screen.
+  let currentCatRowsFiltered = [];
  
   // ============ HOMEPAGE PER-CATEGORY QUICK SEARCH ============
   // Each category tile on the home page carries its own search icon so an
@@ -4894,6 +4943,7 @@
     document.getElementById('catFilterSection').value = '';
     document.getElementById('catLogFilters').style.display = 'flex';
 
+    currentCatRowsFiltered = currentCatRows;
     renderCategoryRows(currentCatRows, meta.hasLift);
   }
  
@@ -4949,9 +4999,9 @@
   }
  
   function exportCategoryToExcel(){
-    if(!currentCatRows.length){ alert('No entries to export for this range.'); return; }
+    if(!currentCatRowsFiltered.length){ alert('No entries to export for this range.'); return; }
     const meta = catMeta[currentCatKey];
-    const flat = currentCatRows.map(row => {
+    const flat = currentCatRowsFiltered.map(row => {
       const base = {
         'Employee': row.profiles ? displayName(row.profiles) : '',
         'Date': new Date(row.created_at).toLocaleDateString('en-GB'),
@@ -5038,6 +5088,7 @@
       const vals = Object.values(percentsByMonth);
       e.score = vals.length ? vals.reduce((a,b)=>a+b,0) / vals.length : 0;
       e.topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0]?.[0];
+      e.duration = e.rows.reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0);
     });
     const leaderboard = Object.entries(byEngineer).sort((a,b) => b[1].score - a[1].score);
     const teamAvgScoreLocal = leaderboard.length ? leaderboard.reduce((sum,[,e]) => sum + e.score, 0) / leaderboard.length : 0;
@@ -5168,15 +5219,57 @@
         { text:'Engineer', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
         { text:'Top Category', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
         { text:'Activities', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
+        { text:'Time Logged', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
       ],
       ...byActivity.slice(0, 15).map(([, e], i) => [
         { text:String(i+1), options:{ color:DIM, fill:{color:DARK} } },
         { text:e.name, options:{ color:TEXT, fill:{color:DARK} } },
         { text:catMeta[e.topCat]?.name || '—', options:{ color:DIM, fill:{color:DARK} } },
         { text:String(e.total), options:{ color:ACCENT, bold:true, fill:{color:DARK} } },
+        { text:e.duration > 0 ? formatDurationShort(e.duration) : '—', options:{ color:DIM, fill:{color:DARK} } },
       ]),
     ];
-    slide.addTable(tableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:14, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.7,4.5,4.4,2.5] });
+    slide.addTable(tableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:14, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.6,3.8,3.6,2.1,2] });
+
+    // 2026-09-22: one slide per engineer — their own category-breakdown
+    // chart plus task count, categories touched (versatility), and time
+    // logged. This is deliberately the structured, numbers half of a
+    // richer reference deck the person shared — not attempting to
+    // reproduce that deck's hand-written narrative lines per person,
+    // since those require human interpretation of whatever the data
+    // happens to show and can't be reliably generated the same way
+    // twice for arbitrary data. Sorted by activity, same as the summary
+    // table just above, so the deck reads in a consistent order.
+    byActivity.forEach(([, e]) => {
+      const engSlide = pptx.addSlide();
+      addSlideHeader(engSlide, e.name);
+      const engCats = Object.entries(e.cats).sort((a,b) => b[1]-a[1]);
+      const engKpis = [
+        { label:'Tasks Logged', value:String(e.total) },
+        { label:'Categories Touched', value:`${engCats.length} / ${catSorted.length}` },
+        { label:'Time Logged', value: e.duration > 0 ? formatDurationShort(e.duration) : '—' },
+      ];
+      engKpis.forEach((k, i) => {
+        const x = 0.6 + i * 4.1;
+        engSlide.addShape(pptx.ShapeType.roundRect, { x, y:1.5, w:3.8, h:1.5, fill:{color:CARD}, line:{color:ACCENT, width:1}, rectRadius:0.1 });
+        engSlide.addText(k.value, { x, y:1.65, w:3.8, h:0.8, align:'center', fontSize:26, bold:true, color:ACCENT, fontFace:'Arial' });
+        engSlide.addText(k.label, { x, y:2.4, w:3.8, h:0.5, align:'center', fontSize:11, color:DIM, fontFace:'Arial' });
+      });
+      if(engCats.length){
+        engSlide.addText('Task breakdown by category', { x:0.6, y:3.3, w:12, h:0.4, fontSize:14, bold:true, color:TEXT, fontFace:'Arial' });
+        engSlide.addChart(pptx.ChartType.bar, [{
+          name: 'Tasks',
+          labels: engCats.map(([cat]) => catMeta[cat]?.name || cat),
+          values: engCats.map(([,count]) => count),
+        }], {
+          x:0.6, y:3.8, w:12.1, h:3.1,
+          barDir:'bar', chartColors: engCats.map(([cat]) => catColorsLocal[catSorted.findIndex(([c]) => c === cat) % catColorsLocal.length]),
+          showLegend:false, showValue:true,
+          valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
+          chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
+        });
+      }
+    });
 
     pptx.writeFile({ fileName: `Dashboard_${engineerLabel.replace(/\s+/g,'_')}_${(fromVal||'all')}_to_${(toVal||'all')}.pptx` });
   }
@@ -5299,6 +5392,7 @@
       if(subtypeKey && subtypeVal && (r.details || {})[subtypeKey] !== subtypeVal) return false;
       return true;
     });
+    currentCatRowsFiltered = filtered;
     renderCategoryRows(filtered, meta.hasLift);
   }
 
@@ -8475,7 +8569,16 @@ for a competing inline style first.`;
       document.getElementById('devGanttRows').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the dev_projects table has been created (see setup SQL).</div>`;
       return;
     }
-    devProjectsCache = data || [];
+    // 2026-09-22: unpublished projects are only visible to their own
+    // owner (created_by or lead_id) and Superadmins — everyone else
+    // simply never receives them past this filter, so "published" is a
+    // real visibility control, not just a cosmetic label on an
+    // otherwise-visible-to-all project.
+    const rawProjects = data || [];
+    const isSuperadminNow = currentProfile && currentProfile.role === 'superadmin';
+    devProjectsCache = rawProjects.filter(p =>
+      p.published || isSuperadminNow || (currentUser && (p.created_by === currentUser.id || p.lead_id === currentUser.id))
+    );
     allProjectTasksCache = tasksRes.data || [];
  
     const impacts = [...new Set(devProjectsCache.map(p => p.impact_type).filter(Boolean))];
@@ -8650,6 +8753,8 @@ for a competing inline style first.`;
         <div><div class="gt-name">${p.name}${progressBadge}</div><div class="gt-sub">${leadLabel}</div></div>
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="status-capsule" style="background:${color};">${p.status}</span>
+          ${!p.published ? '<span style="font-size:10.5px; font-weight:700; color:var(--text-faint); border:1px solid var(--border); border-radius:20px; padding:2px 9px;">DRAFT</span>' : '<span style="font-size:10.5px; font-weight:700; color:#1D9E75; border:1px solid #1D9E75; border-radius:20px; padding:2px 9px;">PUBLISHED</span>'}
+          ${canManageProject && !p.published ? `<button class="btn" style="padding:6px 12px; font-size:11px; font-weight:700; color:#1D9E75; border:1px solid #1D9E75;" onclick="publishDevProject('${p.id}')" title="Publish — visible to everyone once you do, and this can't be undone">Publish</button>` : ''}
           ${canEdit ? `<button class="btn edit" style="padding:6px; font-size:11.5px;" onclick="editDevProject('${p.id}')" title="Edit" aria-label="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>` : ''}
           ${canDelete ? `<button class="btn remove" style="padding:6px; font-size:11.5px;" onclick="deleteDevProject('${p.id}')" title="Delete" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
           <button class="btn" style="padding:6px; font-size:11.5px;" onclick="exportProjectReportPptx('${p.id}')" title="Download PPT report" aria-label="Download PPT report"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><rect x="2" y="3.5" width="20" height="13.5" rx="2"/><path d="M8 9v5M12 11v3M16 7.5v6.5" stroke-linecap="round"/><path d="M8 20.5h8"/><path d="M12 17v3.5"/></svg></button>
@@ -9214,7 +9319,6 @@ for a competing inline style first.`;
           <div class="panel-title" style="text-align:center; margin-bottom:12px;">Category &amp; engineer performance</div>
           <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
           <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-          <div id="dashCategoryTimeBreakdown" style="margin-top:10px;"></div>
           <div class="field-label" style="margin:16px 0 8px;">Top engineers by score</div>
           <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
         </div>`;
@@ -9250,11 +9354,10 @@ for a competing inline style first.`;
         <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 16px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
         <div class="panel liquid-glass-card" style="margin-bottom:18px;">
           <div class="panel-title" style="text-align:center; margin-bottom:16px;">Category &amp; engineer performance</div>
-          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:start;">
+          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:stretch;">
             <div>
               <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
               <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-          <div id="dashCategoryTimeBreakdown" style="margin-top:10px;"></div>
             </div>
             <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:22px;">
               <div class="field-label" style="margin-bottom:8px;">Top engineers by score</div>
@@ -9403,12 +9506,20 @@ for a competing inline style first.`;
       // chart, and a donut needs more room to stay readable than this
       // layout gives it. Bars scale relative to whichever category has
       // the most activity, same logic the old donut's proportions used.
+      // 2026-09-22: hour count now sits directly above each bar (only for
+      // categories that actually track duration) instead of a separate
+      // pills section below — colors already distinguish categories, so
+      // the time figure reads faster living right where it's earned.
       const barsHtml = catSorted.map(([cat,count], i) => {
         const c = catColors[i % catColors.length];
         const targetH = Math.max(6, Math.round(count/maxCat*54));
+        const tracksDuration = (durationLabels[cat] || []).length > 0;
+        const mins = tracksDuration ? rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0) : 0;
+        const timeLabel = tracksDuration ? `<div style="font-size:10px; font-weight:700; color:${c}; margin-bottom:3px; white-space:nowrap;">${formatDurationShort(mins)}</div>` : '';
         return `
-        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; min-width:0;">
-          <div class="anim-bar-fill-vertical" data-h="${targetH}" style="width:100%; height:0; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}80;" title="${catMeta[cat]?.name || cat}: ${count}"></div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; min-width:0;">
+          ${timeLabel}
+          <div class="anim-bar-fill-vertical" data-h="${targetH}" style="width:100%; height:0; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}80;" title="${catMeta[cat]?.name || cat}: ${count}${tracksDuration ? ', ' + formatDurationShort(mins) : ''}"></div>
         </div>
       `;}).join('');
       // Each dot sits directly beside its own name as one wrapping chip,
@@ -9422,39 +9533,9 @@ for a competing inline style first.`;
         </span>
       `).join('');
       document.getElementById('dashCategoryBreakdown').innerHTML = `
-        <div style="display:flex; align-items:flex-end; gap:6px; height:54px; margin-bottom:10px;">${barsHtml}</div>
+        <div style="display:flex; align-items:flex-end; gap:6px; height:80px; margin-bottom:10px;">${barsHtml}</div>
         <div style="display:flex; flex-wrap:wrap;">${legendHtml}</div>`;
       animateBars();
-
-      // 2026-09-19: total time spent per category, for whichever
-      // categories actually track duration — mirrors the same info
-      // already shown in the Dashboard PPTX export's Category Details
-      // table, so the app and the export tell the same story rather
-      // than the export knowing something the live page doesn't show.
-      // Categories with no duration field at all are left out entirely
-      // here rather than shown as a confusing "0h".
-      const timeByCategory = catSorted
-        .map(([cat]) => {
-          const tracksDuration = (durationLabels[cat] || []).length > 0;
-          if(!tracksDuration) return null;
-          const mins = rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0);
-          return { cat, mins };
-        })
-        .filter(Boolean);
-      const timeEl = document.getElementById('dashCategoryTimeBreakdown');
-      if(timeEl){
-        timeEl.innerHTML = timeByCategory.length ? `
-          <div style="font-size:10.5px; color:var(--text-faint); margin-bottom:6px;">Time spent (tracked categories)</div>
-          <div style="display:flex; flex-wrap:wrap; gap:8px;">
-            ${timeByCategory.map(({cat, mins}) => {
-              const i = catSorted.findIndex(([c]) => c === cat);
-              return `<span style="display:inline-flex; align-items:center; gap:5px; font-size:11px; padding:4px 9px; border-radius:20px; background:var(--surface-alt); border:1px solid var(--border);">
-                <span style="width:6px; height:6px; border-radius:50%; background:${catColors[i % catColors.length]}; flex-shrink:0;"></span>
-                ${catMeta[cat]?.name || cat}: <b style="color:var(--text);">${formatDurationShort(mins)}</b>
-              </span>`;
-            }).join('')}
-          </div>` : '';
-      }
     }
  
     // Leaderboard: per engineer totals + their top category, built from the same filtered rows
@@ -9467,6 +9548,17 @@ for a competing inline style first.`;
     // it, or vice versa, depending on what a Superadmin has configured.
     const canSeeErrorReports = currentProfile.role === 'superadmin' || (currentProfile.role === 'admin' && appSettings.admins_see_error_reports);
     const target = appSettings.monthly_score_target ?? 20;
+
+    // 2026-09-22: Score/Error Reports columns are now genuinely removed
+    // for anyone without permission to see them, rather than showing a
+    // lock icon in an otherwise-still-present column — per request, "who
+    // have no access to see them" means the columns themselves shouldn't
+    // exist for that viewer, not just be visually blocked.
+    const headerRow = document.getElementById('leaderboardHeaderRow');
+    if(headerRow){
+      headerRow.innerHTML = `<th>Engineer</th><th>Top category</th><th>Activities</th><th>Time</th>${canSeeIndividualKpi ? '<th>Score</th>' : ''}${canSeeErrorReports ? '<th>Error Reports</th>' : ''}<th></th>`;
+    }
+    const visibleColCount = 5 + (canSeeIndividualKpi ? 1 : 0) + (canSeeErrorReports ? 1 : 0);
 
     const byEngineer = {};
     let teamTotalDuration = 0;
@@ -9581,23 +9673,23 @@ for a competing inline style first.`;
             // background plus a minimum-width gradient fill (never
             // fully empty, even at 0) makes it read as an intentional
             // meter instead.
-            return `<div style="display:flex; align-items:center; gap:8px;">
+            return `<td><div style="display:flex; align-items:center; gap:8px;">
               <div style="width:46px; height:6px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; flex-shrink:0;">
                 <div class="anim-bar-fill" data-w="${Math.max(pct, 6)}" style="width:0%; height:100%; background:#1D9E75; border-radius:99px;"></div>
               </div>
               <span>${e.kpi.toFixed(1)}</span>
-            </div>`;
+            </div></td>`;
           })()
-        : '<span title="Restricted by Superadmin" style="color:var(--text-faint);">🔒</span>';
-      const errorCell = !canSeeErrorReports
-        ? '<span title="Restricted by Superadmin" style="color:var(--text-faint);">🔒</span>'
-        : (e.errorCount ? `${e.errorCount} <span style="color:var(--red); font-size:11px;">(${e.errorImpact.toFixed(1)})</span>` : '—');
+        : '';
+      const errorCell = canSeeErrorReports
+        ? `<td>${e.errorCount ? `${e.errorCount} <span style="color:var(--red); font-size:11px;">(${e.errorImpact.toFixed(1)})</span>` : '—'}</td>`
+        : '';
       const avColor = avatarColors[i % avatarColors.length];
       return `<tr style="cursor:pointer;" onclick="document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">
-        <td><div class="rank-name" style="display:flex; align-items:center; gap:9px;">${rankBadge(i)}<span style="width:24px; height:24px; border-radius:50%; background:${avColor}22; color:${avColor}; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${initials(e.name)}</span>${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td title="${formatDurationLong(e.duration)}">${e.duration > 0 ? formatDurationShort(e.duration) : '—'}</td><td>${kpiCell}</td><td>${errorCell}</td>
+        <td><div class="rank-name" style="display:flex; align-items:center; gap:9px;">${rankBadge(i)}<span style="width:24px; height:24px; border-radius:50%; background:${avColor}22; color:${avColor}; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${initials(e.name)}</span>${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td title="${formatDurationLong(e.duration)}">${e.duration > 0 ? formatDurationShort(e.duration) : '—'}</td>${kpiCell}${errorCell}
         <td><button class="btn inspect" style="padding:4px 12px; font-size:11.5px;" onclick="event.stopPropagation(); document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">Inspect</button></td>
       </tr>`;
-    }).join('') : '<tr><td colspan="7" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>';
+    }).join('') : `<tr><td colspan="${visibleColCount}" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>`;
     animateBars();
 
     // Inspecting a specific engineer also surfaces their real individual
