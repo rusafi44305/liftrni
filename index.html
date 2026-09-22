@@ -797,12 +797,23 @@
     white-space:nowrap;
   }
   .filter-row .queue-btn:hover{ border-color:var(--accent); color:var(--text); background:var(--surface); }
-  .filter-btn-apply{ background:#4A78E0 !important; color:#fff !important; border-color:#4A78E0 !important; }
-  .filter-btn-apply:hover{ background:#3A63C4 !important; }
-  .filter-btn-excel{ background:rgba(29,158,117,0.12) !important; color:#1D9E75 !important; border-color:#1D9E75 !important; }
-  .filter-btn-excel:hover{ background:rgba(29,158,117,0.2) !important; }
-  .filter-btn-pptx{ background:rgba(216,90,48,0.12) !important; color:#D85A30 !important; border-color:#D85A30 !important; }
-  .filter-btn-pptx:hover{ background:rgba(216,90,48,0.2) !important; }
+  /* 2026-09-23: found the real cause — a macOS-styling override further
+     down (.queue-btn, .btn:not(...), .fselect{ background:...
+     !important }) also sets background with !important on this same
+     element. Since that rule has equal specificity (.queue-btn is a
+     single class, same as .filter-btn-apply) and comes later in the
+     file, it was winning the tiebreak by source order, silently
+     replacing this blue back to a near-transparent surface tint —
+     exactly the washed-out white-on-white look reported. Fixed by
+     raising specificity with button.filter-btn-apply (tag+class) rather
+     than just .filter-btn-apply, which now wins regardless of source
+     order, not just by chance of being later in the file. */
+  button.filter-btn-apply{ background:#4A78E0 !important; color:#fff !important; border-color:#4A78E0 !important; }
+  button.filter-btn-apply:hover{ background:#3A63C4 !important; }
+  button.filter-btn-excel{ background:rgba(29,158,117,0.12) !important; color:#1D9E75 !important; border-color:#1D9E75 !important; }
+  button.filter-btn-excel:hover{ background:rgba(29,158,117,0.2) !important; }
+  button.filter-btn-pptx{ background:rgba(216,90,48,0.12) !important; color:#D85A30 !important; border-color:#D85A30 !important; }
+  button.filter-btn-pptx:hover{ background:rgba(216,90,48,0.2) !important; }
   .fselect{
     background:var(--surface); border:1px solid var(--border); border-radius:9px;
     padding:9px 14px; font-size:13px; font-weight:600; color:var(--text-dim);
@@ -4375,7 +4386,8 @@
     { date:'2026-09-22', summary:'Simplified the project Show/Hide toggle per request — removed both the DRAFT and PUBLISHED text badges entirely (no one sees either, owner included), leaving just the one icon button visible only to the owner, switching between an eye (Show) and eye-with-a-line-through (Hide) depending on current state.' },
     { date:'2026-09-22', summary:'The Show icon was identical to the "See details" eye icon used globally throughout the app, causing exactly the confusion reported. Switched both Show and Hide to a globe/globe-with-a-line-through pairing instead — clearly distinct from See Details\' eye icon, and consistent with each other as a matched pair.' },
     { date:'2026-09-22', summary:'Added colored borders to the Show/Hide globe icon (accent blue) and the PPTX report icon (orange, matching Export to PPTX\'s color elsewhere), same tinted-background-plus-border treatment Edit and Delete already use, so all 5 icon buttons on a project card now read as a consistent, color-coded set rather than 2 colored and 3 plain.' },
-    { date:'2026-09-22', summary:'Apply/Apply range\'s blue background was washing out to near-invisible in light theme, making its white text unreadable. Switched from var(--accent) (which resolves differently per theme) to an explicit hardcoded blue, and replaced its opacity-based hover effect with an explicit darker blue on hover — removes any possibility of a theme-specific value or an opacity fade being involved, so the button reads the same solid, readable blue in both themes.' }
+    { date:'2026-09-22', summary:'Apply/Apply range\'s blue background was washing out to near-invisible in light theme, making its white text unreadable. Switched from var(--accent) (which resolves differently per theme) to an explicit hardcoded blue, and replaced its opacity-based hover effect with an explicit darker blue on hover — removes any possibility of a theme-specific value or an opacity fade being involved, so the button reads the same solid, readable blue in both themes.' },
+    { date:'2026-09-23', summary:'The fix above still didn\'t take effect, confirmed against a follow-up screenshot — found the real cause this time: a macOS-styling override further down the stylesheet (.queue-btn, .btn:not(...), .fselect{ background:... !important }) also sets background with !important on the exact same element. Since that rule has equal specificity to .filter-btn-apply/excel/pptx (all single-class selectors) and comes later in the file, it was winning the !important tiebreak by source order alone, silently replacing the intended color back to a near-transparent surface tint. Fixed by raising specificity to button.filter-btn-apply/excel/pptx (tag+class) instead of class-only, which now wins on specificity regardless of where either rule sits in the file — not a fix that depends on staying lucky with ordering.' }
   ];
  
   let currentUser = null;   // Supabase auth user
