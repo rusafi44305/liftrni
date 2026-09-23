@@ -4388,7 +4388,8 @@
     { date:'2026-09-22', summary:'Added colored borders to the Show/Hide globe icon (accent blue) and the PPTX report icon (orange, matching Export to PPTX\'s color elsewhere), same tinted-background-plus-border treatment Edit and Delete already use, so all 5 icon buttons on a project card now read as a consistent, color-coded set rather than 2 colored and 3 plain.' },
     { date:'2026-09-22', summary:'Apply/Apply range\'s blue background was washing out to near-invisible in light theme, making its white text unreadable. Switched from var(--accent) (which resolves differently per theme) to an explicit hardcoded blue, and replaced its opacity-based hover effect with an explicit darker blue on hover — removes any possibility of a theme-specific value or an opacity fade being involved, so the button reads the same solid, readable blue in both themes.' },
     { date:'2026-09-23', summary:'The fix above still didn\'t take effect, confirmed against a follow-up screenshot — found the real cause this time: a macOS-styling override further down the stylesheet (.queue-btn, .btn:not(...), .fselect{ background:... !important }) also sets background with !important on the exact same element. Since that rule has equal specificity to .filter-btn-apply/excel/pptx (all single-class selectors) and comes later in the file, it was winning the !important tiebreak by source order alone, silently replacing the intended color back to a near-transparent surface tint. Fixed by raising specificity to button.filter-btn-apply/excel/pptx (tag+class) instead of class-only, which now wins on specificity regardless of where either rule sits in the file — not a fix that depends on staying lucky with ordering.' },
-    { date:'2026-09-23', summary:'Found and fixed the real cause behind "I changed the Monthly Score Target but the score isn\'t updating" — appSettings (which holds monthly_score_target and several Admin-permission flags) was cached once per session with no expiry at all, the exact same pattern as the dynamicFieldOptions bug fixed earlier. A Superadmin\'s own change already updated their own in-memory copy immediately (that line already existed), but anyone else\'s already-open session had no way to ever pick up the new value short of a full reload. Added the same 2-minute staleness window used for the fields fix. Confirmed this is a display/calculation staleness issue only — traced submitTask()\'s full error-handling path and found no way for a submission to fail without the person seeing a clear error message, so this doesn\'t point to any actual data loss.' }
+    { date:'2026-09-23', summary:'Found and fixed the real cause behind "I changed the Monthly Score Target but the score isn\'t updating" — appSettings (which holds monthly_score_target and several Admin-permission flags) was cached once per session with no expiry at all, the exact same pattern as the dynamicFieldOptions bug fixed earlier. A Superadmin\'s own change already updated their own in-memory copy immediately (that line already existed), but anyone else\'s already-open session had no way to ever pick up the new value short of a full reload. Added the same 2-minute staleness window used for the fields fix. Confirmed this is a display/calculation staleness issue only — traced submitTask()\'s full error-handling path and found no way for a submission to fail without the person seeing a clear error message, so this doesn\'t point to any actual data loss.' },
+    { date:'2026-09-23', summary:'Found the real cause of Dashboard showing fewer Activities than Home (1000 vs 1077, reported directly) — a genuine, more serious bug than a display mismatch: Dashboard\'s and Category Log\'s task queries had no pagination at all, so each relied on a single request, which Supabase caps at a maximum row count per call (commonly 1000) regardless of how many rows actually match. Once total activity passed that cap, every calculation built from that query — category breakdown, leaderboard, time logged, not just the headline count — was silently working from an incomplete slice of the real data, quietly excluding the oldest rows past the limit. Fixed both by paging through in batches of 1000 until a page comes back short, accumulating the true complete set before computing anything, rather than trusting whatever a single request happened to return.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -5077,9 +5078,24 @@
       nextDay.setDate(nextDay.getDate() + 1);
       query = query.lt('created_at', nextDay.toISOString().slice(0,10));
     }
- 
-    const { data, error } = await query;
-    currentCatRows = data || [];
+
+    // 2026-09-23: same pagination fix as Dashboard's query — a single
+    // request silently caps at Supabase's per-request row limit
+    // regardless of how many rows actually match, which would quietly
+    // drop older entries for any category whose total grows past that
+    // cap over time. Pages through in batches until a page comes back
+    // short, same pattern, same guarantee of a complete result.
+    let catRows = [];
+    let catPage = 0;
+    const CAT_PAGE_SIZE = 1000;
+    while(true){
+      const { data, error } = await query.range(catPage * CAT_PAGE_SIZE, catPage * CAT_PAGE_SIZE + CAT_PAGE_SIZE - 1);
+      if(error){ document.getElementById('catLogSub').textContent = `Could not load: ${error.message}`; return; }
+      catRows = catRows.concat(data || []);
+      if(!data || data.length < CAT_PAGE_SIZE) break;
+      catPage++;
+    }
+    currentCatRows = catRows;
     document.getElementById('catLogSub').textContent = meta.hasLift
       ? `${currentCatRows.length} entries shown · search below to trace by Lift ID`
       : `${currentCatRows.length} entries shown · not tied to a Lift ID`;
@@ -9578,12 +9594,28 @@ for a competing inline style first.`;
       query = query.lt('created_at', nextDay.toISOString().slice(0,10));
     }
     if(engineerId) query = query.eq('employee_id', engineerId);
- 
-    const { data, error } = await query;
-    document.getElementById('dashAsOf').textContent = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-    if(error){ document.getElementById('dashCategoryBreakdown').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
- 
-    const rows = data || [];
+
+    // 2026-09-23: real, confirmed bug fix — this had no pagination at
+    // all, so it silently relied on a single request, which Supabase
+    // caps at a maximum row count per call (commonly 1000) regardless
+    // of how many rows actually match. Once total activity passed that
+    // cap, everything computed here — category breakdown, leaderboard,
+    // time logged, not just the headline Activities count — was quietly
+    // working from an incomplete slice of the real data, which is
+    // exactly the gap reported against Home's own total. Fixed by
+    // paging through in batches of 1000 until a page comes back short,
+    // accumulating the true complete set before computing anything.
+    let rows = [];
+    let page = 0;
+    const PAGE_SIZE = 1000;
+    while(true){
+      const { data, error } = await query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      document.getElementById('dashAsOf').textContent = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+      if(error){ document.getElementById('dashCategoryBreakdown').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
+      rows = rows.concat(data || []);
+      if(!data || data.length < PAGE_SIZE) break;
+      page++;
+    }
     currentDashRows = rows;
     const durationLabels = await getDurationLabelsByCategory();
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
