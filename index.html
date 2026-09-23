@@ -4157,25 +4157,24 @@
     loadProjectTasks(projectId);
   }
 
-  // 2026-09-23: rewritten for the new full-width progress bar row,
-  // which replaced the small battery icon next to the project name per
-  // follow-up request. Targets the row by its own id now rather than a
-  // .progress-badge nested inside .gt-name, since that nesting no
-  // longer exists — the bar is now its own row below the title/status
-  // line, spanning the full card width.
+  // 2026-09-23: rewritten again — the progress bar is now the card's
+  // own background fill (a hard-edge gradient), not a separate row
+  // underneath, per follow-up request that the card itself be the bar.
+  // Updates both the card's background and the small percentage label
+  // together, since they're two separate elements that both need to
+  // change in sync.
   function updateProjectProgressBadge(projectId){
-    const row = document.getElementById(`projProgressRow-${projectId}`);
-    if(!row) return;
+    const card = document.querySelector(`.gantt-row[data-id="${projectId}"]`)?.closest('.gantt-project-card');
+    const label = document.getElementById(`projProgressRow-${projectId}`);
+    if(!card || !label) return;
     const progress = projectProgressPercent(projectId);
-    const html = progress !== null
-      ? `<div id="projProgressRow-${projectId}" style="display:flex; align-items:center; gap:10px; padding:0 16px 12px;">
-          <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden;">
-            <div style="width:${progress}%; height:100%; background:var(--green); border-radius:99px; transition:width 0.4s ease;"></div>
-          </div>
-          <span style="font-size:12.5px; font-weight:700; color:var(--text); flex-shrink:0; min-width:32px; text-align:right;">${progress}%</span>
-        </div>`
-      : `<div id="projProgressRow-${projectId}" style="padding:0 16px 12px; font-size:12px; color:var(--text-faint); font-style:italic;">No specific breakdown</div>`;
-    row.outerHTML = html;
+    if(progress !== null){
+      card.style.background = `linear-gradient(to right, color-mix(in srgb, var(--green) 22%, var(--surface)) 0%, color-mix(in srgb, var(--green) 22%, var(--surface)) ${progress}%, var(--surface) ${progress}%, var(--surface) 100%)`;
+      label.outerHTML = `<span id="projProgressRow-${projectId}" style="font-size:12px; font-weight:700; color:var(--green); margin-left:8px;">${progress}%</span>`;
+    } else {
+      card.style.background = '';
+      label.outerHTML = `<span id="projProgressRow-${projectId}" style="font-size:11.5px; color:var(--text-faint); font-style:italic; margin-left:8px;">No specific breakdown</span>`;
+    }
   }
 
   // 2026-09-22: reversed from the earlier one-way design after explicit
@@ -4185,14 +4184,29 @@
   // list), reversible any time by publishing again.
   async function toggleDevProjectPublished(id, publish){
     const project = devProjectsCache.find(p => p.id === id);
-    if(!project) return;
-    if(!currentUser || (project.created_by !== currentUser.id && project.lead_id !== currentUser.id)) return;
+    // 2026-09-23: RLS confirmed correct (matches this exact same
+    // condition), which rules that out as the cause. These two checks
+    // were the remaining silent-failure points — if either failed, the
+    // button would do visibly nothing, no confirm dialog, no error,
+    // nothing at all. Now surfaces exactly which check failed instead.
+    if(!project){ alert('Could not find this project in the current list — try refreshing the page and trying again.'); return; }
+    if(!currentUser || (project.created_by !== currentUser.id && project.lead_id !== currentUser.id)){
+      alert("You don't appear to be recognized as this project's owner or lead right now, so this action is blocked. If you believe you should be, try refreshing the page.");
+      return;
+    }
     const msg = publish
       ? 'Publish this project? It will become visible to everyone.'
       : 'Unpublish this project? It will go back to being visible only to you.';
     if(!confirm(msg)) return;
-    const { error } = await sb.from('dev_projects').update({ published: publish }).eq('id', id);
+    const { data, error } = await sb.from('dev_projects').update({ published: publish }).eq('id', id).select();
     if(error){ alert(`Could not ${publish ? 'publish' : 'unpublish'}: ` + error.message); return; }
+    if(!data || data.length === 0){
+      // RLS was checked directly and is correctly configured, so a
+      // zero-rows result here would now point somewhere else — most
+      // likely the id itself not matching any real row anymore.
+      alert(`The ${publish ? 'publish' : 'unpublish'} request completed, but no matching row was found to update — the project may have been deleted or its id may be stale. Try refreshing the page.`);
+      return;
+    }
     loadDevDashboard();
   }
 
@@ -4439,7 +4453,9 @@
     { date:'2026-09-23', summary:'Switched Progress % from a 5%-step slider to a plain number field, per request to enter it manually — any exact value (37%, 82%, etc.) can be typed directly rather than only multiples of 5. Added client-side clamping to 0-100 before saving, so a manually-typed out-of-range number gets corrected quietly instead of hitting the database\'s own check constraint with a confusing error.' },
     { date:'2026-09-23', summary:'Added a battery-style progress bar to each project card — a rounded outline with a small terminal nub and a fill proportional to progress, replacing the plain percentage text. One consistent color throughout regardless of level, confirmed explicitly rather than color-shifting like a real battery\'s red/yellow/green — the fill amount alone communicates progress. Also fixed the live-update path (used right after adding/editing a task, without a full page reload) which used to patch individual properties on the old plain-text badge — that approach can\'t correctly resize a nested fill element, so it now rebuilds the whole badge fresh instead.' },
     { date:'2026-09-23', summary:'Re-verified the Show/Hide publish toggle end to end by tracing the actual filter logic — confirmed correct: a project passes through to a viewer only if published, or they\'re the owner, or they\'re Superadmin. Worth knowing: this is a client-side filter, so the browser does still receive unpublished projects\' data, it just isn\'t rendered for non-owners — fine for a declutter-the-view feature, but flagged in case a hard security boundary is ever needed instead. Also added the requested rule: Progress % is now only manually editable while a task\'s status is In Progress — Done always forces 100% and locks the field, On Hold/Cancelled lock it too but leave whatever value was already there untouched rather than resetting it. Fixed an edge case while building this: editing an existing task used to set the status chip directly without applying this same lock, which would have left the field wrongly editable when opening an existing Done/On Hold/Cancelled task for editing.' },
-    { date:'2026-09-23', summary:'Two changes, one a real bug fix. (1) Found and fixed a genuine inconsistency shown directly in a screenshot — a project marked Done in its own status field could still show 0% progress, because that status and its subtasks\' individual progress were entirely disconnected calculations. The project\'s own Done status now forces 100% outright, overriding subtask math entirely, even for a project with no subtasks tracked at all. (2) Replaced the small battery-icon badge with a full-width progress bar spanning the entire card, per follow-up request that the battery read as too small/cramped next to the title — now its own row below the title/status line, same single consistent color as before, just properly sized to the card rather than squeezed into 34px next to the name.' }
+    { date:'2026-09-23', summary:'Two changes, one a real bug fix. (1) Found and fixed a genuine inconsistency shown directly in a screenshot — a project marked Done in its own status field could still show 0% progress, because that status and its subtasks\' individual progress were entirely disconnected calculations. The project\'s own Done status now forces 100% outright, overriding subtask math entirely, even for a project with no subtasks tracked at all. (2) Replaced the small battery-icon badge with a full-width progress bar spanning the entire card, per follow-up request that the battery read as too small/cramped next to the title — now its own row below the title/status line, same single consistent color as before, just properly sized to the card rather than squeezed into 34px next to the name.' },
+    { date:'2026-09-23', summary:'Two more changes. (1) The card itself is now the progress bar, per direct follow-up that the separate bar row still wasn\'t what was wanted — a light-colored fill spans the card\'s own background proportional to progress (hard-edge, not a soft gradient), with a small percentage label next to the title; text and buttons sit on top exactly as before, deliberately kept light enough not to fight with them for attention. (2) Investigated a reported suspicion that Publish/Unpublish isn\'t working — the code itself traces correctly and matches the working Delete function\'s exact pattern, but there\'s a real possibility that can\'t be ruled out from code alone: a database security policy silently blocking the update with no error at all, which would look identical to "the button doesn\'t work." Added .select() to the update call so a zero-rows-affected silent failure now surfaces a clear message instead of failing invisibly, and provided a read-only query to check dev_projects\' actual permission policies directly.' },
+    { date:'2026-09-23', summary:'Checked the actual RLS policies on dev_projects directly (the user ran the diagnostic query) — confirmed correctly configured, matching the exact same creator-or-lead condition the app already checks client-side, so that\'s ruled out as the cause. Found the next real suspects instead: two silent early-returns in toggleDevProjectPublished — if the project wasn\'t found in the current cache, or the current user wasn\'t recognized as its owner/lead, the function would return with absolutely no feedback at all, no confirm dialog, no error, nothing — which would look identical to "the button does nothing" from the outside. Both now show a specific alert explaining exactly which check failed, rather than failing in total silence.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -9004,19 +9020,25 @@ for a competing inline style first.`;
       // the same single consistent color (no color-shifting by level).
       // Progress % text now sits beside the bar on its own row instead
       // of squeezed next to the project name.
-      const progressBarRow = progress !== null
-        ? `<div id="projProgressRow-${p.id}" style="display:flex; align-items:center; gap:10px; padding:0 16px 12px;">
-            <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden;">
-              <div style="width:${progress}%; height:100%; background:var(--green); border-radius:99px; transition:width 0.4s ease;"></div>
-            </div>
-            <span style="font-size:12.5px; font-weight:700; color:var(--text); flex-shrink:0; min-width:32px; text-align:right;">${progress}%</span>
-          </div>`
-        : `<div id="projProgressRow-${p.id}" style="padding:0 16px 12px; font-size:12px; color:var(--text-faint); font-style:italic;">No specific breakdown</div>`;
-      return `<div class="gantt-project-card">
+      // 2026-09-23: the card itself is now the progress bar, per
+      // follow-up request — a light fill spanning proportional to
+      // progress, applied as the card's own background via a hard-edge
+      // gradient (light color up to the % mark, normal card background
+      // for the rest) rather than a separate bar element underneath.
+      // Text/buttons sit on top of this as normal, unaffected — the
+      // fill is deliberately light enough not to fight with them for
+      // attention. No fill at all for a project with no progress data.
+      const cardFillStyle = progress !== null
+        ? `background:linear-gradient(to right, color-mix(in srgb, var(--green) 22%, var(--surface)) 0%, color-mix(in srgb, var(--green) 22%, var(--surface)) ${progress}%, var(--surface) ${progress}%, var(--surface) 100%);`
+        : '';
+      const progressLabel = progress !== null
+        ? `<span id="projProgressRow-${p.id}" style="font-size:12px; font-weight:700; color:var(--green); margin-left:8px;">${progress}%</span>`
+        : `<span id="projProgressRow-${p.id}" style="font-size:11.5px; color:var(--text-faint); font-style:italic; margin-left:8px;">No specific breakdown</span>`;
+      return `<div class="gantt-project-card" style="${cardFillStyle}">
       <div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
         data-impact="${p.impact_type||'—'}" data-fin="${p.financial_outcome||'—'}" data-doc="${p.documentation||'—'}" data-remarks="${(p.notes||'').replace(/"/g,'&quot;')}">
-        <div><div class="gt-name">${p.name}</div><div class="gt-sub">${leadLabel}</div></div>
+        <div><div class="gt-name">${p.name}${progressLabel}</div><div class="gt-sub">${leadLabel}</div></div>
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="status-capsule" style="background:${color};">${p.status}</span>
           ${canManageProject ? (
@@ -9030,7 +9052,6 @@ for a competing inline style first.`;
           <button class="btn view-details" style="padding:6px; font-size:11.5px;" onclick="toggleProjectDetailsInline('${p.id}')" id="ptToggleBtn-${p.id}" title="See details" aria-label="See details"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
       </div>
-      ${progressBarRow}
       <div id="projDetailWrap-${p.id}" style="display:none;"></div>
       </div>`;
     }).join('');
