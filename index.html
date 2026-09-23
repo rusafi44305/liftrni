@@ -4387,7 +4387,8 @@
     { date:'2026-09-22', summary:'The Show icon was identical to the "See details" eye icon used globally throughout the app, causing exactly the confusion reported. Switched both Show and Hide to a globe/globe-with-a-line-through pairing instead — clearly distinct from See Details\' eye icon, and consistent with each other as a matched pair.' },
     { date:'2026-09-22', summary:'Added colored borders to the Show/Hide globe icon (accent blue) and the PPTX report icon (orange, matching Export to PPTX\'s color elsewhere), same tinted-background-plus-border treatment Edit and Delete already use, so all 5 icon buttons on a project card now read as a consistent, color-coded set rather than 2 colored and 3 plain.' },
     { date:'2026-09-22', summary:'Apply/Apply range\'s blue background was washing out to near-invisible in light theme, making its white text unreadable. Switched from var(--accent) (which resolves differently per theme) to an explicit hardcoded blue, and replaced its opacity-based hover effect with an explicit darker blue on hover — removes any possibility of a theme-specific value or an opacity fade being involved, so the button reads the same solid, readable blue in both themes.' },
-    { date:'2026-09-23', summary:'The fix above still didn\'t take effect, confirmed against a follow-up screenshot — found the real cause this time: a macOS-styling override further down the stylesheet (.queue-btn, .btn:not(...), .fselect{ background:... !important }) also sets background with !important on the exact same element. Since that rule has equal specificity to .filter-btn-apply/excel/pptx (all single-class selectors) and comes later in the file, it was winning the !important tiebreak by source order alone, silently replacing the intended color back to a near-transparent surface tint. Fixed by raising specificity to button.filter-btn-apply/excel/pptx (tag+class) instead of class-only, which now wins on specificity regardless of where either rule sits in the file — not a fix that depends on staying lucky with ordering.' }
+    { date:'2026-09-23', summary:'The fix above still didn\'t take effect, confirmed against a follow-up screenshot — found the real cause this time: a macOS-styling override further down the stylesheet (.queue-btn, .btn:not(...), .fselect{ background:... !important }) also sets background with !important on the exact same element. Since that rule has equal specificity to .filter-btn-apply/excel/pptx (all single-class selectors) and comes later in the file, it was winning the !important tiebreak by source order alone, silently replacing the intended color back to a near-transparent surface tint. Fixed by raising specificity to button.filter-btn-apply/excel/pptx (tag+class) instead of class-only, which now wins on specificity regardless of where either rule sits in the file — not a fix that depends on staying lucky with ordering.' },
+    { date:'2026-09-23', summary:'Found and fixed the real cause behind "I changed the Monthly Score Target but the score isn\'t updating" — appSettings (which holds monthly_score_target and several Admin-permission flags) was cached once per session with no expiry at all, the exact same pattern as the dynamicFieldOptions bug fixed earlier. A Superadmin\'s own change already updated their own in-memory copy immediately (that line already existed), but anyone else\'s already-open session had no way to ever pick up the new value short of a full reload. Added the same 2-minute staleness window used for the fields fix. Confirmed this is a display/calculation staleness issue only — traced submitTask()\'s full error-handling path and found no way for a submission to fail without the person seeing a clear error message, so this doesn\'t point to any actual data loss.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -9914,12 +9915,21 @@ for a competing inline style first.`;
   // ============ APP SETTINGS (KPI visibility + trigger control, Superadmin only) ============
   let appSettings = { admins_see_kpi: true, admins_trigger_kpi: false, monthly_score_target: 20, admins_see_error_reports: false };
   let appSettingsLoaded = false;
- 
-  async function loadAppSettings(){
-    if(appSettingsLoaded) return;
+  let appSettingsLoadedAt = 0;
+  // 2026-09-23: real bug fix, same pattern as dynamicFieldOptions
+  // earlier — this was a one-time-only cache with no expiry at all, so
+  // changing the Monthly Score Target (or any other app_settings value)
+  // never reached anyone whose session was already open, including the
+  // Superadmin who just changed it, until a full page reload. That's
+  // exactly what "I changed the target but the score isn't updating"
+  // was — not a scoring bug, a caching one. Same 2-minute staleness
+  // window as the fields fix.
+  async function loadAppSettings(force){
+    if(appSettingsLoaded && !force && (Date.now() - appSettingsLoadedAt) < 120000) return;
     const { data, error } = await sb.from('app_settings').select('*').eq('id', 1).single();
     if(!error && data) appSettings = { admins_trigger_kpi: false, monthly_score_target: 20, ...data };
     appSettingsLoaded = true;
+    appSettingsLoadedAt = Date.now();
   }
  
   async function toggleAdminsSeeKpi(checkbox){
