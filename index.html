@@ -4157,28 +4157,25 @@
     loadProjectTasks(projectId);
   }
 
+  // 2026-09-23: rewritten for the new full-width progress bar row,
+  // which replaced the small battery icon next to the project name per
+  // follow-up request. Targets the row by its own id now rather than a
+  // .progress-badge nested inside .gt-name, since that nesting no
+  // longer exists — the bar is now its own row below the title/status
+  // line, spanning the full card width.
   function updateProjectProgressBadge(projectId){
-    const nameEl = document.querySelector(`.gantt-row[data-id="${projectId}"] .gt-name`);
-    if(!nameEl) return;
+    const row = document.getElementById(`projProgressRow-${projectId}`);
+    if(!row) return;
     const progress = projectProgressPercent(projectId);
-    const badge = nameEl.querySelector('.progress-badge');
-    // 2026-09-23: rebuilds the whole badge rather than tweaking
-    // individual properties on the old one — the battery bar has a
-    // nested fill element whose width can't be corrected by patching
-    // textContent/style on the outer span the way the old plain-text
-    // badge could. Same markup as the main card list, so a live update
-    // here looks identical to a fresh page load.
     const html = progress !== null
-      ? `<span class="progress-badge" style="display:inline-flex; align-items:center; gap:7px; margin-left:10px;">
-          <span style="position:relative; display:inline-block; width:34px; height:15px; border:1.5px solid var(--green); border-radius:3px; padding:2px; box-sizing:border-box; flex-shrink:0;">
-            <span style="display:block; width:${progress}%; height:100%; background:var(--green); border-radius:1px; transition:width 0.4s ease;"></span>
-            <span style="position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:2px; height:6px; background:var(--green); border-radius:0 2px 2px 0;"></span>
-          </span>
-          <span style="font-size:14px; font-weight:700; color:var(--text);">${progress}%</span>
-        </span>`
-      : `<span class="progress-badge" style="font-size:12px; font-weight:600; color:var(--text-faint); margin-left:10px; font-style:italic;">No specific breakdown</span>`;
-    if(badge) badge.outerHTML = html;
-    else nameEl.insertAdjacentHTML('beforeend', html);
+      ? `<div id="projProgressRow-${projectId}" style="display:flex; align-items:center; gap:10px; padding:0 16px 12px;">
+          <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden;">
+            <div style="width:${progress}%; height:100%; background:var(--green); border-radius:99px; transition:width 0.4s ease;"></div>
+          </div>
+          <span style="font-size:12.5px; font-weight:700; color:var(--text); flex-shrink:0; min-width:32px; text-align:right;">${progress}%</span>
+        </div>`
+      : `<div id="projProgressRow-${projectId}" style="padding:0 16px 12px; font-size:12px; color:var(--text-faint); font-style:italic;">No specific breakdown</div>`;
+    row.outerHTML = html;
   }
 
   // 2026-09-22: reversed from the earlier one-way design after explicit
@@ -4441,7 +4438,8 @@
     { date:'2026-09-23', summary:'Added a 0-100% progress slider to individual project Gantt tasks, shown on each task\'s own row alongside its status. Overall project progress now averages every task\'s own percentage instead of a binary done/total ratio — an in-progress task contributes its real partial progress (e.g. 40%) instead of counting as 0% until the moment it\'s marked Done. Marking a task Done always sets it to 100% regardless of whatever the slider was left at, avoiding a task that reads "complete" but shows a lower percentage. Older tasks saved before this field existed default to 0% rather than breaking the average.' },
     { date:'2026-09-23', summary:'Switched Progress % from a 5%-step slider to a plain number field, per request to enter it manually — any exact value (37%, 82%, etc.) can be typed directly rather than only multiples of 5. Added client-side clamping to 0-100 before saving, so a manually-typed out-of-range number gets corrected quietly instead of hitting the database\'s own check constraint with a confusing error.' },
     { date:'2026-09-23', summary:'Added a battery-style progress bar to each project card — a rounded outline with a small terminal nub and a fill proportional to progress, replacing the plain percentage text. One consistent color throughout regardless of level, confirmed explicitly rather than color-shifting like a real battery\'s red/yellow/green — the fill amount alone communicates progress. Also fixed the live-update path (used right after adding/editing a task, without a full page reload) which used to patch individual properties on the old plain-text badge — that approach can\'t correctly resize a nested fill element, so it now rebuilds the whole badge fresh instead.' },
-    { date:'2026-09-23', summary:'Re-verified the Show/Hide publish toggle end to end by tracing the actual filter logic — confirmed correct: a project passes through to a viewer only if published, or they\'re the owner, or they\'re Superadmin. Worth knowing: this is a client-side filter, so the browser does still receive unpublished projects\' data, it just isn\'t rendered for non-owners — fine for a declutter-the-view feature, but flagged in case a hard security boundary is ever needed instead. Also added the requested rule: Progress % is now only manually editable while a task\'s status is In Progress — Done always forces 100% and locks the field, On Hold/Cancelled lock it too but leave whatever value was already there untouched rather than resetting it. Fixed an edge case while building this: editing an existing task used to set the status chip directly without applying this same lock, which would have left the field wrongly editable when opening an existing Done/On Hold/Cancelled task for editing.' }
+    { date:'2026-09-23', summary:'Re-verified the Show/Hide publish toggle end to end by tracing the actual filter logic — confirmed correct: a project passes through to a viewer only if published, or they\'re the owner, or they\'re Superadmin. Worth knowing: this is a client-side filter, so the browser does still receive unpublished projects\' data, it just isn\'t rendered for non-owners — fine for a declutter-the-view feature, but flagged in case a hard security boundary is ever needed instead. Also added the requested rule: Progress % is now only manually editable while a task\'s status is In Progress — Done always forces 100% and locks the field, On Hold/Cancelled lock it too but leave whatever value was already there untouched rather than resetting it. Fixed an edge case while building this: editing an existing task used to set the status chip directly without applying this same lock, which would have left the field wrongly editable when opening an existing Done/On Hold/Cancelled task for editing.' },
+    { date:'2026-09-23', summary:'Two changes, one a real bug fix. (1) Found and fixed a genuine inconsistency shown directly in a screenshot — a project marked Done in its own status field could still show 0% progress, because that status and its subtasks\' individual progress were entirely disconnected calculations. The project\'s own Done status now forces 100% outright, overriding subtask math entirely, even for a project with no subtasks tracked at all. (2) Replaced the small battery-icon badge with a full-width progress bar spanning the entire card, per follow-up request that the battery read as too small/cramped next to the title — now its own row below the title/status line, same single consistent color as before, just properly sized to the card rather than squeezed into 34px next to the name.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -8783,7 +8781,18 @@ for a competing inline style first.`;
   // this field existed (progress_pct ?? 0), so older projects don't
   // suddenly show as more complete than they should just because their
   // tasks predate this column.
+  // 2026-09-23: real bug fix — a project's own status (Done/In Progress/
+  // etc.) and its subtasks' individual progress were two entirely
+  // separate things with no connection between them, which is exactly
+  // how a project could show "Done" as its status while still
+  // displaying 0% progress (its subtasks just hadn't been marked
+  // complete or given a percentage). The project's own status now wins
+  // outright when it's Done — 100%, regardless of subtask math, and
+  // even for a project with no subtasks tracked at all (previously
+  // "No specific breakdown" even when the project itself was finished).
   function projectProgressPercent(projectId){
+    const project = devProjectsCache.find(p => p.id === projectId);
+    if(project && project.status === 'Done') return 100;
     const tasks = allProjectTasksCache.filter(t => t.project_id === projectId);
     if(!tasks.length) return null;
     const total = tasks.reduce((sum, t) => sum + (t.progress_pct ?? 0), 0);
@@ -8989,20 +8998,25 @@ for a competing inline style first.`;
       // icon) and a fill proportional to progress. One consistent color
       // throughout (not color-shifting by level, confirmed explicitly),
       // so it's purely the fill amount that communicates progress.
-      const progressBadge = progress !== null
-        ? `<span class="progress-badge" style="display:inline-flex; align-items:center; gap:7px; margin-left:10px;">
-            <span style="position:relative; display:inline-block; width:34px; height:15px; border:1.5px solid var(--green); border-radius:3px; padding:2px; box-sizing:border-box; flex-shrink:0;">
-              <span style="display:block; width:${progress}%; height:100%; background:var(--green); border-radius:1px; transition:width 0.4s ease;"></span>
-              <span style="position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:2px; height:6px; background:var(--green); border-radius:0 2px 2px 0;"></span>
-            </span>
-            <span style="font-size:14px; font-weight:700; color:var(--text);">${progress}%</span>
-          </span>`
-        : `<span class="progress-badge" style="font-size:12px; font-weight:600; color:var(--text-faint); margin-left:10px; font-style:italic;">No specific breakdown</span>`;
+      // 2026-09-23: replaced the small battery icon with a full-width
+      // bar spanning the whole card, per explicit follow-up request —
+      // the battery read as too small/cramped next to the title. Kept
+      // the same single consistent color (no color-shifting by level).
+      // Progress % text now sits beside the bar on its own row instead
+      // of squeezed next to the project name.
+      const progressBarRow = progress !== null
+        ? `<div id="projProgressRow-${p.id}" style="display:flex; align-items:center; gap:10px; padding:0 16px 12px;">
+            <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden;">
+              <div style="width:${progress}%; height:100%; background:var(--green); border-radius:99px; transition:width 0.4s ease;"></div>
+            </div>
+            <span style="font-size:12.5px; font-weight:700; color:var(--text); flex-shrink:0; min-width:32px; text-align:right;">${progress}%</span>
+          </div>`
+        : `<div id="projProgressRow-${p.id}" style="padding:0 16px 12px; font-size:12px; color:var(--text-faint); font-style:italic;">No specific breakdown</div>`;
       return `<div class="gantt-project-card">
       <div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
         data-impact="${p.impact_type||'—'}" data-fin="${p.financial_outcome||'—'}" data-doc="${p.documentation||'—'}" data-remarks="${(p.notes||'').replace(/"/g,'&quot;')}">
-        <div><div class="gt-name">${p.name}${progressBadge}</div><div class="gt-sub">${leadLabel}</div></div>
+        <div><div class="gt-name">${p.name}</div><div class="gt-sub">${leadLabel}</div></div>
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="status-capsule" style="background:${color};">${p.status}</span>
           ${canManageProject ? (
@@ -9016,6 +9030,7 @@ for a competing inline style first.`;
           <button class="btn view-details" style="padding:6px; font-size:11.5px;" onclick="toggleProjectDetailsInline('${p.id}')" id="ptToggleBtn-${p.id}" title="See details" aria-label="See details"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
       </div>
+      ${progressBarRow}
       <div id="projDetailWrap-${p.id}" style="display:none;"></div>
       </div>`;
     }).join('');
