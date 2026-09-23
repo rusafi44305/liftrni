@@ -4069,10 +4069,10 @@
           <input type="date" id="ptEnd" style="padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;">
         </div>
         <div class="chip-group" id="ptStatusChips" style="margin-bottom:10px;">
-          <div class="chip-opt picked-single" onclick="pickSingleChip(this)">In Progress</div>
-          <div class="chip-opt" onclick="pickSingleChip(this)">Done</div>
-          <div class="chip-opt" onclick="pickSingleChip(this)">On Hold</div>
-          <div class="chip-opt" onclick="pickSingleChip(this)">Cancelled</div>
+          <div class="chip-opt picked-single" onclick="pickTaskStatusChip(this)">In Progress</div>
+          <div class="chip-opt" onclick="pickTaskStatusChip(this)">Done</div>
+          <div class="chip-opt" onclick="pickTaskStatusChip(this)">On Hold</div>
+          <div class="chip-opt" onclick="pickTaskStatusChip(this)">Cancelled</div>
         </div>
         <label style="font-size:12px; color:var(--text-faint); display:block; margin-bottom:5px;">Progress %</label>
         <input type="number" id="ptProgress" min="0" max="100" value="0" placeholder="e.g. 37" style="width:100%; padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; margin-bottom:14px; box-sizing:border-box;">
@@ -4105,6 +4105,21 @@
     document.querySelectorAll('#ptStatusChips .chip-opt').forEach(c => {
       c.classList.toggle('picked-single', c.textContent === t.status);
     });
+    // Applying the same lock/unlock rule pickTaskStatusChip() uses for a
+    // live click — without this, opening the edit form for an existing
+    // Done/On Hold/Cancelled task would leave Progress % editable when
+    // it shouldn't be, since setting the chip class directly above
+    // doesn't fire that function's side effect.
+    const progressInput = document.getElementById('ptProgress');
+    if(t.status !== 'In Progress'){
+      progressInput.disabled = true;
+      progressInput.style.opacity = '0.6';
+      progressInput.style.cursor = 'not-allowed';
+    } else {
+      progressInput.disabled = false;
+      progressInput.style.opacity = '1';
+      progressInput.style.cursor = 'text';
+    }
   }
 
   async function submitProjectTask(projectId){
@@ -4257,6 +4272,30 @@
     el.classList.add('picked-single');
   }
 
+  // 2026-09-23: dedicated to the task-status chips specifically (not a
+  // change to pickSingleChip itself, which other unrelated chip groups
+  // also use) — per request, Progress % should only be manually
+  // editable while a task is In Progress. Done always shows 100% and
+  // locks the field; On Hold/Cancelled lock it too but leave whatever
+  // value was already there untouched, since pausing or cancelling a
+  // task doesn't erase the progress it had already made.
+  function pickTaskStatusChip(el){
+    pickSingleChip(el);
+    const status = el.textContent.trim();
+    const input = document.getElementById('ptProgress');
+    if(!input) return;
+    if(status === 'In Progress'){
+      input.disabled = false;
+      input.style.opacity = '1';
+      input.style.cursor = 'text';
+    } else {
+      if(status === 'Done') input.value = 100;
+      input.disabled = true;
+      input.style.opacity = '0.6';
+      input.style.cursor = 'not-allowed';
+    }
+  }
+
   // Fills in stars 1 through the clicked one, greys out the rest, and
   // stores the plain numeric rating on the group's own data-value —
   // collectFormData() reads that directly rather than trying to count
@@ -4401,7 +4440,8 @@
     { date:'2026-09-23', summary:'Found the real cause of Dashboard showing fewer Activities than Home (1000 vs 1077, reported directly) — a genuine, more serious bug than a display mismatch: Dashboard\'s and Category Log\'s task queries had no pagination at all, so each relied on a single request, which Supabase caps at a maximum row count per call (commonly 1000) regardless of how many rows actually match. Once total activity passed that cap, every calculation built from that query — category breakdown, leaderboard, time logged, not just the headline count — was silently working from an incomplete slice of the real data, quietly excluding the oldest rows past the limit. Fixed both by paging through in batches of 1000 until a page comes back short, accumulating the true complete set before computing anything, rather than trusting whatever a single request happened to return.' },
     { date:'2026-09-23', summary:'Added a 0-100% progress slider to individual project Gantt tasks, shown on each task\'s own row alongside its status. Overall project progress now averages every task\'s own percentage instead of a binary done/total ratio — an in-progress task contributes its real partial progress (e.g. 40%) instead of counting as 0% until the moment it\'s marked Done. Marking a task Done always sets it to 100% regardless of whatever the slider was left at, avoiding a task that reads "complete" but shows a lower percentage. Older tasks saved before this field existed default to 0% rather than breaking the average.' },
     { date:'2026-09-23', summary:'Switched Progress % from a 5%-step slider to a plain number field, per request to enter it manually — any exact value (37%, 82%, etc.) can be typed directly rather than only multiples of 5. Added client-side clamping to 0-100 before saving, so a manually-typed out-of-range number gets corrected quietly instead of hitting the database\'s own check constraint with a confusing error.' },
-    { date:'2026-09-23', summary:'Added a battery-style progress bar to each project card — a rounded outline with a small terminal nub and a fill proportional to progress, replacing the plain percentage text. One consistent color throughout regardless of level, confirmed explicitly rather than color-shifting like a real battery\'s red/yellow/green — the fill amount alone communicates progress. Also fixed the live-update path (used right after adding/editing a task, without a full page reload) which used to patch individual properties on the old plain-text badge — that approach can\'t correctly resize a nested fill element, so it now rebuilds the whole badge fresh instead.' }
+    { date:'2026-09-23', summary:'Added a battery-style progress bar to each project card — a rounded outline with a small terminal nub and a fill proportional to progress, replacing the plain percentage text. One consistent color throughout regardless of level, confirmed explicitly rather than color-shifting like a real battery\'s red/yellow/green — the fill amount alone communicates progress. Also fixed the live-update path (used right after adding/editing a task, without a full page reload) which used to patch individual properties on the old plain-text badge — that approach can\'t correctly resize a nested fill element, so it now rebuilds the whole badge fresh instead.' },
+    { date:'2026-09-23', summary:'Re-verified the Show/Hide publish toggle end to end by tracing the actual filter logic — confirmed correct: a project passes through to a viewer only if published, or they\'re the owner, or they\'re Superadmin. Worth knowing: this is a client-side filter, so the browser does still receive unpublished projects\' data, it just isn\'t rendered for non-owners — fine for a declutter-the-view feature, but flagged in case a hard security boundary is ever needed instead. Also added the requested rule: Progress % is now only manually editable while a task\'s status is In Progress — Done always forces 100% and locks the field, On Hold/Cancelled lock it too but leave whatever value was already there untouched rather than resetting it. Fixed an edge case while building this: editing an existing task used to set the status chip directly without applying this same lock, which would have left the field wrongly editable when opening an existing Done/On Hold/Cancelled task for editing.' }
   ];
  
   let currentUser = null;   // Supabase auth user
