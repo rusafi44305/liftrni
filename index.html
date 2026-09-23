@@ -4031,7 +4031,7 @@
             <span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${t.task_name}</span>
             ${t.remarks ? `<span title="${escapeHtml(t.remarks)}" style="flex-shrink:0; color:var(--text-faint); cursor:help;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>` : ''}
           </div>
-          <div style="font-size:11px; color:var(--text-faint); display:flex; align-items:center; gap:5px; margin-top:2px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${color}; flex-shrink:0;"></span>${personLabel} · ${t.status}</div>
+          <div style="font-size:11px; color:var(--text-faint); display:flex; align-items:center; gap:5px; margin-top:2px;"><span style="display:inline-block; width:6px; height:6px; border-radius:50%; background:${color}; flex-shrink:0;"></span>${personLabel} · ${t.status} · ${t.progress_pct ?? 0}%</div>
         </div>
         <div class="gantt-task-bar-track" style="flex:1; position:relative; height:22px; background:var(--surface-alt); border-radius:999px; min-width:100px;">
           <div style="position:absolute; left:${left}%; width:${width}%; height:100%; background:${color}; border-radius:999px; display:flex; align-items:center; padding:0 10px; font-size:10.5px; font-weight:600; color:#fff; white-space:nowrap; overflow:hidden;" title="${fmtShort(s)} → ${fmtShort(e)}">${t.task_name}</div>
@@ -4074,6 +4074,8 @@
           <div class="chip-opt" onclick="pickSingleChip(this)">On Hold</div>
           <div class="chip-opt" onclick="pickSingleChip(this)">Cancelled</div>
         </div>
+        <label style="font-size:12px; color:var(--text-faint); display:block; margin-bottom:5px;">Progress % <span id="ptProgressValue" style="color:var(--text); font-weight:700;">0%</span></label>
+        <input type="range" id="ptProgress" min="0" max="100" value="0" step="5" style="width:100%; margin-bottom:14px;" oninput="document.getElementById('ptProgressValue').textContent = this.value + '%'">
         <textarea id="ptRemarks" placeholder="Remarks (optional)" rows="2" style="width:100%; padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; margin-bottom:14px; resize:vertical; font-family:inherit;"></textarea>
         <div style="display:flex; gap:8px;">
           <button class="btn" style="padding:7px 16px; font-size:12.5px; border-radius:9px;" onclick="document.getElementById('projTaskAddFormWrap-${projectId}').innerHTML='';">Cancel</button>
@@ -4099,6 +4101,8 @@
     document.getElementById('ptStart').value = t.start_date || '';
     document.getElementById('ptEnd').value = t.end_date || '';
     document.getElementById('ptRemarks').value = t.remarks || '';
+    document.getElementById('ptProgress').value = t.progress_pct || 0;
+    document.getElementById('ptProgressValue').textContent = (t.progress_pct || 0) + '%';
     document.querySelectorAll('#ptStatusChips .chip-opt').forEach(c => {
       c.classList.toggle('picked-single', c.textContent === t.status);
     });
@@ -4107,13 +4111,18 @@
   async function submitProjectTask(projectId){
     const taskName = document.getElementById('ptName').value.trim();
     if(!taskName){ alert('Task name is required.'); return; }
+    const statusVal = document.querySelector('#ptStatusChips .picked-single')?.textContent || 'In Progress';
     const payload = {
       project_id: projectId,
       task_name: taskName,
       assigned_to: document.getElementById('ptAssigned').value || null,
       start_date: document.getElementById('ptStart').value || null,
       end_date: document.getElementById('ptEnd').value || null,
-      status: document.querySelector('#ptStatusChips .picked-single')?.textContent || 'In Progress',
+      status: statusVal,
+      // Done always means 100%, regardless of whatever the slider was
+      // left at — avoids the inconsistent-looking case of a task marked
+      // complete but showing, say, 80% progress.
+      progress_pct: statusVal === 'Done' ? 100 : parseInt(document.getElementById('ptProgress').value, 10) || 0,
       remarks: document.getElementById('ptRemarks').value.trim() || null
     };
     let error;
@@ -4389,7 +4398,8 @@
     { date:'2026-09-22', summary:'Apply/Apply range\'s blue background was washing out to near-invisible in light theme, making its white text unreadable. Switched from var(--accent) (which resolves differently per theme) to an explicit hardcoded blue, and replaced its opacity-based hover effect with an explicit darker blue on hover — removes any possibility of a theme-specific value or an opacity fade being involved, so the button reads the same solid, readable blue in both themes.' },
     { date:'2026-09-23', summary:'The fix above still didn\'t take effect, confirmed against a follow-up screenshot — found the real cause this time: a macOS-styling override further down the stylesheet (.queue-btn, .btn:not(...), .fselect{ background:... !important }) also sets background with !important on the exact same element. Since that rule has equal specificity to .filter-btn-apply/excel/pptx (all single-class selectors) and comes later in the file, it was winning the !important tiebreak by source order alone, silently replacing the intended color back to a near-transparent surface tint. Fixed by raising specificity to button.filter-btn-apply/excel/pptx (tag+class) instead of class-only, which now wins on specificity regardless of where either rule sits in the file — not a fix that depends on staying lucky with ordering.' },
     { date:'2026-09-23', summary:'Found and fixed the real cause behind "I changed the Monthly Score Target but the score isn\'t updating" — appSettings (which holds monthly_score_target and several Admin-permission flags) was cached once per session with no expiry at all, the exact same pattern as the dynamicFieldOptions bug fixed earlier. A Superadmin\'s own change already updated their own in-memory copy immediately (that line already existed), but anyone else\'s already-open session had no way to ever pick up the new value short of a full reload. Added the same 2-minute staleness window used for the fields fix. Confirmed this is a display/calculation staleness issue only — traced submitTask()\'s full error-handling path and found no way for a submission to fail without the person seeing a clear error message, so this doesn\'t point to any actual data loss.' },
-    { date:'2026-09-23', summary:'Found the real cause of Dashboard showing fewer Activities than Home (1000 vs 1077, reported directly) — a genuine, more serious bug than a display mismatch: Dashboard\'s and Category Log\'s task queries had no pagination at all, so each relied on a single request, which Supabase caps at a maximum row count per call (commonly 1000) regardless of how many rows actually match. Once total activity passed that cap, every calculation built from that query — category breakdown, leaderboard, time logged, not just the headline count — was silently working from an incomplete slice of the real data, quietly excluding the oldest rows past the limit. Fixed both by paging through in batches of 1000 until a page comes back short, accumulating the true complete set before computing anything, rather than trusting whatever a single request happened to return.' }
+    { date:'2026-09-23', summary:'Found the real cause of Dashboard showing fewer Activities than Home (1000 vs 1077, reported directly) — a genuine, more serious bug than a display mismatch: Dashboard\'s and Category Log\'s task queries had no pagination at all, so each relied on a single request, which Supabase caps at a maximum row count per call (commonly 1000) regardless of how many rows actually match. Once total activity passed that cap, every calculation built from that query — category breakdown, leaderboard, time logged, not just the headline count — was silently working from an incomplete slice of the real data, quietly excluding the oldest rows past the limit. Fixed both by paging through in batches of 1000 until a page comes back short, accumulating the true complete set before computing anything, rather than trusting whatever a single request happened to return.' },
+    { date:'2026-09-23', summary:'Added a 0-100% progress slider to individual project Gantt tasks, shown on each task\'s own row alongside its status. Overall project progress now averages every task\'s own percentage instead of a binary done/total ratio — an in-progress task contributes its real partial progress (e.g. 40%) instead of counting as 0% until the moment it\'s marked Done. Marking a task Done always sets it to 100% regardless of whatever the slider was left at, avoiding a task that reads "complete" but shows a lower percentage. Older tasks saved before this field existed default to 0% rather than breaking the average.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -8724,11 +8734,18 @@ for a competing inline style first.`;
   // expand each project individually first, which only fetches its own
   // tasks in full detail.
   let allProjectTasksCache = [];
+  // 2026-09-23: switched from a binary done/total ratio to averaging
+  // each task's own progress_pct — an in-progress task contributes its
+  // real partial progress (e.g. 40%) instead of counting as 0 until the
+  // moment it flips to Done. Falls back to 0 for any task saved before
+  // this field existed (progress_pct ?? 0), so older projects don't
+  // suddenly show as more complete than they should just because their
+  // tasks predate this column.
   function projectProgressPercent(projectId){
     const tasks = allProjectTasksCache.filter(t => t.project_id === projectId);
     if(!tasks.length) return null;
-    const done = tasks.filter(t => t.status === 'Done').length;
-    return Math.round((done / tasks.length) * 100);
+    const total = tasks.reduce((sum, t) => sum + (t.progress_pct ?? 0), 0);
+    return Math.round(total / tasks.length);
   }
  
   async function populateDevPeople(){
@@ -8744,7 +8761,7 @@ for a competing inline style first.`;
     await populateDevPeople();
     const [projectsRes, tasksRes] = await Promise.all([
       sb.from('dev_projects').select('*').order('start_date', { ascending: false }),
-      sb.from('dev_project_tasks').select('id, project_id, status')
+      sb.from('dev_project_tasks').select('id, project_id, status, progress_pct')
     ]);
     const { data, error } = projectsRes;
     if(error){
