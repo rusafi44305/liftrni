@@ -4147,22 +4147,23 @@
     if(!nameEl) return;
     const progress = projectProgressPercent(projectId);
     const badge = nameEl.querySelector('.progress-badge');
-    if(progress === null){
-      const text = 'No specific breakdown';
-      if(badge){ badge.textContent = text; badge.style.fontSize = '12px'; badge.style.fontWeight = '600'; badge.style.color = 'var(--text-faint)'; badge.style.fontStyle = 'italic'; }
-      else { nameEl.insertAdjacentHTML('beforeend', `<span class="progress-badge" style="font-size:12px; font-weight:600; color:var(--text-faint); margin-left:10px; font-style:italic;">${text}</span>`); }
-      return;
-    }
-    const color = progress === 100 ? 'var(--green)' : 'var(--accent)';
-    if(badge){
-      badge.textContent = `${progress}%`;
-      badge.style.color = color;
-      badge.style.fontSize = '17px';
-      badge.style.fontWeight = '700';
-      badge.style.fontStyle = 'normal';
-    } else {
-      nameEl.insertAdjacentHTML('beforeend', `<span class="progress-badge" style="font-size:17px; font-weight:700; color:${color}; margin-left:10px;">${progress}%</span>`);
-    }
+    // 2026-09-23: rebuilds the whole badge rather than tweaking
+    // individual properties on the old one — the battery bar has a
+    // nested fill element whose width can't be corrected by patching
+    // textContent/style on the outer span the way the old plain-text
+    // badge could. Same markup as the main card list, so a live update
+    // here looks identical to a fresh page load.
+    const html = progress !== null
+      ? `<span class="progress-badge" style="display:inline-flex; align-items:center; gap:7px; margin-left:10px;">
+          <span style="position:relative; display:inline-block; width:34px; height:15px; border:1.5px solid var(--green); border-radius:3px; padding:2px; box-sizing:border-box; flex-shrink:0;">
+            <span style="display:block; width:${progress}%; height:100%; background:var(--green); border-radius:1px; transition:width 0.4s ease;"></span>
+            <span style="position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:2px; height:6px; background:var(--green); border-radius:0 2px 2px 0;"></span>
+          </span>
+          <span style="font-size:14px; font-weight:700; color:var(--text);">${progress}%</span>
+        </span>`
+      : `<span class="progress-badge" style="font-size:12px; font-weight:600; color:var(--text-faint); margin-left:10px; font-style:italic;">No specific breakdown</span>`;
+    if(badge) badge.outerHTML = html;
+    else nameEl.insertAdjacentHTML('beforeend', html);
   }
 
   // 2026-09-22: reversed from the earlier one-way design after explicit
@@ -4399,7 +4400,8 @@
     { date:'2026-09-23', summary:'Found and fixed the real cause behind "I changed the Monthly Score Target but the score isn\'t updating" — appSettings (which holds monthly_score_target and several Admin-permission flags) was cached once per session with no expiry at all, the exact same pattern as the dynamicFieldOptions bug fixed earlier. A Superadmin\'s own change already updated their own in-memory copy immediately (that line already existed), but anyone else\'s already-open session had no way to ever pick up the new value short of a full reload. Added the same 2-minute staleness window used for the fields fix. Confirmed this is a display/calculation staleness issue only — traced submitTask()\'s full error-handling path and found no way for a submission to fail without the person seeing a clear error message, so this doesn\'t point to any actual data loss.' },
     { date:'2026-09-23', summary:'Found the real cause of Dashboard showing fewer Activities than Home (1000 vs 1077, reported directly) — a genuine, more serious bug than a display mismatch: Dashboard\'s and Category Log\'s task queries had no pagination at all, so each relied on a single request, which Supabase caps at a maximum row count per call (commonly 1000) regardless of how many rows actually match. Once total activity passed that cap, every calculation built from that query — category breakdown, leaderboard, time logged, not just the headline count — was silently working from an incomplete slice of the real data, quietly excluding the oldest rows past the limit. Fixed both by paging through in batches of 1000 until a page comes back short, accumulating the true complete set before computing anything, rather than trusting whatever a single request happened to return.' },
     { date:'2026-09-23', summary:'Added a 0-100% progress slider to individual project Gantt tasks, shown on each task\'s own row alongside its status. Overall project progress now averages every task\'s own percentage instead of a binary done/total ratio — an in-progress task contributes its real partial progress (e.g. 40%) instead of counting as 0% until the moment it\'s marked Done. Marking a task Done always sets it to 100% regardless of whatever the slider was left at, avoiding a task that reads "complete" but shows a lower percentage. Older tasks saved before this field existed default to 0% rather than breaking the average.' },
-    { date:'2026-09-23', summary:'Switched Progress % from a 5%-step slider to a plain number field, per request to enter it manually — any exact value (37%, 82%, etc.) can be typed directly rather than only multiples of 5. Added client-side clamping to 0-100 before saving, so a manually-typed out-of-range number gets corrected quietly instead of hitting the database\'s own check constraint with a confusing error.' }
+    { date:'2026-09-23', summary:'Switched Progress % from a 5%-step slider to a plain number field, per request to enter it manually — any exact value (37%, 82%, etc.) can be typed directly rather than only multiples of 5. Added client-side clamping to 0-100 before saving, so a manually-typed out-of-range number gets corrected quietly instead of hitting the database\'s own check constraint with a confusing error.' },
+    { date:'2026-09-23', summary:'Added a battery-style progress bar to each project card — a rounded outline with a small terminal nub and a fill proportional to progress, replacing the plain percentage text. One consistent color throughout regardless of level, confirmed explicitly rather than color-shifting like a real battery\'s red/yellow/green — the fill amount alone communicates progress. Also fixed the live-update path (used right after adding/editing a task, without a full page reload) which used to patch individual properties on the old plain-text badge — that approach can\'t correctly resize a nested fill element, so it now rebuilds the whole badge fresh instead.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -8942,8 +8944,19 @@ for a competing inline style first.`;
       const canEdit = canManageProject;
       const canDelete = canManageProject;
       const progress = projectProgressPercent(p.id);
+      // 2026-09-23: battery-style bar per request — a rounded outline
+      // with a small terminal nub on the right (like a phone's battery
+      // icon) and a fill proportional to progress. One consistent color
+      // throughout (not color-shifting by level, confirmed explicitly),
+      // so it's purely the fill amount that communicates progress.
       const progressBadge = progress !== null
-        ? `<span class="progress-badge" style="font-size:17px; font-weight:700; color:${progress === 100 ? 'var(--green)' : 'var(--accent)'}; margin-left:10px;">${progress}%</span>`
+        ? `<span class="progress-badge" style="display:inline-flex; align-items:center; gap:7px; margin-left:10px;">
+            <span style="position:relative; display:inline-block; width:34px; height:15px; border:1.5px solid var(--green); border-radius:3px; padding:2px; box-sizing:border-box; flex-shrink:0;">
+              <span style="display:block; width:${progress}%; height:100%; background:var(--green); border-radius:1px; transition:width 0.4s ease;"></span>
+              <span style="position:absolute; right:-4px; top:50%; transform:translateY(-50%); width:2px; height:6px; background:var(--green); border-radius:0 2px 2px 0;"></span>
+            </span>
+            <span style="font-size:14px; font-weight:700; color:var(--text);">${progress}%</span>
+          </span>`
         : `<span class="progress-badge" style="font-size:12px; font-weight:600; color:var(--text-faint); margin-left:10px; font-style:italic;">No specific breakdown</span>`;
       return `<div class="gantt-project-card">
       <div class="gantt-row"
