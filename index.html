@@ -4465,7 +4465,8 @@
     { date:'2026-09-23', summary:'Two more changes. (1) The card itself is now the progress bar, per direct follow-up that the separate bar row still wasn\'t what was wanted — a light-colored fill spans the card\'s own background proportional to progress (hard-edge, not a soft gradient), with a small percentage label next to the title; text and buttons sit on top exactly as before, deliberately kept light enough not to fight with them for attention. (2) Investigated a reported suspicion that Publish/Unpublish isn\'t working — the code itself traces correctly and matches the working Delete function\'s exact pattern, but there\'s a real possibility that can\'t be ruled out from code alone: a database security policy silently blocking the update with no error at all, which would look identical to "the button doesn\'t work." Added .select() to the update call so a zero-rows-affected silent failure now surfaces a clear message instead of failing invisibly, and provided a read-only query to check dev_projects\' actual permission policies directly.' },
     { date:'2026-09-23', summary:'Checked the actual RLS policies on dev_projects directly (the user ran the diagnostic query) — confirmed correctly configured, matching the exact same creator-or-lead condition the app already checks client-side, so that\'s ruled out as the cause. Found the next real suspects instead: two silent early-returns in toggleDevProjectPublished — if the project wasn\'t found in the current cache, or the current user wasn\'t recognized as its owner/lead, the function would return with absolutely no feedback at all, no confirm dialog, no error, nothing — which would look identical to "the button does nothing" from the outside. Both now show a specific alert explaining exactly which check failed, rather than failing in total silence.' },
     { date:'2026-09-23', summary:'Extended the engineer-count exclusion to Superadmin too, per follow-up — both "engineers active" counters (Home\'s get_home_stats SQL function and Dashboard\'s own client-side count) now exclude Admin AND Superadmin, leaving only regular Users/Engineers. Updated both together deliberately, so the two counters stay defined identically rather than drifting apart the way they had before.' },
-    { date:'2026-09-23', summary:'Added a short description to each of Home\'s 6 category tiles (Team Activity, Pre-Sales Support, Post-Sales Activity, Technical Support, General Support, Reports), desktop only per request — hidden by default and only shown at the existing 861px desktop breakpoint this file already uses elsewhere, so mobile tiles stay exactly as compact as before, completely unaffected.' }
+    { date:'2026-09-23', summary:'Added a short description to each of Home\'s 6 category tiles (Team Activity, Pre-Sales Support, Post-Sales Activity, Technical Support, General Support, Reports), desktop only per request — hidden by default and only shown at the existing 861px desktop breakpoint this file already uses elsewhere, so mobile tiles stay exactly as compact as before, completely unaffected.' },
+    { date:'2026-09-23', summary:'Removed Superadmin\'s full-visibility exception on unpublished projects, per explicit decision after the person found they could still see another user\'s unpublished project as Superadmin and confirmed they wanted zero exceptions rather than the deliberate oversight behavior that was there before. An unpublished project is now only visible to its own owner (created_by or lead_id) — no role gets to see past that, Superadmin included.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -8845,15 +8846,16 @@ for a competing inline style first.`;
       document.getElementById('devGanttRows').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the dev_projects table has been created (see setup SQL).</div>`;
       return;
     }
-    // 2026-09-22: unpublished projects are only visible to their own
-    // owner (created_by or lead_id) and Superadmins — everyone else
-    // simply never receives them past this filter, so "published" is a
-    // real visibility control, not just a cosmetic label on an
-    // otherwise-visible-to-all project.
+    // 2026-09-23: removed the Superadmin bypass entirely, per explicit
+    // decision after the person found they could still see another
+    // user's unpublished project as Superadmin and confirmed they
+    // wanted zero exceptions rather than the intentional oversight
+    // behavior that was there before. Unpublished projects are now only
+    // visible to their own owner (created_by or lead_id) — no role gets
+    // to see past that, Superadmin included.
     const rawProjects = data || [];
-    const isSuperadminNow = currentProfile && currentProfile.role === 'superadmin';
     devProjectsCache = rawProjects.filter(p =>
-      p.published || isSuperadminNow || (currentUser && (p.created_by === currentUser.id || p.lead_id === currentUser.id))
+      p.published || (currentUser && (p.created_by === currentUser.id || p.lead_id === currentUser.id))
     );
     allProjectTasksCache = tasksRes.data || [];
  
