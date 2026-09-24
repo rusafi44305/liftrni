@@ -857,6 +857,13 @@
   .gantt-months .gm{font-size:11px; font-weight:600; color:var(--text-faint); text-align:center; padding-bottom:8px; border-bottom:1px solid var(--border);}
   .gantt-project-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; margin-bottom:14px; box-shadow:var(--shadow); overflow:hidden; color:var(--text); }
   .gantt-row{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 20px; flex-wrap:wrap;}
+  /* 2026-09-24: the progress fill lives inside .proj-zone (header row + the
+     Lead/Collaborators/Status info block) instead of on the whole card, so
+     it never extends down behind the Gantt chart. The fill is its own
+     rounded element; the zone's content sits on top of it. */
+  .proj-zone{position:relative;}
+  .proj-zone-fill{position:absolute; top:0; bottom:0; left:0; border-radius:10px; background:color-mix(in srgb, var(--green) 22%, var(--surface)); pointer-events:none; z-index:0;}
+  .proj-zone > .gantt-row, .proj-zone > .proj-info-wrap{position:relative; z-index:1;}
   .proj-gantt-task-row:hover{ background:var(--surface-alt); }
   /* On narrow screens the task rows below wrap onto two lines each (name
      above, bar below, spanning the row's full width) since there isn't
@@ -3899,13 +3906,17 @@
       const prevWrap = document.getElementById('projDetailWrap-' + openProjectDetailId);
       const prevBtn = document.getElementById('ptToggleBtn-' + openProjectDetailId);
       if(prevWrap) prevWrap.style.display = 'none';
+      const prevInfo = document.getElementById('projInfoWrap-' + openProjectDetailId);
+      if(prevInfo) prevInfo.style.display = 'none';
       setDetailsToggleLabel(prevBtn, 'See details');
     }
 
     const isOpen = wrap.style.display !== 'none';
     const btn = document.getElementById('ptToggleBtn-' + projectId);
+    const infoWrap = document.getElementById('projInfoWrap-' + projectId);
     if(isOpen){
       wrap.style.display = 'none';
+      if(infoWrap) infoWrap.style.display = 'none';
       setDetailsToggleLabel(btn, 'See details');
       openProjectDetailId = null;
       return;
@@ -3914,6 +3925,7 @@
     openProjectDetailId = projectId;
     setDetailsToggleLabel(btn, 'Hide details');
     wrap.style.display = 'block';
+    if(infoWrap) infoWrap.style.display = 'block';
     await loadProjectTasks(projectId);
   }
 
@@ -3960,9 +3972,15 @@
     // project's own creator or Lead can add a task to it at all.
     const canManageTasks = project.created_by === currentUser?.id || project.lead_id === currentUser?.id;
 
+    // 2026-09-24: the info block now renders into the header zone (inside
+    // the progress fill's container) rather than into this wrap, so the
+    // fill covers header + info but never the Gantt chart below.
+    const infoWrap = document.getElementById('projInfoWrap-' + projectId);
+    if(infoWrap){
+      infoWrap.innerHTML = `<div style="padding:14px 20px 18px; margin-top:0; border-top:1px solid var(--border);">${infoHtml}</div>`;
+    }
     wrap.innerHTML = `
-      <div style="padding:14px 20px 18px; margin-top:0; border-top:1px solid var(--border);">
-        ${infoHtml}
+      <div style="padding:0 20px 18px; margin-top:0; border-top:1px solid var(--border);">
         <div style="display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px;">
           <div class="panel-title" style="margin:0;">Task breakdown — Gantt view</div>
           ${canManageTasks ? `<button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="showAddProjectTaskForm('${projectId}')">+ Add task</button>` : ''}
@@ -4173,19 +4191,19 @@
   // 2026-09-23: rewritten again — the progress bar is now the card's
   // own background fill (a hard-edge gradient), not a separate row
   // underneath, per follow-up request that the card itself be the bar.
-  // Updates both the card's background and the small percentage label
+  // Updates both the header zone's progress fill and the small percentage label
   // together, since they're two separate elements that both need to
   // change in sync.
   function updateProjectProgressBadge(projectId){
-    const card = document.querySelector(`.gantt-row[data-id="${projectId}"]`)?.closest('.gantt-project-card');
+    const fill = document.getElementById(`projFill-${projectId}`);
     const label = document.getElementById(`projProgressRow-${projectId}`);
-    if(!card || !label) return;
+    if(!fill || !label) return;
     const progress = projectProgressPercent(projectId);
     if(progress !== null){
-      card.style.background = `linear-gradient(to right, color-mix(in srgb, var(--green) 22%, var(--surface)) 0%, color-mix(in srgb, var(--green) 22%, var(--surface)) ${progress}%, var(--surface) ${progress}%, var(--surface) 100%)`;
+      fill.style.width = `${progress}%`;
       label.outerHTML = `<span id="projProgressRow-${projectId}" style="font-size:12px; font-weight:700; color:var(--green); margin-left:8px;">${progress}%</span>`;
     } else {
-      card.style.background = '';
+      fill.style.width = '0%';
       label.outerHTML = `<span id="projProgressRow-${projectId}" style="font-size:11.5px; color:var(--text-faint); font-style:italic; margin-left:8px;">No specific breakdown</span>`;
     }
   }
@@ -4473,7 +4491,8 @@
     { date:'2026-09-23', summary:'Added a short description to each of Home\'s 6 category tiles (Team Activity, Pre-Sales Support, Post-Sales Activity, Technical Support, General Support, Reports), desktop only per request — hidden by default and only shown at the existing 861px desktop breakpoint this file already uses elsewhere, so mobile tiles stay exactly as compact as before, completely unaffected.' },
     { date:'2026-09-23', summary:'Removed Superadmin\'s full-visibility exception on unpublished projects, per explicit decision after the person found they could still see another user\'s unpublished project as Superadmin and confirmed they wanted zero exceptions rather than the deliberate oversight behavior that was there before. An unpublished project is now only visible to its own owner (created_by or lead_id) — no role gets to see past that, Superadmin included.' },
     { date:'2026-09-23', summary:'Added a Mechanical/Electrical section filter to Dashboard, right alongside the existing engineer filter — same dropdown style, same filter-row that already wraps gracefully on both desktop and mobile, so no separate layout work was needed for either view. Applied client-side right after pagination completes and before any calculation touches the rows (filtering by a joined profile column isn\'t a plain .eq() on the main query), so every number on the page — category breakdown, leaderboard, time logged, everything — is automatically scoped to whichever section is selected, with no separate filtering logic needed anywhere else.' },
-    { date:'2026-09-24', summary:'Fixed project progress dropping to 0% when opening a project\'s details (and fixing itself after a refresh) — loadProjectTasks() re-synced the lightweight all-projects cache after loading a project\'s tasks, but copied only id/project_id/status and left out progress_pct, so the progress calculation read every task as 0% until a full reload re-fetched the column. It now carries progress_pct through, same as the initial page load already did.' }
+    { date:'2026-09-24', summary:'Fixed project progress dropping to 0% when opening a project\'s details (and fixing itself after a refresh) — loadProjectTasks() re-synced the lightweight all-projects cache after loading a project\'s tasks, but copied only id/project_id/status and left out progress_pct, so the progress calculation read every task as 0% until a full reload re-fetched the column. It now carries progress_pct through, same as the initial page load already did.' },
+    { date:'2026-09-24', summary:'Progress fill on Projects cards is now limited to the header zone (title row plus the Lead/Collaborators/Status/Financial Outcome/Documentation block) as its own rounded element, instead of being the whole card\'s background — it no longer extends behind the Gantt chart when a project\'s details are open. The info block moved into a new projInfoWrap container inside that zone; the Gantt chart stays in projDetailWrap below it, and toggling details shows/hides both together. updateProjectProgressBadge() now resizes the fill element rather than repainting the card.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -9047,13 +9066,14 @@ for a competing inline style first.`;
       // Text/buttons sit on top of this as normal, unaffected — the
       // fill is deliberately light enough not to fight with them for
       // attention. No fill at all for a project with no progress data.
-      const cardFillStyle = progress !== null
-        ? `background:linear-gradient(to right, color-mix(in srgb, var(--green) 22%, var(--surface)) 0%, color-mix(in srgb, var(--green) 22%, var(--surface)) ${progress}%, var(--surface) ${progress}%, var(--surface) 100%);`
-        : '';
+      // 2026-09-24: fill is now a rounded element inside the header zone (see .proj-zone-fill), not the whole card's background.
+      const progressFillWidth = progress !== null ? progress : 0;
       const progressLabel = progress !== null
         ? `<span id="projProgressRow-${p.id}" style="font-size:12px; font-weight:700; color:var(--green); margin-left:8px;">${progress}%</span>`
         : `<span id="projProgressRow-${p.id}" style="font-size:11.5px; color:var(--text-faint); font-style:italic; margin-left:8px;">No specific breakdown</span>`;
-      return `<div class="gantt-project-card" style="${cardFillStyle}">
+      return `<div class="gantt-project-card">
+      <div class="proj-zone">
+      <div class="proj-zone-fill" id="projFill-${p.id}" style="width:${progressFillWidth}%;"></div>
       <div class="gantt-row"
         data-id="${p.id}" data-name="${p.name}" data-lead="${leadLabel}" data-collab="${collabNames}" data-status="${p.status}"
         data-impact="${p.impact_type||'—'}" data-fin="${p.financial_outcome||'—'}" data-doc="${p.documentation||'—'}" data-remarks="${(p.notes||'').replace(/"/g,'&quot;')}">
@@ -9070,6 +9090,8 @@ for a competing inline style first.`;
           <button class="btn" style="padding:6px; font-size:11.5px; background:color-mix(in srgb, #D85A30 20%, var(--surface)); color:#D85A30; border:1px solid color-mix(in srgb, #D85A30 40%, transparent);" onclick="exportProjectReportPptx('${p.id}')" title="Download PPT report" aria-label="Download PPT report"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><rect x="2" y="3.5" width="20" height="13.5" rx="2"/><path d="M8 9v5M12 11v3M16 7.5v6.5" stroke-linecap="round"/><path d="M8 20.5h8"/><path d="M12 17v3.5"/></svg></button>
           <button class="btn view-details" style="padding:6px; font-size:11.5px;" onclick="toggleProjectDetailsInline('${p.id}')" id="ptToggleBtn-${p.id}" title="See details" aria-label="See details"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
         </div>
+      </div>
+      <div id="projInfoWrap-${p.id}" class="proj-info-wrap" style="display:none;"></div>
       </div>
       <div id="projDetailWrap-${p.id}" style="display:none;"></div>
       </div>`;
