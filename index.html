@@ -2219,6 +2219,11 @@
       <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
       <input type="date" id="dashToMonth" class="fselect" style="cursor:pointer;">
       <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
+      <select id="dashDisciplineSelect" class="fselect" style="cursor:pointer;">
+        <option value="">All sections</option>
+        <option value="mechanical">Mechanical</option>
+        <option value="electrical">Electrical</option>
+      </select>
       <button class="queue-btn filter-btn-apply" onclick="loadDashboard()">Apply</button>
       <button class="queue-btn filter-btn-excel" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
       <button class="queue-btn filter-btn-pptx" onclick="exportDashboardToPptx()">⬇ Export to PPTX</button>
@@ -4466,7 +4471,8 @@
     { date:'2026-09-23', summary:'Checked the actual RLS policies on dev_projects directly (the user ran the diagnostic query) — confirmed correctly configured, matching the exact same creator-or-lead condition the app already checks client-side, so that\'s ruled out as the cause. Found the next real suspects instead: two silent early-returns in toggleDevProjectPublished — if the project wasn\'t found in the current cache, or the current user wasn\'t recognized as its owner/lead, the function would return with absolutely no feedback at all, no confirm dialog, no error, nothing — which would look identical to "the button does nothing" from the outside. Both now show a specific alert explaining exactly which check failed, rather than failing in total silence.' },
     { date:'2026-09-23', summary:'Extended the engineer-count exclusion to Superadmin too, per follow-up — both "engineers active" counters (Home\'s get_home_stats SQL function and Dashboard\'s own client-side count) now exclude Admin AND Superadmin, leaving only regular Users/Engineers. Updated both together deliberately, so the two counters stay defined identically rather than drifting apart the way they had before.' },
     { date:'2026-09-23', summary:'Added a short description to each of Home\'s 6 category tiles (Team Activity, Pre-Sales Support, Post-Sales Activity, Technical Support, General Support, Reports), desktop only per request — hidden by default and only shown at the existing 861px desktop breakpoint this file already uses elsewhere, so mobile tiles stay exactly as compact as before, completely unaffected.' },
-    { date:'2026-09-23', summary:'Removed Superadmin\'s full-visibility exception on unpublished projects, per explicit decision after the person found they could still see another user\'s unpublished project as Superadmin and confirmed they wanted zero exceptions rather than the deliberate oversight behavior that was there before. An unpublished project is now only visible to its own owner (created_by or lead_id) — no role gets to see past that, Superadmin included.' }
+    { date:'2026-09-23', summary:'Removed Superadmin\'s full-visibility exception on unpublished projects, per explicit decision after the person found they could still see another user\'s unpublished project as Superadmin and confirmed they wanted zero exceptions rather than the deliberate oversight behavior that was there before. An unpublished project is now only visible to its own owner (created_by or lead_id) — no role gets to see past that, Superadmin included.' },
+    { date:'2026-09-23', summary:'Added a Mechanical/Electrical section filter to Dashboard, right alongside the existing engineer filter — same dropdown style, same filter-row that already wraps gracefully on both desktop and mobile, so no separate layout work was needed for either view. Applied client-side right after pagination completes and before any calculation touches the rows (filtering by a joined profile column isn\'t a plain .eq() on the main query), so every number on the page — category breakdown, leaderboard, time logged, everything — is automatically scoped to whichever section is selected, with no separate filtering logic needed anywhere else.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -9703,8 +9709,9 @@ for a competing inline style first.`;
     const fromVal = document.getElementById('dashFromMonth').value; // "2026-01-15"
     const toVal = document.getElementById('dashToMonth').value;
     const engineerId = document.getElementById('dashEngineerSelect').value;
+    const disciplineFilter = document.getElementById('dashDisciplineSelect').value;
  
-    let query = sb.from('tasks').select('*, profiles(full_name, nickname, role)');
+    let query = sb.from('tasks').select('*, profiles(full_name, nickname, role, discipline)');
     if(fromVal) query = query.gte('created_at', fromVal);
     if(toVal){
       const nextDay = new Date(toVal + 'T00:00:00');
@@ -9734,6 +9741,13 @@ for a competing inline style first.`;
       if(!data || data.length < PAGE_SIZE) break;
       page++;
     }
+    // Applied client-side (filtering by a joined table's own column
+    // isn't a plain .eq() on the main query) — done here, right after
+    // pagination completes and before any calculation touches the
+    // rows, so every downstream number (category breakdown, leaderboard,
+    // time logged, everything) is automatically scoped to the selected
+    // section with no separate filtering logic needed elsewhere.
+    if(disciplineFilter) rows = rows.filter(r => r.profiles?.discipline === disciplineFilter);
     currentDashRows = rows;
     const durationLabels = await getDurationLabelsByCategory();
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
