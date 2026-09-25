@@ -158,54 +158,35 @@
   /* ---------- TOP NAV ---------- */
   header.topnav{
     position:sticky; top:0; z-index:50;
-    display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
-    padding:8px 24px;
+    display:grid; grid-template-columns:auto 1fr auto; align-items:center;
+    padding:7px 20px;
     background: color-mix(in srgb, var(--header-bg) 72%, transparent);
     backdrop-filter: blur(32px) saturate(180%);
     -webkit-backdrop-filter: blur(32px) saturate(180%);
     border-bottom:1px solid color-mix(in srgb, var(--border) 70%, transparent);
-    transition: grid-template-columns 0.3s ease, padding 0.25s ease;
-  }
-  header.topnav.scrolled{
-    grid-template-columns: 0fr auto 1fr;
-    padding: 5px 20px;
   }
   .nav-left{
     justify-self:start;
     overflow:hidden;
-    transition: opacity 0.25s ease;
-  }
-  header.topnav.scrolled .nav-left{
-    opacity:0;
-    pointer-events:none;
   }
   .brand-center-name{
     max-height:24px; opacity:1; overflow:hidden;
-    transition: max-height 0.25s ease, opacity 0.2s ease;
   }
-  header.topnav.scrolled .brand-center-name{
-    max-height:0; opacity:0;
-  }
-  .brand-center-sub{
-    transition: font-size 0.25s ease, color 0.25s ease, font-weight 0.25s ease;
-  }
-  header.topnav.scrolled .brand-center-sub{
-    font-size:16px; font-weight:600; color:var(--text);
-  }
-  /* Desktop only — the dashboard name gets a gentle drop-in slide as it
-     becomes the prominent element on scroll, and reverses smoothly when
-     scrolling back up. Mobile always shows the compact header statically,
-     so this transition would never actually play there anyway. */
-  @media (min-width:601px){
-    .brand-center-sub{
-      transform: translateY(-5px);
-      transition: font-size 0.25s ease, color 0.25s ease, font-weight 0.25s ease, transform 0.3s ease;
-    }
-    header.topnav.scrolled .brand-center-sub{
-      transform: translateY(0);
-    }
-  }
+  /* 2026-09-25: the header no longer collapses on scroll — nav-left (icon
+     + date) is fixed and always visible now, so the old scroll-triggered
+     slide/collapse animation (header.topnav.scrolled, see the removed
+     scroll listener in the script below) no longer has anything to
+     animate. Desktop hides .brand-center outright instead — see
+     "2026-09-25 header redesign" further down — and this mobile-only
+     block still governs the still-unchanged mobile header. */
   #navClockTimeWrap{ transition: opacity 0.2s ease; }
+  /* 2026-09-25: on desktop the date now lives in nav-left (see
+     #navClockDateLeft) instead of here, so this copy — still needed
+     as-is for the unchanged mobile header — is hidden on desktop only. */
+  @media (min-width:601px){
+    #navClockDate{ display:none; }
+    .brand-center{ display:none; }
+  }
   .brand-center{ text-align:center; }
   .brand-center-name{ font-family:'Space Grotesk'; font-weight:700; font-size:17px; letter-spacing:-0.01em; line-height:1.2; }
   .brand-center-sub{ font-size:12px; color:var(--text-faint); margin-top:1px; line-height:1.2; }
@@ -271,7 +252,7 @@
   .switch input:checked + .switch-track::before{ transform:translateX(20px); }
  
  
-  main{max-width:1180px; margin:0 auto; padding:24px 20px 100px;}
+  main{max-width:1180px; margin:0 auto; padding:24px 20px 28px;}
   /* 2026-09-11: universal gap-to-dock safety net. The actual bug behind
      "the gap isn't the same on every page" was several pages having
      their own leftover large margin-bottom on their last section
@@ -1087,50 +1068,48 @@
   .nav-left{display:flex; align-items:center; gap:10px;}
   .hamburger{ display:none; }
  
-  /* ---------- FLOATING BOTTOM DOCK (always-on primary nav) ---------- */
-  /* iOS tab-bar style: a flat, neutral frosted blur — no gradient, no
-     accent-color tint mixed into the background or border. A real iOS
-     tab bar's material is uniform regardless of the app's own accent
-     color, which is what this now matches. */
-  nav.tabs.dock{
-    display:flex; align-items:center;
-    position:fixed; left:50%; bottom:18px; top:auto;
-    transform:translateX(-50%);
-    z-index:150;
-    max-width:96vw; overflow-x:auto;
-    gap:2px; padding:6px 8px;
-    background: color-mix(in srgb, var(--surface) 72%, transparent);
-    backdrop-filter: blur(32px) saturate(180%);
-    -webkit-backdrop-filter: blur(32px) saturate(180%);
-    border:1px solid color-mix(in srgb, var(--border) 70%, transparent);
-    border-radius:999px;
-    box-shadow:var(--shadow);
+  /* ---------- HEADER / MOBILE-FOOTER NAV ----------
+     2026-09-25 header redesign: replaces the old floating bottom dock.
+     Desktop (min-width:601px): renders inline in the header center,
+     icon-only, spread evenly across the available width. Mobile
+     (max-width:600px): the exact same element becomes a fixed,
+     full-width footer bar instead — see the media query below. Both
+     variants are deliberately minimal (no pill background, no box
+     around each icon, no labels) to leave as much room as possible for
+     the page content, per request. */
+  nav.tabs.headernav{
+    display:flex; align-items:center; justify-content:space-evenly;
+    width:100%; background:none; padding:0; border-radius:0; gap:0;
   }
-  nav.tabs.dock::-webkit-scrollbar{ display:none; }
-  nav.tabs.dock button{
-    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
-    font-family:'Inter'; font-size:10px; font-weight:600; color:var(--text-dim);
-    padding:7px 14px; border:none; background:transparent; border-radius:999px; cursor:pointer;
-    transition:all .15s ease; white-space:nowrap; flex-shrink:0;
+  nav.tabs.headernav button{
+    display:flex; align-items:center; justify-content:center;
+    background:none; border:none; -webkit-appearance:none; appearance:none;
+    color:var(--text-dim); cursor:pointer; padding:8px; border-radius:10px;
+    position:relative; transition:color .15s ease;
   }
-  nav.tabs.dock button svg{ width:19px; height:19px; }
-  /* These two specifically read a little cramped at the shared 19px —
-     the notebook/pencil composition and the checklist rows both have
-     more internal detail than the simpler single-glyph icons around
-     them, so they need slightly more room to stay clear at this size. */
-  nav.tabs.dock button[data-view="notebook"] svg, nav.tabs.dock button[data-view="mytasks"] svg{ width:22px; height:22px; }
-  nav.tabs.dock button.active{ background:var(--surface); color:var(--accent); box-shadow:var(--shadow); }
-  nav.tabs.dock button:hover:not(.active){ color:var(--text); }
-  /* The dock's signature macOS touch — icons gently scale up on hover.
-     Only ever triggers on devices with real hover (a mouse), so this is
-     purely additive on touch/mobile, never interferes with tapping. */
-  nav.tabs.dock button svg{ transition:transform .15s cubic-bezier(.34,1.56,.64,1); }
-  nav.tabs.dock button:hover svg{ transform:scale(1.16); }
-  /* :active triggers the instant a finger presses down, unlike :hover
-     which never fires on a touchscreen at all — this is the version of
-     the "icon responds to touch" feeling that's actually visible on
-     mobile, where hover effects alone would go completely unseen. */
-  nav.tabs.dock button:active svg{ transform:scale(0.85); transition:transform .08s ease; }
+  nav.tabs.headernav button svg{ width:20px; height:20px; transition:transform .15s cubic-bezier(.34,1.56,.64,1); }
+  /* Same reasoning as the old dock — these two read a little cramped
+     at the shared 20px next to the simpler single-glyph icons. */
+  nav.tabs.headernav button[data-view="notebook"] svg, nav.tabs.headernav button[data-view="mytasks"] svg{ width:23px; height:23px; }
+  nav.tabs.headernav button span{ display:none; }
+  nav.tabs.headernav button:hover:not(.active){ color:var(--text); }
+  nav.tabs.headernav button:hover svg{ transform:scale(1.12); }
+  nav.tabs.headernav button:active svg{ transform:scale(0.88); transition:transform .08s ease; }
+  /* Higher specificity than the generic nav.tabs button.active rule
+     (which forces an accent-tinted background !important) — icon-only
+     means no background/box on the active tab either, just its color. */
+  nav.tabs.headernav button.active{ color:var(--accent) !important; background:none !important; box-shadow:none !important; }
+
+  @media (max-width:600px){
+    nav.tabs.headernav{
+      position:fixed; left:0; right:0; bottom:0; top:auto; z-index:150;
+      padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
+      background: color-mix(in srgb, var(--surface) 72%, transparent);
+      backdrop-filter: blur(28px) saturate(180%);
+      -webkit-backdrop-filter: blur(28px) saturate(180%);
+      border-top:1px solid color-mix(in srgb, var(--border) 70%, transparent);
+    }
+  }
  
   /* ---------- RESPONSIVE OVERRIDES (kept last so they win the cascade) ---------- */
   @media (max-width: 860px){
@@ -1138,10 +1117,8 @@
     .stat-row, .cat-grid, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr);}
     .split-grid, .split-grid-tasks, .dev-form-grid{grid-template-columns:1fr;}
     .form-row-2{grid-template-columns:1fr;}
-    main{padding:16px 12px 100px;}
+    main{padding:16px 12px 24px;}
     header.topnav{padding:7px 16px;}
-    nav.tabs.dock button span{ display:none; }
-    nav.tabs.dock button{ padding:10px; }
   }
   @media (max-width: 600px){
     /* The KPI card's big number sits in a fixed-width flex row alongside
@@ -1182,6 +1159,7 @@
        desktop only switches into once you scroll down — since there's
        never enough room here for the full logo + two-line brand text. */
     header.topnav{ grid-template-columns: 0fr auto 1fr !important; padding:6px 14px !important; }
+    main{ padding-bottom:80px !important; }
     .nav-left{ opacity:0 !important; pointer-events:none; }
     .brand-center-name{ max-height:0 !important; opacity:0 !important; }
     .brand-center-sub{ display:block !important; font-size:13px !important; font-weight:600 !important; color:var(--text) !important; margin-top:0 !important; }
@@ -1730,6 +1708,7 @@
 <header class="topnav">
   <div class="nav-left">
     <div class="brand-mark"><img src="logo.png" alt="Walton Lift logo"></div>
+    <span id="navClockDateLeft" class="mono" style="font-size:11.5px; color:var(--text-faint); white-space:nowrap; letter-spacing:0.01em;">—</span>
   </div>
  
   <div class="nav-center">
@@ -1737,10 +1716,45 @@
       <div class="brand-center-name">Walton Hi-Tech Industries PLC</div>
       <div class="brand-center-sub">Walton Lift R&amp;I Dashboard</div>
     </div>
+    <!-- ============ HEADER / MOBILE-FOOTER NAV (primary navigation) ============
+         2026-09-25: moved here from its old spot as a floating bottom dock
+         after </header>. On desktop (min-width:601px) it renders inline as
+         icon-only buttons spread evenly across the header center — see
+         nav.tabs.headernav in the CSS. On mobile (max-width:600px) the same
+         element switches to position:fixed and becomes a full-width footer
+         bar instead — it is pulled out of this DOM position visually, so
+         .brand-center (mobile only) still centers normally either way. -->
+    <nav class="tabs headernav" id="tabs">
+      <button class="active" data-view="home" title="Home">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
+      </button>
+      <button data-view="search" title="Lift Trace">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </button>
+      <button data-view="mytasks" title="My Tasks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1.2 1.2L7 5"/><path d="M4 12l1.2 1.2L7 11"/><path d="M4 18l1.2 1.2L7 17"/></svg>
+      </button>
+      <button data-view="chat" title="Team Chat" style="position:relative;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8c-1.1 0-2.1-.2-3.1-.6L4 21l1.4-3.9C4.5 15.9 4 14 4 12z"/></svg>
+        <span id="chatUnreadBadge" style="display:none; position:absolute; top:0; right:0; min-width:14px; height:14px; padding:0 3px; border-radius:999px; background:var(--red); color:#fff; font-size:8.5px; font-weight:700; align-items:center; justify-content:center;">0</span>
+      </button>
+      <button data-view="dashboard" title="Dashboard">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+      </button>
+      <button data-view="notebook" title="Notebook">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18" stroke-width="1.5"/><path d="M11.5 8h6M11.5 12h6M11.5 16h4" stroke-width="1.5"/></svg>
+      </button>
+      <button data-view="gantt" title="R&amp;I Project Manager">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="10" height="3.2" rx="1" fill="currentColor" stroke="none"/><rect x="3" y="11" width="16" height="3.2" rx="1" fill="currentColor" stroke="none"/><rect x="3" y="17" width="7" height="3.2" rx="1" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <button data-view="admin" title="Admin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4.5" stroke-width="1.8"/></svg>
+      </button>
+    </nav>
   </div>
  
   <div class="navright">
-    <div id="navClockDesktop" class="mono nav-clock-desktop" style="font-size:11.5px; color:var(--text-faint); white-space:nowrap; letter-spacing:0.01em;"><span id="navClockDate">—</span><span id="navClockTimeWrap"> · <span id="navClockTime">—</span></span></div>
+    <div id="navClockDesktop" class="mono nav-clock-desktop" style="font-size:11.5px; color:var(--text-faint); white-space:nowrap; letter-spacing:0.01em;"><span id="navClockDate">—</span><span id="navClockTimeWrap"><span id="navClockTime">—</span></span></div>
     <div style="position:relative;">
       <button id="notifBell" title="Notifications" onclick="toggleNotifPanel()" style="position:relative; background:var(--surface-alt); border:1px solid var(--border); width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--text-dim);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
@@ -1818,46 +1832,6 @@
     </div>
   </div>
 </header>
- 
-<!-- ============ FLOATING BOTTOM DOCK (primary navigation) ============ -->
-<nav class="tabs dock" id="tabs">
-  <button class="active" data-view="home" title="Home">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
-    <span>Home</span>
-  </button>
-  <!-- 2026-09-10: restored — this tab and its view (view-search) were
-       accidentally lost during unrelated theme work, which is how Lift
-       Trace ended up merged into Home instead of being its own page. -->
-  <button data-view="search" title="Lift Trace">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <span>Lift Trace</span>
-  </button>
-  <button data-view="mytasks" title="My Tasks">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6h11M9 12h11M9 18h11"/><path d="M4 6l1.2 1.2L7 5"/><path d="M4 12l1.2 1.2L7 11"/><path d="M4 18l1.2 1.2L7 17"/></svg>
-    <span>My Tasks</span>
-  </button>
-  <button data-view="chat" title="Team Chat" style="position:relative;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12c0-4.4 3.6-8 8-8s8 3.6 8 8-3.6 8-8 8c-1.1 0-2.1-.2-3.1-.6L4 21l1.4-3.9C4.5 15.9 4 14 4 12z"/></svg>
-    <span>Chat</span>
-    <span id="chatUnreadBadge" style="display:none; position:absolute; top:2px; right:14px; min-width:16px; height:16px; padding:0 4px; border-radius:999px; background:var(--red); color:#fff; font-size:9.5px; font-weight:700; align-items:center; justify-content:center;">0</span>
-  </button>
-  <button data-view="dashboard" title="Dashboard">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
-    <span>Dashboard</span>
-  </button>
-  <button data-view="notebook" title="Notebook" style="position:relative;">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 3v18" stroke-width="1.5"/><path d="M11.5 8h6M11.5 12h6M11.5 16h4" stroke-width="1.5"/></svg>
-    <span>Notebook</span>
-  </button>
-  <button data-view="gantt" title="R&amp;I Project Manager">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="10" height="3.2" rx="1" fill="currentColor" stroke="none"/><rect x="3" y="11" width="16" height="3.2" rx="1" fill="currentColor" stroke="none"/><rect x="3" y="17" width="7" height="3.2" rx="1" fill="currentColor" stroke="none"/></svg>
-    <span>Projects</span>
-  </button>
-  <button data-view="admin" title="Admin">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6l7-3z"/><path d="M9 12l2 2 4-4.5" stroke-width="1.8"/></svg>
-    <span>Admin</span>
-  </button>
-</nav>
  
 <!-- ============ HOMEPAGE PER-CATEGORY QUICK SEARCH POPOVER ============ -->
 <div id="catQuickSearch" class="cat-quick-search">
@@ -2334,7 +2308,7 @@
         </div>
  
         <div class="form-card span-2">
-          <div class="form-card-head"><div class="form-card-badge">5</div><div class="form-card-title">Notes</div></div>
+          <div class="form-card-head"><div class="form-card-badge">5</div><div class="form-card-title">Project Briefing</div></div>
           <div class="form-field"><textarea id="devNotes" placeholder="Impact, notes, blockers..."></textarea></div>
         </div>
       </div>
@@ -3833,52 +3807,28 @@
   function tickClock(){
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
-    const timeStr = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:true});
+    // 2026-09-25: seconds dropped per request — "10:54 AM" instead of "10:54:17 AM".
+    const timeStr = now.toLocaleTimeString('en-US', {hour:'2-digit', minute:'2-digit', hour12:true});
     const nav = document.getElementById('navClock');
     const navDate = document.getElementById('navClockDate');
+    const navDateLeft = document.getElementById('navClockDateLeft'); // desktop-only copy, next to the logo
     const navTime = document.getElementById('navClockTime');
     const dash = document.getElementById('dashAsOf');
     if(nav) nav.textContent = `${dateStr} · ${timeStr}`;
     if(navDate) navDate.textContent = dateStr;
+    if(navDateLeft) navDateLeft.textContent = dateStr;
     if(navTime) navTime.textContent = timeStr;
     if(dash) dash.textContent = `as of ${dateStr}, ${timeStr}`;
   }
   tickClock();
   setInterval(tickClock, 1000);
 
-  // ============ HEADER SCROLL ANIMATION ============
-  // Scrolling down past a small threshold slides the logo out and shrinks
-  // the header down to a thin bar showing just "Walton Lift R&I Dashboard"
-  // on the left plus the notification/profile icons on the right.
-  // Scrolling back up reverses it immediately. On narrow (mobile) screens
-  // this compact look applies permanently via CSS media query instead,
-  // regardless of scroll position.
-  (function(){
-    let lastScrollY = window.scrollY;
-    let locked = false;
-    const header = document.querySelector('header.topnav');
-    if(!header) return;
-    window.addEventListener('scroll', () => {
-      if(locked) return;
-      const y = window.scrollY;
-      const delta = y - lastScrollY;
-      if(Math.abs(delta) < 5) return;
-      // Briefly ignore further scroll events right after toggling — the
-      // header animating in size shifts the page content by a few pixels
-      // as it plays, which without this lock gets misread as the user
-      // scrolling and immediately flips the state back mid-animation.
-      if(delta > 0 && y > 60 && !header.classList.contains('scrolled')){
-        header.classList.add('scrolled');
-        locked = true;
-        setTimeout(() => { locked = false; lastScrollY = window.scrollY; }, 400);
-      } else if(delta < 0 && header.classList.contains('scrolled')){
-        header.classList.remove('scrolled');
-        locked = true;
-        setTimeout(() => { locked = false; lastScrollY = window.scrollY; }, 400);
-      }
-      lastScrollY = y;
-    }, { passive: true });
-  })();
+  // 2026-09-25: the old header scroll animation (slide/collapse on scroll)
+  // was removed — the header no longer changes on scroll. Desktop now shows
+  // the Walton icon + date fixed at the left at all times instead (see
+  // .nav-left / #navClockDateLeft), and the brand text it used to animate
+  // ("Walton Hi-Tech Industries PLC" / "Walton Lift R&I Dashboard") is gone
+  // from desktop entirely — replaced by the header nav icons.
   let selectedDevProjectId = null;
  
   // ============ PROJECT TASK BREAKDOWN (inline accordion + Gantt view) ============
@@ -4492,7 +4442,9 @@
     { date:'2026-09-23', summary:'Removed Superadmin\'s full-visibility exception on unpublished projects, per explicit decision after the person found they could still see another user\'s unpublished project as Superadmin and confirmed they wanted zero exceptions rather than the deliberate oversight behavior that was there before. An unpublished project is now only visible to its own owner (created_by or lead_id) — no role gets to see past that, Superadmin included.' },
     { date:'2026-09-23', summary:'Added a Mechanical/Electrical section filter to Dashboard, right alongside the existing engineer filter — same dropdown style, same filter-row that already wraps gracefully on both desktop and mobile, so no separate layout work was needed for either view. Applied client-side right after pagination completes and before any calculation touches the rows (filtering by a joined profile column isn\'t a plain .eq() on the main query), so every number on the page — category breakdown, leaderboard, time logged, everything — is automatically scoped to whichever section is selected, with no separate filtering logic needed anywhere else.' },
     { date:'2026-09-24', summary:'Fixed project progress dropping to 0% when opening a project\'s details (and fixing itself after a refresh) — loadProjectTasks() re-synced the lightweight all-projects cache after loading a project\'s tasks, but copied only id/project_id/status and left out progress_pct, so the progress calculation read every task as 0% until a full reload re-fetched the column. It now carries progress_pct through, same as the initial page load already did.' },
-    { date:'2026-09-24', summary:'Progress fill on Projects cards is now limited to the header zone (title row plus the Lead/Collaborators/Status/Financial Outcome/Documentation block) as its own rounded element, instead of being the whole card\'s background — it no longer extends behind the Gantt chart when a project\'s details are open. The info block moved into a new projInfoWrap container inside that zone; the Gantt chart stays in projDetailWrap below it, and toggling details shows/hides both together. updateProjectProgressBadge() now resizes the fill element rather than repainting the card.' }
+    { date:'2026-09-24', summary:'Progress fill on Projects cards is now limited to the header zone (title row plus the Lead/Collaborators/Status/Financial Outcome/Documentation block) as its own rounded element, instead of being the whole card\'s background — it no longer extends behind the Gantt chart when a project\'s details are open. The info block moved into a new projInfoWrap container inside that zone; the Gantt chart stays in projDetailWrap below it, and toggling details shows/hides both together. updateProjectProgressBadge() now resizes the fill element rather than repainting the card.' },
+    { date:'2026-09-24', summary:'Renamed card 5 of the Add/Edit project form from "Notes" to "Project Briefing" (label only — still saved to dev_projects.notes, nothing else changed).' },
+    { date:'2026-09-25', summary:'Header redesign. Desktop: the "Walton Hi-Tech Industries PLC" / "Walton Lift R&I Dashboard" text is gone; the Walton icon plus date are now fixed at the left at all times (no more scroll-triggered collapse/slide animation — that whole feature was removed along with the text it animated); all 8 nav icons (Home, Lift Trace, My Tasks, Chat, Dashboard, Notebook, Projects, Admin) moved from the old floating bottom dock into the header center, spread evenly, icon-only (no labels, hover still shows the name as a tooltip); the floating bottom dock itself is gone on desktop; time on the right dropped seconds ("10:54 AM" instead of "10:54:17 AM"); notification bell and profile avatar unchanged. Mobile: header completely unchanged (both text lines, date, time hidden, notification, avatar, exactly as before); the same nav icons now render as a new fixed-bottom footer instead of the old floating pill — same frosted/liquid-glass material as the header, full width, icon-only, no per-icon background or border, evenly spaced. Both bars trimmed to be as minimal as possible (thinner padding, no dock reserving space above 600px width) to leave more room for page content.' }
   ];
  
   let currentUser = null;   // Supabase auth user
