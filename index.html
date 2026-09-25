@@ -1078,8 +1078,8 @@
      around each icon, no labels) to leave as much room as possible for
      the page content, per request. */
   nav.tabs.headernav{
-    display:flex; align-items:center; justify-content:space-evenly;
-    width:100%; background:none; padding:0; border-radius:0; gap:0;
+    display:flex; align-items:center; justify-content:center;
+    width:100%; background:none; padding:0; border-radius:0; gap:2px;
   }
   nav.tabs.headernav button{
     display:flex; align-items:center; justify-content:center;
@@ -1103,6 +1103,7 @@
   @media (max-width:600px){
     nav.tabs.headernav{
       position:fixed; left:0; right:0; bottom:0; top:auto; z-index:150;
+      justify-content:center; gap:2px;
       padding:6px 6px calc(6px + env(safe-area-inset-bottom,0px));
       background: color-mix(in srgb, var(--surface) 72%, transparent);
       backdrop-filter: blur(28px) saturate(180%);
@@ -3829,6 +3830,38 @@
   // .nav-left / #navClockDateLeft), and the brand text it used to animate
   // ("Walton Hi-Tech Industries PLC" / "Walton Lift R&I Dashboard") is gone
   // from desktop entirely — replaced by the header nav icons.
+
+  // 2026-09-25: #tabs is moved between two DOM homes depending on width,
+  // rather than staying nested inside <header> and only changed with CSS.
+  // Reason: header.topnav uses backdrop-filter, and any element with
+  // backdrop-filter/filter/transform becomes the containing block for its
+  // position:fixed descendants — so with #tabs left nested inside it, the
+  // mobile footer's "bottom:0" was resolving against the header's own
+  // (tiny) box instead of the real viewport, landing the icons at the top,
+  // overlapping the header, instead of at the bottom of the screen. Moving
+  // #tabs to be a sibling of <header> on mobile — same relationship the
+  // original floating dock had — fixes that; moving it back inside
+  // .nav-center on desktop keeps the in-header icon row exactly as before.
+  // Event listeners survive the move (this relocates the existing node,
+  // never clones it), so no handlers need re-attaching either way.
+  (function(){
+    const nav = document.getElementById('tabs');
+    const navCenter = document.querySelector('.nav-center');
+    const header = document.querySelector('header.topnav');
+    const appShell = document.getElementById('appShell');
+    if(!nav || !navCenter || !header || !appShell) return;
+    function placeTabs(){
+      const mobile = window.matchMedia('(max-width:600px)').matches;
+      if(mobile){
+        if(nav.parentElement !== appShell) appShell.insertBefore(nav, header.nextSibling);
+      } else {
+        if(nav.parentElement !== navCenter) navCenter.appendChild(nav);
+      }
+    }
+    placeTabs();
+    window.addEventListener('resize', placeTabs);
+  })();
+
   let selectedDevProjectId = null;
  
   // ============ PROJECT TASK BREAKDOWN (inline accordion + Gantt view) ============
@@ -4444,7 +4477,9 @@
     { date:'2026-09-24', summary:'Fixed project progress dropping to 0% when opening a project\'s details (and fixing itself after a refresh) — loadProjectTasks() re-synced the lightweight all-projects cache after loading a project\'s tasks, but copied only id/project_id/status and left out progress_pct, so the progress calculation read every task as 0% until a full reload re-fetched the column. It now carries progress_pct through, same as the initial page load already did.' },
     { date:'2026-09-24', summary:'Progress fill on Projects cards is now limited to the header zone (title row plus the Lead/Collaborators/Status/Financial Outcome/Documentation block) as its own rounded element, instead of being the whole card\'s background — it no longer extends behind the Gantt chart when a project\'s details are open. The info block moved into a new projInfoWrap container inside that zone; the Gantt chart stays in projDetailWrap below it, and toggling details shows/hides both together. updateProjectProgressBadge() now resizes the fill element rather than repainting the card.' },
     { date:'2026-09-24', summary:'Renamed card 5 of the Add/Edit project form from "Notes" to "Project Briefing" (label only — still saved to dev_projects.notes, nothing else changed).' },
-    { date:'2026-09-25', summary:'Header redesign. Desktop: the "Walton Hi-Tech Industries PLC" / "Walton Lift R&I Dashboard" text is gone; the Walton icon plus date are now fixed at the left at all times (no more scroll-triggered collapse/slide animation — that whole feature was removed along with the text it animated); all 8 nav icons (Home, Lift Trace, My Tasks, Chat, Dashboard, Notebook, Projects, Admin) moved from the old floating bottom dock into the header center, spread evenly, icon-only (no labels, hover still shows the name as a tooltip); the floating bottom dock itself is gone on desktop; time on the right dropped seconds ("10:54 AM" instead of "10:54:17 AM"); notification bell and profile avatar unchanged. Mobile: header completely unchanged (both text lines, date, time hidden, notification, avatar, exactly as before); the same nav icons now render as a new fixed-bottom footer instead of the old floating pill — same frosted/liquid-glass material as the header, full width, icon-only, no per-icon background or border, evenly spaced. Both bars trimmed to be as minimal as possible (thinner padding, no dock reserving space above 600px width) to leave more room for page content.' }
+    { date:'2026-09-25', summary:'Header redesign. Desktop: the "Walton Hi-Tech Industries PLC" / "Walton Lift R&I Dashboard" text is gone; the Walton icon plus date are now fixed at the left at all times (no more scroll-triggered collapse/slide animation — that whole feature was removed along with the text it animated); all 8 nav icons (Home, Lift Trace, My Tasks, Chat, Dashboard, Notebook, Projects, Admin) moved from the old floating bottom dock into the header center, spread evenly, icon-only (no labels, hover still shows the name as a tooltip); the floating bottom dock itself is gone on desktop; time on the right dropped seconds ("10:54 AM" instead of "10:54:17 AM"); notification bell and profile avatar unchanged. Mobile: header completely unchanged (both text lines, date, time hidden, notification, avatar, exactly as before); the same nav icons now render as a new fixed-bottom footer instead of the old floating pill — same frosted/liquid-glass material as the header, full width, icon-only, no per-icon background or border, evenly spaced. Both bars trimmed to be as minimal as possible (thinner padding, no dock reserving space above 600px width) to leave more room for page content.' },
+    { date:'2026-09-25', summary:'Fixed the new mobile footer nav landing at the top, overlapping the header, instead of at the bottom of the screen — header.topnav has backdrop-filter, which makes it the containing block for any position:fixed descendant, so #tabs nested inside it had its "bottom:0" resolving against the header\'s own tiny box rather than the viewport. #tabs is now moved between two DOM homes by width on load/resize (event listeners survive the move): a sibling of <header> on mobile (position:fixed resolves correctly there, same relationship the old floating dock had), back inside .nav-center on desktop (unchanged, still the in-header icon row). Also: mobile footer icons now cluster centered with a minimal gap (gap:2px, matching the old dock) instead of being spread edge-to-edge — desktop\'s evenly-spread layout is unchanged. Mobile header padding trimmed slightly further (5px 14px) for a leaner bar.' },
+    { date:'2026-09-25', summary:'Desktop header nav icons now cluster centered with the same tight gap (2px) the old floating dock used, instead of being spread across the full header-center width with justify-content:space-evenly. Also reverted the previous 1px mobile header padding trim (6px 14px, back to unchanged) — the mobile header must stay completely untouched; only the new footer below it may change.' }
   ];
  
   let currentUser = null;   // Supabase auth user
