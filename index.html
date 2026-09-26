@@ -306,7 +306,7 @@
   /* ---------- FLOOR INDICATOR (signature element) ---------- */
   .indicator-panel{
     background:linear-gradient(180deg, #0E1420, #182238);
-    border-radius:20px; padding:26px 26px 22px;
+    border-radius:20px; padding:22px 24px 18px;
     /* 2026-09-10: "floating opaque glass" — stays fully solid/opaque (no
        see-through), but reads like glass via a much bigger, softer
        shadow (lifts it off the page), an inset top-highlight (light
@@ -334,11 +334,19 @@
   }
   .indicator-caption{font-size:12.5px; color:#7B87A3; position:relative; z-index:1; margin-bottom:14px;}
   .indicator-stats{display:grid; grid-template-columns:1fr 1fr; gap:10px; position:relative; z-index:1;}
-  .trend-range-row{display:flex; align-items:center; gap:8px; margin:14px 0 16px; position:relative; z-index:1; flex-wrap:wrap;}
+  /* 2026-09-25: hidden — the home hero trend no longer offers a custom
+     range, always the last 6 months (setDefaultTrendRange() still sets
+     trendFrom/trendTo under the hood; loadActivityTrend() still reads
+     them; nothing left in the UI to edit them, so this row is just
+     display:none rather than removed). */
+  .trend-range-row{display:none;}
   .trend-date-input{background:#141B2B; border:1px solid #2A3548; border-radius:8px; padding:6px 10px; color:#E7ECF5; font-size:12px; font-family:'IBM Plex Mono'; color-scheme:dark;}
   .trend-to-label{color:#7B87A3; font-size:12px;}
   .trend-apply-btn{background:var(--accent); border:none; border-radius:8px; padding:6px 16px; color:#fff; font-size:12px; font-weight:600; cursor:pointer;}
-  .trend-svg{width:100%; height:130px; overflow:visible; position:relative; z-index:1;}
+  /* 2026-09-25: shorter now that the removed range row's space isn't
+     there to separate this from the header row above — margin-top
+     replaces a little of that lost breathing room. */
+  .trend-svg{width:100%; height:96px; margin-top:14px; overflow:visible; position:relative; z-index:1;}
   .trend-labels-row{display:flex; margin-top:6px; position:relative; z-index:1;}
   .trend-labels-row > div{flex:1; text-align:center; font-size:11px; color:#7B87A3;}
   .trend-legend-row{display:flex; gap:16px; margin-top:14px; position:relative; z-index:1; flex-wrap:wrap;}
@@ -1120,6 +1128,13 @@
     .form-row-2{grid-template-columns:1fr;}
     main{padding:16px 12px 24px;}
     header.topnav{padding:7px 16px;}
+    /* 2026-09-25: action buttons in a filter row (Apply/Export to Excel/
+       Export to PPTX/Apply range) previously sized to their own text,
+       so pairs that wrap onto the same line together looked lopsided.
+       Equal flex-basis makes whichever end up sharing a line split it
+       evenly. Recalculate team Score sits in its own wrapper div, so
+       it's a different flex child here and is unaffected. */
+    .filter-row .queue-btn{ flex:1 1 0; min-width:0; }
   }
   @media (max-width: 600px){
     /* The KPI card's big number sits in a fixed-width flex row alongside
@@ -1171,7 +1186,7 @@
     h1.hero-title{font-size:19px; white-space:nowrap; line-height:1.3;}
     .hero-linebreak{ display:none; }
     .hero-desc{ display:none; }
-    .indicator-panel{padding:20px;}
+    .indicator-panel{padding:16px;}
     .digit{width:44px; height:64px; font-size:30px;}
     .cat-grid, .stat-row, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr) !important;}
 
@@ -1869,7 +1884,7 @@
           <input type="date" id="trendTo" class="trend-date-input">
           <button class="trend-apply-btn" onclick="loadActivityTrend()">Apply</button>
         </div>
-        <svg id="trendChart" viewBox="0 0 560 150" class="trend-svg"></svg>
+        <svg id="trendChart" viewBox="0 0 560 150" preserveAspectRatio="none" class="trend-svg"></svg>
         <div id="trendChartLabels" class="trend-labels-row"></div>
         <div class="trend-legend-row">
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#4CE0FF; box-shadow:0 0 6px #4CE0FF;"></span>Team Activity</div>
@@ -4479,7 +4494,8 @@
     { date:'2026-09-24', summary:'Renamed card 5 of the Add/Edit project form from "Notes" to "Project Briefing" (label only — still saved to dev_projects.notes, nothing else changed).' },
     { date:'2026-09-25', summary:'Header redesign. Desktop: the "Walton Hi-Tech Industries PLC" / "Walton Lift R&I Dashboard" text is gone; the Walton icon plus date are now fixed at the left at all times (no more scroll-triggered collapse/slide animation — that whole feature was removed along with the text it animated); all 8 nav icons (Home, Lift Trace, My Tasks, Chat, Dashboard, Notebook, Projects, Admin) moved from the old floating bottom dock into the header center, spread evenly, icon-only (no labels, hover still shows the name as a tooltip); the floating bottom dock itself is gone on desktop; time on the right dropped seconds ("10:54 AM" instead of "10:54:17 AM"); notification bell and profile avatar unchanged. Mobile: header completely unchanged (both text lines, date, time hidden, notification, avatar, exactly as before); the same nav icons now render as a new fixed-bottom footer instead of the old floating pill — same frosted/liquid-glass material as the header, full width, icon-only, no per-icon background or border, evenly spaced. Both bars trimmed to be as minimal as possible (thinner padding, no dock reserving space above 600px width) to leave more room for page content.' },
     { date:'2026-09-25', summary:'Fixed the new mobile footer nav landing at the top, overlapping the header, instead of at the bottom of the screen — header.topnav has backdrop-filter, which makes it the containing block for any position:fixed descendant, so #tabs nested inside it had its "bottom:0" resolving against the header\'s own tiny box rather than the viewport. #tabs is now moved between two DOM homes by width on load/resize (event listeners survive the move): a sibling of <header> on mobile (position:fixed resolves correctly there, same relationship the old floating dock had), back inside .nav-center on desktop (unchanged, still the in-header icon row). Also: mobile footer icons now cluster centered with a minimal gap (gap:2px, matching the old dock) instead of being spread edge-to-edge — desktop\'s evenly-spread layout is unchanged. Mobile header padding trimmed slightly further (5px 14px) for a leaner bar.' },
-    { date:'2026-09-25', summary:'Desktop header nav icons now cluster centered with the same tight gap (2px) the old floating dock used, instead of being spread across the full header-center width with justify-content:space-evenly. Also reverted the previous 1px mobile header padding trim (6px 14px, back to unchanged) — the mobile header must stay completely untouched; only the new footer below it may change.' }
+    { date:'2026-09-25', summary:'Desktop header nav icons now cluster centered with the same tight gap (2px) the old floating dock used, instead of being spread across the full header-center width with justify-content:space-evenly. Also reverted the previous 1px mobile header padding trim (6px 14px, back to unchanged) — the mobile header must stay completely untouched; only the new footer below it may change.' },
+    { date:'2026-09-25', summary:'Four fixes. (1) Team dashboard category bars: fixed order and fixed per-category color, both keyed to the category itself (catMeta order, CATEGORY_COLOR_VAR — the same color used for that category\'s tag/dropdown elsewhere) instead of to its rank-by-count, so a category no longer changes position or color depending on how it compares to the others that load. (2 & 4) Mobile: filter-row action buttons (Apply / Export to Excel / Export to PPTX / Apply range) now split evenly with whichever sibling shares their wrapped line, instead of sizing to their own text — covers both the Team dashboard\'s Excel/PPTX pair and a category log\'s Apply range/Export to Excel pair with one rule; Recalculate team Score is unaffected (separate wrapper). (5) Home hero Activity Trend: the custom date-range picker and Apply button are hidden — always shows the last 6 months now, no custom range in the UI (the code behind it is unchanged, just nothing left to edit it). Block height reduced on both mobile and desktop: chart SVG 130px→96px (stretches to fill exactly, no more letterboxing), panel padding trimmed, small margin added above the chart to replace some of the spacing the removed row used to provide.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -9843,8 +9859,15 @@ for a competing inline style first.`;
     }
 
     const maxCat = Math.max(1, ...Object.values(catCounts));
-    const catSorted = Object.entries(catCounts).sort((a,b)=>b[1]-a[1]);
-    const catColors = ['#378ADD','#1D9E75','#D85A30','#D4537E','#B98900','#8A63D2'];
+    // 2026-09-25: fixed category order + fixed per-category color, both
+    // keyed by the category itself (catMeta's own key order) instead of
+    // by that category's rank-by-count — previously both the bar's
+    // position AND its color were derived from index-after-sorting-by-
+    // count, so a category could move position and change color between
+    // loads just because another category's total passed it. Color comes
+    // from CATEGORY_COLOR_VAR, the same one already used for this
+    // category's tag/dropdown color elsewhere in the app.
+    const catSorted = Object.keys(catMeta).filter(cat => catCounts[cat] != null).map(cat => [cat, catCounts[cat]]);
     document.getElementById('breakdownTitle').textContent = engineerId ? 'By category — this engineer' : 'By category — whole team';
     if(!catSorted.length){
       document.getElementById('dashCategoryBreakdown').innerHTML = '<div class="placeholder-note">No activity in this range.</div>';
@@ -9858,25 +9881,27 @@ for a competing inline style first.`;
       // categories that actually track duration) instead of a separate
       // pills section below — colors already distinguish categories, so
       // the time figure reads faster living right where it's earned.
-      const barsHtml = catSorted.map(([cat,count], i) => {
-        const c = catColors[i % catColors.length];
+      const barsHtml = catSorted.map(([cat,count]) => {
+        const c = CATEGORY_COLOR_VAR[cat] || '#8A63D2';
         const targetH = Math.max(6, Math.round(count/maxCat*54));
         const tracksDuration = (durationLabels[cat] || []).length > 0;
         const mins = tracksDuration ? rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0) : 0;
         const timeLabel = tracksDuration ? `<div style="font-size:10px; font-weight:700; color:${c}; margin-bottom:3px; white-space:nowrap;">${formatDurationShort(mins)}</div>` : '';
+        // color-mix, not the old hex+alpha-suffix trick — c is now a CSS
+        // var() reference (theme-aware), which "var(--x)80" can't parse.
         return `
         <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; min-width:0;">
           ${timeLabel}
-          <div class="anim-bar-fill-vertical" data-h="${targetH}" style="width:100%; height:0; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px ${c}80;" title="${catMeta[cat]?.name || cat}: ${count}${tracksDuration ? ', ' + formatDurationShort(mins) : ''}"></div>
+          <div class="anim-bar-fill-vertical" data-h="${targetH}" style="width:100%; height:0; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px color-mix(in srgb, ${c} 50%, transparent);" title="${catMeta[cat]?.name || cat}: ${count}${tracksDuration ? ', ' + formatDurationShort(mins) : ''}"></div>
         </div>
       `;}).join('');
       // Each dot sits directly beside its own name as one wrapping chip,
       // rather than all dots up front followed by a run-on comma list —
       // the earlier version left no visual link between a color and the
       // name it belonged to, which read as congested rather than compact.
-      const legendHtml = catSorted.map(([cat], i) => `
+      const legendHtml = catSorted.map(([cat]) => `
         <span style="display:inline-flex; align-items:center; gap:4px; margin:0 10px 4px 0;">
-          <span style="width:7px; height:7px; border-radius:50%; background:${catColors[i % catColors.length]}; flex-shrink:0;"></span>
+          <span style="width:7px; height:7px; border-radius:50%; background:${CATEGORY_COLOR_VAR[cat] || '#8A63D2'}; flex-shrink:0;"></span>
           <span style="font-size:10.5px; color:var(--text-faint);">${catMeta[cat]?.name || cat}</span>
         </span>
       `).join('');
