@@ -1128,13 +1128,23 @@
     .form-row-2{grid-template-columns:1fr;}
     main{padding:16px 12px 24px;}
     header.topnav{padding:7px 16px;}
-    /* 2026-09-25: action buttons in a filter row (Apply/Export to Excel/
-       Export to PPTX/Apply range) previously sized to their own text,
-       so pairs that wrap onto the same line together looked lopsided.
-       Equal flex-basis makes whichever end up sharing a line split it
-       evenly. Recalculate team Score sits in its own wrapper div, so
-       it's a different flex child here and is unaffected. */
-    .filter-row .queue-btn{ flex:1 1 0; min-width:0; }
+  }
+  /* 2026-09-26: replaces the 2026-09-25 attempt above, which broke mobile
+     — flex-basis:0 + min-width:0 let buttons shrink narrower than their
+     own text instead of wrapping to a new line, so on a busy row (like
+     the dashboard's date/select/button mix) they got squeezed onto the
+     tail of the wrong line and overflowed the screen instead of moving
+     down, hiding the footer behind horizontal scroll. Action buttons are
+     now grouped into their own .filter-row-actions wrapper in the HTML
+     (a single flex child of .filter-row, so it still wraps as a whole
+     onto its own line same as before) and only THAT wrapper switches to
+     a plain, deterministic 2-column grid below — independent of
+     whatever the date inputs/selects around it are doing. */
+  .filter-row-actions{ display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  @media (max-width:600px){
+    .filter-row-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+    .filter-row-actions > *{ width:100%; }
+    .filter-row-actions .queue-btn{ white-space:normal; text-align:center; line-height:1.25; padding:10px 8px; font-size:12.5px; }
   }
   @media (max-width: 600px){
     /* The KPI card's big number sits in a fixed-width flex row alongside
@@ -1981,8 +1991,10 @@
       <input type="date" id="catFromMonth" class="fselect" style="cursor:pointer;">
       <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
       <input type="date" id="catToMonth" class="fselect" style="cursor:pointer;">
-      <button class="queue-btn filter-btn-apply" onclick="showCategoryLog(currentCatKey)">Apply range</button>
-      <button class="queue-btn filter-btn-excel" onclick="exportCategoryToExcel()">⬇ Export to Excel</button>
+      <div class="filter-row-actions">
+        <button class="queue-btn filter-btn-apply" onclick="showCategoryLog(currentCatKey)">Apply range</button>
+        <button class="queue-btn filter-btn-excel" onclick="exportCategoryToExcel()">⬇ Export to Excel</button>
+      </div>
     </div>
     <!-- 2026-09-11: By Section/Engineer/Sub-category filters, same pattern
          already used on Lift Trace — client-side only, populated from
@@ -2221,11 +2233,13 @@
         <option value="mechanical">Mechanical</option>
         <option value="electrical">Electrical</option>
       </select>
-      <button class="queue-btn filter-btn-apply" onclick="loadDashboard()">Apply</button>
-      <button class="queue-btn filter-btn-excel" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
-      <button class="queue-btn filter-btn-pptx" onclick="exportDashboardToPptx()">⬇ Export to PPTX</button>
-      <div id="dashKpiTriggerWrap" style="display:none;">
-        <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate team Score</button>
+      <div class="filter-row-actions">
+        <button class="queue-btn filter-btn-apply" onclick="loadDashboard()">Apply</button>
+        <button class="queue-btn filter-btn-excel" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
+        <button class="queue-btn filter-btn-pptx" onclick="exportDashboardToPptx()">⬇ Export to PPTX</button>
+        <div id="dashKpiTriggerWrap" style="display:none;">
+          <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate team Score</button>
+        </div>
       </div>
     </div>
 
@@ -4495,7 +4509,8 @@
     { date:'2026-09-25', summary:'Header redesign. Desktop: the "Walton Hi-Tech Industries PLC" / "Walton Lift R&I Dashboard" text is gone; the Walton icon plus date are now fixed at the left at all times (no more scroll-triggered collapse/slide animation — that whole feature was removed along with the text it animated); all 8 nav icons (Home, Lift Trace, My Tasks, Chat, Dashboard, Notebook, Projects, Admin) moved from the old floating bottom dock into the header center, spread evenly, icon-only (no labels, hover still shows the name as a tooltip); the floating bottom dock itself is gone on desktop; time on the right dropped seconds ("10:54 AM" instead of "10:54:17 AM"); notification bell and profile avatar unchanged. Mobile: header completely unchanged (both text lines, date, time hidden, notification, avatar, exactly as before); the same nav icons now render as a new fixed-bottom footer instead of the old floating pill — same frosted/liquid-glass material as the header, full width, icon-only, no per-icon background or border, evenly spaced. Both bars trimmed to be as minimal as possible (thinner padding, no dock reserving space above 600px width) to leave more room for page content.' },
     { date:'2026-09-25', summary:'Fixed the new mobile footer nav landing at the top, overlapping the header, instead of at the bottom of the screen — header.topnav has backdrop-filter, which makes it the containing block for any position:fixed descendant, so #tabs nested inside it had its "bottom:0" resolving against the header\'s own tiny box rather than the viewport. #tabs is now moved between two DOM homes by width on load/resize (event listeners survive the move): a sibling of <header> on mobile (position:fixed resolves correctly there, same relationship the old floating dock had), back inside .nav-center on desktop (unchanged, still the in-header icon row). Also: mobile footer icons now cluster centered with a minimal gap (gap:2px, matching the old dock) instead of being spread edge-to-edge — desktop\'s evenly-spread layout is unchanged. Mobile header padding trimmed slightly further (5px 14px) for a leaner bar.' },
     { date:'2026-09-25', summary:'Desktop header nav icons now cluster centered with the same tight gap (2px) the old floating dock used, instead of being spread across the full header-center width with justify-content:space-evenly. Also reverted the previous 1px mobile header padding trim (6px 14px, back to unchanged) — the mobile header must stay completely untouched; only the new footer below it may change.' },
-    { date:'2026-09-25', summary:'Four fixes. (1) Team dashboard category bars: fixed order and fixed per-category color, both keyed to the category itself (catMeta order, CATEGORY_COLOR_VAR — the same color used for that category\'s tag/dropdown elsewhere) instead of to its rank-by-count, so a category no longer changes position or color depending on how it compares to the others that load. (2 & 4) Mobile: filter-row action buttons (Apply / Export to Excel / Export to PPTX / Apply range) now split evenly with whichever sibling shares their wrapped line, instead of sizing to their own text — covers both the Team dashboard\'s Excel/PPTX pair and a category log\'s Apply range/Export to Excel pair with one rule; Recalculate team Score is unaffected (separate wrapper). (5) Home hero Activity Trend: the custom date-range picker and Apply button are hidden — always shows the last 6 months now, no custom range in the UI (the code behind it is unchanged, just nothing left to edit it). Block height reduced on both mobile and desktop: chart SVG 130px→96px (stretches to fill exactly, no more letterboxing), panel padding trimmed, small margin added above the chart to replace some of the spacing the removed row used to provide.' }
+    { date:'2026-09-25', summary:'Four fixes. (1) Team dashboard category bars: fixed order and fixed per-category color, both keyed to the category itself (catMeta order, CATEGORY_COLOR_VAR — the same color used for that category\'s tag/dropdown elsewhere) instead of to its rank-by-count, so a category no longer changes position or color depending on how it compares to the others that load. (2 & 4) Mobile: filter-row action buttons (Apply / Export to Excel / Export to PPTX / Apply range) now split evenly with whichever sibling shares their wrapped line, instead of sizing to their own text — covers both the Team dashboard\'s Excel/PPTX pair and a category log\'s Apply range/Export to Excel pair with one rule; Recalculate team Score is unaffected (separate wrapper). (5) Home hero Activity Trend: the custom date-range picker and Apply button are hidden — always shows the last 6 months now, no custom range in the UI (the code behind it is unchanged, just nothing left to edit it). Block height reduced on both mobile and desktop: chart SVG 130px→96px (stretches to fill exactly, no more letterboxing), panel padding trimmed, small margin added above the chart to replace some of the spacing the removed row used to provide.' },
+    { date:'2026-09-26', summary:'Fixed a mobile layout break from yesterday\'s equal-width button change: flex:1 1 0 + min-width:0 let Apply/Export buttons shrink narrower than their own text instead of wrapping to a new line, so on the dashboard\'s busy filter row they got squeezed onto the tail of the selects\' row and overflowed off-screen, hiding the footer nav behind horizontal scroll. Replaced with a proper fix: action buttons are now grouped into their own .filter-row-actions wrapper (Apply/Export to Excel/Export to PPTX/Recalculate team Score on the dashboard; Apply range/Export to Excel on a category log) — a single flex child of .filter-row on desktop (unchanged), a deterministic 2-column grid on mobile only, independent of whatever the date inputs/selects around it are doing. Text wraps to a second line instead of overflowing if a label is too long for its half-width column at very narrow widths (checked: only "Recalculate team Score" comes close, on the narrowest phones).' }
   ];
  
   let currentUser = null;   // Supabase auth user
