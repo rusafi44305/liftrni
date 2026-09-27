@@ -305,23 +305,21 @@
  
   /* ---------- FLOOR INDICATOR (signature element) ---------- */
   .indicator-panel{
-    background:linear-gradient(180deg, #0E1420, #182238);
+    /* 2026-09-26: Apple Health/Stocks-style redesign, replacing the old
+       always-dark-navy "glass" hero card (the box-shadow/filter comment
+       above no longer applies — kept the date so the history reads
+       clearly) — now a plain card using the app's own surface/border
+       vars, so light and dark theme each get their own correct look
+       automatically, same as every other card in the app. */
+    background:var(--surface); border:1px solid var(--border);
     border-radius:20px; padding:22px 24px 18px;
-    /* 2026-09-10: "floating opaque glass" — stays fully solid/opaque (no
-       see-through), but reads like glass via a much bigger, softer
-       shadow (lifts it off the page), an inset top-highlight (light
-       catching an edge), and a saturation boost on the gradient itself. */
-    box-shadow:0 14px 34px -8px rgba(0,0,0,0.5), 0 4px 12px -3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.14);
-    filter:saturate(125%);
+    box-shadow:0 1px 2px rgba(10,14,23,0.06), 0 6px 18px -6px rgba(10,14,23,0.12);
     position:relative; overflow:hidden;
   }
-  .indicator-panel::before{
-    content:''; position:absolute; inset:0;
-    background:radial-gradient(circle at 85% -10%, rgba(47,95,224,0.35), transparent 55%);
-  }
+  .indicator-panel::before{ display:none; }
   .indicator-row{display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;}
-  .indicator-label{font-size:11px; color:#8FA2D6; letter-spacing:.08em; text-transform:uppercase; font-weight:600;}
-  .indicator-dot{width:7px; height:7px; border-radius:50%; background:#3DCB7F; box-shadow:0 0 8px #3DCB7F; animation:pulseDot 2s ease-in-out infinite;}
+  .indicator-label{font-size:11px; color:var(--text-faint); letter-spacing:.08em; text-transform:uppercase; font-weight:600;}
+  .indicator-dot{width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px color-mix(in srgb, var(--green) 70%, transparent); animation:pulseDot 2s ease-in-out infinite;}
   @keyframes pulseDot{ 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.6; transform:scale(1.3); } }
   .indicator-display{
     display:flex; gap:6px; margin:20px 0 6px; position:relative; z-index:1;
@@ -348,10 +346,14 @@
      replaces a little of that lost breathing room. */
   .trend-svg{width:100%; height:96px; margin-top:14px; overflow:visible; position:relative; z-index:1;}
   .trend-labels-row{display:flex; margin-top:6px; position:relative; z-index:1;}
-  .trend-labels-row > div{flex:1; text-align:center; font-size:11px; color:#7B87A3;}
-  .trend-legend-row{display:flex; gap:16px; margin-top:14px; position:relative; z-index:1; flex-wrap:wrap;}
-  .trend-legend-item{display:flex; align-items:center; gap:6px; font-size:11.5px; color:#B9C6DE;}
-  .trend-legend-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0;}
+  .trend-labels-row > div{flex:1; text-align:center; font-size:11px; color:var(--text-faint);}
+  /* 2026-09-26: tightened (smaller gap/dot/font, nowrap) so all three
+     legend items reliably sit on one line even at narrow mobile widths,
+     instead of wrapping to a second line — checked against a 340px-wide
+     card before shipping. */
+  .trend-legend-row{display:flex; gap:7px; margin-top:11px; position:relative; z-index:1; flex-wrap:nowrap; overflow:hidden;}
+  .trend-legend-item{display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text-faint); white-space:nowrap; flex-shrink:0;}
+  .trend-legend-dot{width:6px; height:6px; border-radius:50%; flex-shrink:0;}
   .mini-stat{background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.07); border-radius:10px; padding:12px 14px;}
   .mini-stat .num{font-family:'Space Grotesk'; font-size:20px; font-weight:700; color:#fff;}
   .mini-stat .lbl{font-size:11px; color:#8391AE; margin-top:2px;}
@@ -1897,9 +1899,9 @@
         <svg id="trendChart" viewBox="0 0 560 150" preserveAspectRatio="none" class="trend-svg"></svg>
         <div id="trendChartLabels" class="trend-labels-row"></div>
         <div class="trend-legend-row">
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#4CE0FF; box-shadow:0 0 6px #4CE0FF;"></span>Team Activity</div>
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#FFDD33; box-shadow:0 0 6px #FFDD33;"></span>R&amp;I Projects</div>
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:#7C8AAE;"></span>All other categories</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--accent);"></span>Team Activity</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--green);"></span>R&amp;I Projects</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--text-faint);"></span>All other categories</div>
         </div>
       </div>
     </div>
@@ -4510,7 +4512,8 @@
     { date:'2026-09-25', summary:'Fixed the new mobile footer nav landing at the top, overlapping the header, instead of at the bottom of the screen — header.topnav has backdrop-filter, which makes it the containing block for any position:fixed descendant, so #tabs nested inside it had its "bottom:0" resolving against the header\'s own tiny box rather than the viewport. #tabs is now moved between two DOM homes by width on load/resize (event listeners survive the move): a sibling of <header> on mobile (position:fixed resolves correctly there, same relationship the old floating dock had), back inside .nav-center on desktop (unchanged, still the in-header icon row). Also: mobile footer icons now cluster centered with a minimal gap (gap:2px, matching the old dock) instead of being spread edge-to-edge — desktop\'s evenly-spread layout is unchanged. Mobile header padding trimmed slightly further (5px 14px) for a leaner bar.' },
     { date:'2026-09-25', summary:'Desktop header nav icons now cluster centered with the same tight gap (2px) the old floating dock used, instead of being spread across the full header-center width with justify-content:space-evenly. Also reverted the previous 1px mobile header padding trim (6px 14px, back to unchanged) — the mobile header must stay completely untouched; only the new footer below it may change.' },
     { date:'2026-09-25', summary:'Four fixes. (1) Team dashboard category bars: fixed order and fixed per-category color, both keyed to the category itself (catMeta order, CATEGORY_COLOR_VAR — the same color used for that category\'s tag/dropdown elsewhere) instead of to its rank-by-count, so a category no longer changes position or color depending on how it compares to the others that load. (2 & 4) Mobile: filter-row action buttons (Apply / Export to Excel / Export to PPTX / Apply range) now split evenly with whichever sibling shares their wrapped line, instead of sizing to their own text — covers both the Team dashboard\'s Excel/PPTX pair and a category log\'s Apply range/Export to Excel pair with one rule; Recalculate team Score is unaffected (separate wrapper). (5) Home hero Activity Trend: the custom date-range picker and Apply button are hidden — always shows the last 6 months now, no custom range in the UI (the code behind it is unchanged, just nothing left to edit it). Block height reduced on both mobile and desktop: chart SVG 130px→96px (stretches to fill exactly, no more letterboxing), panel padding trimmed, small margin added above the chart to replace some of the spacing the removed row used to provide.' },
-    { date:'2026-09-26', summary:'Fixed a mobile layout break from yesterday\'s equal-width button change: flex:1 1 0 + min-width:0 let Apply/Export buttons shrink narrower than their own text instead of wrapping to a new line, so on the dashboard\'s busy filter row they got squeezed onto the tail of the selects\' row and overflowed off-screen, hiding the footer nav behind horizontal scroll. Replaced with a proper fix: action buttons are now grouped into their own .filter-row-actions wrapper (Apply/Export to Excel/Export to PPTX/Recalculate team Score on the dashboard; Apply range/Export to Excel on a category log) — a single flex child of .filter-row on desktop (unchanged), a deterministic 2-column grid on mobile only, independent of whatever the date inputs/selects around it are doing. Text wraps to a second line instead of overflowing if a label is too long for its half-width column at very narrow widths (checked: only "Recalculate team Score" comes close, on the narrowest phones).' }
+    { date:'2026-09-26', summary:'Fixed a mobile layout break from yesterday\'s equal-width button change: flex:1 1 0 + min-width:0 let Apply/Export buttons shrink narrower than their own text instead of wrapping to a new line, so on the dashboard\'s busy filter row they got squeezed onto the tail of the selects\' row and overflowed off-screen, hiding the footer nav behind horizontal scroll. Replaced with a proper fix: action buttons are now grouped into their own .filter-row-actions wrapper (Apply/Export to Excel/Export to PPTX/Recalculate team Score on the dashboard; Apply range/Export to Excel on a category log) — a single flex child of .filter-row on desktop (unchanged), a deterministic 2-column grid on mobile only, independent of whatever the date inputs/selects around it are doing. Text wraps to a second line instead of overflowing if a label is too long for its half-width column at very narrow widths (checked: only "Recalculate team Score" comes close, on the narrowest phones).' },
+    { date:'2026-09-26', summary:'Home hero Activity Trend rebuilt in an Apple Health/Stocks style, replacing the earlier neon-glow HUD look. Chart: one dashed midline instead of three; Team Activity (the primary line) gets a soft gradient fill down to the baseline; R&I Projects and All other categories are clean thin lines with no fill, so three overlapping filled areas don\'t turn into visual noise; only the primary line gets an end-point dot instead of a dot on every point of every line (hover targets on every point are still there, invisible, so hovering still shows the exact count). The card itself (.indicator-panel) is now a plain, theme-aware card using the app\'s own surface/border colors instead of a fixed dark-navy "glass" background with a blue glow overlay — light and dark theme each get their own correct look automatically now, same as every other card in the app; same for the eyebrow label, the live-dot, the month labels, and the legend, which were all hardcoded colors tuned only for the old dark card. Legend row also tightened (smaller gap/dot/font, no-wrap) so Team Activity / R&I Projects / All other categories reliably sit on one line even on narrow phones.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -9270,31 +9273,39 @@ for a competing inline style first.`;
     const rniLine = buildLine('rni');
     const otherLine = buildLine('other');
     const projectsLine = buildLine('projects');
-    const gridLines = [0.25,0.5,0.75].map(f => `<line x1="0" y1="${h - h*f}" x2="${w}" y2="${h - h*f}" stroke="#1E2A40" stroke-width="1" stroke-dasharray="4 4"/>`).join('');
+    const last = rniLine.pts[rniLine.pts.length - 1];
+    const firstX = rniLine.pts[0].x;
+    const areaPath = `${rniLine.path} L ${last.x} ${h-pad} L ${firstX} ${h-pad} Z`;
 
-    // Both Team Activity and R&I Projects get a genuine glow — a blurred
-    // duplicate of the same line sitting behind the crisp one, the classic
-    // sci-fi HUD technique — using two different colors so they stay
-    // distinguishable from each other, not just from the muted "other"
-    // line.
+    // 2026-09-26: Apple Health/Stocks-style redesign, replacing the
+    // earlier neon-glow HUD look. One dashed midline instead of three;
+    // Team Activity is the primary line (the team's own logged work) and
+    // gets a soft gradient fill down to the baseline; R&I Projects and
+    // All other categories are clean thin lines with no fill, so three
+    // overlapping filled areas don't turn into visual noise; only the
+    // primary line gets an end-point dot rather than one on every point
+    // of every line. Colors are CSS vars, not fixed hex, so this reads
+    // correctly in both themes automatically — same approach as the
+    // dashboard's category bars. Per-point hover targets are kept
+    // (invisible, larger hit area) so hovering still reveals the exact
+    // count per month per series, just without a visible dot cluttering
+    // the line.
     document.getElementById('trendChart').innerHTML = `
       <defs>
-        <filter id="glowFilter" x="-60%" y="-60%" width="220%" height="220%">
-          <feGaussianBlur stdDeviation="5" result="blur"/>
-          <feMerge>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="blur"/>
-            <feMergeNode in="SourceGraphic"/>
-          </feMerge>
-        </filter>
+        <linearGradient id="trendFillGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color:var(--accent); stop-opacity:0.28"/>
+          <stop offset="100%" style="stop-color:var(--accent); stop-opacity:0"/>
+        </linearGradient>
       </defs>
-      ${gridLines}
-      <path d="${otherLine.path}" fill="none" stroke="#7C8AAE" stroke-width="2" stroke-linecap="round" opacity="0.85"/>
-      ${otherLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="3" fill="#7C8AAE"><title>${p.v}</title></circle>`).join('')}
-      <path d="${projectsLine.path}" fill="none" stroke="#FFDD33" stroke-width="2.5" stroke-linecap="round" filter="url(#glowFilter)"/>
-      ${projectsLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#FFDD33" filter="url(#glowFilter)"><title>${p.v}</title></circle>`).join('')}
-      <path d="${rniLine.path}" fill="none" stroke="#4CE0FF" stroke-width="2.5" stroke-linecap="round" filter="url(#glowFilter)"/>
-      ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#4CE0FF" filter="url(#glowFilter)"><title>${p.v}</title></circle>`).join('')}
+      <line x1="${pad}" y1="${h/2}" x2="${w-pad}" y2="${h/2}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
+      <path d="${otherLine.path}" fill="none" stroke="var(--text-faint)" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>
+      <path d="${projectsLine.path}" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round"/>
+      <path d="${areaPath}" fill="url(#trendFillGrad)"/>
+      <path d="${rniLine.path}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="${last.x}" cy="${last.y}" r="4.5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.4"/>
+      ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>Team Activity — ${p.v}</title></circle>`).join('')}
+      ${projectsLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>R&amp;I Projects — ${p.v}</title></circle>`).join('')}
+      ${otherLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>All other categories — ${p.v}</title></circle>`).join('')}
     `;
     document.getElementById('trendChartLabels').innerHTML = months.map(m => `<div>${m.label}</div>`).join('');
   }
