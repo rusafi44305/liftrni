@@ -4519,7 +4519,8 @@
     { date:'2026-09-25', summary:'Four fixes. (1) Team dashboard category bars: fixed order and fixed per-category color, both keyed to the category itself (catMeta order, CATEGORY_COLOR_VAR — the same color used for that category\'s tag/dropdown elsewhere) instead of to its rank-by-count, so a category no longer changes position or color depending on how it compares to the others that load. (2 & 4) Mobile: filter-row action buttons (Apply / Export to Excel / Export to PPTX / Apply range) now split evenly with whichever sibling shares their wrapped line, instead of sizing to their own text — covers both the Team dashboard\'s Excel/PPTX pair and a category log\'s Apply range/Export to Excel pair with one rule; Recalculate team Score is unaffected (separate wrapper). (5) Home hero Activity Trend: the custom date-range picker and Apply button are hidden — always shows the last 6 months now, no custom range in the UI (the code behind it is unchanged, just nothing left to edit it). Block height reduced on both mobile and desktop: chart SVG 130px→96px (stretches to fill exactly, no more letterboxing), panel padding trimmed, small margin added above the chart to replace some of the spacing the removed row used to provide.' },
     { date:'2026-09-26', summary:'Fixed a mobile layout break from yesterday\'s equal-width button change: flex:1 1 0 + min-width:0 let Apply/Export buttons shrink narrower than their own text instead of wrapping to a new line, so on the dashboard\'s busy filter row they got squeezed onto the tail of the selects\' row and overflowed off-screen, hiding the footer nav behind horizontal scroll. Replaced with a proper fix: action buttons are now grouped into their own .filter-row-actions wrapper (Apply/Export to Excel/Export to PPTX/Recalculate team Score on the dashboard; Apply range/Export to Excel on a category log) — a single flex child of .filter-row on desktop (unchanged), a deterministic 2-column grid on mobile only, independent of whatever the date inputs/selects around it are doing. Text wraps to a second line instead of overflowing if a label is too long for its half-width column at very narrow widths (checked: only "Recalculate team Score" comes close, on the narrowest phones).' },
     { date:'2026-09-26', summary:'Home hero Activity Trend rebuilt in an Apple Health/Stocks style, replacing the earlier neon-glow HUD look. Chart: one dashed midline instead of three; Team Activity (the primary line) gets a soft gradient fill down to the baseline; R&I Projects and All other categories are clean thin lines with no fill, so three overlapping filled areas don\'t turn into visual noise; only the primary line gets an end-point dot instead of a dot on every point of every line (hover targets on every point are still there, invisible, so hovering still shows the exact count). The card itself (.indicator-panel) is now a plain, theme-aware card using the app\'s own surface/border colors instead of a fixed dark-navy "glass" background with a blue glow overlay — light and dark theme each get their own correct look automatically now, same as every other card in the app; same for the eyebrow label, the live-dot, the month labels, and the legend, which were all hardcoded colors tuned only for the old dark card. Legend row also tightened (smaller gap/dot/font, no-wrap) so Team Activity / R&I Projects / All other categories reliably sit on one line even on narrow phones.' },
-    { date:'2026-09-26', summary:'Removed the home hero intro paragraph ("Search any Lift ID to see its full history...") on desktop — it was already hidden on mobile via an existing rule, now removed entirely so nothing is left showing anywhere. Also fixed the resulting misalignment: .hero was align-items:center, which only lined the two columns up on one shared middle line, so with the paragraph gone the left column (title/search bar/hint) ended up shorter than the Activity Trend card and just floated mid-height beside it instead of matching its height. Changed to align-items:stretch with a new .hero-left wrapper that centers its own content within the stretched height, so the two columns now start and end level with each other. Desktop only — mobile layout is untouched.' }
+    { date:'2026-09-26', summary:'Removed the home hero intro paragraph ("Search any Lift ID to see its full history...") on desktop — it was already hidden on mobile via an existing rule, now removed entirely so nothing is left showing anywhere. Also fixed the resulting misalignment: .hero was align-items:center, which only lined the two columns up on one shared middle line, so with the paragraph gone the left column (title/search bar/hint) ended up shorter than the Activity Trend card and just floated mid-height beside it instead of matching its height. Changed to align-items:stretch with a new .hero-left wrapper that centers its own content within the stretched height, so the two columns now start and end level with each other. Desktop only — mobile layout is untouched.' },
+    { date:'2026-09-27', summary:'Fixed a real bug behind "I added a field/subcategory in Admin but can\'t find it on the form until I refresh": three functions in the Task Fields catalog (Admin) saved correctly to the database but never refreshed the real form\'s in-memory field cache (dynamicFieldOptions) afterward, unlike every other admin save path in the app, which already does this. Fixed: submitNewCustomField (add/edit a field, including toggling Duration), deleteCustomField (delete a field), and handleFieldDrop (drag-and-drop reorder) all now call loadDynamicFieldOptions(true) immediately after saving, same as the Quick Add shortcuts and the subcategory functions already did. A field added, edited, deleted, or reordered here now reaches the real form immediately, in the same browser session — no page reload needed.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -8235,6 +8236,14 @@ for a competing inline style first.`;
     }
 
     closeAddFieldModal();
+    // 2026-09-27: was missing here — every other save path in this admin
+    // panel refreshes the real form's cache immediately (see the
+    // Quick Add functions above); this one, the full Add/Edit Field
+    // modal, only refreshed the admin catalog's own list. A field added
+    // or edited here — including toggling Duration — was correct in the
+    // database right away, but invisible on the real task-logging form
+    // until a full page reload rebuilt the form's cache from scratch.
+    await loadDynamicFieldOptions(true);
     loadCustomFieldsPanel();
     showFormPopup(existing ? `"${label}" updated.` : `"${label}" added.`, 'success');
   }
@@ -8255,6 +8264,9 @@ for a competing inline style first.`;
     await sb.from('chip_options').delete().eq('category', 'customfield').eq('field_key', id);
     const { error } = await sb.from('custom_fields').delete().eq('id', id);
     if(error){ alert('Could not delete: ' + error.message); return; }
+    // 2026-09-27: same gap as submitNewCustomField above — a deleted
+    // field stayed visible on the real form until a page reload.
+    await loadDynamicFieldOptions(true);
     loadCustomFieldsPanel();
   }
 
@@ -8649,6 +8661,9 @@ for a competing inline style first.`;
     // values for all of them.
     const orderedIds = Array.from(container.querySelectorAll('[data-field-id]')).map(el => el.dataset.fieldId);
     await Promise.all(orderedIds.map((id, idx) => sb.from('custom_fields').update({ sort_order: (idx + 1) * 10 }).eq('id', id)));
+    // 2026-09-27: same gap as submitNewCustomField above — a reorder
+    // stayed as the old order on the real form until a page reload.
+    await loadDynamicFieldOptions(true);
     loadCustomFieldsPanel();
   }
 
