@@ -351,7 +351,19 @@
   /* 2026-09-25: shorter now that the removed range row's space isn't
      there to separate this from the header row above — margin-top
      replaces a little of that lost breathing room. */
-  .trend-svg{width:100%; height:96px; margin-top:14px; overflow:visible; position:relative; z-index:1;}
+  .trend-svg{width:100%; height:96px; display:block; overflow:visible; position:relative; z-index:1;}
+  /* 2026-09-27: the chart SVG uses preserveAspectRatio="none" so it can
+     stretch to fill its box, which scales x and y by different amounts —
+     fine for lines, but it turned the end-point <circle> into an oval.
+     The end dot is now a real HTML element positioned over the chart by
+     percentage instead, so it's always a true circle at any width. The
+     wrapper carries the margin so its box matches the SVG's exactly. */
+  .trend-chart-wrap{ position:relative; margin-top:14px; z-index:1; }
+  .trend-end-dot{
+    position:absolute; width:11.4px; height:11.4px; box-sizing:border-box;
+    border-radius:50%; border:2.4px solid var(--accent); background:var(--surface);
+    transform:translate(-50%,-50%); pointer-events:none; z-index:2;
+  }
   .trend-labels-row{display:flex; margin-top:6px; position:relative; z-index:1;}
   .trend-labels-row > div{flex:1; text-align:center; font-size:11px; color:var(--text-faint);}
   /* 2026-09-26: tightened (smaller gap/dot/font, nowrap) so all three
@@ -1905,7 +1917,10 @@
           <input type="date" id="trendTo" class="trend-date-input">
           <button class="trend-apply-btn" onclick="loadActivityTrend()">Apply</button>
         </div>
-        <svg id="trendChart" viewBox="0 0 560 150" preserveAspectRatio="none" class="trend-svg"></svg>
+        <div class="trend-chart-wrap">
+          <svg id="trendChart" viewBox="0 0 560 150" preserveAspectRatio="none" class="trend-svg"></svg>
+          <div id="trendEndDot" class="trend-end-dot" style="display:none;"></div>
+        </div>
         <div id="trendChartLabels" class="trend-labels-row"></div>
         <div class="trend-legend-row">
           <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--accent);"></span>Team Activity</div>
@@ -4525,7 +4540,8 @@
     { date:'2026-09-26', summary:'Home hero Activity Trend rebuilt in an Apple Health/Stocks style, replacing the earlier neon-glow HUD look. Chart: one dashed midline instead of three; Team Activity (the primary line) gets a soft gradient fill down to the baseline; R&I Projects and All other categories are clean thin lines with no fill, so three overlapping filled areas don\'t turn into visual noise; only the primary line gets an end-point dot instead of a dot on every point of every line (hover targets on every point are still there, invisible, so hovering still shows the exact count). The card itself (.indicator-panel) is now a plain, theme-aware card using the app\'s own surface/border colors instead of a fixed dark-navy "glass" background with a blue glow overlay — light and dark theme each get their own correct look automatically now, same as every other card in the app; same for the eyebrow label, the live-dot, the month labels, and the legend, which were all hardcoded colors tuned only for the old dark card. Legend row also tightened (smaller gap/dot/font, no-wrap) so Team Activity / R&I Projects / All other categories reliably sit on one line even on narrow phones.' },
     { date:'2026-09-26', summary:'Removed the home hero intro paragraph ("Search any Lift ID to see its full history...") on desktop — it was already hidden on mobile via an existing rule, now removed entirely so nothing is left showing anywhere. Also fixed the resulting misalignment: .hero was align-items:center, which only lined the two columns up on one shared middle line, so with the paragraph gone the left column (title/search bar/hint) ended up shorter than the Activity Trend card and just floated mid-height beside it instead of matching its height. Changed to align-items:stretch with a new .hero-left wrapper that centers its own content within the stretched height, so the two columns now start and end level with each other. Desktop only — mobile layout is untouched.' },
     { date:'2026-09-27', summary:'Fixed a real bug behind "I added a field/subcategory in Admin but can\'t find it on the form until I refresh": three functions in the Task Fields catalog (Admin) saved correctly to the database but never refreshed the real form\'s in-memory field cache (dynamicFieldOptions) afterward, unlike every other admin save path in the app, which already does this. Fixed: submitNewCustomField (add/edit a field, including toggling Duration), deleteCustomField (delete a field), and handleFieldDrop (drag-and-drop reorder) all now call loadDynamicFieldOptions(true) immediately after saving, same as the Quick Add shortcuts and the subcategory functions already did. A field added, edited, deleted, or reordered here now reaches the real form immediately, in the same browser session — no page reload needed.' },
-    { date:'2026-09-27', summary:'Header: on desktop only, vertical padding trimmed from 7px to 4px (bell/avatar sizes unchanged — only the breathing room around them shrinks); mobile header keeps its own separate, untouched padding. Active tab now gets a soft accent-tinted background (color-mix, 14%) instead of just a color change, on both desktop and mobile — one rule covers both since it\'s the same nav element either way, just repositioned by screen width.' }
+    { date:'2026-09-27', summary:'Header: on desktop only, vertical padding trimmed from 7px to 4px (bell/avatar sizes unchanged — only the breathing room around them shrinks); mobile header keeps its own separate, untouched padding. Active tab now gets a soft accent-tinted background (color-mix, 14%) instead of just a color change, on both desktop and mobile — one rule covers both since it\'s the same nav element either way, just repositioned by screen width.' },
+    { date:'2026-09-27', summary:'Fixed the Activity Trend end-point dot looking stretched/oval. Cause: the chart SVG uses preserveAspectRatio="none" (so it can fill a shorter box without letterboxing), which scales x and y by different amounts — harmless for the lines, but it turned the end-point <circle> into an ellipse, most visible on wide desktop cards. The dot is now a real HTML element positioned over the chart by percentage of the viewBox (new .trend-chart-wrap / #trendEndDot), so it stays a true circle at any width, on desktop and mobile alike. The invisible per-point hover targets stay inside the SVG (their shape doesn\'t matter since nothing is drawn).' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -9328,11 +9344,18 @@ for a competing inline style first.`;
       <path d="${projectsLine.path}" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round"/>
       <path d="${areaPath}" fill="url(#trendFillGrad)"/>
       <path d="${rniLine.path}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
-      <circle cx="${last.x}" cy="${last.y}" r="4.5" fill="var(--surface)" stroke="var(--accent)" stroke-width="2.4"/>
       ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>Team Activity — ${p.v}</title></circle>`).join('')}
       ${projectsLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>R&amp;I Projects — ${p.v}</title></circle>`).join('')}
       ${otherLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>All other categories — ${p.v}</title></circle>`).join('')}
     `;
+    // End dot: HTML element placed by percentage of the viewBox (560x150),
+    // so it stays a true circle no matter how the SVG stretches.
+    const dot = document.getElementById('trendEndDot');
+    if(dot){
+      dot.style.left = (last.x / 560 * 100) + '%';
+      dot.style.top = (last.y / 150 * 100) + '%';
+      dot.style.display = 'block';
+    }
     document.getElementById('trendChartLabels').innerHTML = months.map(m => `<div>${m.label}</div>`).join('');
   }
  
