@@ -2377,6 +2377,7 @@
     <div class="block-head"><div class="block-title">Project timeline</div><div class="block-sub" id="devRangeLabel">—</div></div>
     <div class="filter-row" style="margin-bottom:14px;">
       <select class="fselect" id="devFilterLead" onchange="renderGanttRows()"><option value="">All leads</option></select>
+      <select class="fselect" id="devFilterCollab" onchange="renderGanttRows()"><option value="">All collaborators</option></select>
       <select class="fselect" id="devFilterImpact" onchange="renderGanttRows()"><option value="">All impact types</option></select>
       <select class="fselect" id="devFilterStatus" onchange="renderGanttRows()">
         <option value="">All statuses</option><option>In Progress</option><option>On Hold</option><option>Done</option><option>Cancelled</option>
@@ -4542,7 +4543,8 @@
     { date:'2026-09-27', summary:'Fixed a real bug behind "I added a field/subcategory in Admin but can\'t find it on the form until I refresh": three functions in the Task Fields catalog (Admin) saved correctly to the database but never refreshed the real form\'s in-memory field cache (dynamicFieldOptions) afterward, unlike every other admin save path in the app, which already does this. Fixed: submitNewCustomField (add/edit a field, including toggling Duration), deleteCustomField (delete a field), and handleFieldDrop (drag-and-drop reorder) all now call loadDynamicFieldOptions(true) immediately after saving, same as the Quick Add shortcuts and the subcategory functions already did. A field added, edited, deleted, or reordered here now reaches the real form immediately, in the same browser session — no page reload needed.' },
     { date:'2026-09-27', summary:'Header: on desktop only, vertical padding trimmed from 7px to 4px (bell/avatar sizes unchanged — only the breathing room around them shrinks); mobile header keeps its own separate, untouched padding. Active tab now gets a soft accent-tinted background (color-mix, 14%) instead of just a color change, on both desktop and mobile — one rule covers both since it\'s the same nav element either way, just repositioned by screen width.' },
     { date:'2026-09-27', summary:'Fixed the Activity Trend end-point dot looking stretched/oval. Cause: the chart SVG uses preserveAspectRatio="none" (so it can fill a shorter box without letterboxing), which scales x and y by different amounts — harmless for the lines, but it turned the end-point <circle> into an ellipse, most visible on wide desktop cards. The dot is now a real HTML element positioned over the chart by percentage of the viewBox (new .trend-chart-wrap / #trendEndDot), so it stays a true circle at any width, on desktop and mobile alike. The invisible per-point hover targets stay inside the SVG (their shape doesn\'t matter since nothing is drawn).' },
-    { date:'2026-09-28', summary:'Fixed the Notebook tab blinking every minute. Cause: the 60-second reminder check reloads the Notebook list while that tab is open, and loadNotebook() blanked the whole list to "Loading…" and rebuilt it on every call — a visible flash once a minute even when nothing had changed (it also collapsed any open "+ Add subtask" box). Now "Loading…" only appears on the first load, and each reload compares the fresh data with what is already on screen and only redraws if something actually changed (a task newly turning overdue counts as a change, since it is drawn differently). Adding, editing, ticking and deleting still refresh immediately as before.' }
+    { date:'2026-09-28', summary:'Fixed the Notebook tab blinking every minute. Cause: the 60-second reminder check reloads the Notebook list while that tab is open, and loadNotebook() blanked the whole list to "Loading…" and rebuilt it on every call — a visible flash once a minute even when nothing had changed (it also collapsed any open "+ Add subtask" box). Now "Loading…" only appears on the first load, and each reload compares the fresh data with what is already on screen and only redraws if something actually changed (a task newly turning overdue counts as a change, since it is drawn differently). Adding, editing, ticking and deleting still refresh immediately as before.' },
+    { date:'2026-09-28', summary:'Added a Collaborators filter to the R&I Project Manager\'s Project timeline, right beside All leads. Works like the existing filters: pick a person and the Gantt list narrows to projects where they\'re listed as a collaborator (not just the lead), combinable with the lead/impact type/status filters already there.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -8939,6 +8941,7 @@ for a competing inline style first.`;
     document.getElementById('devLead').innerHTML = devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('') || '<option value="">No active users</option>';
     document.getElementById('devCollabChips').innerHTML = devPeople.map(p => `<div class="chip-opt" data-pid="${p.id}" onclick="pickChip(this)">${displayName(p)}</div>`).join('') || '<div class="chip-opt">No one else yet</div>';
     document.getElementById('devFilterLead').innerHTML = '<option value="">All leads</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
+    document.getElementById('devFilterCollab').innerHTML = '<option value="">All collaborators</option>' + devPeople.map(p => `<option value="${p.id}">${displayName(p)}</option>`).join('');
   }
  
   async function loadDevDashboard(){
@@ -9091,11 +9094,13 @@ for a competing inline style first.`;
  
   function renderGanttRows(){
     const leadFilter = document.getElementById('devFilterLead').value;
+    const collabFilter = document.getElementById('devFilterCollab').value;
     const impactFilter = document.getElementById('devFilterImpact').value;
     const statusFilter = document.getElementById('devFilterStatus').value;
  
     let rows = devProjectsCache.filter(p =>
       (!leadFilter || p.lead_id === leadFilter) &&
+      (!collabFilter || (p.collaborators || []).includes(collabFilter)) &&
       (!impactFilter || p.impact_type === impactFilter) &&
       (!statusFilter || p.status === statusFilter)
     );
