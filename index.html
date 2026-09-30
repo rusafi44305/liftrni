@@ -388,37 +388,42 @@
   .stat-card .delta{font-size:11.5px; font-weight:600; margin-top:8px; display:inline-block;}
   .delta.up{color:var(--green);} .delta.flat{color:var(--text-faint);}
 
-  /* 2026-09-30: Home summary follow-up, scoped to these four items only.
-     Keep the surfaces transparent and non-interactive; add a thin outline
-     to each item instead of the earlier interior dividers. Center all
-     text and tighten padding/type spacing without fixed-height clipping.
-     The scoped !important rules still beat the shared card-material CSS.
-     Desktop: four equal columns. At the existing 860px breakpoint: 2x2.
-     Do not change shared .stat-card styling, live IDs, or data logic. */
+  /* 2026-09-30: Home summary refinement, scoped to these four items only.
+     The four values now read as one information group: one theme-aware
+     outer border and one very light shared surface, with only internal
+     hairline dividers between values. Individual stat cards stay fully
+     transparent/non-interactive so they do not look like four buttons.
+     Desktop: 4 across. Existing 860px breakpoint: compact 2x2 matrix.
+     Live IDs, values, queries and all application logic are unchanged. */
   #view-home .home-stats{
-    grid-template-columns:repeat(4,minmax(0,1fr)); grid-auto-rows:1fr;
-    gap:8px; margin-bottom:16px; background:none;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    grid-auto-rows:1fr; gap:0; padding:4px; margin-bottom:16px;
+    background:color-mix(in srgb, var(--surface) 58%, transparent);
+    border:1px solid color-mix(in srgb, var(--border) 88%, transparent);
+    border-radius:14px; overflow:hidden;
+    box-shadow:none;
   }
   #view-home .home-stats > .stat-card{
-    min-width:0; padding:6px 12px; text-align:center;
+    min-width:0; padding:8px 12px; text-align:center;
     display:flex; flex-direction:column; justify-content:center;
     background:none !important;
-    border:1px solid var(--border) !important; border-radius:10px !important;
-    box-shadow:none !important;
+    border:0 !important; border-left:1px solid var(--border) !important;
+    border-radius:0 !important; box-shadow:none !important;
     backdrop-filter:none; -webkit-backdrop-filter:none;
     cursor:default;
   }
+  #view-home .home-stats > .stat-card:first-child{ border-left:0 !important; }
   #view-home .home-stats .n{
-    font-size:28px; line-height:1.1; font-variant-numeric:tabular-nums;
+    font-size:28px; line-height:1.08; font-variant-numeric:tabular-nums;
     overflow-wrap:anywhere;
   }
   #view-home .home-stats .l{
     font-size:13.5px; font-weight:700; color:var(--text);
-    margin-top:3px; line-height:1.25;
+    margin-top:3px; line-height:1.2;
   }
   #view-home .home-stats .delta{
     display:block; font-size:11.5px; font-weight:400;
-    margin-top:2px; line-height:1.35; overflow-wrap:anywhere;
+    margin-top:2px; line-height:1.3; overflow-wrap:anywhere;
   }
  
   section.block{margin-bottom:16px;}
@@ -1182,12 +1187,17 @@
   @media (max-width: 860px){
     .hero{grid-template-columns:1fr;}
     .stat-row, .cat-grid, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr);}
-    /* Home summary: two equal columns with separate thin outlines;
-       no cross-divider or extra vertical padding on tablet/mobile. */
+    /* Home summary: the same single shared panel becomes a 2x2 matrix.
+       Internal hairlines form a cross; the outer border stays singular. */
     #view-home .home-stats{
       grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+      gap:0; padding:4px;
     }
-    #view-home .home-stats > .stat-card{ padding:6px 10px; }
+    #view-home .home-stats > .stat-card{
+      padding:8px 10px; border-left:0 !important;
+    }
+    #view-home .home-stats > .stat-card:nth-child(even){ border-left:1px solid var(--border) !important; }
+    #view-home .home-stats > .stat-card:nth-child(n+3){ border-top:1px solid var(--border) !important; }
     .split-grid, .split-grid-tasks, .dev-form-grid{grid-template-columns:1fr;}
     .form-row-2{grid-template-columns:1fr;}
     main{padding:16px 12px 24px;}
@@ -1264,7 +1274,7 @@
     .cat-grid, .stat-row, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr) !important;}
     /* Compact, centered Home summary on phones. Allow text to wrap
        naturally rather than hiding labels or fixing the item height. */
-    #view-home .home-stats > .stat-card{ padding:6px 8px; }
+    #view-home .home-stats > .stat-card{ padding:8px 8px; }
     #view-home .home-stats .n{ font-size:24px; }
     #view-home .home-stats .l{ font-size:12px; }
     #view-home .home-stats .delta{ font-size:11px; }
@@ -4592,7 +4602,8 @@
     { date:'2026-09-28', summary:'Added a Collaborators filter to the R&I Project Manager\'s Project timeline, right beside All leads. Works like the existing filters: pick a person and the Gantt list narrows to projects where they\'re listed as a collaborator (not just the lead), combinable with the lead/impact type/status filters already there.' },
     { date:'2026-09-29', summary:'Redesigned the home page\'s 4 top stats (Distinct lifts tracked, Activities logged, Active R&I projects, Active engineers) — they aren\'t clickable, so the boxed .stat-card look (background, border, shadow) wrongly implied they were. Card chrome removed, replaced with a hairline divider between the four so they still read as one compact group. Desktop: one row, number stacked above its bold label, detail line lighter underneath. Mobile: back to a 2x2 grid, same layout scaled down (number/label/detail sizes shrunk so 4-digit numbers don\'t crowd the narrower cells), hairlines forming a cross between the four cells. Scoped to .home-stats only — the R&I Project Manager\'s own stat row and the profile page\'s KPI row still use plain, boxed .stat-card, unaffected.' },
     { date:'2026-09-30', summary:'Applied the approved Home statistics layout: removed card backgrounds, outlines, shadows, rounding and backdrop blur; four equal columns on desktop and a 2x2 grid at the existing 860px breakpoint, with interior hairline dividers and readable mobile typography. Fixed the shared card-material CSS overriding the previous Home-only rules. Other cards, statistic IDs, data fetching and all application/database logic are unchanged.' },
-    { date:'2026-09-30', summary:'Home statistics follow-up: added a thin theme-aware outline around each transparent item, removed the interior dividers, centered numbers/labels/details, and reduced padding, number sizes and text gaps for a shorter layout. Preserved four columns on desktop and the existing 2x2 tablet/mobile layout. Home-only CSS; live IDs, values, data requests and all business/database logic remain unchanged.' }
+    { date:'2026-09-30', summary:'Home statistics follow-up: added a thin theme-aware outline around each transparent item, removed the interior dividers, centered numbers/labels/details, and reduced padding, number sizes and text gaps for a shorter layout. Preserved four columns on desktop and the existing 2x2 tablet/mobile layout. Home-only CSS; live IDs, values, data requests and all business/database logic remain unchanged.' },
+    { date:'2026-09-30', summary:'Home statistics refinement: replaced the four separate outlined stat cards with one shared theme-aware panel using a single outer border and a very light surface. Desktop keeps 4 centered values in one row with subtle internal vertical dividers; mobile/tablet keeps the existing 2x2 layout with a simple cross-divider. No stat IDs, values, queries or business/database logic changed.' }
   ];
  
   let currentUser = null;   // Supabase auth user
