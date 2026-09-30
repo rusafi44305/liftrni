@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
@@ -4480,6 +4481,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-09-30', summary:'Excel exports upgraded from plain worksheets to native Excel Tables with built-in filter/sort dropdowns, frozen headers, readable widths, and type-aware cells: text/reference IDs stay text, dates are real Excel dates, numeric columns are numbers, and percentages use percentage formatting. Applied to Category export, Dashboard export, and Google Drive archive workbooks without changing the exported data or Supabase logic.' },
     { date:'2026-08-28', summary:'Initial build: task logging across 6 categories, Lift ID tracking, Team Chat, Notebook, Admin panel, role system (User/Admin/Superadmin).' },
     { date:'2026-08-29', summary:'R&I Project Manager added (internal projects, Gantt view, task breakdown, progress %). Category merges and field cleanup across Pre-Sales/Post-Sales/Tech Support.' },
     { date:'2026-08-30', summary:'Notifications system, KPI/Score weighting, monthly target tracking, task management permission restrictions (project owner vs others).' },
@@ -5391,13 +5393,201 @@
     document.getElementById('catLogEmpty').style.display = rows.length ? 'none' : 'block';
   }
  
-  function exportCategoryToExcel(){
+  // ============ PROFESSIONAL EXCEL TABLE EXPORT ============
+  // 2026-09-30: Excel exports now create real native Excel Tables rather
+  // than plain cell ranges. Each table opens with filter/sort dropdowns,
+  // a frozen header row, readable column widths, and real Excel value types.
+  // IDs/reference-like columns stay as text so leading zeros are never lost.
+  // Dates, percentages and numeric columns are written as native Excel values.
+  function excelHeadersFromRows(rows){
+    const headers = [];
+    (rows || []).forEach(row => Object.keys(row || {}).forEach(k => {
+      if(!headers.includes(k)) headers.push(k);
+    }));
+    return headers;
+  }
+
+  function excelNonEmptyValues(rows, header){
+    return (rows || []).map(r => r ? r[header] : null).filter(v => v !== null && v !== undefined && v !== '');
+  }
+
+  function excelHeaderLooksText(header){
+    const h = String(header || '').toLowerCase();
+    return /(\bid\b|lift\s*id|employee|owner|engineer|category|status|subject|project\s*name|project\s*\/\s*subject|summary|remark|remarks|description|statement|name|reference|ref\.?|code|email|phone|serial|model|type|discipline|section|location|medium|document|documentation)/i.test(h);
+  }
+
+  function excelHeaderLooksDate(header){
+    const h = String(header || '').toLowerCase();
+    return /(date|created|updated|start|finish|completion|completed|deadline|due\b|target\s*completion)/i.test(h);
+  }
+
+  function excelHeaderLooksDateTime(header){
+    const h = String(header || '').toLowerCase();
+    return /(date\s*&\s*time|date\s*and\s*time|datetime|timestamp|time\s*stamp)/i.test(h);
+  }
+
+  function excelHeaderLooksPercent(header){
+    const h = String(header || '').toLowerCase();
+    return /(%|percent|percentage|progress)/i.test(h);
+  }
+
+  function excelStringIsNumeric(v){
+    if(typeof v === 'number') return Number.isFinite(v);
+    if(typeof v !== 'string') return false;
+    const t = v.trim().replace(/,/g, '');
+    if(!t || !/^[+-]?(?:\d+\.?\d*|\.\d+)$/.test(t)) return false;
+    // Preserve leading-zero strings such as employee/reference numbers.
+    if(/^[-+]?0\d+/.test(t)) return false;
+    return Number.isFinite(Number(t));
+  }
+
+  function excelParseDate(v){
+    if(v instanceof Date && !isNaN(v)) return v;
+    if(typeof v === 'number') return null;
+    const t = String(v || '').trim();
+    if(!t) return null;
+    let m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[ ,T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+    if(m){
+      const d = new Date(Number(m[3]), Number(m[2])-1, Number(m[1]), Number(m[4]||0), Number(m[5]||0), Number(m[6]||0));
+      return isNaN(d) ? null : d;
+    }
+    m = t.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if(m){
+      const d = new Date(Number(m[1]), Number(m[2])-1, Number(m[3]), Number(m[4]||0), Number(m[5]||0), Number(m[6]||0));
+      return isNaN(d) ? null : d;
+    }
+    return null;
+  }
+
+  function inferExcelColumnKind(header, rows){
+    const vals = excelNonEmptyValues(rows, header);
+    if(excelHeaderLooksText(header)) return 'text';
+    if(excelHeaderLooksDateTime(header)) return 'datetime';
+    if(excelHeaderLooksDate(header)) return 'date';
+    if(excelHeaderLooksPercent(header)){
+      const numeric = vals.length && vals.every(excelStringIsNumeric);
+      return numeric ? 'percent' : 'text';
+    }
+    if(vals.length && vals.every(v => typeof v === 'number' ? Number.isFinite(v) : excelStringIsNumeric(v))) return 'number';
+    if(vals.length && vals.every(v => excelParseDate(v))) return 'date';
+    return 'text';
+  }
+
+  function excelValueForKind(value, kind){
+    if(value === null || value === undefined || value === '') return null;
+    if(Array.isArray(value)) value = value.join(', ');
+    if(kind === 'date' || kind === 'datetime') return excelParseDate(value) || String(value);
+    if(kind === 'number'){
+      if(typeof value === 'number') return value;
+      const n = Number(String(value).replace(/,/g, '').trim());
+      return Number.isFinite(n) ? n : String(value);
+    }
+    if(kind === 'percent'){
+      const n = typeof value === 'number' ? value : Number(String(value).replace(/[% ,]/g, ''));
+      if(!Number.isFinite(n)) return String(value);
+      return Math.abs(n) > 1 ? n / 100 : n;
+    }
+    return String(value);
+  }
+
+  function safeExcelTableName(name, index){
+    let base = String(name || `Table${index+1}`).replace(/[^A-Za-z0-9_]/g, '_');
+    if(!/^[A-Za-z_]/.test(base)) base = 'T_' + base;
+    return (base.slice(0, 220) || 'Table') + '_' + (index + 1);
+  }
+
+  function excelDisplayLength(value, kind){
+    if(value === null || value === undefined) return 0;
+    if(value instanceof Date) return kind === 'datetime' ? 18 : 10;
+    return String(value).length;
+  }
+
+  async function buildFormattedExcelBlob(sheetSpecs){
+    if(typeof ExcelJS === 'undefined') throw new Error('The Excel formatting library did not load. Refresh the page and try again.');
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = 'Walton Lift R&I';
+    workbook.company = 'Walton Hi-Tech Industries PLC';
+    workbook.created = new Date();
+    workbook.modified = new Date();
+
+    (sheetSpecs || []).forEach((spec, sheetIndex) => {
+      const rows = spec.rows || [];
+      if(!rows.length) return;
+      const headers = excelHeadersFromRows(rows);
+      if(!headers.length) return;
+      const kinds = headers.map(h => inferExcelColumnKind(h, rows));
+      const ws = workbook.addWorksheet(String(spec.name || `Sheet ${sheetIndex+1}`).slice(0,31), {
+        views: [{ state:'frozen', ySplit:1, activeCell:'A2' }]
+      });
+      ws.properties.defaultRowHeight = 18;
+      ws.addTable({
+        name: safeExcelTableName(spec.name, sheetIndex),
+        ref: 'A1',
+        headerRow: true,
+        totalsRow: false,
+        style: { theme:'TableStyleMedium2', showRowStripes:true, showFirstColumn:false, showLastColumn:false },
+        columns: headers.map(h => ({ name:h, filterButton:true })),
+        rows: rows.map(row => headers.map((h, i) => excelValueForKind(row[h], kinds[i])))
+      });
+
+      headers.forEach((header, idx) => {
+        const col = ws.getColumn(idx + 1);
+        const kind = kinds[idx];
+        let maxLen = Math.max(10, String(header).length + 2);
+        rows.forEach(row => {
+          const v = excelValueForKind(row[header], kind);
+          maxLen = Math.max(maxLen, excelDisplayLength(v, kind) + 2);
+        });
+        col.width = Math.min(Math.max(maxLen, 12), 42);
+        if(kind === 'text') col.numFmt = '@';
+        else if(kind === 'date') col.numFmt = 'dd/mm/yyyy';
+        else if(kind === 'datetime') col.numFmt = 'dd/mm/yyyy hh:mm';
+        else if(kind === 'percent') col.numFmt = '0.0%';
+        else if(kind === 'number'){
+          const numericVals = excelNonEmptyValues(rows, header).map(v => typeof v === 'number' ? v : Number(String(v).replace(/,/g, ''))).filter(Number.isFinite);
+          col.numFmt = numericVals.length && numericVals.every(Number.isInteger) ? '#,##0' : '#,##0.00';
+        }
+      });
+
+      ws.getRow(1).height = 22;
+      ws.getRow(1).font = { bold:true, color:{ argb:'FFFFFFFF' } };
+      ws.eachRow((row, rowNumber) => {
+        row.alignment = { vertical:'middle' };
+        if(rowNumber > 1){
+          row.eachCell({ includeEmpty:true }, cell => {
+            cell.alignment = { vertical:'top', wrapText:true };
+          });
+        }
+      });
+    });
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+
+  function downloadExcelBlob(blob, filename){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  async function exportFormattedExcel(sheetSpecs, filename){
+    const blob = await buildFormattedExcelBlob(sheetSpecs);
+    downloadExcelBlob(blob, filename);
+  }
+
+  async function exportCategoryToExcel(){
     if(!currentCatRowsFiltered.length){ alert('No entries to export for this range.'); return; }
     const meta = catMeta[currentCatKey];
     const flat = currentCatRowsFiltered.map(row => {
       const base = {
         'Employee': row.profiles ? displayName(row.profiles) : '',
-        'Date': new Date(row.created_at).toLocaleDateString('en-GB'),
+        'Date': new Date(row.created_at),
         'Project / Subject': row.project_name || '',
       };
       if(meta.hasLift) base['Lift ID'] = row.lift_id || '';
@@ -5405,12 +5595,13 @@
       Object.entries(details).forEach(([k,v]) => { base[k] = Array.isArray(v) ? v.join(', ') : (v ?? ''); });
       return base;
     });
-    const ws = XLSX.utils.json_to_sheet(flat);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, meta.name.slice(0,31));
     const fromVal = document.getElementById('catFromMonth').value || 'all';
     const toVal = document.getElementById('catToMonth').value || 'all';
-    XLSX.writeFile(wb, `${meta.name.replace(/\s+/g,'_')}_${fromVal}_to_${toVal}.xlsx`);
+    try{
+      await exportFormattedExcel([{ name:meta.name.slice(0,31), rows:flat }], `${meta.name.replace(/\s+/g,'_')}_${fromVal}_to_${toVal}.xlsx`);
+    }catch(err){
+      alert('Could not export Excel file: ' + err.message);
+    }
   }
 
   // 2026-09-19: modern multi-slide PPTX export for the Dashboard, using
@@ -5422,13 +5613,13 @@
   // genuinely editable, resizable charts in the resulting file. Category
   // colors and names are pulled from catColors/catMeta, the same source
   // the live page's own bars use, so the deck visually matches the app.
-  function exportDashboardToExcel(){
+  async function exportDashboardToExcel(){
     if(!currentDashRows.length){ alert('No entries to export for this range.'); return; }
     const flat = currentDashRows.map(row => {
       const base = {
         'Employee': row.profiles ? displayName(row.profiles) : '',
         'Category': catMeta[row.category]?.name || row.category,
-        'Date': new Date(row.created_at).toLocaleDateString('en-GB'),
+        'Date': new Date(row.created_at),
         'Lift ID': row.lift_id || '',
         'Project / Subject': row.project_name || '',
       };
@@ -5436,14 +5627,15 @@
       Object.entries(details).forEach(([k,v]) => { base[k] = Array.isArray(v) ? v.join(', ') : (v ?? ''); });
       return base;
     });
-    const ws = XLSX.utils.json_to_sheet(flat);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Team Dashboard');
     const fromVal = document.getElementById('dashFromMonth').value || 'all';
     const toVal = document.getElementById('dashToMonth').value || 'all';
     const engineerId = document.getElementById('dashEngineerSelect').value;
     const engineerLabel = engineerId ? (document.getElementById('dashEngineerSelect').selectedOptions[0]?.textContent || 'engineer').replace(/[^\w]+/g, '_') : 'whole_team';
-    XLSX.writeFile(wb, `Dashboard_${engineerLabel}_${fromVal}_to_${toVal}.xlsx`);
+    try{
+      await exportFormattedExcel([{ name:'Team Dashboard', rows:flat }], `Dashboard_${engineerLabel}_${fromVal}_to_${toVal}.xlsx`);
+    }catch(err){
+      alert('Could not export Excel file: ' + err.message);
+    }
   }
 
   async function exportDashboardToPptx(){
@@ -6891,13 +7083,13 @@
     if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Building the archive file…</span>';
 
     try{
-      const wb = XLSX.utils.book_new();
+      const archiveSheets = [];
       if(taskRows.length){
         const flatTasks = taskRows.map(row => {
           const base = {
             'Employee': row.profiles ? displayName(row.profiles) : '',
             'Category': catMeta[row.category]?.name || row.category,
-            'Date': new Date(row.created_at).toLocaleDateString('en-GB'),
+            'Date': new Date(row.created_at),
             'Lift ID': row.lift_id || '',
             'Project / Subject': row.project_name || '',
           };
@@ -6905,7 +7097,7 @@
           Object.entries(details).forEach(([k,v]) => { base[k] = Array.isArray(v) ? v.join(', ') : (v ?? ''); });
           return base;
         });
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(flatTasks), 'Tasks');
+        archiveSheets.push({ name:'Tasks', rows:flatTasks });
       }
       if(projectRows.length){
         const flatProjects = projectRows.map(p => {
@@ -6922,12 +7114,12 @@
             'Status': p.status || '',
             'Progress %': progress !== null ? progress : 'No specific breakdown',
             'Summary': p.notes || '',
-            'Created': new Date(p.created_at).toLocaleDateString('en-GB'),
+            'Created': new Date(p.created_at),
           };
         });
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(flatProjects), 'Projects');
+        archiveSheets.push({ name:'Projects', rows:flatProjects });
       }
-      const excelBlob = new Blob([XLSX.write(wb, { type: 'array', bookType: 'xlsx' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const excelBlob = await buildFormattedExcelBlob(archiveSheets);
       const filename = `Archive_${startStr}_to_${endStr}.xlsx`;
 
       if(statusEl) statusEl.innerHTML = '<span style="color:var(--text-faint);">⏳ Sign in to Google if prompted, then uploading to Drive…</span>';
@@ -7136,7 +7328,7 @@
       ['Backup / Restore system', typeof createBackup === 'function' && typeof confirmRestoreBackup === 'function'],
       ['Data Archive (Google Drive backup/verify)', typeof runDataArchive === 'function' && typeof verifyArchive === 'function'],
       ['Dashboard PPTX export', typeof exportDashboardToPptx === 'function'],
-      ['Excel export', typeof XLSX !== 'undefined'],
+      ['Excel export', typeof ExcelJS !== 'undefined' && typeof XLSX !== 'undefined'],
       ['PPTX generation library loaded', typeof PptxGenJS !== 'undefined']
     ];
     const featureText = featureChecks
