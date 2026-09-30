@@ -4605,7 +4605,8 @@
     { date:'2026-09-29', summary:'Redesigned the home page\'s 4 top stats (Distinct lifts tracked, Activities logged, Active R&I projects, Active engineers) — they aren\'t clickable, so the boxed .stat-card look (background, border, shadow) wrongly implied they were. Card chrome removed, replaced with a hairline divider between the four so they still read as one compact group. Desktop: one row, number stacked above its bold label, detail line lighter underneath. Mobile: back to a 2x2 grid, same layout scaled down (number/label/detail sizes shrunk so 4-digit numbers don\'t crowd the narrower cells), hairlines forming a cross between the four cells. Scoped to .home-stats only — the R&I Project Manager\'s own stat row and the profile page\'s KPI row still use plain, boxed .stat-card, unaffected.' },
     { date:'2026-09-30', summary:'Applied the approved Home statistics layout: removed card backgrounds, outlines, shadows, rounding and backdrop blur; four equal columns on desktop and a 2x2 grid at the existing 860px breakpoint, with interior hairline dividers and readable mobile typography. Fixed the shared card-material CSS overriding the previous Home-only rules. Other cards, statistic IDs, data fetching and all application/database logic are unchanged.' },
     { date:'2026-09-30', summary:'Home statistics follow-up: added a thin theme-aware outline around each transparent item, removed the interior dividers, centered numbers/labels/details, and reduced padding, number sizes and text gaps for a shorter layout. Preserved four columns on desktop and the existing 2x2 tablet/mobile layout. Home-only CSS; live IDs, values, data requests and all business/database logic remain unchanged.' },
-    { date:'2026-09-30', summary:'Home statistics refinement: replaced the four separate outlined stat cards with one shared theme-aware panel using a single outer border and a very light surface. Desktop keeps 4 centered values in one row with subtle internal vertical dividers; mobile/tablet keeps the existing 2x2 layout with a simple cross-divider. No stat IDs, values, queries or business/database logic changed.' }
+    { date:'2026-09-30', summary:'Home statistics refinement: replaced the four separate outlined stat cards with one shared theme-aware panel using a single outer border and a very light surface. Desktop keeps 4 centered values in one row with subtle internal vertical dividers; mobile/tablet keeps the existing 2x2 layout with a simple cross-divider. No stat IDs, values, queries or business/database logic changed.' },
+    { date:'2026-09-30', summary:'Fixed the Google Drive archive silently truncating at 1000 rows. Cause: Supabase/PostgREST caps any single request at 1000 rows by default, with no error — a period with more than 1000 matching tasks looked like a completely successful archive ("Backed up 1000 task(s)...") while quietly leaving the rest out. New fetchAllRows() helper pages through with .range() until a page comes back short, added to all three archive queries (tasks, dev_projects, and the dev_project_tasks progress lookup). Tested against a simulated 2350-row table (fetches all 2350 across 3 pages), the exact-1000 edge case (correctly makes one more request to confirm nothing is left, rather than assuming truncation), zero rows, and an error case. Separately confirmed: the archive\'s project query has no published/unpublished filter — it already always included every project in the date range, published or not. Note: the Category export and Dashboard export queries have this same unpaginated pattern and may have the same silent-truncation risk for a busy category or wide date range — not fixed here, flagged for a follow-up.' }
   ];
  
   let currentUser = null;   // Supabase auth user
@@ -7045,13 +7046,39 @@
     return { startStr, endStr, periodLabel };
   }
 
+  // 2026-09-30: Supabase/PostgREST caps any single request at 1000 rows
+  // by default — with no error, no warning, it just silently returns the
+  // first 1000 and stops. Archiving a period with more than 1000 tasks
+  // (very plausible over "last 12 months", given ~1300+ activities/month
+  // org-wide) looked completely successful ("Backed up 1000 task(s)...")
+  // while quietly leaving the rest out. This pages through with .range()
+  // until a page comes back smaller than the page size, accumulating
+  // every row. Requires a stable .order() on the query so pagination
+  // doesn't skip or repeat rows across pages — callers must supply one.
+  async function fetchAllRows(buildQuery){
+    const pageSize = 1000;
+    let from = 0, all = [];
+    while(true){
+      const { data, error } = await buildQuery().range(from, from + pageSize - 1);
+      if(error) return { data: null, error };
+      all = all.concat(data || []);
+      if(!data || data.length < pageSize) break;
+      from += pageSize;
+    }
+    return { data: all, error: null };
+  }
+
   async function runDataArchive(startStr, endStr, periodLabel, btn, alsoDelete){
     if(!currentProfile || currentProfile.role !== 'superadmin') return;
     const statusEl = document.getElementById('archiveStatusMsg');
 
-    const { data: taskRows, error: taskErr } = await sb.from('tasks').select('*, profiles(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr);
+    const { data: taskRows, error: taskErr } = await fetchAllRows(() =>
+      sb.from('tasks').select('*, profiles(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr).order('id', { ascending: true })
+    );
     if(taskErr){ alert('Could not read tasks for this period: ' + taskErr.message); return; }
-    const { data: projectRows, error: projErr } = await sb.from('dev_projects').select('*, profiles!lead_id(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr);
+    const { data: projectRows, error: projErr } = await fetchAllRows(() =>
+      sb.from('dev_projects').select('*, profiles!lead_id(full_name, nickname)').gte('created_at', startStr).lte('created_at', endStr).order('id', { ascending: true })
+    );
     if(projErr){ alert('Could not read projects for this period: ' + projErr.message); return; }
     // Progress isn't a stored column — it's computed from each project's
     // sub-tasks (done / total), same as the real Projects page does via
@@ -7061,7 +7088,9 @@
     // and computes it the same way, independently.
     let projectTaskRows = [];
     if(projectRows.length){
-      const { data: subTasks, error: subTaskErr } = await sb.from('dev_project_tasks').select('project_id, status').in('project_id', projectRows.map(p => p.id));
+      const { data: subTasks, error: subTaskErr } = await fetchAllRows(() =>
+        sb.from('dev_project_tasks').select('project_id, status').in('project_id', projectRows.map(p => p.id)).order('id', { ascending: true })
+      );
       if(subTaskErr){ alert('Could not read project sub-tasks for progress: ' + subTaskErr.message); return; }
       projectTaskRows = subTasks || [];
     }
