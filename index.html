@@ -387,6 +387,23 @@
   .stat-card .l{font-size:12.5px; color:var(--text-dim); margin-top:4px;}
   .stat-card .delta{font-size:11.5px; font-weight:600; margin-top:8px; display:inline-block;}
   .delta.up{color:var(--green);} .delta.flat{color:var(--text-faint);}
+
+  /* 2026-09-29: home page's own 4 stats (Distinct lifts tracked etc.) —
+     these aren\'t clickable, so the boxed .stat-card look (background,
+     border, shadow) wrongly implied they were. Card chrome removed here
+     only; a hairline divider between the four keeps them reading as one
+     compact group instead of four separate floating numbers. The R&I
+     Project Manager\'s own stat row further down the page is unaffected
+     — it still uses plain .stat-card, unscoped by .home-stats. */
+  .home-stats{ background:none; }
+  .home-stats .stat-card{
+    background:none; border:none; box-shadow:none; border-radius:0;
+    padding:4px 20px; border-left:1px solid var(--border);
+  }
+  .home-stats .stat-card:first-child{ border-left:none; padding-left:2px; }
+  .home-stats .stat-card .n{ font-size:30px; line-height:1; }
+  .home-stats .stat-card .l{ font-size:13.5px; font-weight:700; color:var(--text); margin-top:6px; }
+  .home-stats .stat-card .delta{ margin-top:2px; }
  
   section.block{margin-bottom:16px;}
   .block-head{
@@ -1223,6 +1240,16 @@
     .indicator-panel{padding:16px;}
     .digit{width:44px; height:64px; font-size:30px;}
     .cat-grid, .stat-row, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr) !important;}
+    /* Mobile: home-stats keeps the 2x2 grid the line above already gives
+       it, cross-dividers instead of 4 boxes, sizes shrunk to fit without
+       overflowing (checked against 4-digit numbers like "1226"). */
+    .home-stats .stat-card{ border-left:1px solid var(--border); padding:12px 14px; }
+    .home-stats .stat-card:nth-child(odd){ border-left:none; padding-left:2px; }
+    .home-stats .stat-card:nth-child(-n+2){ border-bottom:1px solid var(--border); padding-bottom:14px; }
+    .home-stats .stat-card:nth-child(n+3){ padding-top:14px; }
+    .home-stats .stat-card .n{ font-size:19px; }
+    .home-stats .stat-card .l{ font-size:10px; margin-top:4px; line-height:1.25; }
+    .home-stats .stat-card .delta{ font-size:9px; }
 
     /* Pending sign-in row: avatar/name/email + a role dropdown + two buttons
        all had to share one line before, which pushed the buttons off the
@@ -1930,7 +1957,7 @@
       </div>
     </div>
 
-    <div class="stat-row">
+    <div class="stat-row home-stats">
       <div class="stat-card"><div class="n" id="homeStatLifts">—</div><div class="l">Distinct lifts tracked</div><div class="delta flat" id="homeStatLiftsDelta">—</div></div>
       <div class="stat-card"><div class="n" id="homeStatActivities">—</div><div class="l">Activities logged</div><div class="delta flat" id="homeStatActivitiesDelta">—</div></div>
       <div class="stat-card"><div class="n" id="homeStatDevProjects">—</div><div class="l">Active R&amp;I projects</div><div class="delta flat" id="homeStatDevDelta">—</div></div>
@@ -4544,7 +4571,8 @@
     { date:'2026-09-27', summary:'Header: on desktop only, vertical padding trimmed from 7px to 4px (bell/avatar sizes unchanged — only the breathing room around them shrinks); mobile header keeps its own separate, untouched padding. Active tab now gets a soft accent-tinted background (color-mix, 14%) instead of just a color change, on both desktop and mobile — one rule covers both since it\'s the same nav element either way, just repositioned by screen width.' },
     { date:'2026-09-27', summary:'Fixed the Activity Trend end-point dot looking stretched/oval. Cause: the chart SVG uses preserveAspectRatio="none" (so it can fill a shorter box without letterboxing), which scales x and y by different amounts — harmless for the lines, but it turned the end-point <circle> into an ellipse, most visible on wide desktop cards. The dot is now a real HTML element positioned over the chart by percentage of the viewBox (new .trend-chart-wrap / #trendEndDot), so it stays a true circle at any width, on desktop and mobile alike. The invisible per-point hover targets stay inside the SVG (their shape doesn\'t matter since nothing is drawn).' },
     { date:'2026-09-28', summary:'Fixed the Notebook tab blinking every minute. Cause: the 60-second reminder check reloads the Notebook list while that tab is open, and loadNotebook() blanked the whole list to "Loading…" and rebuilt it on every call — a visible flash once a minute even when nothing had changed (it also collapsed any open "+ Add subtask" box). Now "Loading…" only appears on the first load, and each reload compares the fresh data with what is already on screen and only redraws if something actually changed (a task newly turning overdue counts as a change, since it is drawn differently). Adding, editing, ticking and deleting still refresh immediately as before.' },
-    { date:'2026-09-28', summary:'Added a Collaborators filter to the R&I Project Manager\'s Project timeline, right beside All leads. Works like the existing filters: pick a person and the Gantt list narrows to projects where they\'re listed as a collaborator (not just the lead), combinable with the lead/impact type/status filters already there.' }
+    { date:'2026-09-28', summary:'Added a Collaborators filter to the R&I Project Manager\'s Project timeline, right beside All leads. Works like the existing filters: pick a person and the Gantt list narrows to projects where they\'re listed as a collaborator (not just the lead), combinable with the lead/impact type/status filters already there.' },
+    { date:'2026-09-29', summary:'Redesigned the home page\'s 4 top stats (Distinct lifts tracked, Activities logged, Active R&I projects, Active engineers) — they aren\'t clickable, so the boxed .stat-card look (background, border, shadow) wrongly implied they were. Card chrome removed, replaced with a hairline divider between the four so they still read as one compact group. Desktop: one row, number stacked above its bold label, detail line lighter underneath. Mobile: back to a 2x2 grid, same layout scaled down (number/label/detail sizes shrunk so 4-digit numbers don\'t crowd the narrower cells), hairlines forming a cross between the four cells. Scoped to .home-stats only — the R&I Project Manager\'s own stat row and the profile page\'s KPI row still use plain, boxed .stat-card, unaffected.' }
   ];
  
   let currentUser = null;   // Supabase auth user
