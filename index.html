@@ -325,6 +325,31 @@
     position:relative; overflow:hidden;
   }
   .indicator-panel::before{ display:none; }
+
+  /* ---------- SUGGESTION DROPDOWN ----------
+     2026-09-30: shared by the Lift ID field in the task-logging form and
+     the 3 search boxes (Home, Lift Trace, quick search). Appended to
+     document.body and positioned with position:fixed, computed in JS from
+     the input's own getBoundingClientRect() — NOT nested inside the input's
+     own container. This sidesteps the exact bug the header/footer nav hit
+     earlier: an ancestor with backdrop-filter becomes the containing block
+     for any position:fixed descendant, which would silently break this the
+     same way. Rendering it as a body-level sibling avoids that entirely,
+     regardless of which container an input happens to sit inside. */
+  .suggest-panel{
+    position:fixed; z-index:400; max-height:280px; overflow-y:auto;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    box-shadow:var(--shadow); padding:6px; display:none;
+  }
+  .suggest-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:8px 10px; border-radius:8px; cursor:pointer;
+  }
+  .suggest-item:hover, .suggest-item.active{ background:var(--surface-alt); }
+  .suggest-item .main{ font-family:'IBM Plex Mono'; font-weight:600; font-size:13px; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .suggest-item .sub{ font-size:11px; color:var(--text-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:1; text-align:right; }
+  .suggest-item .kind{ font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--accent); flex-shrink:0; }
+  .suggest-empty{ padding:10px; font-size:12px; color:var(--text-faint); }
   .indicator-row{display:flex; align-items:center; justify-content:space-between; position:relative; z-index:1;}
   .indicator-label{font-size:11px; color:var(--text-faint); letter-spacing:.08em; text-transform:uppercase; font-weight:600;}
   .indicator-dot{width:7px; height:7px; border-radius:50%; background:var(--green); box-shadow:0 0 8px color-mix(in srgb, var(--green) 70%, transparent); animation:pulseDot 2s ease-in-out infinite;}
@@ -962,6 +987,14 @@
   .detail-v{font-size:13px; color:var(--text); word-break:break-word;}
   .btn{padding:8px 15px; border-radius:8px; font-size:12.5px; font-weight:600; border:none; cursor:pointer;}
   .btn.approve{background:var(--green); color:#fff;}
+  /* 2026-09-30: dark theme's --green (#3FCF8E) is deliberately a bright,
+     light mint — reads fine as text/icon color against the dark
+     background it's normally used on, but as a solid button fill behind
+     white text it's too close in lightness to white, so the label was
+     barely legible. Darkened just for this button, dark theme only —
+     light theme's --green is already dark enough for white text and is
+     untouched. */
+  html[data-theme="dark"] .btn.approve{ background:color-mix(in srgb, var(--green) 55%, black); }
   .btn.reject{background:var(--surface-alt); color:var(--text-dim); margin-left:8px; border:1px solid var(--border);}
   /* 2026-09-10: these three were nearly invisible in Dark — their tint
      was tightly mixed with --surface, but Dark's surface/surface-alt had
@@ -3000,6 +3033,215 @@
     if(!wingsErr && !typesErr && !chipErr && !subtypeErr && !customFieldErr){ dynamicFieldOptionsLoaded = true; dynamicFieldOptionsLoadedAt = Date.now(); }
   }
 
+
+  // ============================================================
+  // SUGGESTION DROPDOWN (Lift ID field + the 3 search boxes)
+  // 2026-09-30. See .suggest-panel in the CSS for why this is a body-level
+  // element rather than nested near each input.
+  // ============================================================
+  function timeAgoShort(dateStr){
+    const ms = Date.now() - new Date(dateStr).getTime();
+    const days = Math.floor(ms / 86400000);
+    if(days <= 0) return 'today';
+    if(days === 1) return 'yesterday';
+    if(days < 30) return `${days}d ago`;
+    const months = Math.floor(days / 30);
+    if(months < 12) return `${months}mo ago`;
+    return `${Math.floor(months / 12)}y ago`;
+  }
+
+  // One shared panel element reused by every input this is attached to —
+  // only one can ever be open at a time anyway, so there is no need for
+  // each input to own a separate DOM node.
+  let suggestPanelEl = null;
+  function getSuggestPanel(){
+    if(!suggestPanelEl){
+      suggestPanelEl = document.createElement('div');
+      suggestPanelEl.className = 'suggest-panel';
+      document.body.appendChild(suggestPanelEl);
+    }
+    return suggestPanelEl;
+  }
+
+  // buildQuery(term) -> Supabase query for that search term.
+  // mapRows(rows, term) -> array of {main, sub, kind, value}, already
+  // deduped/capped — kept separate from the query itself since the two
+  // fetchers below need different matching/grouping logic on the result.
+  function attachSuggestions(inputEl, { buildQuery, mapRows, onPick, minChars = 2 }){
+    if(!inputEl || inputEl.dataset.suggestBound) return;
+    inputEl.dataset.suggestBound = 'true';
+    let debounceTimer = null, requestToken = 0, activeIndex = -1, items = [];
+    const panel = getSuggestPanel();
+
+    function positionPanel(){
+      const r = inputEl.getBoundingClientRect();
+      panel.style.left = r.left + 'px';
+      panel.style.top = (r.bottom + 4) + 'px';
+      panel.style.width = r.width + 'px';
+    }
+    function closePanel(){
+      panel.style.display = 'none';
+      if(panel._owner === inputEl) panel._owner = null;
+      activeIndex = -1;
+    }
+    function renderItems(){
+      if(!items.length){
+        panel.innerHTML = '<div class="suggest-empty">No matches yet</div>';
+      } else {
+        panel.innerHTML = items.map((it, i) => `
+          <div class="suggest-item${i === activeIndex ? ' active' : ''}" data-i="${i}">
+            <div style="min-width:0; overflow:hidden;">
+              <span class="kind">${it.kind}</span>
+              <div class="main">${it.main}</div>
+            </div>
+            <div class="sub">${it.sub}</div>
+          </div>`).join('');
+        panel.querySelectorAll('.suggest-item').forEach(el => {
+          el.addEventListener('mousedown', (e) => {
+            // mousedown (not click) fires before the input's own blur
+            // handler would otherwise close this panel first and lose
+            // the click.
+            e.preventDefault();
+            const it = items[+el.dataset.i];
+            closePanel();
+            onPick(it, inputEl);
+          });
+        });
+      }
+      panel._owner = inputEl;
+      positionPanel();
+      panel.style.display = 'block';
+    }
+
+    async function runSearch(){
+      const term = inputEl.value.trim();
+      if(term.length < minChars){ closePanel(); return; }
+      const myToken = ++requestToken;
+      const { data, error } = await buildQuery(term);
+      if(myToken !== requestToken) return; // a newer keystroke already superseded this
+      if(error || !data){ closePanel(); return; }
+      items = mapRows(data, term);
+      activeIndex = -1;
+      if(document.activeElement === inputEl) renderItems();
+    }
+
+    inputEl.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(runSearch, 280);
+    });
+    inputEl.addEventListener('keydown', (e) => {
+      if(panel.style.display !== 'block' || panel._owner !== inputEl) return;
+      if(e.key === 'ArrowDown'){ e.preventDefault(); activeIndex = Math.min(activeIndex + 1, items.length - 1); renderItems(); }
+      else if(e.key === 'ArrowUp'){ e.preventDefault(); activeIndex = Math.max(activeIndex - 1, 0); renderItems(); }
+      else if(e.key === 'Escape'){ closePanel(); }
+      else if(e.key === 'Enter' && activeIndex >= 0 && items[activeIndex]){
+        e.preventDefault();
+        const it = items[activeIndex];
+        closePanel();
+        onPick(it, inputEl);
+      }
+    });
+    inputEl.addEventListener('blur', () => setTimeout(() => { if(panel._owner === inputEl) closePanel(); }, 120));
+    window.addEventListener('resize', () => { if(panel._owner === inputEl) positionPanel(); });
+    window.addEventListener('scroll', () => { if(panel._owner === inputEl) positionPanel(); }, true);
+  }
+
+  // Search-bar suggestions: Lift ID and Project Name both, mixed. Term is
+  // escaped the same way runLiftSearch() already does, for the same
+  // reason (a literal comma would break PostgREST's .or() syntax).
+  function fetchSearchSuggestions(term){
+    const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\\$&');
+    return sb.from('tasks')
+      .select('lift_id, project_name, category, created_at, profiles(full_name, nickname)')
+      .or(`lift_id.ilike.%${safeTerm}%,project_name.ilike.%${safeTerm}%`)
+      .order('created_at', { ascending: false })
+      .limit(40);
+  }
+  function mapSearchSuggestions(rows, term){
+    const q = term.toLowerCase();
+    const lifts = new Map(), projects = new Map();
+    rows.forEach(row => {
+      if(row.lift_id && row.lift_id.toLowerCase().includes(q) && !lifts.has(row.lift_id)){
+        lifts.set(row.lift_id, { kind: 'Lift ID', main: row.lift_id, value: row.lift_id,
+          sub: `${catMeta[row.category]?.name || row.category} · ${timeAgoShort(row.created_at)}` });
+      }
+      if(row.project_name && row.project_name.toLowerCase().includes(q) && !projects.has(row.project_name)){
+        projects.set(row.project_name, { kind: 'Project', main: row.project_name, value: row.project_name,
+          sub: row.profiles ? displayName(row.profiles) : '' });
+      }
+    });
+    return [...lifts.values()].slice(0, 5).concat([...projects.values()].slice(0, 4));
+  }
+
+  // Lift ID field (task-logging form) suggestions: Lift ID only, the
+  // "additional info" is where it was last logged.
+  function fetchLiftIdFieldSuggestions(term){
+    const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\\$&');
+    return sb.from('tasks')
+      .select('lift_id, category, created_at, profiles(full_name, nickname)')
+      .ilike('lift_id', `%${safeTerm}%`)
+      .order('created_at', { ascending: false })
+      .limit(20);
+  }
+  function mapLiftIdFieldSuggestions(rows){
+    const seen = new Map();
+    rows.forEach(row => {
+      if(row.lift_id && !seen.has(row.lift_id)){
+        seen.set(row.lift_id, { kind: 'Lift ID', main: row.lift_id, value: row.lift_id,
+          sub: `${catMeta[row.category]?.name || row.category} · ${row.profiles ? displayName(row.profiles) : 'unknown'} · ${timeAgoShort(row.created_at)}` });
+      }
+    });
+    return [...seen.values()].slice(0, 6);
+  }
+
+  // Every category's "Task Name" / "Project Name" / "Client / Project
+  // Name" field (section:'identity', anything other than Lift ID) writes
+  // into the same tasks.project_name column — confirmed in
+  // collectFormData()'s own logic below, which already treats them
+  // interchangeably when picking a title for the feed/log. One shared
+  // source covers all of them for exactly the same reason it already
+  // covers the search boxes.
+  function fetchProjectNameFieldSuggestions(term){
+    const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\$&');
+    return sb.from('tasks')
+      .select('project_name, category, created_at, profiles(full_name, nickname)')
+      .ilike('project_name', `%${safeTerm}%`)
+      .order('created_at', { ascending: false })
+      .limit(20);
+  }
+  function mapProjectNameFieldSuggestions(rows){
+    const seen = new Map();
+    rows.forEach(row => {
+      if(row.project_name && !seen.has(row.project_name)){
+        seen.set(row.project_name, { kind: 'Logged before', main: row.project_name, value: row.project_name,
+          sub: `${catMeta[row.category]?.name || row.category} · ${row.profiles ? displayName(row.profiles) : 'unknown'} · ${timeAgoShort(row.created_at)}` });
+      }
+    });
+    return [...seen.values()].slice(0, 6);
+  }
+
+  // Wiring: the 3 search boxes are static markup, present once at page
+  // load, so this only needs to run once. The task-logging form's Lift ID
+  // field is handled separately, at the end of renderTaskForm() — that
+  // form is rebuilt from scratch every time a category/type changes.
+  (function(){
+    const home = document.getElementById('homeSearchInput');
+    if(home) attachSuggestions(home, {
+      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions,
+      onPick: (it, el) => { el.value = it.value; traceFromHome(); }
+    });
+    const liftPage = document.getElementById('liftSearchInput');
+    if(liftPage) attachSuggestions(liftPage, {
+      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions,
+      onPick: (it, el) => { el.value = it.value; runLiftSearch(); }
+    });
+    const quick = document.getElementById('catQuickSearchInput');
+    if(quick) attachSuggestions(quick, {
+      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions,
+      onPick: (it, el) => { el.value = it.value; submitCatQuickSearch(); }
+    });
+  })();
+
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
 
   function innerFieldHTML(f){
@@ -3009,7 +3251,7 @@
       const inputType = isMonth ? 'month' : (isDate ? 'date' : 'text');
       const numericAttrs = f.numeric ? `inputmode="numeric" oninput="filterNumericInput(this)"` : '';
       const numericWarning = f.numeric ? `<div class="field-warning" style="display:none;">Only numbers are allowed here — letters were removed.</div>` : '';
-      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${inputType}" class="ti" placeholder="${(isDate||isMonth)?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}" ${numericAttrs}>${numericWarning}</div>`;
+      return `<div class="form-field"><div class="field-label">${f.l}${reqStar(f)}</div><input type="${inputType}" class="ti" data-field-label="${f.l}" placeholder="${(isDate||isMonth)?'':(f.ph||'')}" style="${f.mono?"font-family:'IBM Plex Mono'":''}" ${numericAttrs}>${numericWarning}</div>`;
     }
     if(f.t==='number'){
       // A genuine number input (browser-native stepper, decimal support)
@@ -3636,6 +3878,25 @@
         if(preservedBaseValues.hasOwnProperty(label)) input.value = preservedBaseValues[label];
       });
     }
+
+    // 2026-09-30: suggestions on the Lift ID field, wherever it appears —
+    // this form is rebuilt from scratch on every category/type change, so
+    // re-running this each time (attachSuggestions no-ops on an input it's
+    // already bound, via dataset.suggestBound) picks up the fresh element.
+    document.querySelectorAll('#dynamicForm input[data-field-label="Lift ID"]').forEach(el => {
+      attachSuggestions(el, {
+        buildQuery: fetchLiftIdFieldSuggestions, mapRows: mapLiftIdFieldSuggestions,
+        onPick: (it, inputEl) => { inputEl.value = it.value; }
+      });
+    });
+    (currentFormFields || []).forEach(f => {
+      if(f.t !== 'text' || f.section !== 'identity' || f.l === 'Lift ID') return;
+      const el = document.querySelector(`#dynamicForm input[data-field-label="${f.l}"]`);
+      if(el) attachSuggestions(el, {
+        buildQuery: fetchProjectNameFieldSuggestions, mapRows: mapProjectNameFieldSuggestions,
+        onPick: (it, inputEl) => { inputEl.value = it.value; }
+      });
+    });
   }
  
   function toggleSearchResultDetails(btn){
@@ -4606,7 +4867,9 @@
     { date:'2026-09-30', summary:'Applied the approved Home statistics layout: removed card backgrounds, outlines, shadows, rounding and backdrop blur; four equal columns on desktop and a 2x2 grid at the existing 860px breakpoint, with interior hairline dividers and readable mobile typography. Fixed the shared card-material CSS overriding the previous Home-only rules. Other cards, statistic IDs, data fetching and all application/database logic are unchanged.' },
     { date:'2026-09-30', summary:'Home statistics follow-up: added a thin theme-aware outline around each transparent item, removed the interior dividers, centered numbers/labels/details, and reduced padding, number sizes and text gaps for a shorter layout. Preserved four columns on desktop and the existing 2x2 tablet/mobile layout. Home-only CSS; live IDs, values, data requests and all business/database logic remain unchanged.' },
     { date:'2026-09-30', summary:'Home statistics refinement: replaced the four separate outlined stat cards with one shared theme-aware panel using a single outer border and a very light surface. Desktop keeps 4 centered values in one row with subtle internal vertical dividers; mobile/tablet keeps the existing 2x2 layout with a simple cross-divider. No stat IDs, values, queries or business/database logic changed.' },
-    { date:'2026-09-30', summary:'Fixed the Google Drive archive silently truncating at 1000 rows. Cause: Supabase/PostgREST caps any single request at 1000 rows by default, with no error — a period with more than 1000 matching tasks looked like a completely successful archive ("Backed up 1000 task(s)...") while quietly leaving the rest out. New fetchAllRows() helper pages through with .range() until a page comes back short, added to all three archive queries (tasks, dev_projects, and the dev_project_tasks progress lookup). Tested against a simulated 2350-row table (fetches all 2350 across 3 pages), the exact-1000 edge case (correctly makes one more request to confirm nothing is left, rather than assuming truncation), zero rows, and an error case. Separately confirmed: the archive\'s project query has no published/unpublished filter — it already always included every project in the date range, published or not. Note: the Category export and Dashboard export queries have this same unpaginated pattern and may have the same silent-truncation risk for a busy category or wide date range — not fixed here, flagged for a follow-up.' }
+    { date:'2026-09-30', summary:'Fixed the Google Drive archive silently truncating at 1000 rows. Cause: Supabase/PostgREST caps any single request at 1000 rows by default, with no error — a period with more than 1000 matching tasks looked like a completely successful archive ("Backed up 1000 task(s)...") while quietly leaving the rest out. New fetchAllRows() helper pages through with .range() until a page comes back short, added to all three archive queries (tasks, dev_projects, and the dev_project_tasks progress lookup). Tested against a simulated 2350-row table (fetches all 2350 across 3 pages), the exact-1000 edge case (correctly makes one more request to confirm nothing is left, rather than assuming truncation), zero rows, and an error case. Separately confirmed: the archive\'s project query has no published/unpublished filter — it already always included every project in the date range, published or not. Note: the Category export and Dashboard export queries have this same unpaginated pattern and may have the same silent-truncation risk for a busy category or wide date range — not fixed here, flagged for a follow-up.' },
+    { date:'2026-09-30', summary:'Added type-as-you-go suggestion dropdowns, sourced from what has already been logged. Covers: the Lift ID field in every category\'s task-logging form (one shared field renderer, so this works everywhere Lift ID appears without per-category code); every category\'s Task Name / Project Name / Client Project Name field (they all write into the same tasks.project_name column, so one shared source covers all of them); and the 3 search boxes (Home hero, Lift Trace page, quick search popover), which suggest a mix of matching Lift IDs and project names. Each suggestion shows where it was last logged — category, who, and how long ago for Lift ID; category and who for names — so a near-duplicate (e.g. "LX-204" vs "LX-024") gets caught before it fragments a lift\'s history. Triggers after 2 characters, debounced, keyboard-navigable (arrows/Enter/Escape), click to fill. The dropdown is deliberately rendered as its own element at the end of <body> rather than nested near each input — an ancestor with backdrop-filter (like the header) becomes the containing block for any position:fixed descendant, which is exactly the bug the header/footer nav redesign hit earlier; this sidesteps it the same way rather than repeating it. Tested the matching/dedupe logic directly: duplicate Lift IDs collapse to their most recently logged entry, and the field-selection logic correctly picks up every identity-section name field while skipping Lift ID (handled separately) and non-text fields like dates.' },
+    { date:'2026-09-30', summary:'Fixed the Approve button (Admin > Pending sign-ins) being nearly unreadable in dark theme — white text on dark theme\'s --green (#3FCF8E, a deliberately bright mint for use as text/icon color) measured 1.99:1 contrast, well under the 4.5:1 minimum for legible text. Dark theme only: background darkened via color-mix to roughly 5.9:1 contrast with the white label. Light theme\'s --green is already dark enough and is untouched.' }
   ];
  
   let currentUser = null;   // Supabase auth user
