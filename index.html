@@ -430,8 +430,8 @@
     box-shadow:none;
   }
   #view-home .home-stats > .stat-card{
-    min-width:0; padding:8px 12px; text-align:center;
-    display:flex; flex-direction:column; justify-content:center;
+    min-width:0; padding:8px 12px; text-align:left;
+    display:flex; flex-direction:column; justify-content:center; align-items:flex-start;
     background:none !important;
     border:0 !important; border-left:1px solid var(--border) !important;
     border-radius:0 !important; box-shadow:none !important;
@@ -1221,17 +1221,18 @@
   @media (max-width: 860px){
     .hero{grid-template-columns:1fr;}
     .stat-row, .cat-grid, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr);}
-    /* Home summary: the same single shared panel becomes a 2x2 matrix.
-       Internal hairlines form a cross; the outer border stays singular. */
+    /* Home summary: on mobile keep the same single outer panel, but make
+       the 2x2 contents minimal — no interior divider lines or individual
+       card borders, just tighter spacing and smaller type. */
     #view-home .home-stats{
       grid-template-columns:repeat(2,minmax(0,1fr)) !important;
       gap:0; padding:4px;
     }
     #view-home .home-stats > .stat-card{
-      padding:8px 10px; border-left:0 !important;
+      padding:7px 8px; border:0 !important; align-items:flex-start; text-align:left;
     }
-    #view-home .home-stats > .stat-card:nth-child(even){ border-left:1px solid var(--border) !important; }
-    #view-home .home-stats > .stat-card:nth-child(n+3){ border-top:1px solid var(--border) !important; }
+    #view-home .home-stats > .stat-card:nth-child(even),
+    #view-home .home-stats > .stat-card:nth-child(n+3){ border:0 !important; }
     .split-grid, .split-grid-tasks, .dev-form-grid{grid-template-columns:1fr;}
     .form-row-2{grid-template-columns:1fr;}
     main{padding:16px 12px 24px;}
@@ -1306,12 +1307,12 @@
     .indicator-panel{padding:16px;}
     .digit{width:44px; height:64px; font-size:30px;}
     .cat-grid, .stat-row, .lift-specs, .specs-4, .specs-5{grid-template-columns:repeat(2,1fr) !important;}
-    /* Compact, centered Home summary on phones. Allow text to wrap
-       naturally rather than hiding labels or fixing the item height. */
-    #view-home .home-stats > .stat-card{ padding:8px 8px; }
-    #view-home .home-stats .n{ font-size:24px; }
-    #view-home .home-stats .l{ font-size:12px; }
-    #view-home .home-stats .delta{ font-size:11px; }
+    /* Compact Home summary on phones: one group border only, no internal
+       rules, and smaller text so the 2x2 block stays visually light. */
+    #view-home .home-stats > .stat-card{ padding:7px 8px; }
+    #view-home .home-stats .n{ font-size:22px; }
+    #view-home .home-stats .l{ font-size:11.5px; margin-top:2px; }
+    #view-home .home-stats .delta{ font-size:10.5px; margin-top:1px; }
 
     /* Pending sign-in row: avatar/name/email + a role dropdown + two buttons
        all had to share one line before, which pushed the buttons off the
@@ -4778,6 +4779,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-03', summary:'Home statistics visual refinement: desktop stat content is now left-aligned inside the existing single shared panel; mobile keeps the 2x2 layout but removes all interior divider lines and individual borders, with slightly smaller type and tighter padding. The single outer group border, live values, calculations and realtime refresh logic are unchanged.' },
     { date:'2026-10-03', summary:'Home overview counts now refresh immediately without a page reload: successful task add/edit/delete, project add/edit/delete/publish changes, and profile approval/removal actions schedule the existing get_home_stats RPC to refresh; realtime changes on activity_log/tasks/dev_projects/profiles also trigger the same debounced refresh so other users\' changes appear live when those table events are available. No Home UI/CSS or Supabase SQL changed.' },
     { date:'2026-10-03', summary:'Project PPTX exporter now matches the approved VIP Lift reference template: no portfolio summary/details/remarks slides, no extra project-status badge, one clean project-report slide per up to 8 tasks with the same header, Done/In progress/Planned/Today legend, four project metrics, completion bar, task timeline and footer; longer projects automatically continue on identical timeline slides using the same full-project date scale.' },
     { date:'2026-10-03', summary:'PPTX layout hardening: Dashboard Engineer Activity now paginates at 8 engineers per slide; Project reports follow the reference layout more closely with a dedicated optional Project Details slide, a cleaner task-only Gantt area, 6 tasks per Gantt page, protected legend/footer space, and smaller remarks pages. Excel export is unchanged.' },
