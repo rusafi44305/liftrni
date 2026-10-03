@@ -4781,6 +4781,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-03', summary:'Fixed Project PPTX repair warning for same-day/right-edge Gantt tasks: task-bar geometry is now finite-number guarded, clamped inside the timeline, and given a minimum visible width so PptxGenJS can never emit a zero-width rounded rectangle with an invalid Infinity adjustment.' },
     { date:'2026-10-03', summary:'Export reporting upgrade: Project PPTX now supports single, selected, or currently-filtered multiple projects in one deck; long project task lists paginate across fixed-height continuation slides instead of shrinking/overlapping; Dashboard PPTX moved to the same clean professional report language; Category/Dashboard Excel exports now use filter-aware filenames and report headers plus an additional Charts sheet with graphical summaries, while preserving native Excel Tables and type-aware cells.' },
     { date:'2026-09-30', summary:'Excel exports upgraded from plain worksheets to native Excel Tables with built-in filter/sort dropdowns, frozen headers, readable widths, and type-aware cells: text/reference IDs stay text, dates are real Excel dates, numeric columns are numbers, and percentages use percentage formatting. Applied to Category export, Dashboard export, and Google Drive archive workbooks without changing the exported data or Supabase logic.' },
     { date:'2026-08-28', summary:'Initial build: task logging across 6 categories, Lift ID tracking, Team Chat, Notebook, Admin panel, role system (User/Admin/Superadmin).' },
@@ -9737,7 +9738,33 @@ for a competing inline style first.`;
           const rangeStart=Math.min(...allStarts), rangeEnd=Math.max(...allEnds,rangeStart+86400000), span=Math.max(rangeEnd-rangeStart,86400000);
           let tick=new Date(new Date(rangeStart).getFullYear(),new Date(rangeStart).getMonth(),1); const endTick=new Date(rangeEnd);
           while(tick<=endTick){const tx=trackX+((tick.getTime()-rangeStart)/span)*trackW; if(tx>=trackX-0.02&&tx<=trackX+trackW+0.02){slide.addShape(pptx.ShapeType.line,{x:tx,y:top-0.12,w:0,h:rowH*chunk.length+0.15,line:{color:'E9EDF3',width:0.5,dash:'dash'}});slide.addText(tick.toLocaleDateString('en-GB',{month:'short',year:tick.getMonth()===0?'numeric':undefined}),{x:Math.max(trackX,tx-0.25),y:top-0.35,w:0.8,h:0.18,fontSize:7.2,color:DIM,fontFace:F,align:'center'});} tick.setMonth(tick.getMonth()+1);}
-          chunk.forEach((t,i)=>{const y=top+i*rowH; const s=new Date((t.start_date||project.start_date)+'T00:00:00').getTime(); const e=new Date((t.end_date||t.start_date||project.target_date||project.start_date)+'T00:00:00').getTime(); const left=trackX+((s-rangeStart)/span)*trackW; const width=Math.max(0.12,((Math.max(e,s+86400000)-s)/span)*trackW); const color=STATUS[t.status]||ACCENT; slide.addText(t.task_name,{x:nameX,y:y+0.02,w:nameW,h:0.22,fontSize:8.9,bold:true,color:TEXT,fontFace:F,fit:'shrink'}); slide.addText(`${fmt(t.start_date)} → ${fmt(t.end_date)}`,{x:nameX,y:y+0.24,w:nameW,h:0.16,fontSize:7.1,color:DIM,fontFace:F}); slide.addShape(pptx.ShapeType.roundRect,{x:trackX,y:y+0.16,w:trackW,h:0.17,rectRadius:0.05,fill:{color:'EEF1F5'},line:{type:'none'}}); slide.addShape(pptx.ShapeType.roundRect,{x:left,y:y+0.16,w:Math.min(width,trackX+trackW-left),h:0.17,rectRadius:0.05,fill:{color},line:{type:'none'}}); if(t.progress_pct!==undefined&&t.progress_pct!==null)slide.addText(`${t.progress_pct}%`,{x:trackX+trackW-0.55,y:y+0.02,w:0.5,h:0.16,fontSize:7,color:DIM,align:'right',fontFace:F});});
+          // Keep every task bar inside the timeline and strictly positive in size.
+          // PptxGenJS writes an invalid roundRect adjustment (Infinity) when a rounded
+          // rectangle reaches zero width. That can happen for a same-day task whose
+          // start falls exactly on the timeline's right edge. PowerPoint then repairs
+          // the deck on open. Treat same-day tasks as a small milestone-width bar and
+          // clamp all geometry before it reaches PptxGenJS.
+          const minTaskBarW=0.12;
+          const finiteOr=(v,fallback)=>Number.isFinite(v)?v:fallback;
+          const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
+          chunk.forEach((t,i)=>{
+            const y=top+i*rowH;
+            const rawS=new Date((t.start_date||project.start_date)+'T00:00:00').getTime();
+            const rawE=new Date((t.end_date||t.start_date||project.target_date||project.start_date)+'T00:00:00').getTime();
+            const s=finiteOr(rawS,rangeStart);
+            const e=finiteOr(rawE,s);
+            const naturalLeft=trackX+((s-rangeStart)/span)*trackW;
+            const left=clamp(finiteOr(naturalLeft,trackX),trackX,trackX+trackW-minTaskBarW);
+            const naturalW=((Math.max(e,s+86400000)-s)/span)*trackW;
+            const availableW=Math.max(minTaskBarW,trackX+trackW-left);
+            const barW=clamp(finiteOr(naturalW,minTaskBarW),minTaskBarW,availableW);
+            const color=STATUS[t.status]||ACCENT;
+            slide.addText(t.task_name,{x:nameX,y:y+0.02,w:nameW,h:0.22,fontSize:8.9,bold:true,color:TEXT,fontFace:F,fit:'shrink'});
+            slide.addText(`${fmt(t.start_date)} → ${fmt(t.end_date)}`,{x:nameX,y:y+0.24,w:nameW,h:0.16,fontSize:7.1,color:DIM,fontFace:F});
+            slide.addShape(pptx.ShapeType.roundRect,{x:trackX,y:y+0.16,w:trackW,h:0.17,rectRadius:0.05,fill:{color:'EEF1F5'},line:{type:'none'}});
+            slide.addShape(pptx.ShapeType.roundRect,{x:left,y:y+0.16,w:barW,h:0.17,rectRadius:0.05,fill:{color},line:{type:'none'}});
+            if(t.progress_pct!==undefined&&t.progress_pct!==null)slide.addText(`${t.progress_pct}%`,{x:trackX+trackW-0.55,y:y+0.02,w:0.5,h:0.16,fontSize:7,color:DIM,align:'right',fontFace:F});
+          });
           const legend=[['Done','188A5A'],['In progress','2F6FE4'],['On hold','C97A16'],['Planned / skipped','8A93A1']]; legend.forEach((l,i)=>{const x=7.6+i*1.25;slide.addShape(pptx.ShapeType.ellipse,{x,y:6.48,w:0.07,h:0.07,fill:{color:l[1]},line:{type:'none'}});slide.addText(l[0],{x:x+0.1,y:6.43,w:1.05,h:0.16,fontSize:6.8,color:DIM,fontFace:F});});
         }
         addFooter(slide);
