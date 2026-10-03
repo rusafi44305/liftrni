@@ -4781,6 +4781,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-03', summary:'PPTX layout hardening: Dashboard Engineer Activity now paginates at 8 engineers per slide; Project reports follow the reference layout more closely with a dedicated optional Project Details slide, a cleaner task-only Gantt area, 6 tasks per Gantt page, protected legend/footer space, and smaller remarks pages. Excel export is unchanged.' },
     { date:'2026-10-03', summary:'Fixed Project PPTX repair warning for same-day/right-edge Gantt tasks: task-bar geometry is now finite-number guarded, clamped inside the timeline, and given a minimum visible width so PptxGenJS can never emit a zero-width rounded rectangle with an invalid Infinity adjustment.' },
     { date:'2026-10-03', summary:'Export reporting upgrade: Project PPTX now supports single, selected, or currently-filtered multiple projects in one deck; long project task lists paginate across fixed-height continuation slides instead of shrinking/overlapping; Dashboard PPTX moved to the same clean professional report language; Category/Dashboard Excel exports now use filter-aware filenames and report headers plus an additional Charts sheet with graphical summaries, while preserving native Excel Tables and type-aware cells.' },
     { date:'2026-09-30', summary:'Excel exports upgraded from plain worksheets to native Excel Tables with built-in filter/sort dropdowns, frozen headers, readable widths, and type-aware cells: text/reference IDs stay text, dates are real Excel dates, numeric columns are numbers, and percentages use percentage formatting. Applied to Category export, Dashboard export, and Google Drive archive workbooks without changing the exported data or Supabase logic.' },
@@ -6192,9 +6193,38 @@
     slide.addTable(catRows,{x:0.72,y:1.95,w:11.85,h:4.85,fontSize:12.5,fontFace:'Arial',border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[3.3,1.8,1.8,3.1,1.85],margin:0.08});
 
     const byActivity=[...leaderboard].sort((a,b)=>b[1].total-a[1].total);
-    slide=pptx.addSlide(); addBrand(slide,'Engineer Activity','Individual scores are intentionally excluded; ranking here is by activity count');
-    const engRows=[[{text:'#',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Engineer',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Top Category',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Activities',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Time Logged',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...byActivity.slice(0,15).map(([,e],i)=>[{text:String(i+1),options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:e.name,options:{color:TEXT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:catMeta[e.topCat]?.name||'—',options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:String(e.total),options:{color:ACCENT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:e.duration>0?formatDurationShort(e.duration):'—',options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}}])];
-    slide.addTable(engRows,{x:0.72,y:1.95,w:11.85,h:4.9,fontSize:12.5,fontFace:'Arial',border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[0.65,3.6,3.25,2.0,2.35],margin:0.08});
+    // Keep the Engineer Activity table readable and fully inside the slide.
+    // Eight data rows per slide leaves a protected footer zone and prevents
+    // the table from spilling below the report frame as the team grows.
+    const engineerRowsPerSlide=8;
+    const engineerPages=Math.max(1,Math.ceil(byActivity.length/engineerRowsPerSlide));
+    for(let pageIndex=0;pageIndex<engineerPages;pageIndex++){
+      const pageStart=pageIndex*engineerRowsPerSlide;
+      const pageItems=byActivity.slice(pageStart,pageStart+engineerRowsPerSlide);
+      slide=pptx.addSlide();
+      addBrand(
+        slide,
+        'Engineer Activity',
+        `Individual scores are intentionally excluded; ranking here is by activity count${engineerPages>1?` · page ${pageIndex+1} of ${engineerPages}`:''}`
+      );
+      const engRows=[[
+        {text:'#',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},
+        {text:'Engineer',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},
+        {text:'Top Category',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},
+        {text:'Activities',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},
+        {text:'Time Logged',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}
+      ],...pageItems.map(([,e],i)=>{
+        const globalIndex=pageStart+i;
+        return [
+          {text:String(globalIndex+1),options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},
+          {text:e.name,options:{color:TEXT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},
+          {text:catMeta[e.topCat]?.name||'—',options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},
+          {text:String(e.total),options:{color:ACCENT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},
+          {text:e.duration>0?formatDurationShort(e.duration):'—',options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}}
+        ];
+      })];
+      slide.addTable(engRows,{x:0.72,y:1.95,w:11.85,h:4.35,fontSize:12,fontFace:'Arial',border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[0.65,3.6,3.25,2.0,2.35],margin:0.075});
+    }
 
     byActivity.forEach(([,e])=>{
       const es=pptx.addSlide(); addBrand(es,e.name,'Individual activity summary');
@@ -9714,7 +9744,37 @@ for a competing inline style first.`;
 
     for(const project of projects){
       const tasks=taskMap[project.id]||[];
-      const chunks=[]; const perSlide=7;
+      const progress=project.status==='Done'?100:(projectProgressPercent(project.id)??0);
+      const collabs=(project.collaborators||[]).map(displayPerson).filter(x=>x!=='Unassigned');
+
+      // Keep narrative project information away from the dense Gantt area.
+      // This mirrors the supplied reference deck: the task slide is primarily
+      // a timeline, while optional collaborators/briefing get their own page.
+      if((options.includeCollaborators!==false && collabs.length) || String(project.notes||'').trim()){
+        const ds=pptx.addSlide();
+        addFrame(ds,'WALTON LIFT R&I  ·  PROJECT REPORT',project.name,'Project details');
+        const statusColor=STATUS[project.status]||ACCENT;
+        ds.addShape(pptx.ShapeType.roundRect,{x:10.55,y:0.82,w:1.75,h:0.34,rectRadius:0.16,fill:{color:statusColor,transparency:88},line:{color:statusColor,width:0.5}});
+        ds.addText(project.status||'—',{x:10.55,y:0.82,w:1.75,h:0.34,align:'center',valign:'middle',fontSize:9.5,bold:true,color:statusColor,fontFace:F});
+        const metrics=[['OWNER',displayPerson(project.lead_id)],['START DATE',fmt(project.start_date)],['TARGET DATE',fmt(project.target_date)],['COMPLETION',`${progress}%`]];
+        metrics.forEach((m,i)=>{const x=0.7+i*3.0; ds.addShape(pptx.ShapeType.roundRect,{x,y:1.62,w:2.72,h:0.78,rectRadius:0.06,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});ds.addText(m[0],{x:x+0.13,y:1.75,w:2.45,h:0.15,fontSize:7.8,bold:true,color:DIM,charSpacing:0.6,fontFace:F});ds.addText(m[1],{x:x+0.13,y:1.98,w:2.45,h:0.25,fontSize:11.2,bold:true,color:TEXT,fontFace:F,fit:'shrink'});});
+        let detailsY=2.72;
+        if(options.includeCollaborators!==false && collabs.length){
+          ds.addText('COLLABORATORS',{x:0.72,y:detailsY,w:2.2,h:0.2,fontSize:8.5,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
+          ds.addText(collabs.join(', '),{x:0.72,y:detailsY+0.28,w:11.6,h:0.65,fontSize:13,color:TEXT,fontFace:F,fit:'shrink',valign:'top'});
+          detailsY+=1.05;
+        }
+        if(String(project.notes||'').trim()){
+          ds.addText('PROJECT BRIEFING',{x:0.72,y:detailsY,w:2.4,h:0.2,fontSize:8.5,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
+          ds.addShape(pptx.ShapeType.roundRect,{x:0.72,y:detailsY+0.28,w:11.55,h:1.45,rectRadius:0.05,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});
+          ds.addText(project.notes,{x:0.93,y:detailsY+0.5,w:11.1,h:1.0,fontSize:13,color:TEXT,fontFace:F,fit:'shrink',valign:'top',margin:0});
+        }
+        addFooter(ds);
+      }
+
+      // Six tasks per slide is deliberate: it preserves a protected legend/footer
+      // zone and avoids the crowded 7+1 split seen in the previous exporter.
+      const chunks=[]; const perSlide=6;
       if(tasks.length) for(let i=0;i<tasks.length;i+=perSlide) chunks.push(tasks.slice(i,i+perSlide)); else chunks.push([]);
       for(let chunkIndex=0;chunkIndex<chunks.length;chunkIndex++){
         const chunk=chunks[chunkIndex], slide=pptx.addSlide();
@@ -9722,15 +9782,10 @@ for a competing inline style first.`;
         const statusColor=STATUS[project.status]||ACCENT;
         slide.addShape(pptx.ShapeType.roundRect,{x:10.55,y:0.82,w:1.75,h:0.34,rectRadius:0.16,fill:{color:statusColor,transparency:88},line:{color:statusColor,width:0.5}});
         slide.addText(project.status||'—',{x:10.55,y:0.82,w:1.75,h:0.34,align:'center',valign:'middle',fontSize:9.5,bold:true,color:statusColor,fontFace:F});
-        const progress=project.status==='Done'?100:(projectProgressPercent(project.id)??0);
-        const collabs=(project.collaborators||[]).map(displayPerson).filter(x=>x!=='Unassigned');
         const metrics=[['OWNER',displayPerson(project.lead_id)],['START DATE',fmt(project.start_date)],['TARGET DATE',fmt(project.target_date)],['COMPLETION',`${progress}%`]];
-        metrics.forEach((m,i)=>{const x=0.7+i*3.0; slide.addShape(pptx.ShapeType.roundRect,{x,y:1.62,w:2.72,h:0.78,rectRadius:0.06,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});slide.addText(m[0],{x:x+0.13,y:1.75,w:2.45,h:0.15,fontSize:7.8,bold:true,color:DIM,charSpacing:0.6,fontFace:F});slide.addText(m[1],{x:x+0.13,y:1.98,w:2.45,h:0.25,fontSize:11.2,bold:true,color:TEXT,fontFace:F,fit:'shrink'});});
-        let infoY=2.52;
-        if(options.includeCollaborators!==false && collabs.length){slide.addText(`Collaborators: ${collabs.join(', ')}`,{x:0.72,y:infoY,w:11.7,h:0.23,fontSize:8.8,color:DIM,fontFace:F,fit:'shrink'});infoY+=0.28;}
-        if(project.notes){slide.addText(`Project briefing: ${project.notes}`,{x:0.72,y:infoY,w:11.7,h:0.32,fontSize:8.6,color:DIM,fontFace:F,fit:'shrink'});infoY+=0.36;}
-        slide.addText('TASK BREAKDOWN',{x:0.72,y:infoY+0.05,w:2.4,h:0.18,fontSize:8.2,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
-        const top=infoY+0.36, nameX=0.72, nameW=3.1, trackX=4.05, trackW=8.2, rowH=0.51;
+        metrics.forEach((m,i)=>{const x=0.7+i*3.0; slide.addShape(pptx.ShapeType.roundRect,{x,y:1.55,w:2.72,h:0.72,rectRadius:0.06,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});slide.addText(m[0],{x:x+0.13,y:1.67,w:2.45,h:0.14,fontSize:7.6,bold:true,color:DIM,charSpacing:0.6,fontFace:F});slide.addText(m[1],{x:x+0.13,y:1.88,w:2.45,h:0.23,fontSize:10.8,bold:true,color:TEXT,fontFace:F,fit:'shrink'});});
+        slide.addText('TASK BREAKDOWN',{x:0.72,y:2.55,w:2.4,h:0.18,fontSize:8.2,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
+        const top=2.98, nameX=0.72, nameW=3.05, trackX=4.03, trackW=8.22, rowH=0.52;
         if(!chunk.length){slide.addText('No tasks added yet for this project.',{x:nameX,y:top+0.25,w:7,h:0.4,fontSize:11,color:DIM,italic:true,fontFace:F});}
         else{
           const allStarts=tasks.map(t=>new Date((t.start_date||project.start_date||new Date().toISOString().slice(0,10))+'T00:00:00').getTime());
@@ -9765,17 +9820,17 @@ for a competing inline style first.`;
             slide.addShape(pptx.ShapeType.roundRect,{x:left,y:y+0.16,w:barW,h:0.17,rectRadius:0.05,fill:{color},line:{type:'none'}});
             if(t.progress_pct!==undefined&&t.progress_pct!==null)slide.addText(`${t.progress_pct}%`,{x:trackX+trackW-0.55,y:y+0.02,w:0.5,h:0.16,fontSize:7,color:DIM,align:'right',fontFace:F});
           });
-          const legend=[['Done','188A5A'],['In progress','2F6FE4'],['On hold','C97A16'],['Planned / skipped','8A93A1']]; legend.forEach((l,i)=>{const x=7.6+i*1.25;slide.addShape(pptx.ShapeType.ellipse,{x,y:6.48,w:0.07,h:0.07,fill:{color:l[1]},line:{type:'none'}});slide.addText(l[0],{x:x+0.1,y:6.43,w:1.05,h:0.16,fontSize:6.8,color:DIM,fontFace:F});});
+          const legend=[['Done','188A5A'],['In progress','2F6FE4'],['On hold','C97A16'],['Planned / skipped','8A93A1']]; legend.forEach((l,i)=>{const x=7.15+i*1.35;slide.addShape(pptx.ShapeType.ellipse,{x,y:6.2,w:0.07,h:0.07,fill:{color:l[1]},line:{type:'none'}});slide.addText(l[0],{x:x+0.1,y:6.15,w:1.18,h:0.16,fontSize:6.8,color:DIM,fontFace:F});});
         }
         addFooter(slide);
       }
 
       if(options.includeRemarks!==false){
         const withRemarks=tasks.filter(t=>String(t.remarks||'').trim());
-        for(let i=0;i<withRemarks.length;i+=10){
-          const part=withRemarks.slice(i,i+10), rs=pptx.addSlide(); addFrame(rs,'WALTON LIFT R&I  ·  PROJECT REPORT',`${project.name} — Task Remarks`,withRemarks.length>10?`Page ${Math.floor(i/10)+1} of ${Math.ceil(withRemarks.length/10)}`:'');
+        for(let i=0;i<withRemarks.length;i+=6){
+          const part=withRemarks.slice(i,i+6), rs=pptx.addSlide(); addFrame(rs,'WALTON LIFT R&I  ·  PROJECT REPORT',`${project.name} — Task Remarks`,withRemarks.length>6?`Page ${Math.floor(i/6)+1} of ${Math.ceil(withRemarks.length/6)}`:'');
           const rows=[[{text:'Task',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Status',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Remarks',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...part.map((t,j)=>[{text:t.task_name,options:{bold:true,color:TEXT,fill:{color:j%2?'F8FAFC':'FFFFFF'}}},{text:t.status||'—',options:{color:STATUS[t.status]||TEXT,fill:{color:j%2?'F8FAFC':'FFFFFF'}}},{text:t.remarks,options:{color:DIM,fill:{color:j%2?'F8FAFC':'FFFFFF'}}}])];
-          rs.addTable(rows,{x:0.72,y:1.75,w:11.85,h:4.9,fontSize:10.5,fontFace:F,border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[3.25,1.7,6.9],margin:0.07}); addFooter(rs);
+          rs.addTable(rows,{x:0.72,y:1.75,w:11.85,h:4.55,fontSize:9.8,fontFace:F,border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[3.25,1.7,6.9],margin:0.065}); addFooter(rs);
         }
       }
     }
