@@ -2471,6 +2471,7 @@
       <select class="fselect" id="devFilterStatus" onchange="renderGanttRows()">
         <option value="">All statuses</option><option>In Progress</option><option>On Hold</option><option>Done</option><option>Cancelled</option>
       </select>
+      <button class="queue-btn filter-btn-pptx" onclick="openProjectExportModal()">⬇ Export PPTX</button>
     </div>
  
     <div class="gantt-wrap">
@@ -2484,6 +2485,44 @@
     </div>
   </div>
  
+
+  <!-- ============ PROJECT PPTX EXPORT ============ -->
+  <div id="projectExportModal" style="display:none; position:fixed; inset:0; z-index:140; background:rgba(8,12,20,.58); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); padding:18px; align-items:center; justify-content:center;">
+    <div style="width:min(720px,96vw); max-height:88vh; overflow:auto; background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:18px; box-shadow:0 24px 70px rgba(0,0,0,.28); padding:20px;">
+      <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:16px;">
+        <div><div class="panel-title" style="font-size:18px; margin:0 0 4px;">Export Project Report</div><div style="font-size:12.5px; color:var(--text-faint);">Choose one project, selected projects, or every project currently visible after filters.</div></div>
+        <button class="btn" onclick="closeProjectExportModal()" aria-label="Close" title="Close" style="padding:6px 9px;">✕</button>
+      </div>
+      <div class="form-field" style="margin-bottom:14px;">
+        <div class="field-label">Export mode</div>
+        <select id="projectExportMode" class="fselect" onchange="updateProjectExportModeUI()" style="width:100%;">
+          <option value="single">Single project</option>
+          <option value="selected">Selected projects</option>
+          <option value="visible">All visible projects after filters</option>
+        </select>
+      </div>
+      <div id="projectExportSingleWrap" class="form-field" style="margin-bottom:14px;">
+        <div class="field-label">Project</div>
+        <select id="projectExportSingle" class="fselect" style="width:100%;"></select>
+      </div>
+      <div id="projectExportSelectedWrap" style="display:none; margin-bottom:14px;">
+        <div class="field-label" style="margin-bottom:7px;">Projects to include</div>
+        <div id="projectExportChecklist" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:7px; max-height:240px; overflow:auto; padding:10px; border:1px solid var(--border); border-radius:12px; background:var(--surface-alt);"></div>
+      </div>
+      <div id="projectExportVisibleNote" style="display:none; margin-bottom:14px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-alt); font-size:12.5px; color:var(--text-dim);"></div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:8px; margin:14px 0 18px;">
+        <label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="projectExportSummary" checked> Include portfolio summary when exporting multiple projects</label>
+        <label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="projectExportCollaborators" checked> Include collaborators</label>
+        <label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="projectExportRemarks" checked> Include task remarks appendix</label>
+      </div>
+      <div style="padding:10px 12px; border-radius:12px; background:var(--accent-dim); color:var(--text-dim); font-size:12px; line-height:1.5; margin-bottom:16px;">Projects with many tasks are automatically split across continuation slides with fixed-height rows, so task bars and labels never overlap.</div>
+      <div style="display:flex; justify-content:flex-end; gap:8px;">
+        <button class="btn" onclick="closeProjectExportModal()">Cancel</button>
+        <button class="submit-btn" id="projectExportRunBtn" style="width:auto; margin:0; padding:9px 18px;" onclick="runProjectPptxExport()">Export PPTX</button>
+      </div>
+    </div>
+  </div>
+
  
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
@@ -4742,6 +4781,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-03', summary:'Export reporting upgrade: Project PPTX now supports single, selected, or currently-filtered multiple projects in one deck; long project task lists paginate across fixed-height continuation slides instead of shrinking/overlapping; Dashboard PPTX moved to the same clean professional report language; Category/Dashboard Excel exports now use filter-aware filenames and report headers plus an additional Charts sheet with graphical summaries, while preserving native Excel Tables and type-aware cells.' },
     { date:'2026-09-30', summary:'Excel exports upgraded from plain worksheets to native Excel Tables with built-in filter/sort dropdowns, frozen headers, readable widths, and type-aware cells: text/reference IDs stay text, dates are real Excel dates, numeric columns are numbers, and percentages use percentage formatting. Applied to Category export, Dashboard export, and Google Drive archive workbooks without changing the exported data or Supabase logic.' },
     { date:'2026-08-28', summary:'Initial build: task logging across 6 categories, Lift ID tracking, Team Chat, Notebook, Admin panel, role system (User/Admin/Superadmin).' },
     { date:'2026-08-29', summary:'R&I Project Manager added (internal projects, Gantt view, task breakdown, progress %). Category merges and field cleanup across Pre-Sales/Post-Sales/Tech Support.' },
@@ -5766,6 +5806,54 @@
     return String(value).length;
   }
 
+  function excelSafeFilePart(value, fallback='Report'){
+    const cleaned = String(value || '').trim().replace(/[\/:*?"<>|]+/g, '-').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^[-_.]+|[-_.]+$/g, '');
+    return (cleaned || fallback).slice(0, 70);
+  }
+
+  function excelSelectedText(id, allLabel='All'){
+    const el = document.getElementById(id);
+    if(!el || !el.value) return allLabel;
+    return (el.selectedOptions && el.selectedOptions[0] ? el.selectedOptions[0].textContent : el.value).trim();
+  }
+
+  function excelCountBy(rows, keyFn){
+    const map = new Map();
+    (rows || []).forEach(r => {
+      const key = keyFn(r);
+      if(!key) return;
+      map.set(key, (map.get(key) || 0) + 1);
+    });
+    return [...map.entries()].map(([label,value]) => ({label:String(label), value:Number(value)})).sort((a,b) => b.value-a.value);
+  }
+
+  function excelChartPngBase64(title, items, accent='#4A78E0'){
+    const data = (items || []).filter(x => Number.isFinite(Number(x.value))).slice(0, 12);
+    if(!data.length) return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 1280; canvas.height = 680;
+    const ctx = canvas.getContext('2d');
+    const bg = '#FFFFFF', text = '#18212F', dim = '#64748B', grid = '#E6EAF0';
+    ctx.fillStyle = bg; ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = text; ctx.font = '700 34px Arial'; ctx.fillText(title, 58, 62);
+    const left = 340, right = 70, top = 115, bottom = 55;
+    const plotW = canvas.width-left-right, plotH = canvas.height-top-bottom;
+    const max = Math.max(...data.map(x=>Number(x.value)),1);
+    const rowH = plotH / data.length;
+    data.forEach((d,i)=>{
+      const cy = top + i*rowH + rowH/2;
+      const barH = Math.min(34, rowH*0.55);
+      ctx.fillStyle = grid; ctx.fillRect(left, cy-barH/2, plotW, barH);
+      ctx.fillStyle = d.color || accent; ctx.fillRect(left, cy-barH/2, Math.max(2, plotW*(Number(d.value)/max)), barH);
+      ctx.fillStyle = text; ctx.font = '600 19px Arial';
+      let label = String(d.label); if(label.length>31) label = label.slice(0,30)+'…';
+      ctx.textAlign='right'; ctx.fillText(label, left-18, cy+6);
+      ctx.textAlign='left'; ctx.fillStyle = dim; ctx.font = '600 18px Arial'; ctx.fillText(String(d.value), left + Math.max(8, plotW*(Number(d.value)/max)) + 10, cy+6);
+    });
+    ctx.textAlign='left';
+    return canvas.toDataURL('image/png').split(',')[1];
+  }
+
   async function buildFormattedExcelBlob(sheetSpecs){
     if(typeof ExcelJS === 'undefined') throw new Error('The Excel formatting library did not load. Refresh the page and try again.');
     const workbook = new ExcelJS.Workbook();
@@ -5774,19 +5862,45 @@
     workbook.created = new Date();
     workbook.modified = new Date();
 
-    (sheetSpecs || []).forEach((spec, sheetIndex) => {
+    let renderedSheetIndex = 0;
+    for(const spec of (sheetSpecs || [])){
       const rows = spec.rows || [];
-      if(!rows.length) return;
+      if(!rows.length) continue;
       const headers = excelHeadersFromRows(rows);
-      if(!headers.length) return;
+      if(!headers.length) continue;
       const kinds = headers.map(h => inferExcelColumnKind(h, rows));
-      const ws = workbook.addWorksheet(String(spec.name || `Sheet ${sheetIndex+1}`).slice(0,31), {
-        views: [{ state:'frozen', ySplit:1, activeCell:'A2' }]
+      const hasReportHeader = !!(spec.title || spec.filterSummary || spec.subtitle);
+      const tableRow = hasReportHeader ? 5 : 1;
+      const ws = workbook.addWorksheet(String(spec.name || `Sheet ${renderedSheetIndex+1}`).slice(0,31), {
+        views: [{ state:'frozen', ySplit:tableRow, activeCell:`A${tableRow+1}` }]
       });
       ws.properties.defaultRowHeight = 18;
+
+      if(hasReportHeader){
+        const lastCol = Math.max(1, headers.length);
+        ws.mergeCells(1,1,1,lastCol);
+        const titleCell = ws.getCell(1,1);
+        titleCell.value = spec.title || spec.name || 'Report';
+        titleCell.font = { bold:true, size:18, color:{argb:'FF1A1B1E'} };
+        titleCell.alignment = { vertical:'middle', horizontal:'left' };
+        ws.getRow(1).height = 30;
+        ws.mergeCells(2,1,2,lastCol);
+        const filterCell = ws.getCell(2,1);
+        filterCell.value = spec.filterSummary || spec.subtitle || '';
+        filterCell.font = { size:10.5, color:{argb:'FF646C7B'} };
+        filterCell.alignment = { vertical:'middle', horizontal:'left', wrapText:true };
+        ws.getRow(2).height = 28;
+        ws.mergeCells(3,1,3,lastCol);
+        const metaCell = ws.getCell(3,1);
+        metaCell.value = `${rows.length} record${rows.length===1?'':'s'}  •  Generated ${new Date().toLocaleString('en-GB')}`;
+        metaCell.font = { size:9.5, color:{argb:'FF7B8493'} };
+        ws.getRow(3).height = 20;
+        ws.getRow(4).height = 7;
+      }
+
       ws.addTable({
-        name: safeExcelTableName(spec.name, sheetIndex),
-        ref: 'A1',
+        name: safeExcelTableName(spec.name, renderedSheetIndex),
+        ref: `A${tableRow}`,
         headerRow: true,
         totalsRow: false,
         style: { theme:'TableStyleMedium2', showRowStripes:true, showFirstColumn:false, showLastColumn:false },
@@ -5813,17 +5927,40 @@
         }
       });
 
-      ws.getRow(1).height = 22;
-      ws.getRow(1).font = { bold:true, color:{ argb:'FFFFFFFF' } };
+      ws.getRow(tableRow).height = 22;
+      ws.getRow(tableRow).font = { bold:true, color:{ argb:'FFFFFFFF' } };
       ws.eachRow((row, rowNumber) => {
         row.alignment = { vertical:'middle' };
-        if(rowNumber > 1){
-          row.eachCell({ includeEmpty:true }, cell => {
-            cell.alignment = { vertical:'top', wrapText:true };
-          });
+        if(rowNumber > tableRow){
+          row.eachCell({ includeEmpty:true }, cell => { cell.alignment = { vertical:'top', wrapText:true }; });
         }
       });
-    });
+
+      if(spec.charts && spec.charts.length){
+        let chartName = renderedSheetIndex === 0 ? 'Charts' : `${String(spec.name||'Report').slice(0,22)} Charts`;
+        chartName = chartName.slice(0,31);
+        let n=2, base=chartName;
+        while(workbook.getWorksheet(chartName)) chartName = `${base.slice(0,27)} ${n++}`;
+        const cw = workbook.addWorksheet(chartName, { views:[{showGridLines:false}] });
+        cw.getColumn(1).width = 4;
+        for(let c=2;c<=14;c++) cw.getColumn(c).width = 11;
+        cw.mergeCells('B2:N2');
+        cw.getCell('B2').value = spec.chartTitle || `${spec.title || spec.name || 'Report'} — Charts`;
+        cw.getCell('B2').font = {bold:true,size:18,color:{argb:'FF1A1B1E'}};
+        cw.mergeCells('B3:N3');
+        cw.getCell('B3').value = spec.filterSummary || '';
+        cw.getCell('B3').font = {size:10,color:{argb:'FF646C7B'}};
+        let topRow = 5;
+        for(const chart of spec.charts.slice(0,3)){
+          const base64 = excelChartPngBase64(chart.title, chart.items, chart.accent || '#4A78E0');
+          if(!base64) continue;
+          const imageId = workbook.addImage({ base64, extension:'png' });
+          cw.addImage(imageId, { tl:{col:1,row:topRow-1}, ext:{width:960,height:510} });
+          topRow += 29;
+        }
+      }
+      renderedSheetIndex++;
+    }
 
     const buffer = await workbook.xlsx.writeBuffer();
     return new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -5861,12 +5998,47 @@
     });
     const fromVal = document.getElementById('catFromMonth').value || 'all';
     const toVal = document.getElementById('catToMonth').value || 'all';
+    const section = excelSelectedText('catFilterSection','All sections');
+    const engineer = excelSelectedText('catFilterEngineer','All engineers');
+    const subtype = excelSelectedText('catFilterSubtype','All sub-categories');
+    const subtypeEl = document.getElementById('catFilterSubtype');
+    const subtypeActive = subtypeEl && subtypeEl.style.display !== 'none' && subtypeEl.value;
+    const searchTerm = (document.getElementById('catLogSearch').value || '').trim();
+    const filterBits = [
+      `Category: ${meta.name}`,
+      subtypeActive ? `Sub-category: ${subtype}` : null,
+      document.getElementById('catFilterSection').value ? `Section: ${section}` : null,
+      document.getElementById('catFilterEngineer').value ? `Engineer: ${engineer}` : null,
+      searchTerm ? `Search: ${searchTerm}` : null,
+      `Date: ${fromVal} to ${toVal}`
+    ].filter(Boolean);
+    const titleParts = [subtypeActive ? subtype : meta.name, 'Report'];
+    const fileParts = [meta.name, subtypeActive ? subtype : null, document.getElementById('catFilterSection').value ? section : null, document.getElementById('catFilterEngineer').value ? engineer : null, searchTerm ? searchTerm.slice(0,24) : null, `${fromVal}_to_${toVal}`].filter(Boolean).map(v=>excelSafeFilePart(v));
+
+    const engineerChart = excelCountBy(currentCatRowsFiltered, r => r.profiles ? displayName(r.profiles) : 'Unknown');
+    const subtypeKeys = ['Sub-category','Support Type','Report Type','Activity Type'];
+    let subtypeKey = null;
+    for(const key of subtypeKeys){ if(currentCatRowsFiltered.some(r => r.details && r.details[key])){ subtypeKey = key; break; } }
+    const subtypeChart = subtypeKey ? excelCountBy(currentCatRowsFiltered, r => r.details && r.details[subtypeKey]) : [];
+    const dayChart = excelCountBy(currentCatRowsFiltered, r => new Date(r.created_at).toISOString().slice(0,10)).sort((a,b)=>a.label.localeCompare(b.label)).slice(-12);
+    const charts = [];
+    if(subtypeChart.length > 1) charts.push({title:`Activities by ${subtypeKey}`, items:subtypeChart, accent:'#6E4FD1'});
+    if(engineerChart.length) charts.push({title:'Activities by Engineer', items:engineerChart, accent:'#1D6FD9'});
+    if(dayChart.length > 1) charts.push({title:'Activity by Date', items:dayChart, accent:'#167C51'});
+
     try{
-      await exportFormattedExcel([{ name:meta.name.slice(0,31), rows:flat }], `${meta.name.replace(/\s+/g,'_')}_${fromVal}_to_${toVal}.xlsx`);
+      await exportFormattedExcel([{
+        name: meta.name.slice(0,31), rows:flat,
+        title: titleParts.join(' '),
+        filterSummary: filterBits.join('  •  '),
+        chartTitle: `${titleParts.join(' ')} — Visual Summary`,
+        charts
+      }], `${fileParts.join('_')}.xlsx`);
     }catch(err){
       alert('Could not export Excel file: ' + err.message);
     }
   }
+
 
   // 2026-09-19: modern multi-slide PPTX export for the Dashboard, using
   // currentDashRows — the same already-filtered rows the live page is
@@ -5894,13 +6066,32 @@
     const fromVal = document.getElementById('dashFromMonth').value || 'all';
     const toVal = document.getElementById('dashToMonth').value || 'all';
     const engineerId = document.getElementById('dashEngineerSelect').value;
-    const engineerLabel = engineerId ? (document.getElementById('dashEngineerSelect').selectedOptions[0]?.textContent || 'engineer').replace(/[^\w]+/g, '_') : 'whole_team';
+    const engineerText = excelSelectedText('dashEngineerSelect','Whole team');
+    const discipline = excelSelectedText('dashDisciplineSelect','All sections');
+    const filterBits = [
+      `Engineer: ${engineerText}`,
+      `Section: ${discipline}`,
+      `Date: ${fromVal} to ${toVal}`
+    ];
+    const fileParts = ['Dashboard', engineerId ? engineerText : 'Whole_Team', document.getElementById('dashDisciplineSelect').value ? discipline : null, `${fromVal}_to_${toVal}`].filter(Boolean).map(v=>excelSafeFilePart(v));
+    const catChart = excelCountBy(currentDashRows, r => catMeta[r.category]?.name || r.category);
+    const engChart = excelCountBy(currentDashRows, r => r.profiles ? displayName(r.profiles) : 'Unknown');
     try{
-      await exportFormattedExcel([{ name:'Team Dashboard', rows:flat }], `Dashboard_${engineerLabel}_${fromVal}_to_${toVal}.xlsx`);
+      await exportFormattedExcel([{
+        name:'Team Dashboard', rows:flat,
+        title:'Walton Lift R&I — Team Dashboard Report',
+        filterSummary: filterBits.join('  •  '),
+        chartTitle:'Team Dashboard — Visual Summary',
+        charts:[
+          {title:'Activities by Category', items:catChart, accent:'#4A78E0'},
+          {title:'Activities by Engineer', items:engChart, accent:'#0F7A4C'}
+        ]
+      }], `${fileParts.join('_')}.xlsx`);
     }catch(err){
       alert('Could not export Excel file: ' + err.message);
     }
   }
+
 
   async function exportDashboardToPptx(){
     if(!currentDashRows.length){ alert('No entries to export for this range.'); return; }
@@ -5908,11 +6099,9 @@
     const toVal = document.getElementById('dashToMonth').value || null;
     const engineerSel = document.getElementById('dashEngineerSelect');
     const engineerLabel = engineerSel.value ? (engineerSel.selectedOptions[0]?.textContent || 'Engineer') : 'Whole Team';
+    const disciplineLabel = excelSelectedText('dashDisciplineSelect','All sections');
     const periodLabel = (fromVal && toVal) ? `${fromVal} to ${toVal}` : 'All time';
 
-    // Same weight/duration/target lookups the live leaderboard uses, so
-    // Score here matches what the app itself would show for this exact
-    // set of rows — not a simplified stand-in metric.
     const { data: weightData } = await sb.from('kpi_weights').select('*');
     const weightMap = {};
     (weightData||[]).forEach(w => weightMap[w.category] = w.weight);
@@ -5922,7 +6111,7 @@
     const catCounts = {};
     currentDashRows.forEach(r => { catCounts[r.category] = (catCounts[r.category]||0) + 1; });
     const catSorted = Object.entries(catCounts).sort((a,b) => b[1]-a[1]);
-    const catColorsLocal = ['378ADD','1D9E75','D85A30','D4537E','B98900','8A63D2'];
+    const catColorsLocal = ['4A78E0','167C51','A15B18','B31919','6E4FD1','0C7979'];
 
     const byEngineer = {};
     currentDashRows.forEach(r => {
@@ -5942,13 +6131,6 @@
     const leaderboard = Object.entries(byEngineer).sort((a,b) => b[1].score - a[1].score);
     const teamAvgScoreLocal = leaderboard.length ? leaderboard.reduce((sum,[,e]) => sum + e.score, 0) / leaderboard.length : 0;
     const liftSetLocal = new Set(currentDashRows.filter(r => r.lift_id).map(r => r.lift_id));
-
-    // 2026-09-19: per-category detail, not just a bar chart's raw count —
-    // for each category, works out its share of total activity, which
-    // engineer contributed most to it, and total time logged where that
-    // category actually tracks duration (shown as "—" where it doesn't,
-    // same honesty as the app itself about which categories have that
-    // data and which don't).
     const catDetails = catSorted.map(([cat, count]) => {
       const catRows = currentDashRows.filter(r => r.category === cat);
       const byEng = {};
@@ -5956,172 +6138,74 @@
       const topEngId = Object.entries(byEng).sort((a,b)=>b[1]-a[1])[0]?.[0];
       const tracksDuration = (durationLabels[cat] || []).length > 0;
       const totalMins = tracksDuration ? catRows.reduce((sum,r) => sum + taskDurationMinutes(r, durationLabels), 0) : null;
-      return {
-        cat, count,
-        pct: ((count / currentDashRows.length) * 100).toFixed(1),
-        topEngineer: topEngId ? (byEngineer[topEngId]?.name || '—') : '—',
-        timeLabel: totalMins !== null ? formatDurationShort(totalMins) : '—',
-      };
+      return { cat, count, pct:((count/currentDashRows.length)*100).toFixed(1), topEngineer:topEngId ? (byEngineer[topEngId]?.name||'—') : '—', timeLabel:totalMins!==null ? formatDurationShort(totalMins) : '—' };
     });
 
     const pptx = new PptxGenJS();
-    pptx.defineLayout({ name: 'WIDE', width: 13.33, height: 7.5 });
+    pptx.defineLayout({ name:'WIDE', width:13.33, height:7.5 });
     pptx.layout = 'WIDE';
-    const DARK = '0D1218', CARD = '1C1C1C', ACCENT = '5B8DEF', TEXT = 'F8FAFC', DIM = '94A3B8';
-    // Referenced by relative path rather than embedded — PptxGenJS fetches
-    // it fresh from wherever this code is actually running (your live
-    // GitHub Pages site, where logo.png is a real sibling file next to
-    // index.html), so the exported deck always carries your real, current
-    // logo rather than a copy baked in at some earlier point.
+    pptx.theme = { headFontFace:'Arial', bodyFontFace:'Arial', lang:'en-US' };
+    pptx.author = 'Walton Lift R&I';
+    pptx.company = 'Walton Hi-Tech Industries PLC';
+    pptx.subject = 'Team Dashboard Report';
+    const BG='F3F5F8', WHITE='FFFFFF', TEXT='1A1B1E', DIM='667085', BORDER='D9DEE7', ACCENT='2F6FE4', GREEN='167C51', ORANGE='A15B18', PURPLE='6E4FD1';
     const LOGO_PATH = 'logo.png';
 
-    // Consistent header treatment used on every content slide — a small
-    // watermark logo top-right, and a thin accent underline beneath the
-    // title, rather than a bare heading with nothing to anchor it. This
-    // is what carries the "modern, polished deck" feel across all 6
-    // slides instead of it only showing up on the title slide.
-    function addSlideHeader(slide, title){
-      slide.background = { color: DARK };
-      slide.addText(title, { x:0.6, y:0.4, w:10, h:0.6, fontSize:26, bold:true, color:TEXT, fontFace:'Arial' });
-      slide.addShape(pptx.ShapeType.rect, { x:0.62, y:1.05, w:1.3, h:0.045, fill:{color:ACCENT}, line:{type:'none'} });
-      try{ slide.addImage({ path: LOGO_PATH, x:12.15, y:0.35, w:0.7, h:0.7 }); }catch(e){ /* logo optional — deck still works without it */ }
+    function addBrand(slide, title, subtitle=''){
+      slide.background = {color:BG};
+      slide.addShape(pptx.ShapeType.roundRect,{x:0.35,y:0.3,w:12.63,h:6.9,rectRadius:0.08,fill:{color:WHITE},line:{color:BORDER,width:0.7}});
+      slide.addText('WALTON LIFT R&I  ·  DASHBOARD REPORT',{x:0.72,y:0.55,w:5.8,h:0.22,fontSize:9.5,bold:true,color:ACCENT,charSpacing:1.1,fontFace:'Arial'});
+      slide.addText(title,{x:0.72,y:0.82,w:9.7,h:0.48,fontSize:24,bold:true,color:TEXT,fontFace:'Arial'});
+      if(subtitle) slide.addText(subtitle,{x:0.72,y:1.28,w:10.5,h:0.28,fontSize:10.5,color:DIM,fontFace:'Arial'});
+      try{slide.addImage({path:LOGO_PATH,x:11.75,y:0.52,w:0.75,h:0.75});}catch(e){}
+      slide.addShape(pptx.ShapeType.line,{x:0.72,y:1.62,w:11.88,h:0,line:{color:BORDER,width:0.7}});
+      slide.addText('Walton Hi-Tech Industries PLC',{x:8.4,y:6.83,w:4.1,h:0.18,fontSize:7.5,color:DIM,align:'right',fontFace:'Arial'});
     }
 
-    // Slide 1 — title
     let slide = pptx.addSlide();
-    slide.background = { color: DARK };
-    try{ slide.addImage({ path: LOGO_PATH, x:5.67, y:1.3, w:2, h:2 }); }catch(e){ /* logo optional */ }
-    slide.addText('Team Dashboard', { x:0.7, y:3.5, w:11.9, h:1, align:'center', fontSize:44, bold:true, color:TEXT, fontFace:'Arial' });
-    slide.addShape(pptx.ShapeType.rect, { x:5.87, y:4.55, w:1.6, h:0.05, fill:{color:ACCENT}, line:{type:'none'} });
-    slide.addText(`${engineerLabel}  ·  ${periodLabel}`, { x:0.7, y:4.75, w:11.9, h:0.6, align:'center', fontSize:20, color:ACCENT, fontFace:'Arial' });
-    slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}`, { x:0.7, y:6.7, w:11.9, h:0.4, align:'center', fontSize:12, color:DIM, fontFace:'Arial' });
+    slide.background={color:BG};
+    slide.addShape(pptx.ShapeType.roundRect,{x:0.7,y:0.65,w:11.93,h:6.15,rectRadius:0.1,fill:{color:WHITE},line:{color:BORDER,width:0.8}});
+    try{slide.addImage({path:LOGO_PATH,x:5.82,y:1.15,w:1.7,h:1.7});}catch(e){}
+    slide.addText('WALTON LIFT R&I',{x:0.9,y:2.95,w:11.5,h:0.35,align:'center',fontSize:13,bold:true,color:ACCENT,charSpacing:1.6,fontFace:'Arial'});
+    slide.addText('Team Dashboard Report',{x:0.9,y:3.32,w:11.5,h:0.72,align:'center',fontSize:38,bold:true,color:TEXT,fontFace:'Arial'});
+    slide.addText(`${engineerLabel}  ·  ${disciplineLabel}  ·  ${periodLabel}`,{x:1.15,y:4.18,w:11,h:0.4,align:'center',fontSize:16,color:DIM,fontFace:'Arial'});
+    slide.addShape(pptx.ShapeType.line,{x:5.86,y:4.78,w:1.6,h:0,line:{color:ACCENT,width:2.2}});
+    slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})}`,{x:1,y:6.15,w:11.3,h:0.25,align:'center',fontSize:9.5,color:DIM,fontFace:'Arial'});
 
-    // Slide 2 — KPI overview
-    slide = pptx.addSlide();
-    addSlideHeader(slide, 'Team Overview');
-    const kpis = [
-      { label:'Team Score', value:`${teamAvgScoreLocal.toFixed(1)}%`, color:'1D9E75' },
-      { label:'Activities', value:String(currentDashRows.length), color:ACCENT },
-      { label:'Lifts Touched', value:String(liftSetLocal.size), color:'D85A30' },
-      { label:'Engineers Active', value:String(leaderboard.length), color:'8A63D2' },
+    slide=pptx.addSlide(); addBrand(slide,'Team Overview',`${engineerLabel}  ·  ${disciplineLabel}  ·  ${periodLabel}`);
+    const kpis=[
+      {label:'Team Score',value:`${teamAvgScoreLocal.toFixed(1)}%`,color:GREEN},
+      {label:'Activities',value:String(currentDashRows.length),color:ACCENT},
+      {label:'Lifts Touched',value:String(liftSetLocal.size),color:ORANGE},
+      {label:'Engineers Active',value:String(leaderboard.length),color:PURPLE}
     ];
-    kpis.forEach((k, i) => {
-      const x = 0.6 + i * 3.08;
-      slide.addShape(pptx.ShapeType.roundRect, { x, y:1.6, w:2.85, h:2.1, fill:{color:CARD}, line:{color:k.color, width:1.5}, rectRadius:0.12, shadow:{ type:'outer', color:'000000', opacity:0.35, blur:6, offset:3, angle:90 } });
-      slide.addText(k.value, { x, y:1.9, w:2.85, h:1, align:'center', fontSize:36, bold:true, color:k.color, fontFace:'Arial' });
-      slide.addText(k.label, { x, y:2.9, w:2.85, h:0.5, align:'center', fontSize:13, color:DIM, fontFace:'Arial' });
+    kpis.forEach((k,i)=>{const x=0.72+i*3.0; slide.addShape(pptx.ShapeType.roundRect,{x,y:2.05,w:2.72,h:1.55,rectRadius:0.08,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.7}}); slide.addShape(pptx.ShapeType.rect,{x,y:2.05,w:2.72,h:0.07,fill:{color:k.color},line:{type:'none'}}); slide.addText(k.value,{x,y:2.34,w:2.72,h:0.55,align:'center',fontSize:30,bold:true,color:k.color,fontFace:'Arial'}); slide.addText(k.label,{x,y:2.95,w:2.72,h:0.28,align:'center',fontSize:11,color:DIM,fontFace:'Arial'});});
+    slide.addText('Report scope',{x:0.72,y:4.2,w:2,h:0.25,fontSize:10,bold:true,color:DIM,charSpacing:0.7,fontFace:'Arial'});
+    slide.addText(`This presentation is generated from the same filtered dataset currently shown on the Dashboard. ${currentDashRows.length} activities are included in this export.`,{x:0.72,y:4.55,w:11.4,h:0.75,fontSize:15,color:TEXT,breakLine:false,fontFace:'Arial'});
+
+    slide=pptx.addSlide(); addBrand(slide,'Activity by Category',`${currentDashRows.length} activities in the selected scope`);
+    slide.addChart(pptx.ChartType.bar,[{name:'Activities',labels:catSorted.map(([c])=>catMeta[c]?.name||c),values:catSorted.map(([,v])=>v)}],{x:0.9,y:1.95,w:11.55,h:4.55,chartColors:catSorted.map((_,i)=>catColorsLocal[i%catColorsLocal.length]),barDir:'col',showLegend:false,showValue:true,valAxisLabelColor:DIM,catAxisLabelColor:DIM,dataLabelColor:TEXT,showTitle:false,chartArea:{fill:{color:WHITE},line:{color:WHITE}},plotArea:{fill:{color:WHITE},line:{color:BORDER,width:0.5}},showCatName:false});
+
+    slide=pptx.addSlide(); addBrand(slide,'Category Details','Volume, share, top contributor and logged time');
+    const catRows=[[{text:'Category',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Activities',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'% of Total',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Top Engineer',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Time Logged',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...catDetails.map((c,i)=>[{text:catMeta[c.cat]?.name||c.cat,options:{bold:true,color:catColorsLocal[i%catColorsLocal.length],fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:String(c.count),options:{color:TEXT,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:`${c.pct}%`,options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:c.topEngineer,options:{color:TEXT,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:c.timeLabel,options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}}])];
+    slide.addTable(catRows,{x:0.72,y:1.95,w:11.85,h:4.85,fontSize:12.5,fontFace:'Arial',border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[3.3,1.8,1.8,3.1,1.85],margin:0.08});
+
+    const byActivity=[...leaderboard].sort((a,b)=>b[1].total-a[1].total);
+    slide=pptx.addSlide(); addBrand(slide,'Engineer Activity','Individual scores are intentionally excluded; ranking here is by activity count');
+    const engRows=[[{text:'#',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Engineer',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Top Category',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Activities',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Time Logged',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...byActivity.slice(0,15).map(([,e],i)=>[{text:String(i+1),options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:e.name,options:{color:TEXT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:catMeta[e.topCat]?.name||'—',options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:String(e.total),options:{color:ACCENT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:e.duration>0?formatDurationShort(e.duration):'—',options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}}])];
+    slide.addTable(engRows,{x:0.72,y:1.95,w:11.85,h:4.9,fontSize:12.5,fontFace:'Arial',border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[0.65,3.6,3.25,2.0,2.35],margin:0.08});
+
+    byActivity.forEach(([,e])=>{
+      const es=pptx.addSlide(); addBrand(es,e.name,'Individual activity summary');
+      const engCats=Object.entries(e.cats).sort((a,b)=>b[1]-a[1]);
+      const engKpis=[{label:'Tasks Logged',value:String(e.total)},{label:'Categories Touched',value:`${engCats.length} / ${catSorted.length}`},{label:'Time Logged',value:e.duration>0?formatDurationShort(e.duration):'—'}];
+      engKpis.forEach((k,i)=>{const x=0.72+i*4.0; es.addShape(pptx.ShapeType.roundRect,{x,y:1.95,w:3.68,h:1.18,rectRadius:0.07,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.7}}); es.addText(k.value,{x,y:2.12,w:3.68,h:0.42,align:'center',fontSize:24,bold:true,color:ACCENT,fontFace:'Arial'}); es.addText(k.label,{x,y:2.58,w:3.68,h:0.24,align:'center',fontSize:10.5,color:DIM,fontFace:'Arial'});});
+      if(engCats.length){ es.addChart(pptx.ChartType.bar,[{name:'Activities',labels:engCats.map(([c])=>catMeta[c]?.name||c),values:engCats.map(([,v])=>v)}],{x:0.95,y:3.55,w:11.2,h:2.85,barDir:'bar',chartColors:engCats.map(([c])=>catColorsLocal[Math.max(0,catSorted.findIndex(([cc])=>cc===c))%catColorsLocal.length]),showLegend:false,showValue:true,valAxisLabelColor:DIM,catAxisLabelColor:DIM,dataLabelColor:TEXT,chartArea:{fill:{color:WHITE},line:{color:WHITE}},plotArea:{fill:{color:WHITE},line:{color:BORDER,width:0.5}}}); }
     });
 
-    // Slide 3 — category breakdown, a real native bar chart
-    slide = pptx.addSlide();
-    addSlideHeader(slide, 'Activity by Category');
-    slide.addChart(pptx.ChartType.bar, [{
-      name: 'Activities',
-      labels: catSorted.map(([cat]) => catMeta[cat]?.name || cat),
-      values: catSorted.map(([,count]) => count),
-    }], {
-      x:0.8, y:1.5, w:11.7, h:5.4,
-      chartColors: catSorted.map((_,i) => catColorsLocal[i % catColorsLocal.length]),
-      barDir:'col', showLegend:false, showValue:true,
-      valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
-      chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
-    });
-
-    // Slide 4 — category details table (the "as much category-wise
-    // information as possible" request) — count, share of total, top
-    // contributing engineer, and time logged where that category
-    // actually tracks it, one row per category.
-    slide = pptx.addSlide();
-    addSlideHeader(slide, 'Category Details');
-    const catTableRows = [
-      [
-        { text:'Category', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Activities', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'% of Total', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Top Engineer', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Time Logged', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-      ],
-      ...catDetails.map((c, i) => [
-        { text: catMeta[c.cat]?.name || c.cat, options:{ color:catColorsLocal[i % catColorsLocal.length], bold:true, fill:{color:DARK} } },
-        { text: String(c.count), options:{ color:TEXT, fill:{color:DARK} } },
-        { text: `${c.pct}%`, options:{ color:DIM, fill:{color:DARK} } },
-        { text: c.topEngineer, options:{ color:DIM, fill:{color:DARK} } },
-        { text: c.timeLabel, options:{ color:DIM, fill:{color:DARK} } },
-      ]),
-    ];
-    slide.addTable(catTableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:14, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[3.3,2.2,2.2,2.7,1.7] });
-
-    // 2026-09-19: removed the "Top Engineers by Score" chart entirely
-    // and the Score column below, per explicit request not to show
-    // individual scores in this deck. Team-wide Score on the overview
-    // slide is unaffected — only per-person scores are hidden. Re-sorted
-    // this table by activity count instead, since that's the only
-    // visible ranking metric left once Score isn't shown.
-    const byActivity = [...leaderboard].sort((a,b) => b[1].total - a[1].total);
-
-    // Slide 5 — engineer activity summary (no individual scores)
-    slide = pptx.addSlide();
-    addSlideHeader(slide, 'Engineer Activity');
-    const tableRows = [
-      [
-        { text:'#', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Engineer', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Top Category', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Activities', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-        { text:'Time Logged', options:{ bold:true, color:TEXT, fill:{color:CARD} } },
-      ],
-      ...byActivity.slice(0, 15).map(([, e], i) => [
-        { text:String(i+1), options:{ color:DIM, fill:{color:DARK} } },
-        { text:e.name, options:{ color:TEXT, fill:{color:DARK} } },
-        { text:catMeta[e.topCat]?.name || '—', options:{ color:DIM, fill:{color:DARK} } },
-        { text:String(e.total), options:{ color:ACCENT, bold:true, fill:{color:DARK} } },
-        { text:e.duration > 0 ? formatDurationShort(e.duration) : '—', options:{ color:DIM, fill:{color:DARK} } },
-      ]),
-    ];
-    slide.addTable(tableRows, { x:0.6, y:1.5, w:12.1, h:5.4, fontSize:14, fontFace:'Arial', border:{type:'solid', color:'333333', pt:0.5}, autoPage:false, colW:[0.6,3.8,3.6,2.1,2] });
-
-    // 2026-09-22: one slide per engineer — their own category-breakdown
-    // chart plus task count, categories touched (versatility), and time
-    // logged. This is deliberately the structured, numbers half of a
-    // richer reference deck the person shared — not attempting to
-    // reproduce that deck's hand-written narrative lines per person,
-    // since those require human interpretation of whatever the data
-    // happens to show and can't be reliably generated the same way
-    // twice for arbitrary data. Sorted by activity, same as the summary
-    // table just above, so the deck reads in a consistent order.
-    byActivity.forEach(([, e]) => {
-      const engSlide = pptx.addSlide();
-      addSlideHeader(engSlide, e.name);
-      const engCats = Object.entries(e.cats).sort((a,b) => b[1]-a[1]);
-      const engKpis = [
-        { label:'Tasks Logged', value:String(e.total) },
-        { label:'Categories Touched', value:`${engCats.length} / ${catSorted.length}` },
-        { label:'Time Logged', value: e.duration > 0 ? formatDurationShort(e.duration) : '—' },
-      ];
-      engKpis.forEach((k, i) => {
-        const x = 0.6 + i * 4.1;
-        engSlide.addShape(pptx.ShapeType.roundRect, { x, y:1.5, w:3.8, h:1.5, fill:{color:CARD}, line:{color:ACCENT, width:1}, rectRadius:0.1 });
-        engSlide.addText(k.value, { x, y:1.65, w:3.8, h:0.8, align:'center', fontSize:26, bold:true, color:ACCENT, fontFace:'Arial' });
-        engSlide.addText(k.label, { x, y:2.4, w:3.8, h:0.5, align:'center', fontSize:11, color:DIM, fontFace:'Arial' });
-      });
-      if(engCats.length){
-        engSlide.addText('Task breakdown by category', { x:0.6, y:3.3, w:12, h:0.4, fontSize:14, bold:true, color:TEXT, fontFace:'Arial' });
-        engSlide.addChart(pptx.ChartType.bar, [{
-          name: 'Tasks',
-          labels: engCats.map(([cat]) => catMeta[cat]?.name || cat),
-          values: engCats.map(([,count]) => count),
-        }], {
-          x:0.6, y:3.8, w:12.1, h:3.1,
-          barDir:'bar', chartColors: engCats.map(([cat]) => catColorsLocal[catSorted.findIndex(([c]) => c === cat) % catColorsLocal.length]),
-          showLegend:false, showValue:true,
-          valAxisLabelColor:DIM, catAxisLabelColor:DIM, dataLabelColor:TEXT,
-          chartArea:{ fill:{color:DARK} }, plotArea:{ fill:{color:DARK} },
-        });
-      }
-    });
-
-    pptx.writeFile({ fileName: `Dashboard_${engineerLabel.replace(/\s+/g,'_')}_${(fromVal||'all')}_to_${(toVal||'all')}.pptx` });
+    await pptx.writeFile({ fileName:`Dashboard_${excelSafeFilePart(engineerLabel)}_${excelSafeFilePart(disciplineLabel)}_${fromVal||'all'}_to_${toVal||'all'}.pptx` });
   }
+
 
 
   // ============ EDIT TASK (own entries only, with history trail) ============
@@ -9534,114 +9618,145 @@ for a competing inline style first.`;
  
   const DEV_STATUS_COLOR = { 'In Progress':'#2F5FE0', 'Done':'#188A5A', 'On Hold':'#C97A16', 'Cancelled':'#8A93A1' };
 
-  // One-slide PPTX report for a single project — its own start/target
-  // dates, owner, completion %, and a Gantt-style breakdown of its tasks,
-  // built entirely client-side (same pattern as the existing Excel
-  // export via SheetJS — nothing leaves the browser, no server involved).
-  // Fetches this project's tasks fresh rather than relying on
-  // projectTasksCache, since that cache only ever holds whichever
-  // project's detail view happens to be expanded right now — this export
-  // button works from the card directly, with nothing expanded at all.
-  async function exportProjectReportPptx(projectId){
-    const project = devProjectsCache.find(p => p.id === projectId);
-    if(!project) return;
-    await populateDevPeople();
-    const { data: tasks, error } = await sb.from('dev_project_tasks').select('*').eq('project_id', projectId).order('start_date', { ascending: true });
-    if(error){ alert('Could not load this project\'s tasks: ' + error.message); return; }
+  // Project PPTX export: single, selected, or all currently visible projects.
+  // Projects with many tasks are paginated into fixed-height continuation slides
+  // instead of shrinking rows until labels/bars collide.
+  function filteredDevProjectsForExport(){
+    const leadFilter = document.getElementById('devFilterLead').value;
+    const collabFilter = document.getElementById('devFilterCollab').value;
+    const impactFilter = document.getElementById('devFilterImpact').value;
+    const statusFilter = document.getElementById('devFilterStatus').value;
+    return devProjectsCache.filter(p =>
+      (!leadFilter || p.lead_id === leadFilter) &&
+      (!collabFilter || (p.collaborators || []).includes(collabFilter)) &&
+      (!impactFilter || p.impact_type === impactFilter) &&
+      (!statusFilter || p.status === statusFilter)
+    );
+  }
 
-    const pptx = new PptxGenJS();
-    pptx.layout = 'LAYOUT_16x9'; // 10in x 5.63in
-    // One shared font everywhere — set as the slide-wide default so
-    // every addText call inherits it without repeating fontFace on each
-    // one, plus explicitly on each call too as a safety net for viewers
-    // that don't honor a master-level default.
-    pptx.theme = { headFontFace: 'Arial', bodyFontFace: 'Arial' };
-    const slide = pptx.addSlide();
-    // A soft neutral canvas behind an inset white card, rather than the
-    // report content stretching edge-to-edge — reads as a deliberately
-    // framed, designed page instead of a form that just fills whatever
-    // space it's given.
-    slide.background = { color: 'EEF0F4' };
+  function openProjectExportModal(projectId=''){
+    const modal = document.getElementById('projectExportModal');
+    const projects = devProjectsCache || [];
+    const single = document.getElementById('projectExportSingle');
+    single.innerHTML = projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    if(projectId && projects.some(p=>p.id===projectId)) single.value = projectId;
+    const checklist = document.getElementById('projectExportChecklist');
+    checklist.innerHTML = projects.map(p => `<label style="display:flex;align-items:flex-start;gap:8px;padding:7px 8px;border-radius:9px;background:var(--surface);border:1px solid var(--border);font-size:12.5px;"><input type="checkbox" class="project-export-check" value="${p.id}" ${projectId===p.id?'checked':''}><span><b>${escapeHtml(p.name)}</b><br><span style="color:var(--text-faint);font-size:11px;">${escapeHtml(p.status || '—')}</span></span></label>`).join('');
+    const mode = document.getElementById('projectExportMode');
+    mode.value = projectId ? 'single' : 'visible';
+    updateProjectExportModeUI();
+    modal.style.display = 'flex';
+  }
 
-    const lead = devPeople.find(p => p.id === project.lead_id);
-    const ownerLabel = lead ? displayName(lead) : 'Unassigned';
-    const progress = projectProgressPercent(projectId);
-    const fmt = d => d ? new Date(d).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' }) : '—';
-    const statusColorHex = (DEV_STATUS_COLOR[project.status] || '#2F5FE0').replace('#','');
-    const F = 'Arial';
+  function closeProjectExportModal(){ document.getElementById('projectExportModal').style.display='none'; }
 
-    // The card itself — everything below is positioned relative to this
-    // inset area (x 0.55–9.45, y 0.4–5.23), not the full slide.
-    slide.addShape(pptx.ShapeType.roundRect, { x:0.55, y:0.4, w:8.9, h:4.83, rectRadius:0.12, fill:{ color:'FFFFFF' }, line:{ color:'E2E4E9', width:0.75 }, shadow:{ type:'outer', color:'1A1A2E', opacity:0.08, blur:6, offset:2, angle:90 } });
+  function updateProjectExportModeUI(){
+    const mode = document.getElementById('projectExportMode').value;
+    document.getElementById('projectExportSingleWrap').style.display = mode==='single' ? 'block' : 'none';
+    document.getElementById('projectExportSelectedWrap').style.display = mode==='selected' ? 'block' : 'none';
+    const note = document.getElementById('projectExportVisibleNote');
+    if(mode==='visible'){
+      const visible = filteredDevProjectsForExport();
+      note.style.display='block';
+      note.textContent = `${visible.length} project${visible.length===1?'':'s'} currently match the Project timeline filters and will be exported.`;
+    } else note.style.display='none';
+  }
 
-    // Header: small accent dot + eyebrow, project name, status pill.
-    slide.addShape(pptx.ShapeType.ellipse, { x:0.85, y:0.65, w:0.09, h:0.09, fill:{ color: statusColorHex }, line:{ type:'none' } });
-    slide.addText('WALTON LIFT R&I  ·  PROJECT REPORT', { x:1.02, y:0.6, w:6, h:0.2, fontSize:9.5, fontFace:F, color:'8A93A1', charSpacing:1 });
-    slide.addText(project.name, { x:0.85, y:0.82, w:6.6, h:0.5, fontSize:21, fontFace:F, bold:true, color:'1A1A2E' });
-    slide.addShape(pptx.ShapeType.roundRect, { x:7.85, y:0.75, w:1.45, h:0.36, rectRadius:0.18, fill:{ color: statusColorHex, transparency:88 }, line:{ type:'none' } });
-    slide.addText(project.status, { x:7.85, y:0.75, w:1.45, h:0.36, fontSize:10.5, fontFace:F, bold:true, color: statusColorHex, align:'center', valign:'middle' });
-
-    // Four metric cards: owner, start, target, completion (with its own
-    // small progress bar rather than just a bare number).
-    const cardY = 1.55, cardW = 1.98, cardH = 0.68, cardGap = 0.14;
-    const cards = [
-      { label:'OWNER', value: ownerLabel },
-      { label:'START DATE', value: fmt(project.start_date) },
-      { label:'TARGET DATE', value: fmt(project.target_date) },
-      { label:'COMPLETION', value: progress === null ? 'No tasks yet' : `${progress}%` }
-    ];
-    cards.forEach((c, i) => {
-      const x = 0.85 + i * (cardW + cardGap);
-      slide.addShape(pptx.ShapeType.roundRect, { x, y:cardY, w:cardW, h:cardH, rectRadius:0.07, fill:{ color:'F7F8FA' }, line:{ type:'none' } });
-      slide.addText(c.label, { x:x+0.14, y:cardY+0.09, w:cardW-0.28, h:0.18, fontSize:8, fontFace:F, color:'8A93A1', charSpacing:0.5 });
-      slide.addText(c.value, { x:x+0.14, y:cardY+0.28, w:cardW-0.28, h:0.28, fontSize:12.5, fontFace:F, bold:true, color:'1A1A2E' });
-      if(i === 3 && progress !== null){
-        slide.addShape(pptx.ShapeType.roundRect, { x:x+0.14, y:cardY+0.56, w:cardW-0.28, h:0.05, rectRadius:0.025, fill:{ color:'E2E4E9' }, line:{ type:'none' } });
-        slide.addShape(pptx.ShapeType.roundRect, { x:x+0.14, y:cardY+0.56, w:(cardW-0.28)*(progress/100), h:0.05, rectRadius:0.025, fill:{ color:'2F5FE0' }, line:{ type:'none' } });
-      }
-    });
-
-    // Gantt-style task breakdown — same color-by-status logic as the
-    // in-app version (see DEV_STATUS_COLOR above), so the exported slide
-    // reads as the same system, not a different tool. Row height scales
-    // down automatically for projects with many tasks, so this stays a
-    // single slide regardless of task count rather than overflowing it.
-    slide.addText('TASK BREAKDOWN', { x:0.85, y:2.5, w:4, h:0.2, fontSize:8.5, fontFace:F, color:'8A93A1', charSpacing:1 });
-    const trackX = 2.1, trackW = 7.05;
-    if(!tasks || !tasks.length){
-      slide.addText('No tasks added yet for this project.', { x:0.85, y:2.85, w:7.5, h:0.4, fontSize:11.5, fontFace:F, color:'8A93A1', italic:true });
-    } else {
-      const starts = tasks.map(t => new Date(t.start_date || project.start_date).getTime());
-      const ends = tasks.map(t => new Date(t.end_date || t.start_date || project.target_date).getTime());
-      const rangeStart = Math.min(...starts, new Date(project.start_date || Date.now()).getTime());
-      const rangeEnd = Math.max(...ends, new Date(project.target_date || Date.now()).getTime());
-      const span = Math.max(rangeEnd - rangeStart, 86400000);
-
-      const rowH = Math.min(0.56, (4.9 - 2.78) / tasks.length);
-      tasks.forEach((t, i) => {
-        const y = 2.78 + i * rowH;
-        const s = t.start_date ? new Date(t.start_date).getTime() : rangeStart;
-        const e = t.end_date ? new Date(t.end_date).getTime() : s;
-        const left = trackX + ((s - rangeStart) / span) * trackW;
-        const width = Math.max(0.22, ((e - s) / span) * trackW);
-        const color = (DEV_STATUS_COLOR[t.status] || '#2F5FE0').replace('#','');
-
-        slide.addText(t.task_name, { x:0.85, y, w:1.15, h:rowH-0.05, fontSize:9.5, fontFace:F, color:'1A1A2E', valign:'middle', wrap:true });
-        slide.addShape(pptx.ShapeType.roundRect, { x:trackX, y:y+rowH*0.24, w:trackW, h:rowH*0.36, rectRadius:0.07, fill:{ color:'F0F1F4' }, line:{ type:'none' } });
-        slide.addShape(pptx.ShapeType.roundRect, { x:left, y:y+rowH*0.24, w:width, h:rowH*0.36, rectRadius:0.07, fill:{ color }, line:{ type:'none' } });
-        // Start/end date directly above its own bar — added per request,
-        // rather than only showing the project's overall date range once.
-        slide.addText(`${fmt(t.start_date)}  →  ${fmt(t.end_date)}`, { x:trackX, y:y-0.03, w:trackW, h:0.16, fontSize:7, fontFace:F, color:'8A93A1' });
+  async function runProjectPptxExport(){
+    const mode = document.getElementById('projectExportMode').value;
+    let ids=[];
+    if(mode==='single') ids=[document.getElementById('projectExportSingle').value].filter(Boolean);
+    else if(mode==='selected') ids=[...document.querySelectorAll('.project-export-check:checked')].map(x=>x.value);
+    else ids=filteredDevProjectsForExport().map(p=>p.id);
+    if(!ids.length){ alert('Choose at least one project to export.'); return; }
+    const btn=document.getElementById('projectExportRunBtn');
+    btn.disabled=true; btn.textContent='Building presentation…';
+    try{
+      await buildProjectPortfolioPptx(ids,{
+        includeSummary:document.getElementById('projectExportSummary').checked,
+        includeCollaborators:document.getElementById('projectExportCollaborators').checked,
+        includeRemarks:document.getElementById('projectExportRemarks').checked
       });
+      closeProjectExportModal();
+    }catch(err){ alert('Could not export project presentation: '+err.message); }
+    finally{ btn.disabled=false; btn.textContent='Export PPTX'; }
+  }
+
+  async function exportProjectReportPptx(projectId){ openProjectExportModal(projectId); }
+
+  async function buildProjectPortfolioPptx(projectIds, options={}){
+    const projects = projectIds.map(id=>devProjectsCache.find(p=>p.id===id)).filter(Boolean);
+    if(!projects.length) throw new Error('No matching projects were found.');
+    await populateDevPeople();
+    const {data:taskRows,error}=await sb.from('dev_project_tasks').select('*').in('project_id',projectIds).order('start_date',{ascending:true});
+    if(error) throw error;
+    const taskMap={};
+    (taskRows||[]).forEach(t=>{ if(!taskMap[t.project_id]) taskMap[t.project_id]=[]; taskMap[t.project_id].push(t); });
+
+    const pptx=new PptxGenJS();
+    pptx.defineLayout({name:'WIDE',width:13.33,height:7.5}); pptx.layout='WIDE';
+    pptx.theme={headFontFace:'Arial',bodyFontFace:'Arial',lang:'en-US'};
+    pptx.author='Walton Lift R&I'; pptx.company='Walton Hi-Tech Industries PLC'; pptx.subject='R&I Project Report';
+    const BG='F3F5F8', WHITE='FFFFFF', TEXT='1A1B1E', DIM='667085', BORDER='D9DEE7', ACCENT='2F6FE4';
+    const STATUS={'In Progress':'2F6FE4','Done':'188A5A','On Hold':'C97A16','Cancelled':'8A93A1','Skipped':'8A93A1'};
+    const F='Arial', LOGO_PATH='logo.png';
+    const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
+    const displayPerson=id=>{const p=devPeople.find(x=>x.id===id); return p?displayName(p):'Unassigned';};
+    const addFrame=(slide,eyebrow,title,sub='')=>{slide.background={color:BG};slide.addShape(pptx.ShapeType.roundRect,{x:0.34,y:0.28,w:12.65,h:6.92,rectRadius:0.08,fill:{color:WHITE},line:{color:BORDER,width:0.7}});slide.addText(eyebrow,{x:0.7,y:0.5,w:6,h:0.22,fontSize:9.2,bold:true,color:ACCENT,charSpacing:1.1,fontFace:F});slide.addText(title,{x:0.7,y:0.78,w:9.7,h:0.46,fontSize:23,bold:true,color:TEXT,fontFace:F});if(sub)slide.addText(sub,{x:0.7,y:1.2,w:10.7,h:0.25,fontSize:9.7,color:DIM,fontFace:F});try{slide.addImage({path:LOGO_PATH,x:11.8,y:0.45,w:0.72,h:0.72});}catch(e){};};
+    const addFooter=slide=>{slide.addShape(pptx.ShapeType.line,{x:0.7,y:6.78,w:11.9,h:0,line:{color:BORDER,width:0.6}});slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`,{x:0.7,y:6.86,w:3.5,h:0.16,fontSize:7.5,color:DIM,fontFace:F});slide.addText('Walton Hi-Tech Industries PLC',{x:8.6,y:6.86,w:4,h:0.16,fontSize:7.5,color:DIM,align:'right',fontFace:F});};
+
+    if(projects.length>1 && options.includeSummary!==false){
+      const s0=pptx.addSlide(); addFrame(s0,'WALTON LIFT R&I  ·  PROJECT PORTFOLIO','R&I Project Portfolio',`${projects.length} projects selected for this report`);
+      const rows=[[{text:'Project',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Lead',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Status',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Target',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Completion',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...projects.slice(0,18).map((p,i)=>[{text:p.name,options:{bold:true,color:TEXT,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:displayPerson(p.lead_id),options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:p.status||'—',options:{color:(STATUS[p.status]||ACCENT),bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:fmt(p.target_date),options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:`${projectProgressPercent(p.id)??0}%`,options:{color:ACCENT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}}])];
+      s0.addTable(rows,{x:0.7,y:1.75,w:11.9,h:4.7,fontSize:11.5,fontFace:F,border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[4.25,2.6,1.8,1.8,1.45],margin:0.07}); addFooter(s0);
     }
 
-    slide.addShape(pptx.ShapeType.line, { x:0.85, y:4.98, w:8.15, h:0, line:{ color:'E2E4E9', width:0.75 } });
-    slide.addText(`Generated ${new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })}`, { x:0.85, y:5.03, w:4, h:0.17, fontSize:7.5, fontFace:F, color:'8A93A1' });
-    slide.addText('Walton Hi-Tech Industries PLC', { x:5.4, y:5.03, w:4, h:0.17, fontSize:7.5, fontFace:F, color:'8A93A1', align:'right' });
+    for(const project of projects){
+      const tasks=taskMap[project.id]||[];
+      const chunks=[]; const perSlide=7;
+      if(tasks.length) for(let i=0;i<tasks.length;i+=perSlide) chunks.push(tasks.slice(i,i+perSlide)); else chunks.push([]);
+      for(let chunkIndex=0;chunkIndex<chunks.length;chunkIndex++){
+        const chunk=chunks[chunkIndex], slide=pptx.addSlide();
+        addFrame(slide,'WALTON LIFT R&I  ·  PROJECT REPORT',project.name,chunks.length>1?`Task breakdown · page ${chunkIndex+1} of ${chunks.length}`:'Task breakdown');
+        const statusColor=STATUS[project.status]||ACCENT;
+        slide.addShape(pptx.ShapeType.roundRect,{x:10.55,y:0.82,w:1.75,h:0.34,rectRadius:0.16,fill:{color:statusColor,transparency:88},line:{color:statusColor,width:0.5}});
+        slide.addText(project.status||'—',{x:10.55,y:0.82,w:1.75,h:0.34,align:'center',valign:'middle',fontSize:9.5,bold:true,color:statusColor,fontFace:F});
+        const progress=project.status==='Done'?100:(projectProgressPercent(project.id)??0);
+        const collabs=(project.collaborators||[]).map(displayPerson).filter(x=>x!=='Unassigned');
+        const metrics=[['OWNER',displayPerson(project.lead_id)],['START DATE',fmt(project.start_date)],['TARGET DATE',fmt(project.target_date)],['COMPLETION',`${progress}%`]];
+        metrics.forEach((m,i)=>{const x=0.7+i*3.0; slide.addShape(pptx.ShapeType.roundRect,{x,y:1.62,w:2.72,h:0.78,rectRadius:0.06,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});slide.addText(m[0],{x:x+0.13,y:1.75,w:2.45,h:0.15,fontSize:7.8,bold:true,color:DIM,charSpacing:0.6,fontFace:F});slide.addText(m[1],{x:x+0.13,y:1.98,w:2.45,h:0.25,fontSize:11.2,bold:true,color:TEXT,fontFace:F,fit:'shrink'});});
+        let infoY=2.52;
+        if(options.includeCollaborators!==false && collabs.length){slide.addText(`Collaborators: ${collabs.join(', ')}`,{x:0.72,y:infoY,w:11.7,h:0.23,fontSize:8.8,color:DIM,fontFace:F,fit:'shrink'});infoY+=0.28;}
+        if(project.notes){slide.addText(`Project briefing: ${project.notes}`,{x:0.72,y:infoY,w:11.7,h:0.32,fontSize:8.6,color:DIM,fontFace:F,fit:'shrink'});infoY+=0.36;}
+        slide.addText('TASK BREAKDOWN',{x:0.72,y:infoY+0.05,w:2.4,h:0.18,fontSize:8.2,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
+        const top=infoY+0.36, nameX=0.72, nameW=3.1, trackX=4.05, trackW=8.2, rowH=0.51;
+        if(!chunk.length){slide.addText('No tasks added yet for this project.',{x:nameX,y:top+0.25,w:7,h:0.4,fontSize:11,color:DIM,italic:true,fontFace:F});}
+        else{
+          const allStarts=tasks.map(t=>new Date((t.start_date||project.start_date||new Date().toISOString().slice(0,10))+'T00:00:00').getTime());
+          const allEnds=tasks.map(t=>new Date((t.end_date||t.start_date||project.target_date||project.start_date||new Date().toISOString().slice(0,10))+'T00:00:00').getTime());
+          const rangeStart=Math.min(...allStarts), rangeEnd=Math.max(...allEnds,rangeStart+86400000), span=Math.max(rangeEnd-rangeStart,86400000);
+          let tick=new Date(new Date(rangeStart).getFullYear(),new Date(rangeStart).getMonth(),1); const endTick=new Date(rangeEnd);
+          while(tick<=endTick){const tx=trackX+((tick.getTime()-rangeStart)/span)*trackW; if(tx>=trackX-0.02&&tx<=trackX+trackW+0.02){slide.addShape(pptx.ShapeType.line,{x:tx,y:top-0.12,w:0,h:rowH*chunk.length+0.15,line:{color:'E9EDF3',width:0.5,dash:'dash'}});slide.addText(tick.toLocaleDateString('en-GB',{month:'short',year:tick.getMonth()===0?'numeric':undefined}),{x:Math.max(trackX,tx-0.25),y:top-0.35,w:0.8,h:0.18,fontSize:7.2,color:DIM,fontFace:F,align:'center'});} tick.setMonth(tick.getMonth()+1);}
+          chunk.forEach((t,i)=>{const y=top+i*rowH; const s=new Date((t.start_date||project.start_date)+'T00:00:00').getTime(); const e=new Date((t.end_date||t.start_date||project.target_date||project.start_date)+'T00:00:00').getTime(); const left=trackX+((s-rangeStart)/span)*trackW; const width=Math.max(0.12,((Math.max(e,s+86400000)-s)/span)*trackW); const color=STATUS[t.status]||ACCENT; slide.addText(t.task_name,{x:nameX,y:y+0.02,w:nameW,h:0.22,fontSize:8.9,bold:true,color:TEXT,fontFace:F,fit:'shrink'}); slide.addText(`${fmt(t.start_date)} → ${fmt(t.end_date)}`,{x:nameX,y:y+0.24,w:nameW,h:0.16,fontSize:7.1,color:DIM,fontFace:F}); slide.addShape(pptx.ShapeType.roundRect,{x:trackX,y:y+0.16,w:trackW,h:0.17,rectRadius:0.05,fill:{color:'EEF1F5'},line:{type:'none'}}); slide.addShape(pptx.ShapeType.roundRect,{x:left,y:y+0.16,w:Math.min(width,trackX+trackW-left),h:0.17,rectRadius:0.05,fill:{color},line:{type:'none'}}); if(t.progress_pct!==undefined&&t.progress_pct!==null)slide.addText(`${t.progress_pct}%`,{x:trackX+trackW-0.55,y:y+0.02,w:0.5,h:0.16,fontSize:7,color:DIM,align:'right',fontFace:F});});
+          const legend=[['Done','188A5A'],['In progress','2F6FE4'],['On hold','C97A16'],['Planned / skipped','8A93A1']]; legend.forEach((l,i)=>{const x=7.6+i*1.25;slide.addShape(pptx.ShapeType.ellipse,{x,y:6.48,w:0.07,h:0.07,fill:{color:l[1]},line:{type:'none'}});slide.addText(l[0],{x:x+0.1,y:6.43,w:1.05,h:0.16,fontSize:6.8,color:DIM,fontFace:F});});
+        }
+        addFooter(slide);
+      }
 
-    await pptx.writeFile({ fileName: `${project.name.replace(/[^a-z0-9]+/gi,'_')}_report.pptx` });
-    showFormPopup(`"${project.name}" report downloaded.`, 'success');
+      if(options.includeRemarks!==false){
+        const withRemarks=tasks.filter(t=>String(t.remarks||'').trim());
+        for(let i=0;i<withRemarks.length;i+=10){
+          const part=withRemarks.slice(i,i+10), rs=pptx.addSlide(); addFrame(rs,'WALTON LIFT R&I  ·  PROJECT REPORT',`${project.name} — Task Remarks`,withRemarks.length>10?`Page ${Math.floor(i/10)+1} of ${Math.ceil(withRemarks.length/10)}`:'');
+          const rows=[[{text:'Task',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Status',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Remarks',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...part.map((t,j)=>[{text:t.task_name,options:{bold:true,color:TEXT,fill:{color:j%2?'F8FAFC':'FFFFFF'}}},{text:t.status||'—',options:{color:STATUS[t.status]||TEXT,fill:{color:j%2?'F8FAFC':'FFFFFF'}}},{text:t.remarks,options:{color:DIM,fill:{color:j%2?'F8FAFC':'FFFFFF'}}}])];
+          rs.addTable(rows,{x:0.72,y:1.75,w:11.85,h:4.9,fontSize:10.5,fontFace:F,border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[3.25,1.7,6.9],margin:0.07}); addFooter(rs);
+        }
+      }
+    }
+    const name=projects.length===1?`${excelSafeFilePart(projects[0].name)}_Project_Report.pptx`:`R&I_Project_Portfolio_${projects.length}_Projects_${new Date().toISOString().slice(0,10)}.pptx`;
+    await pptx.writeFile({fileName:name});
+    showFormPopup(projects.length===1?`"${projects[0].name}" report downloaded.`:`${projects.length} project reports downloaded in one presentation.`,'success');
   }
+
  
   function renderGanttRows(){
     const leadFilter = document.getElementById('devFilterLead').value;
