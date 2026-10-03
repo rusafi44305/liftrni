@@ -4628,6 +4628,7 @@
       alert(`The ${publish ? 'publish' : 'unpublish'} request completed, but no matching row was found to update — the project may have been deleted or its id may be stale. Try refreshing the page.`);
       return;
     }
+    scheduleHomeOverviewRefresh(0);
     loadDevDashboard();
   }
 
@@ -4635,6 +4636,7 @@
     if(!confirm('Delete this entire project, including its task breakdown? This cannot be undone.')) return;
     const { error } = await sb.from('dev_projects').delete().eq('id', id);
     if(error){ alert('Could not delete: ' + error.message); return; }
+    scheduleHomeOverviewRefresh(0);
     loadDevDashboard();
   }
  
@@ -4776,6 +4778,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-03', summary:'Home overview counts now refresh immediately without a page reload: successful task add/edit/delete, project add/edit/delete/publish changes, and profile approval/removal actions schedule the existing get_home_stats RPC to refresh; realtime changes on activity_log/tasks/dev_projects/profiles also trigger the same debounced refresh so other users\' changes appear live when those table events are available. No Home UI/CSS or Supabase SQL changed.' },
     { date:'2026-10-03', summary:'Project PPTX exporter now matches the approved VIP Lift reference template: no portfolio summary/details/remarks slides, no extra project-status badge, one clean project-report slide per up to 8 tasks with the same header, Done/In progress/Planned/Today legend, four project metrics, completion bar, task timeline and footer; longer projects automatically continue on identical timeline slides using the same full-project date scale.' },
     { date:'2026-10-03', summary:'PPTX layout hardening: Dashboard Engineer Activity now paginates at 8 engineers per slide; Project reports follow the reference layout more closely with a dedicated optional Project Details slide, a cleaner task-only Gantt area, 6 tasks per Gantt page, protected legend/footer space, and smaller remarks pages. Excel export is unchanged.' },
     { date:'2026-10-03', summary:'Fixed Project PPTX repair warning for same-day/right-edge Gantt tasks: task-bar geometry is now finite-number guarded, clamped inside the timeline, and given a minimum visible width so PptxGenJS can never emit a zero-width rounded rectangle with an invalid Infinity adjustment.' },
@@ -6250,6 +6253,7 @@
     if(!confirm('Delete this entry permanently? This cannot be undone.')) return;
     const { error } = await sb.from('tasks').delete().eq('id', id);
     if(error){ alert('Could not delete: ' + error.message); return; }
+    scheduleHomeOverviewRefresh(0);
     // Refresh whichever view(s) currently show this entry.
     if(currentCatKey) showCategoryLog(currentCatKey);
     loadMyTasks();
@@ -6329,6 +6333,7 @@
  
     if(error){ alert('Could not save changes: ' + error.message); return; }
     closeEditModal();
+    scheduleHomeOverviewRefresh(0);
     // refresh whichever view we're looking at
     if(currentCatKey) showCategoryLog(currentCatKey);
     loadMyTasks();
@@ -6885,6 +6890,10 @@
   // Real-time: whenever ANYONE logs a task, everyone's home feed gets a generic "someone logged X" line — no names or details
   sb.channel('public:activity-feed')
     .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'activity_log' }, (payload) => {
+      // activity_log is already the proven live signal used by Recent Activity.
+      // Refresh the Home overview from the same source-of-truth RPC as soon as
+      // any user's newly logged task reaches this stream.
+      scheduleHomeOverviewRefresh();
       // 2026-09-19: real bug fix — submitTask() already adds the
       // submitter's own new entry to the feed instantly (an optimistic
       // update, so they don't wait on this realtime round-trip at all).
@@ -6908,6 +6917,17 @@
       const items = el.querySelectorAll('.feed-item');
       if(items.length > 10) items[items.length-1].remove();
     })
+    .subscribe();
+
+  // Keep Home counters current when records change outside this browser too.
+  // activity_log above covers the normal task-insert path; these listeners also
+  // cover edits/deletes and project/profile changes when Realtime is enabled for
+  // those tables. Direct post-save refreshes below remain the immediate fallback
+  // for the person performing the action in this browser.
+  sb.channel('public:home-overview-stats')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => scheduleHomeOverviewRefresh())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'dev_projects' }, () => scheduleHomeOverviewRefresh())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => scheduleHomeOverviewRefresh())
     .subscribe();
  
   // Collect every field the person filled in #dynamicForm into one details object
@@ -7188,6 +7208,7 @@
       renderQueue();
       renderTaskForm(); // no preserve flag — fields fully clear for the next entry
       loadMyTasks(); // refresh "Submitted by me" so the new entry appears immediately, not only after a manual page reload
+      scheduleHomeOverviewRefresh(0); // update Home counts immediately, without a page refresh
       if(currentCatKey) showCategoryLog(currentCatKey); // also refresh a category log page if one happens to be open
       // Home's "Recent activity" feed reads from activity_log, a separate
       // table from the tasks table just inserted into above — whatever
@@ -8155,18 +8176,21 @@ for a competing inline style first.`;
     const discipline = disciplineSel ? disciplineSel.value : 'mechanical';
     const { error } = await sb.from('profiles').update({ role, discipline, status: 'active' }).eq('id', id);
     if(error){ alert('Could not approve: ' + error.message); return; }
+    scheduleHomeOverviewRefresh(0);
     loadAdminPanel();
   }
   async function declineUser(id){
     if(!confirm('Decline this sign-in? They will need to register again.')) return;
     const { error } = await sb.from('profiles').delete().eq('id', id);
     if(error){ alert('Could not decline: ' + error.message); return; }
+    scheduleHomeOverviewRefresh(0);
     loadAdminPanel();
   }
   async function removeUser(id, btn){
     if(!confirm('Remove this person from Walton Lift R&I? They will lose access immediately and will need to re-register and be re-approved.')) return;
     const { error } = await sb.from('profiles').update({ status: 'pending' }).eq('id', id);
     if(error){ alert('Could not remove: ' + error.message); return; }
+    scheduleHomeOverviewRefresh(0);
     loadAdminPanel();
   }
   async function updateUserDiscipline(id, discipline){
@@ -9984,6 +10008,7 @@ for a competing inline style first.`;
     const wasEdit = !!editingDevProjectId;
     cancelEditDevProject();
     alert(wasEdit ? 'Project updated.' : 'Project added to the Gantt board.');
+    scheduleHomeOverviewRefresh(0);
     loadDevDashboard();
   }
  
@@ -10009,6 +10034,22 @@ for a competing inline style first.`;
       const pctEl = document.getElementById('catPct-'+key);
       if(pctEl) pctEl.textContent = totalCatActivity > 0 ? `${Math.round((count / totalCatActivity) * 100)}%` : '0%';
     });
+  }
+
+
+  // 2026-10-03: the Home feed already updated immediately after a task
+  // submission, but these overview counters only changed when the whole
+  // page was reloaded. Keep the existing database-side get_home_stats()
+  // definition as the single source of truth and simply re-run it after
+  // relevant data changes. A short debounce coalesces the direct refresh
+  // plus any near-simultaneous Realtime event into one RPC call.
+  let homeOverviewRefreshTimer = null;
+  function scheduleHomeOverviewRefresh(delay = 80){
+    clearTimeout(homeOverviewRefreshTimer);
+    homeOverviewRefreshTimer = setTimeout(() => {
+      homeOverviewRefreshTimer = null;
+      loadHomeOverview();
+    }, delay);
   }
 
   // ============ ACTIVITY TREND CHART (hero card) ============
