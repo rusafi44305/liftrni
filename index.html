@@ -2510,12 +2510,7 @@
         <div id="projectExportChecklist" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:7px; max-height:240px; overflow:auto; padding:10px; border:1px solid var(--border); border-radius:12px; background:var(--surface-alt);"></div>
       </div>
       <div id="projectExportVisibleNote" style="display:none; margin-bottom:14px; padding:10px 12px; border:1px solid var(--border); border-radius:12px; background:var(--surface-alt); font-size:12.5px; color:var(--text-dim);"></div>
-      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:8px; margin:14px 0 18px;">
-        <label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="projectExportSummary" checked> Include portfolio summary when exporting multiple projects</label>
-        <label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="projectExportCollaborators" checked> Include collaborators</label>
-        <label style="display:flex; gap:8px; align-items:center; font-size:13px;"><input type="checkbox" id="projectExportRemarks" checked> Include task remarks appendix</label>
-      </div>
-      <div style="padding:10px 12px; border-radius:12px; background:var(--accent-dim); color:var(--text-dim); font-size:12px; line-height:1.5; margin-bottom:16px;">Projects with many tasks are automatically split across continuation slides with fixed-height rows, so task bars and labels never overlap.</div>
+      <div style="padding:10px 12px; border-radius:12px; background:var(--accent-dim); color:var(--text-dim); font-size:12px; line-height:1.5; margin:14px 0 16px;">The exported presentation follows the approved Project Report template. Each project starts on its own slide; projects with more tasks automatically continue on additional slides using the same timeline layout.</div>
       <div style="display:flex; justify-content:flex-end; gap:8px;">
         <button class="btn" onclick="closeProjectExportModal()">Cancel</button>
         <button class="submit-btn" id="projectExportRunBtn" style="width:auto; margin:0; padding:9px 18px;" onclick="runProjectPptxExport()">Export PPTX</button>
@@ -4781,6 +4776,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-03', summary:'Project PPTX exporter now matches the approved VIP Lift reference template: no portfolio summary/details/remarks slides, no extra project-status badge, one clean project-report slide per up to 8 tasks with the same header, Done/In progress/Planned/Today legend, four project metrics, completion bar, task timeline and footer; longer projects automatically continue on identical timeline slides using the same full-project date scale.' },
     { date:'2026-10-03', summary:'PPTX layout hardening: Dashboard Engineer Activity now paginates at 8 engineers per slide; Project reports follow the reference layout more closely with a dedicated optional Project Details slide, a cleaner task-only Gantt area, 6 tasks per Gantt page, protected legend/footer space, and smaller remarks pages. Excel export is unchanged.' },
     { date:'2026-10-03', summary:'Fixed Project PPTX repair warning for same-day/right-edge Gantt tasks: task-bar geometry is now finite-number guarded, clamped inside the timeline, and given a minimum visible width so PptxGenJS can never emit a zero-width rounded rectangle with an invalid Infinity adjustment.' },
     { date:'2026-10-03', summary:'Export reporting upgrade: Project PPTX now supports single, selected, or currently-filtered multiple projects in one deck; long project task lists paginate across fixed-height continuation slides instead of shrinking/overlapping; Dashboard PPTX moved to the same clean professional report language; Category/Dashboard Excel exports now use filter-aware filenames and report headers plus an additional Charts sheet with graphical summaries, while preserving native Excel Tables and type-aware cells.' },
@@ -9703,11 +9699,7 @@ for a competing inline style first.`;
     const btn=document.getElementById('projectExportRunBtn');
     btn.disabled=true; btn.textContent='Building presentation…';
     try{
-      await buildProjectPortfolioPptx(ids,{
-        includeSummary:document.getElementById('projectExportSummary').checked,
-        includeCollaborators:document.getElementById('projectExportCollaborators').checked,
-        includeRemarks:document.getElementById('projectExportRemarks').checked
-      });
+      await buildProjectPortfolioPptx(ids);
       closeProjectExportModal();
     }catch(err){ alert('Could not export project presentation: '+err.message); }
     finally{ btn.disabled=false; btn.textContent='Export PPTX'; }
@@ -9715,7 +9707,7 @@ for a competing inline style first.`;
 
   async function exportProjectReportPptx(projectId){ openProjectExportModal(projectId); }
 
-  async function buildProjectPortfolioPptx(projectIds, options={}){
+  async function buildProjectPortfolioPptx(projectIds){
     const projects = projectIds.map(id=>devProjectsCache.find(p=>p.id===id)).filter(Boolean);
     if(!projects.length) throw new Error('No matching projects were found.');
     await populateDevPeople();
@@ -9725,115 +9717,143 @@ for a competing inline style first.`;
     (taskRows||[]).forEach(t=>{ if(!taskMap[t.project_id]) taskMap[t.project_id]=[]; taskMap[t.project_id].push(t); });
 
     const pptx=new PptxGenJS();
-    pptx.defineLayout({name:'WIDE',width:13.33,height:7.5}); pptx.layout='WIDE';
+    pptx.defineLayout({name:'WIDE',width:13.333,height:7.5}); pptx.layout='WIDE';
     pptx.theme={headFontFace:'Arial',bodyFontFace:'Arial',lang:'en-US'};
     pptx.author='Walton Lift R&I'; pptx.company='Walton Hi-Tech Industries PLC'; pptx.subject='R&I Project Report';
-    const BG='F3F5F8', WHITE='FFFFFF', TEXT='1A1B1E', DIM='667085', BORDER='D9DEE7', ACCENT='2F6FE4';
-    const STATUS={'In Progress':'2F6FE4','Done':'188A5A','On Hold':'C97A16','Cancelled':'8A93A1','Skipped':'8A93A1'};
-    const F='Arial', LOGO_PATH='logo.png';
+
+    // Exact approved reference style: quiet blue-grey page, one large white
+    // project card, four compact project metrics, and a clean timeline with
+    // Done / In progress / Planned / Today as the only visual legend.
+    const PAGE='F3F5F8', CARD='FFFFFF', TEXT='111827', DIM='61708A', BORDER='DDE3EC';
+    const GRID='DCE5F0', ROW='E9EDF3', PURPLE='5146E5', GREEN='229866', ORANGE='F59E0B', RED='FF5C5C';
+    const F='Arial';
     const fmt=d=>d?new Date(d+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—';
     const displayPerson=id=>{const p=devPeople.find(x=>x.id===id); return p?displayName(p):'Unassigned';};
-    const addFrame=(slide,eyebrow,title,sub='')=>{slide.background={color:BG};slide.addShape(pptx.ShapeType.roundRect,{x:0.34,y:0.28,w:12.65,h:6.92,rectRadius:0.08,fill:{color:WHITE},line:{color:BORDER,width:0.7}});slide.addText(eyebrow,{x:0.7,y:0.5,w:6,h:0.22,fontSize:9.2,bold:true,color:ACCENT,charSpacing:1.1,fontFace:F});slide.addText(title,{x:0.7,y:0.78,w:9.7,h:0.46,fontSize:23,bold:true,color:TEXT,fontFace:F});if(sub)slide.addText(sub,{x:0.7,y:1.2,w:10.7,h:0.25,fontSize:9.7,color:DIM,fontFace:F});try{slide.addImage({path:LOGO_PATH,x:11.8,y:0.45,w:0.72,h:0.72});}catch(e){};};
-    const addFooter=slide=>{slide.addShape(pptx.ShapeType.line,{x:0.7,y:6.78,w:11.9,h:0,line:{color:BORDER,width:0.6}});slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`,{x:0.7,y:6.86,w:3.5,h:0.16,fontSize:7.5,color:DIM,fontFace:F});slide.addText('Walton Hi-Tech Industries PLC',{x:8.6,y:6.86,w:4,h:0.16,fontSize:7.5,color:DIM,align:'right',fontFace:F});};
+    const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
+    const finite=(v,fallback)=>Number.isFinite(v)?v:fallback;
+    const taskColor=t=>t.status==='Done'?GREEN:(t.status==='In Progress'?ORANGE:PURPLE);
+    const projectProgress=p=>p.status==='Done'?100:(projectProgressPercent(p.id)??0);
 
-    if(projects.length>1 && options.includeSummary!==false){
-      const s0=pptx.addSlide(); addFrame(s0,'WALTON LIFT R&I  ·  PROJECT PORTFOLIO','R&I Project Portfolio',`${projects.length} projects selected for this report`);
-      const rows=[[{text:'Project',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Lead',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Status',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Target',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Completion',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...projects.slice(0,18).map((p,i)=>[{text:p.name,options:{bold:true,color:TEXT,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:displayPerson(p.lead_id),options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:p.status||'—',options:{color:(STATUS[p.status]||ACCENT),bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:fmt(p.target_date),options:{color:DIM,fill:{color:i%2?'F8FAFC':'FFFFFF'}}},{text:`${projectProgressPercent(p.id)??0}%`,options:{color:ACCENT,bold:true,fill:{color:i%2?'F8FAFC':'FFFFFF'}}}])];
-      s0.addTable(rows,{x:0.7,y:1.75,w:11.9,h:4.7,fontSize:11.5,fontFace:F,border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[4.25,2.6,1.8,1.8,1.45],margin:0.07}); addFooter(s0);
+    function addPageBase(slide, project, progress, pageNo, pageCount){
+      slide.background={color:PAGE};
+      slide.addText('WALTON LIFT R&I  ·  PROJECT REPORT',{x:0.50,y:0.38,w:4.5,h:0.18,fontFace:F,fontSize:8.8,bold:true,color:DIM,charSpacing:1.8});
+      slide.addText(project.name,{x:0.50,y:0.70,w:6.7,h:0.45,fontFace:F,fontSize:24,bold:true,color:TEXT,margin:0,fit:'shrink'});
+
+      // Reference legend: positioned in the open top-right area, no project-status pill.
+      const legendY=0.82;
+      const legend=[['Done',GREEN,7.05,0.28],['In progress',ORANGE,8.36,0.28],['Planned',PURPLE,9.66,0.28]];
+      legend.forEach(([label,color,x,w])=>{
+        slide.addShape(pptx.ShapeType.roundRect,{x,y:legendY,w,h:0.14,rectRadius:0.07,fill:{color},line:{type:'none'}});
+        slide.addText(label,{x:x+w+0.08,y:legendY-0.02,w:0.9,h:0.18,fontFace:F,fontSize:8.5,color:DIM,margin:0});
+      });
+      slide.addShape(pptx.ShapeType.line,{x:11.13,y:0.72,w:0,h:0.38,line:{color:RED,width:1.3,dash:'dash'}});
+      slide.addText(`Today (${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'})})`,{x:11.25,y:0.80,w:1.25,h:0.18,fontFace:F,fontSize:8.4,color:DIM,margin:0});
+
+      // Large rounded white project panel.
+      slide.addShape(pptx.ShapeType.roundRect,{x:0.50,y:1.38,w:12.33,h:5.45,rectRadius:0.12,fill:{color:CARD},line:{color:BORDER,width:0.7}});
+
+      // Four metric cards, matching the reference proportions.
+      const cards=[
+        {x:0.80,w:3.45,label:'OWNER',value:displayPerson(project.lead_id),valueColor:TEXT},
+        {x:4.38,w:2.44,label:'START DATE',value:fmt(project.start_date),valueColor:TEXT},
+        {x:6.97,w:2.43,label:'TARGET DATE',value:fmt(project.target_date),valueColor:TEXT},
+        {x:9.55,w:2.97,label:'COMPLETION',value:`${progress}%`,valueColor:PURPLE}
+      ];
+      cards.forEach((c,i)=>{
+        slide.addShape(pptx.ShapeType.roundRect,{x:c.x,y:1.67,w:c.w,h:0.78,rectRadius:0.08,fill:{color:'FAFBFD'},line:{color:BORDER,width:0.55}});
+        slide.addText(c.label,{x:c.x+0.14,y:1.82,w:c.w-0.28,h:0.13,fontFace:F,fontSize:7.1,bold:true,color:DIM,charSpacing:1.1,margin:0});
+        slide.addText(c.value,{x:c.x+0.14,y:2.08,w:i===3?0.85:c.w-0.28,h:0.22,fontFace:F,fontSize:i===3?18:12,bold:true,color:c.valueColor,margin:0,fit:'shrink'});
+        if(i===3){
+          slide.addShape(pptx.ShapeType.roundRect,{x:c.x+1.20,y:2.08,w:1.76,h:0.12,rectRadius:0.06,fill:{color:'E4E8F0'},line:{type:'none'}});
+          const fillW=1.76*clamp(progress,0,100)/100;
+          if(fillW>0.03) slide.addShape(pptx.ShapeType.roundRect,{x:c.x+1.20,y:2.08,w:Math.max(0.04,fillW),h:0.12,rectRadius:0.06,fill:{color:PURPLE},line:{type:'none'}});
+        }
+      });
+
+      const label=pageCount>1 && pageNo>1 ? `TASK BREAKDOWN · CONTINUED ${pageNo}/${pageCount}` : 'TASK BREAKDOWN';
+      slide.addText(label,{x:0.80,y:2.74,w:4.1,h:0.17,fontFace:F,fontSize:7.6,bold:true,color:DIM,charSpacing:1.6,margin:0});
+
+      // Footer exactly as the reference: generated date left, company right.
+      slide.addText(`Generated ${new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}`,{x:0.50,y:7.06,w:2.6,h:0.15,fontFace:F,fontSize:7.5,color:DIM,margin:0});
+      slide.addText('Walton Hi-Tech Industries PLC',{x:10.15,y:7.06,w:2.68,h:0.15,fontFace:F,fontSize:7.5,color:DIM,align:'right',margin:0});
     }
 
     for(const project of projects){
-      const tasks=taskMap[project.id]||[];
-      const progress=project.status==='Done'?100:(projectProgressPercent(project.id)??0);
-      const collabs=(project.collaborators||[]).map(displayPerson).filter(x=>x!=='Unassigned');
+      const tasks=(taskMap[project.id]||[]).slice().sort((a,b)=>String(a.start_date||'').localeCompare(String(b.start_date||'')));
+      const progress=projectProgress(project);
 
-      // Keep narrative project information away from the dense Gantt area.
-      // This mirrors the supplied reference deck: the task slide is primarily
-      // a timeline, while optional collaborators/briefing get their own page.
-      if((options.includeCollaborators!==false && collabs.length) || String(project.notes||'').trim()){
-        const ds=pptx.addSlide();
-        addFrame(ds,'WALTON LIFT R&I  ·  PROJECT REPORT',project.name,'Project details');
-        const statusColor=STATUS[project.status]||ACCENT;
-        ds.addShape(pptx.ShapeType.roundRect,{x:10.55,y:0.82,w:1.75,h:0.34,rectRadius:0.16,fill:{color:statusColor,transparency:88},line:{color:statusColor,width:0.5}});
-        ds.addText(project.status||'—',{x:10.55,y:0.82,w:1.75,h:0.34,align:'center',valign:'middle',fontSize:9.5,bold:true,color:statusColor,fontFace:F});
-        const metrics=[['OWNER',displayPerson(project.lead_id)],['START DATE',fmt(project.start_date)],['TARGET DATE',fmt(project.target_date)],['COMPLETION',`${progress}%`]];
-        metrics.forEach((m,i)=>{const x=0.7+i*3.0; ds.addShape(pptx.ShapeType.roundRect,{x,y:1.62,w:2.72,h:0.78,rectRadius:0.06,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});ds.addText(m[0],{x:x+0.13,y:1.75,w:2.45,h:0.15,fontSize:7.8,bold:true,color:DIM,charSpacing:0.6,fontFace:F});ds.addText(m[1],{x:x+0.13,y:1.98,w:2.45,h:0.25,fontSize:11.2,bold:true,color:TEXT,fontFace:F,fit:'shrink'});});
-        let detailsY=2.72;
-        if(options.includeCollaborators!==false && collabs.length){
-          ds.addText('COLLABORATORS',{x:0.72,y:detailsY,w:2.2,h:0.2,fontSize:8.5,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
-          ds.addText(collabs.join(', '),{x:0.72,y:detailsY+0.28,w:11.6,h:0.65,fontSize:13,color:TEXT,fontFace:F,fit:'shrink',valign:'top'});
-          detailsY+=1.05;
-        }
-        if(String(project.notes||'').trim()){
-          ds.addText('PROJECT BRIEFING',{x:0.72,y:detailsY,w:2.4,h:0.2,fontSize:8.5,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
-          ds.addShape(pptx.ShapeType.roundRect,{x:0.72,y:detailsY+0.28,w:11.55,h:1.45,rectRadius:0.05,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});
-          ds.addText(project.notes,{x:0.93,y:detailsY+0.5,w:11.1,h:1.0,fontSize:13,color:TEXT,fontFace:F,fit:'shrink',valign:'top',margin:0});
-        }
-        addFooter(ds);
-      }
+      // Reference slide comfortably fits 8 task rows. Longer projects continue
+      // on another slide using the exact same header/card/timeline structure.
+      const perSlide=8;
+      const chunks=[];
+      if(tasks.length){ for(let i=0;i<tasks.length;i+=perSlide) chunks.push(tasks.slice(i,i+perSlide)); }
+      else chunks.push([]);
 
-      // Six tasks per slide is deliberate: it preserves a protected legend/footer
-      // zone and avoids the crowded 7+1 split seen in the previous exporter.
-      const chunks=[]; const perSlide=6;
-      if(tasks.length) for(let i=0;i<tasks.length;i+=perSlide) chunks.push(tasks.slice(i,i+perSlide)); else chunks.push([]);
-      for(let chunkIndex=0;chunkIndex<chunks.length;chunkIndex++){
-        const chunk=chunks[chunkIndex], slide=pptx.addSlide();
-        addFrame(slide,'WALTON LIFT R&I  ·  PROJECT REPORT',project.name,chunks.length>1?`Task breakdown · page ${chunkIndex+1} of ${chunks.length}`:'Task breakdown');
-        const statusColor=STATUS[project.status]||ACCENT;
-        slide.addShape(pptx.ShapeType.roundRect,{x:10.55,y:0.82,w:1.75,h:0.34,rectRadius:0.16,fill:{color:statusColor,transparency:88},line:{color:statusColor,width:0.5}});
-        slide.addText(project.status||'—',{x:10.55,y:0.82,w:1.75,h:0.34,align:'center',valign:'middle',fontSize:9.5,bold:true,color:statusColor,fontFace:F});
-        const metrics=[['OWNER',displayPerson(project.lead_id)],['START DATE',fmt(project.start_date)],['TARGET DATE',fmt(project.target_date)],['COMPLETION',`${progress}%`]];
-        metrics.forEach((m,i)=>{const x=0.7+i*3.0; slide.addShape(pptx.ShapeType.roundRect,{x,y:1.55,w:2.72,h:0.72,rectRadius:0.06,fill:{color:'F8FAFC'},line:{color:BORDER,width:0.5}});slide.addText(m[0],{x:x+0.13,y:1.67,w:2.45,h:0.14,fontSize:7.6,bold:true,color:DIM,charSpacing:0.6,fontFace:F});slide.addText(m[1],{x:x+0.13,y:1.88,w:2.45,h:0.23,fontSize:10.8,bold:true,color:TEXT,fontFace:F,fit:'shrink'});});
-        slide.addText('TASK BREAKDOWN',{x:0.72,y:2.55,w:2.4,h:0.18,fontSize:8.2,bold:true,color:DIM,charSpacing:0.8,fontFace:F});
-        const top=2.98, nameX=0.72, nameW=3.05, trackX=4.03, trackW=8.22, rowH=0.52;
-        if(!chunk.length){slide.addText('No tasks added yet for this project.',{x:nameX,y:top+0.25,w:7,h:0.4,fontSize:11,color:DIM,italic:true,fontFace:F});}
-        else{
-          const allStarts=tasks.map(t=>new Date((t.start_date||project.start_date||new Date().toISOString().slice(0,10))+'T00:00:00').getTime());
-          const allEnds=tasks.map(t=>new Date((t.end_date||t.start_date||project.target_date||project.start_date||new Date().toISOString().slice(0,10))+'T00:00:00').getTime());
-          const rangeStart=Math.min(...allStarts), rangeEnd=Math.max(...allEnds,rangeStart+86400000), span=Math.max(rangeEnd-rangeStart,86400000);
-          let tick=new Date(new Date(rangeStart).getFullYear(),new Date(rangeStart).getMonth(),1); const endTick=new Date(rangeEnd);
-          while(tick<=endTick){const tx=trackX+((tick.getTime()-rangeStart)/span)*trackW; if(tx>=trackX-0.02&&tx<=trackX+trackW+0.02){slide.addShape(pptx.ShapeType.line,{x:tx,y:top-0.12,w:0,h:rowH*chunk.length+0.15,line:{color:'E9EDF3',width:0.5,dash:'dash'}});slide.addText(tick.toLocaleDateString('en-GB',{month:'short',year:tick.getMonth()===0?'numeric':undefined}),{x:Math.max(trackX,tx-0.25),y:top-0.35,w:0.8,h:0.18,fontSize:7.2,color:DIM,fontFace:F,align:'center'});} tick.setMonth(tick.getMonth()+1);}
-          // Keep every task bar inside the timeline and strictly positive in size.
-          // PptxGenJS writes an invalid roundRect adjustment (Infinity) when a rounded
-          // rectangle reaches zero width. That can happen for a same-day task whose
-          // start falls exactly on the timeline's right edge. PowerPoint then repairs
-          // the deck on open. Treat same-day tasks as a small milestone-width bar and
-          // clamp all geometry before it reaches PptxGenJS.
-          const minTaskBarW=0.12;
-          const finiteOr=(v,fallback)=>Number.isFinite(v)?v:fallback;
-          const clamp=(v,min,max)=>Math.min(max,Math.max(min,v));
+      // Timeline is fixed for the entire project, so continuation pages line up
+      // perfectly and feel like one continuous report rather than new charts.
+      const defaultStart=project.start_date||new Date().toISOString().slice(0,10);
+      const defaultEnd=project.target_date||defaultStart;
+      const starts=tasks.length?tasks.map(t=>new Date((t.start_date||defaultStart)+'T00:00:00').getTime()):[new Date(defaultStart+'T00:00:00').getTime()];
+      const ends=tasks.length?tasks.map(t=>new Date((t.end_date||t.start_date||defaultEnd)+'T00:00:00').getTime()):[new Date(defaultEnd+'T00:00:00').getTime()];
+      const rawStart=Math.min(...starts,new Date(defaultStart+'T00:00:00').getTime());
+      const rawEnd=Math.max(...ends,new Date(defaultEnd+'T00:00:00').getTime());
+      const rangeStart=finite(rawStart,Date.now());
+      const rangeEnd=Math.max(finite(rawEnd,rangeStart+86400000),rangeStart+86400000);
+      const span=Math.max(rangeEnd-rangeStart,86400000);
+
+      for(let pageIndex=0;pageIndex<chunks.length;pageIndex++){
+        const chunk=chunks[pageIndex];
+        const slide=pptx.addSlide();
+        addPageBase(slide,project,progress,pageIndex+1,chunks.length);
+
+        const nameX=0.80, nameW=3.62, trackX=4.72, trackW=7.78;
+        const top=3.20, rowH=0.46;
+
+        // Month grid/labels. Month labels are centered over their actual month
+        // position and the same project range is reused on every continuation.
+        let monthCursor=new Date(new Date(rangeStart).getFullYear(),new Date(rangeStart).getMonth()+1,1);
+        // If the range itself begins on the first day of a month, include it.
+        const rsDate=new Date(rangeStart);
+        if(rsDate.getDate()===1) monthCursor=new Date(rsDate.getFullYear(),rsDate.getMonth(),1);
+        while(monthCursor.getTime()<=rangeEnd){
+          const ratio=(monthCursor.getTime()-rangeStart)/span;
+          const x=trackX+ratio*trackW;
+          if(x>=trackX && x<=trackX+trackW){
+            slide.addShape(pptx.ShapeType.line,{x,y:3.02,w:0,h:3.55,line:{color:GRID,width:0.55,dash:'dash'}});
+            const monthLabel=monthCursor.toLocaleDateString('en-GB',{month:'short',year:monthCursor.getMonth()===0?'numeric':undefined});
+            slide.addText(monthLabel,{x:clamp(x-0.38,trackX-0.1,trackX+trackW-0.76),y:2.75,w:0.76,h:0.18,fontFace:F,fontSize:7.6,bold:true,color:DIM,align:'center',margin:0});
+          }
+          monthCursor.setMonth(monthCursor.getMonth()+1);
+        }
+
+        // Today marker only when today falls inside the project timeline.
+        const today=new Date(); today.setHours(0,0,0,0);
+        const todayMs=today.getTime();
+        if(todayMs>=rangeStart && todayMs<=rangeEnd){
+          const tx=trackX+((todayMs-rangeStart)/span)*trackW;
+          slide.addShape(pptx.ShapeType.line,{x:tx,y:3.00,w:0,h:3.58,line:{color:RED,width:1.3,dash:'dash'}});
+        }
+
+        if(!chunk.length){
+          slide.addText('No tasks added yet for this project.',{x:nameX,y:3.55,w:6.2,h:0.32,fontFace:F,fontSize:10,color:DIM,italic:true,margin:0});
+        }else{
           chunk.forEach((t,i)=>{
             const y=top+i*rowH;
-            const rawS=new Date((t.start_date||project.start_date)+'T00:00:00').getTime();
-            const rawE=new Date((t.end_date||t.start_date||project.target_date||project.start_date)+'T00:00:00').getTime();
-            const s=finiteOr(rawS,rangeStart);
-            const e=finiteOr(rawE,s);
-            const naturalLeft=trackX+((s-rangeStart)/span)*trackW;
-            const left=clamp(finiteOr(naturalLeft,trackX),trackX,trackX+trackW-minTaskBarW);
-            const naturalW=((Math.max(e,s+86400000)-s)/span)*trackW;
-            const availableW=Math.max(minTaskBarW,trackX+trackW-left);
-            const barW=clamp(finiteOr(naturalW,minTaskBarW),minTaskBarW,availableW);
-            const color=STATUS[t.status]||ACCENT;
-            slide.addText(t.task_name,{x:nameX,y:y+0.02,w:nameW,h:0.22,fontSize:8.9,bold:true,color:TEXT,fontFace:F,fit:'shrink'});
-            slide.addText(`${fmt(t.start_date)} → ${fmt(t.end_date)}`,{x:nameX,y:y+0.24,w:nameW,h:0.16,fontSize:7.1,color:DIM,fontFace:F});
-            slide.addShape(pptx.ShapeType.roundRect,{x:trackX,y:y+0.16,w:trackW,h:0.17,rectRadius:0.05,fill:{color:'EEF1F5'},line:{type:'none'}});
-            slide.addShape(pptx.ShapeType.roundRect,{x:left,y:y+0.16,w:barW,h:0.17,rectRadius:0.05,fill:{color},line:{type:'none'}});
-            if(t.progress_pct!==undefined&&t.progress_pct!==null)slide.addText(`${t.progress_pct}%`,{x:trackX+trackW-0.55,y:y+0.02,w:0.5,h:0.16,fontSize:7,color:DIM,align:'right',fontFace:F});
-          });
-          const legend=[['Done','188A5A'],['In progress','2F6FE4'],['On hold','C97A16'],['Planned / skipped','8A93A1']]; legend.forEach((l,i)=>{const x=7.15+i*1.35;slide.addShape(pptx.ShapeType.ellipse,{x,y:6.2,w:0.07,h:0.07,fill:{color:l[1]},line:{type:'none'}});slide.addText(l[0],{x:x+0.1,y:6.15,w:1.18,h:0.16,fontSize:6.8,color:DIM,fontFace:F});});
-        }
-        addFooter(slide);
-      }
+            if(i>0) slide.addShape(pptx.ShapeType.line,{x:nameX,y:y-0.05,w:11.70,h:0,line:{color:ROW,width:0.45}});
+            slide.addText(t.task_name||'Untitled task',{x:nameX,y:y,w:nameW,h:0.18,fontFace:F,fontSize:9.4,bold:true,color:TEXT,margin:0,fit:'shrink'});
+            slide.addText(`${fmt(t.start_date)}  →  ${fmt(t.end_date||t.start_date)}`,{x:nameX,y:y+0.20,w:nameW,h:0.14,fontFace:F,fontSize:7.5,color:DIM,margin:0,fit:'shrink'});
 
-      if(options.includeRemarks!==false){
-        const withRemarks=tasks.filter(t=>String(t.remarks||'').trim());
-        for(let i=0;i<withRemarks.length;i+=6){
-          const part=withRemarks.slice(i,i+6), rs=pptx.addSlide(); addFrame(rs,'WALTON LIFT R&I  ·  PROJECT REPORT',`${project.name} — Task Remarks`,withRemarks.length>6?`Page ${Math.floor(i/6)+1} of ${Math.ceil(withRemarks.length/6)}`:'');
-          const rows=[[{text:'Task',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Status',options:{bold:true,color:WHITE,fill:{color:ACCENT}}},{text:'Remarks',options:{bold:true,color:WHITE,fill:{color:ACCENT}}}],...part.map((t,j)=>[{text:t.task_name,options:{bold:true,color:TEXT,fill:{color:j%2?'F8FAFC':'FFFFFF'}}},{text:t.status||'—',options:{color:STATUS[t.status]||TEXT,fill:{color:j%2?'F8FAFC':'FFFFFF'}}},{text:t.remarks,options:{color:DIM,fill:{color:j%2?'F8FAFC':'FFFFFF'}}}])];
-          rs.addTable(rows,{x:0.72,y:1.75,w:11.85,h:4.55,fontSize:9.8,fontFace:F,border:{type:'solid',color:BORDER,pt:0.5},autoPage:false,colW:[3.25,1.7,6.9],margin:0.065}); addFooter(rs);
+            const s=finite(new Date((t.start_date||defaultStart)+'T00:00:00').getTime(),rangeStart);
+            const e=finite(new Date((t.end_date||t.start_date||defaultEnd)+'T00:00:00').getTime(),s);
+            const left=clamp(trackX+((s-rangeStart)/span)*trackW,trackX,trackX+trackW-0.08);
+            const natural=((Math.max(e,s+86400000)-s)/span)*trackW;
+            const width=clamp(finite(natural,0.10),0.10,Math.max(0.10,trackX+trackW-left));
+            slide.addShape(pptx.ShapeType.roundRect,{x:left,y:y+0.10,w:width,h:0.20,rectRadius:0.10,fill:{color:taskColor(t)},line:{type:'none'}});
+          });
         }
       }
     }
+
     const name=projects.length===1?`${excelSafeFilePart(projects[0].name)}_Project_Report.pptx`:`R&I_Project_Portfolio_${projects.length}_Projects_${new Date().toISOString().slice(0,10)}.pptx`;
     await pptx.writeFile({fileName:name});
     showFormPopup(projects.length===1?`"${projects[0].name}" report downloaded.`:`${projects.length} project reports downloaded in one presentation.`,'success');
