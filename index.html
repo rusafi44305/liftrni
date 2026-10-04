@@ -1515,6 +1515,174 @@
   .queue-btn, .btn:not(.approve):not(.reject):not(.remove):not(.edit):not(.view-details):not(.inspect), .fselect{
     background:color-mix(in srgb, var(--surface) 92%, transparent) !important;
   }
+
+  /* ============================================================
+     2026-10-04 — Dashboard visual refresh only.
+     Clean, compact analytics styling scoped to #view-dashboard so
+     no other tab inherits these changes. All existing IDs, queries,
+     permissions, exports, scoring and inspect behavior remain intact.
+  ============================================================ */
+  #view-dashboard{ --dash-radius:14px; }
+  #view-dashboard .dash-page-head{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
+    margin-bottom:14px;
+  }
+  #view-dashboard .dash-page-title{
+    font-family:'Space Grotesk',sans-serif; font-size:24px; line-height:1.1;
+    font-weight:700; letter-spacing:-0.025em; color:var(--text);
+  }
+  #view-dashboard .dash-page-sub{ margin-top:4px; font-size:12px; color:var(--text-faint); }
+  #view-dashboard .dash-admin-chip{
+    flex-shrink:0; font-size:10.5px; font-weight:700; letter-spacing:.02em;
+    color:var(--text-dim); background:var(--surface); border:1px solid var(--border);
+    border-radius:999px; padding:5px 9px;
+  }
+
+  #view-dashboard .dash-filter-toolbar{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--dash-radius);
+    padding:10px; margin-bottom:14px; box-shadow:none;
+  }
+  #view-dashboard .dash-filter-grid{
+    display:grid; grid-template-columns:1fr 1fr 1.15fr 1fr; gap:8px;
+  }
+  #view-dashboard .dash-filter-field{ min-width:0; }
+  #view-dashboard .dash-filter-field label{
+    display:block; margin:0 0 5px 2px; font-size:9.5px; font-weight:700;
+    letter-spacing:.055em; text-transform:uppercase; color:var(--text-faint);
+  }
+  #view-dashboard .dash-filter-field .fselect{
+    width:100%; min-width:0; height:38px; padding:7px 10px;
+    border-radius:9px !important; background:var(--surface-alt) !important;
+    border:1px solid var(--border) !important; box-shadow:none !important;
+    font-size:12.5px; font-weight:600; color:var(--text);
+  }
+  #view-dashboard .dash-filter-actions{
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    margin-top:9px;
+  }
+  #view-dashboard .dash-filter-secondary{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  #view-dashboard .dash-kpi-trigger-wrap{ display:flex; }
+  #view-dashboard .dash-filter-actions .queue-btn{
+    min-height:34px; padding:7px 11px; border-radius:8px !important;
+    font-size:11.5px; font-weight:650; box-shadow:none !important; transform:none !important;
+  }
+  #view-dashboard .dash-filter-actions .filter-btn-excel,
+  #view-dashboard .dash-filter-actions .filter-btn-pptx,
+  #view-dashboard .dash-filter-actions .dash-recalc-btn{
+    background:var(--surface) !important; color:var(--text-dim) !important;
+    border:1px solid var(--border) !important;
+  }
+  #view-dashboard .dash-filter-actions .filter-btn-excel:hover,
+  #view-dashboard .dash-filter-actions .filter-btn-pptx:hover,
+  #view-dashboard .dash-filter-actions .dash-recalc-btn:hover{
+    color:var(--text) !important; border-color:color-mix(in srgb,var(--accent) 35%,var(--border)) !important;
+    background:var(--surface-alt) !important;
+  }
+  #view-dashboard .dash-filter-actions .filter-btn-apply{
+    min-width:118px; background:var(--accent) !important; color:#fff !important;
+    border:1px solid var(--accent) !important;
+  }
+
+  #view-dashboard .dash-card{
+    background:var(--surface) !important; border:1px solid var(--border) !important;
+    border-radius:var(--dash-radius) !important; box-shadow:none !important;
+    backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  }
+  #view-dashboard .dash-overview-card{ padding:16px !important; margin-bottom:12px; }
+  #view-dashboard .dash-section-head{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
+    margin-bottom:13px;
+  }
+  #view-dashboard .dash-section-title{ font-size:14px; font-weight:700; color:var(--text); }
+  #view-dashboard .dash-section-sub{ margin-top:2px; font-size:10.5px; color:var(--text-faint); }
+  #view-dashboard .dash-section-meta{
+    flex-shrink:0; font-size:10.5px; color:var(--text-faint); padding-top:2px;
+  }
+
+  #view-dashboard .dash-kpi-grid{
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+    border:1px solid var(--border); border-radius:12px; overflow:hidden;
+  }
+  #view-dashboard .dash-kpi-cell{
+    min-width:0; padding:13px 10px 11px; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; text-align:center;
+    border-left:1px solid var(--border); background:transparent;
+  }
+  #view-dashboard .dash-kpi-cell:first-child{ border-left:0; }
+  #view-dashboard .dash-kpi-ring{ display:flex; align-items:center; justify-content:center; min-height:92px; }
+  #view-dashboard .dash-kpi-label{ margin-top:5px; font-size:11.5px; font-weight:700; color:var(--text); }
+  #view-dashboard .dash-kpi-note{ margin-top:2px; font-size:9.5px; color:var(--text-faint); }
+
+  #view-dashboard .dash-trend-block{
+    margin-top:15px; padding-top:13px; border-top:1px solid var(--border);
+  }
+  #view-dashboard .dash-chart-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;
+  }
+  #view-dashboard .dash-chart-title{ font-size:11.5px; font-weight:700; color:var(--text); }
+  #view-dashboard .dash-chart-note{ font-size:9.5px; color:var(--text-faint); }
+  #view-dashboard #dashHeroTrendChart{ min-width:0; }
+
+  #view-dashboard .dash-performance-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;
+  }
+  #view-dashboard .dash-performance-card{ padding:15px !important; min-width:0; }
+  #view-dashboard .dash-performance-card .placeholder-note{ margin-top:4px; }
+
+  #view-dashboard .dash-leaderboard-section{ margin-bottom:14px; }
+  #view-dashboard .dash-leaderboard-head{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:0 2px 8px;
+  }
+  #view-dashboard .dash-table-card{ padding:0 !important; overflow-x:auto; }
+  #view-dashboard .dash-table-card table.data{ min-width:720px; }
+  #view-dashboard .dash-table-card table.data th{
+    padding:10px 12px; background:var(--surface-alt); border-bottom:1px solid var(--border);
+    font-size:9.5px; letter-spacing:.055em; color:var(--text-faint);
+  }
+  #view-dashboard .dash-table-card table.data td{
+    padding:10px 12px; font-size:12.5px; vertical-align:middle;
+  }
+  #view-dashboard .dash-table-card table.data tbody tr{ transition:background .12s ease; }
+  #view-dashboard .dash-table-card table.data tbody tr:hover{ background:var(--surface-alt); }
+  #view-dashboard .dash-table-card .rank-name{ font-size:12.5px; }
+  #view-dashboard .dash-table-card .btn.inspect{
+    padding:4px 9px !important; font-size:10.5px !important; border-radius:7px !important;
+    box-shadow:none !important; transform:none !important;
+  }
+  #view-dashboard .dash-inspect-section{ margin-top:2px; }
+  #view-dashboard .dash-inspect-list .mytask-item,
+  #view-dashboard .dash-inspect-list .panel{ box-shadow:none !important; }
+
+  @media (max-width:700px){
+    #view-dashboard .dash-page-head{ align-items:flex-start; margin-bottom:10px; }
+    #view-dashboard .dash-page-title{ font-size:20px; }
+    #view-dashboard .dash-admin-chip{ display:none; }
+    #view-dashboard .dash-filter-toolbar{ padding:9px; margin-bottom:10px; }
+    #view-dashboard .dash-filter-grid{ grid-template-columns:1fr 1fr; gap:7px; }
+    #view-dashboard .dash-filter-field .fselect{ height:42px; font-size:12px; }
+    #view-dashboard .dash-filter-actions{ display:grid; grid-template-columns:1fr; gap:7px; }
+    #view-dashboard .dash-filter-actions .filter-btn-apply{ width:100%; order:-1; min-height:42px; }
+    #view-dashboard .dash-filter-secondary{ display:grid; grid-template-columns:1fr 1fr; gap:7px; width:100%; }
+    #view-dashboard .dash-filter-secondary .queue-btn{ width:100%; min-height:40px; }
+    #view-dashboard .dash-kpi-trigger-wrap{ grid-column:1 / -1; }
+    #view-dashboard .dash-kpi-trigger-wrap .queue-btn{ width:100%; }
+    #view-dashboard .dash-overview-card{ padding:13px !important; margin-bottom:10px; }
+    #view-dashboard .dash-section-head{ margin-bottom:10px; }
+    #view-dashboard .dash-section-meta{ font-size:9.5px; }
+    #view-dashboard .dash-kpi-grid{ grid-template-columns:1fr 1fr; }
+    #view-dashboard .dash-kpi-cell{ padding:11px 8px 9px; border-left:1px solid var(--border); border-top:1px solid var(--border); }
+    #view-dashboard .dash-kpi-cell:nth-child(odd){ border-left:0; }
+    #view-dashboard .dash-kpi-cell:nth-child(-n+2){ border-top:0; }
+    #view-dashboard .dash-kpi-ring{ min-height:74px; }
+    #view-dashboard .dash-kpi-label{ font-size:10.5px; }
+    #view-dashboard .dash-kpi-note{ font-size:9px; }
+    #view-dashboard .dash-trend-block{ margin-top:12px; padding-top:11px; }
+    #view-dashboard .dash-performance-grid{ grid-template-columns:1fr; gap:10px; margin-bottom:12px; }
+    #view-dashboard .dash-performance-card{ padding:13px !important; }
+    #view-dashboard .dash-leaderboard-head{ align-items:flex-start; flex-direction:column; gap:2px; }
+    #view-dashboard .dash-table-card table.data{ min-width:650px; }
+  }
+
 </style>
 </head>
 <body>
@@ -2336,34 +2504,57 @@
  
   <!-- ============ DASHBOARD ============ -->
   <div class="view" id="view-dashboard">
-    <div class="block-head">
-      <div><div class="block-title">Team dashboard</div><div class="block-sub">Org-wide activity · <span id="dashAsOf" class="mono">as of —</span></div></div>
+    <div class="dash-page-head">
+      <div>
+        <div class="dash-page-title">Team Dashboard</div>
+        <div class="dash-page-sub">Org-wide activity · <span id="dashAsOf" class="mono">as of —</span></div>
+      </div>
+      <div class="dash-admin-chip">Analytics overview</div>
     </div>
-    <div class="filter-row">
-      <input type="date" id="dashFromMonth" class="fselect" style="cursor:pointer;">
-      <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
-      <input type="date" id="dashToMonth" class="fselect" style="cursor:pointer;">
-      <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
-      <select id="dashDisciplineSelect" class="fselect" style="cursor:pointer;">
-        <option value="">All sections</option>
-        <option value="mechanical">Mechanical</option>
-        <option value="electrical">Electrical</option>
-      </select>
-      <div class="filter-row-actions">
-        <button class="queue-btn filter-btn-apply" onclick="loadDashboard()">Apply</button>
-        <button class="queue-btn filter-btn-excel" onclick="exportDashboardToExcel()">⬇ Export to Excel</button>
-        <button class="queue-btn filter-btn-pptx" onclick="exportDashboardToPptx()">⬇ Export to PPTX</button>
-        <div id="dashKpiTriggerWrap" style="display:none;">
-          <button class="queue-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate team Score</button>
+
+    <div class="dash-filter-toolbar">
+      <div class="dash-filter-grid">
+        <div class="dash-filter-field">
+          <label for="dashFromMonth">From</label>
+          <input type="date" id="dashFromMonth" class="fselect" style="cursor:pointer;">
         </div>
+        <div class="dash-filter-field">
+          <label for="dashToMonth">To</label>
+          <input type="date" id="dashToMonth" class="fselect" style="cursor:pointer;">
+        </div>
+        <div class="dash-filter-field">
+          <label for="dashEngineerSelect">Engineer</label>
+          <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
+        </div>
+        <div class="dash-filter-field">
+          <label for="dashDisciplineSelect">Section</label>
+          <select id="dashDisciplineSelect" class="fselect" style="cursor:pointer;">
+            <option value="">All sections</option>
+            <option value="mechanical">Mechanical</option>
+            <option value="electrical">Electrical</option>
+          </select>
+        </div>
+      </div>
+      <div class="dash-filter-actions">
+        <div class="dash-filter-secondary">
+          <button class="queue-btn filter-btn-excel" onclick="exportDashboardToExcel()">↓ Excel</button>
+          <button class="queue-btn filter-btn-pptx" onclick="exportDashboardToPptx()">↓ PPTX</button>
+          <div id="dashKpiTriggerWrap" class="dash-kpi-trigger-wrap" style="display:none;">
+            <button class="queue-btn dash-recalc-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate score</button>
+          </div>
+        </div>
+        <button class="queue-btn filter-btn-apply" onclick="loadDashboard()">Apply filters</button>
       </div>
     </div>
 
     <div id="dashOverviewContainer"></div>
 
-    <section class="block">
-      <div class="block-head"><div class="block-title">Engineer leaderboard</div><div class="block-sub">Click any row to inspect that person individually</div></div>
-      <div class="panel no-shine" style="padding:8px 20px;">
+    <section class="block dash-leaderboard-section">
+      <div class="dash-leaderboard-head">
+        <div class="dash-section-title">Engineer leaderboard</div>
+        <div class="dash-section-sub">Click any row to inspect that person individually</div>
+      </div>
+      <div class="panel no-shine dash-card dash-table-card">
         <table class="data">
           <thead><tr id="leaderboardHeaderRow"><th>Engineer</th><th>Top category</th><th>Activities</th><th>Time</th><th>Score</th><th>Error Reports</th><th></th></tr></thead>
           <tbody id="dashLeaderboardBody"><tr><td colspan="7" style="color:var(--text-faint); padding:14px;">Loading…</td></tr></tbody>
@@ -2371,9 +2562,12 @@
       </div>
     </section>
 
-    <section class="block" id="dashInspectDetailSection" style="display:none;">
-      <div class="block-head"><div class="block-title">Individual activity — <span id="dashInspectDetailName">—</span></div><div class="block-sub">Every entry this person logged in the selected range</div></div>
-      <div id="dashInspectDetailList" style="display:flex; flex-direction:column; gap:10px;"></div>
+    <section class="block dash-inspect-section" id="dashInspectDetailSection" style="display:none;">
+      <div class="dash-leaderboard-head">
+        <div class="dash-section-title">Individual activity — <span id="dashInspectDetailName">—</span></div>
+        <div class="dash-section-sub">Every entry this person logged in the selected range</div>
+      </div>
+      <div id="dashInspectDetailList" class="dash-inspect-list" style="display:flex; flex-direction:column; gap:8px;"></div>
     </section>
   </div>
  
@@ -5507,8 +5701,8 @@
       const pts = toPoints(s.values);
       const lineD = smoothPathD(pts);
       const areaD = `${lineD} L ${w},${h} L 0,${h} Z`;
-      const dotsHtml = pts.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.5" fill="${s.color}" fill-opacity="0.9"><title>${s.label} — ${weekLabels[i] || ''}: ${p.v}</title></circle>`).join('');
-      return `<path d="${areaD}" fill="${s.color}" fill-opacity="0.26"></path><path d="${lineD}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>${dotsHtml}`;
+      const dotsHtml = pts.map((p, i) => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="2.1" fill="${s.color}" fill-opacity="0.9"><title>${s.label} — ${weekLabels[i] || ''}: ${p.v}</title></circle>`).join('');
+      return `<path d="${areaD}" fill="${s.color}" fill-opacity="0.16"></path><path d="${lineD}" fill="none" stroke="${s.color}" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path>${dotsHtml}`;
     }).join('');
     const legendHtml = series.map(s => `<span style="display:inline-flex; align-items:center; gap:4px; margin:0 10px 4px 0;"><span style="width:7px; height:7px; border-radius:2px; background:${s.color}; flex-shrink:0;"></span><span style="font-size:10.5px; color:var(--text-faint);">${s.label}</span></span>`).join('');
     // 2026-09-10 second fix: the first fix (preserveAspectRatio="none" →
@@ -10632,13 +10826,10 @@ for a competing inline style first.`;
   // The Dashboard overview's card groupings genuinely differ by screen
   // size, not just reflow — on mobile, Team Score and the Weekly Trend
   // share one card side by side; on desktop they're each their own card,
-  // and Weekly Trend instead pairs with By Category as a second row. A
-  // pure CSS grid-area reflow can reposition individual items but can't
-  // change which items share one visual card together, so this renders
-  // two genuinely different HTML structures and switches between them in
-  // JS based on viewport width — re-rendering only when actually
-  // crossing the breakpoint (dashOverviewMode tracks which one is live),
-  // not on every resize pixel.
+  // Dashboard overview now uses one semantic structure for both desktop
+  // and mobile; CSS handles the layout reflow, while dashOverviewMode still
+  // tracks the breakpoint so the existing ring sizing can switch cleanly
+  // without re-rendering on every resize pixel.
   let dashOverviewMode = null;
   function renderDashOverviewIfNeeded(){
     const isMobile = window.innerWidth < 700;
@@ -10646,83 +10837,68 @@ for a competing inline style first.`;
     if(mode === dashOverviewMode) return false;
     dashOverviewMode = mode;
     const container = document.getElementById('dashOverviewContainer');
-    if(mode === 'mobile'){
-      container.innerHTML = `
-        <div class="panel liquid-glass-card" style="margin-bottom:12px;">
-          <div class="panel-title" style="text-align:center; margin-bottom:12px;">Team overview</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px;">
-            <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;">
-              <div id="dashRingScore" style="flex-shrink:0;"></div>
-              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Team score</p>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;">
-              <div id="dashRingActivities" style="flex-shrink:0;"></div>
-              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Activities</p>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;">
-              <div id="dashRingLifts" style="flex-shrink:0;"></div>
-              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
-            </div>
-            <div style="display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;">
-              <div id="dashRingTime" style="flex-shrink:0;"></div>
-              <p style="font-size:10.5px; color:var(--text-faint); margin:0;">Time logged</p>
-            </div>
+    container.innerHTML = `
+      <div class="panel dash-card dash-overview-card">
+        <div class="dash-section-head">
+          <div>
+            <div class="dash-section-title">Team overview</div>
+            <div class="dash-section-sub">Selected period summary</div>
           </div>
-          <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
+          <div class="dash-section-meta"><span id="dashStatEngineers">—</span> engineers · <span id="dashStatCategories">—</span> categories</div>
+        </div>
+
+        <div class="dash-kpi-grid">
+          <div class="dash-kpi-cell">
+            <div class="dash-kpi-ring" id="dashRingScore"></div>
+            <div class="dash-kpi-label">Team score</div>
+            <div class="dash-kpi-note">Overall performance</div>
+          </div>
+          <div class="dash-kpi-cell">
+            <div class="dash-kpi-ring" id="dashRingActivities"></div>
+            <div class="dash-kpi-label">Activities</div>
+            <div class="dash-kpi-note">Logged entries</div>
+          </div>
+          <div class="dash-kpi-cell">
+            <div class="dash-kpi-ring" id="dashRingLifts"></div>
+            <div class="dash-kpi-label">Lifts touched</div>
+            <div class="dash-kpi-note">Distinct lift IDs</div>
+          </div>
+          <div class="dash-kpi-cell">
+            <div class="dash-kpi-ring" id="dashRingTime"></div>
+            <div class="dash-kpi-label">Time logged</div>
+            <div class="dash-kpi-note">Tracked duration</div>
+          </div>
+        </div>
+
+        <div class="dash-trend-block">
+          <div class="dash-chart-head">
+            <div class="dash-chart-title">Weekly activity trend</div>
+            <div class="dash-chart-note">Top categories + Other</div>
+          </div>
           <div id="dashHeroTrendChart"></div>
         </div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin-bottom:14px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
-        <div class="panel liquid-glass-card" style="margin-bottom:12px;">
-          <div class="panel-title" style="text-align:center; margin-bottom:12px;">Category &amp; engineer performance</div>
-          <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
-          <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-          <div class="field-label" style="margin:16px 0 8px;">Top engineers by score</div>
-          <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
-        </div>`;
-    } else {
-      container.innerHTML = `
-        <div class="panel liquid-glass-card" style="margin-bottom:16px;">
-          <div class="panel-title" style="text-align:center; margin-bottom:16px;">Team overview</div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
-                <div id="dashRingScore"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Team score</p>
-              </div>
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
-                <div id="dashRingActivities"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Activities</p>
-              </div>
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
-                <div id="dashRingLifts"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Lifts touched</p>
-              </div>
-              <div class="liquid-glass-card" style="padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;">
-                <div id="dashRingTime"></div>
-                <p style="font-size:11.5px; color:var(--text-faint); margin:0;">Time logged</p>
-              </div>
-            </div>
-            <div class="trend-fill" style="display:flex; flex-direction:column;">
-              <div class="field-label" style="margin-bottom:8px;">Weekly trend</div>
-              <div id="dashHeroTrendChart" style="flex:1; display:flex; flex-direction:column;"></div>
-            </div>
-          </div>
-        </div>
-        <div style="font-size:11px; color:var(--text-faint); text-align:center; margin:-6px 0 16px;"><span id="dashStatEngineers">—</span> engineers active · <span id="dashStatCategories">—</span> categories used</div>
-        <div class="panel liquid-glass-card" style="margin-bottom:18px;">
-          <div class="panel-title" style="text-align:center; margin-bottom:16px;">Category &amp; engineer performance</div>
-          <div class="dash-compact-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:22px; align-items:stretch;">
+      </div>
+
+      <div class="dash-performance-grid">
+        <div class="panel dash-card dash-performance-card">
+          <div class="dash-chart-head">
             <div>
-              <div class="field-label" style="margin-bottom:8px;" id="breakdownTitle">By category</div>
-              <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
-            </div>
-            <div style="border-left:1px solid color-mix(in srgb, var(--border) 65%, transparent); padding-left:22px;">
-              <div class="field-label" style="margin-bottom:8px;">Top engineers by score</div>
-              <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
+              <div class="dash-section-title" id="breakdownTitle">By category</div>
+              <div class="dash-section-sub">Activity and tracked time</div>
             </div>
           </div>
-        </div>`;
-    }
+          <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
+        </div>
+        <div class="panel dash-card dash-performance-card">
+          <div class="dash-chart-head">
+            <div>
+              <div class="dash-section-title">Engineer activity</div>
+              <div class="dash-section-sub">Top engineers by score</div>
+            </div>
+          </div>
+          <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
+        </div>
+      </div>`;
     return true;
   }
   window.addEventListener('resize', () => {
@@ -10914,7 +11090,7 @@ for a competing inline style first.`;
         return `
         <div style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; gap:4px; min-width:0;">
           ${timeLabel}
-          <div class="anim-bar-fill-vertical" data-h="${targetH}" style="width:100%; height:0; background:linear-gradient(180deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:4px 4px 2px 2px; box-shadow:0 0 8px color-mix(in srgb, ${c} 50%, transparent);" title="${catMeta[cat]?.name || cat}: ${count}${tracksDuration ? ', ' + formatDurationShort(mins) : ''}"></div>
+          <div class="anim-bar-fill-vertical" data-h="${targetH}" style="width:100%; height:0; background:${c}; border-radius:5px 5px 2px 2px; box-shadow:none;" title="${catMeta[cat]?.name || cat}: ${count}${tracksDuration ? ', ' + formatDurationShort(mins) : ''}"></div>
         </div>
       `;}).join('');
       // Each dot sits directly beside its own name as one wrapping chip,
@@ -11004,17 +11180,17 @@ for a competing inline style first.`;
     // Bigger on desktop only — mobile stays exactly the size it already
     // is (asked to keep as-is), desktop's rings sit in a roomier 2x2
     // grid now and read better larger.
-    const ringSize = dashOverviewMode === 'desktop' ? 84 : 64;
-    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', ringSize, 'Team score');
-    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg((rows.length/ringMaxOfTwo)*100, '#378ADD', ringSize, 'Activities', null, null, String(rows.length));
-    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg((liftSet.size/ringMaxOfTwo)*100, '#D85A30', ringSize, 'Lifts touched', null, null, String(liftSet.size));
+    const ringSize = dashOverviewMode === 'desktop' ? 92 : 72;
+    document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', ringSize, 'Team score', null, null, null, true);
+    document.getElementById('dashRingActivities').innerHTML = scoreRingSvg((rows.length/ringMaxOfTwo)*100, '#378ADD', ringSize, 'Activities', null, null, String(rows.length), true);
+    document.getElementById('dashRingLifts').innerHTML = scoreRingSvg((liftSet.size/ringMaxOfTwo)*100, '#D85A30', ringSize, 'Lifts touched', null, null, String(liftSet.size), true);
     // Deliberately always a full ring rather than a percent-of-something
     // — unlike Activities/Lifts, there's no honest natural comparison for
     // minutes to be "relative to" (a different unit entirely), so this
     // ring exists to hold the number, not to visually represent a share
     // of anything. Same idea as Team Score being the one meaningful
     // percentage among these four.
-    document.getElementById('dashRingTime').innerHTML = scoreRingSvg(100, '#8A63D2', ringSize, 'Time logged', null, null, formatDurationShort(teamTotalDuration));
+    document.getElementById('dashRingTime').innerHTML = scoreRingSvg(100, '#8A63D2', ringSize, 'Time logged', null, null, formatDurationShort(teamTotalDuration), true);
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
@@ -11046,7 +11222,7 @@ for a competing inline style first.`;
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
               <span style="font-size:10.5px; color:var(--text-faint); width:78px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${e.name}">${e.name}</span>
               <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; min-width:0;">
-                <div class="anim-bar-fill" data-w="${Math.max(pct/maxKpi*100, 4)}" style="width:0%; height:100%; background:linear-gradient(90deg, color-mix(in srgb, ${c} 65%, white), ${c}); border-radius:99px; box-shadow:0 0 6px ${c}80;"></div>
+                <div class="anim-bar-fill" data-w="${Math.max(pct/maxKpi*100, 4)}" style="width:0%; height:100%; background:${c}; border-radius:99px; box-shadow:none;"></div>
               </div>
               <span style="font-size:10.5px; color:var(--text-faint); width:32px; text-align:right; flex-shrink:0;">${e.kpi.toFixed(1)}</span>
             </div>`;
