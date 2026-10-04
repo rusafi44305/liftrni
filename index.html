@@ -1622,10 +1622,10 @@
   #view-dashboard .dash-trend-caption{ font-size:8.5px; color:var(--text-faint); white-space:nowrap; }
 
   #view-dashboard .dash-primary-grid{
-    display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,.9fr); gap:12px;
+    display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px;
     margin-bottom:12px; align-items:stretch;
   }
-  #view-dashboard .dash-primary-card{ min-width:0; padding:14px !important; }
+  #view-dashboard .dash-primary-card{ min-width:0; padding:14px !important; display:flex; flex-direction:column; }
   #view-dashboard .dash-chart-head{
     display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:8px;
   }
@@ -1633,10 +1633,13 @@
   #view-dashboard .dash-chart-note{ font-size:9.5px; color:var(--text-faint); text-align:right; }
   #view-dashboard #dashHeroTrendChart{ min-width:0; }
   #view-dashboard #dashHeroTrendChart svg{ max-height:220px; }
-  #view-dashboard .dash-category-bars{
-    display:flex; align-items:flex-end; gap:7px; height:132px; margin:4px 0 10px;
+  #view-dashboard #dashCategoryBreakdown{
+    flex:1; min-height:0; display:flex; flex-direction:column; justify-content:space-between;
   }
-  #view-dashboard .dash-category-legend{ display:flex; flex-wrap:wrap; align-items:center; }
+  #view-dashboard .dash-category-bars{
+    display:flex; align-items:flex-end; gap:7px; flex:1; min-height:176px; margin:6px 0 8px;
+  }
+  #view-dashboard .dash-category-legend{ display:flex; flex-wrap:wrap; align-items:center; margin-top:auto; }
 
   #view-dashboard .dash-discipline-grid{
     display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;
@@ -1696,7 +1699,7 @@
     #view-dashboard .dash-kpi-card{ grid-template-columns:1fr; text-align:center; gap:3px; }
     #view-dashboard .dash-kpi-copy{ text-align:center; }
     #view-dashboard .dash-kpi-trend-line{ justify-content:center; }
-    #view-dashboard .dash-primary-grid{ grid-template-columns:1.2fr .9fr; }
+    #view-dashboard .dash-primary-grid{ grid-template-columns:1fr 1fr; }
     #view-dashboard .dash-rank-row{ grid-template-columns:22px minmax(0,1fr) minmax(70px,.75fr) minmax(70px,.9fr) 38px; }
   }
 
@@ -1730,7 +1733,8 @@
     #view-dashboard .dash-primary-grid{ grid-template-columns:1fr; gap:10px; margin-bottom:10px; }
     #view-dashboard .dash-primary-card{ padding:12px !important; }
     #view-dashboard #dashHeroTrendChart svg{ max-height:none; }
-    #view-dashboard .dash-category-bars{ height:112px; gap:5px; }
+    #view-dashboard #dashCategoryBreakdown{ display:block; }
+    #view-dashboard .dash-category-bars{ min-height:112px; height:112px; gap:5px; }
 
     #view-dashboard .dash-discipline-grid{ grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
     #view-dashboard .dash-discipline-card{ padding:10px !important; }
@@ -11223,7 +11227,7 @@ for a competing inline style first.`;
       // the time figure reads faster living right where it's earned.
       const barsHtml = catSorted.map(([cat,count]) => {
         const c = CATEGORY_COLOR_VAR[cat] || '#8A63D2';
-        const targetH = Math.max(7, Math.round(count/maxCat*102));
+        const targetH = Math.max(10, Math.round(count/maxCat*144));
         const tracksDuration = (durationLabels[cat] || []).length > 0;
         const mins = tracksDuration ? rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0) : 0;
         const timeLabel = tracksDuration ? `<div style="font-size:10px; font-weight:700; color:${c}; margin-bottom:3px; white-space:nowrap;">${formatDurationShort(mins)}</div>` : '';
