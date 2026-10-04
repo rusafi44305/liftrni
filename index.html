@@ -11079,39 +11079,60 @@ for a competing inline style first.`;
     // section with no separate filtering logic needed elsewhere.
     if(disciplineFilter) rows = rows.filter(r => r.profiles?.discipline === disciplineFilter);
 
-    // Trend badges compare the selected range with the immediately
-    // preceding range of exactly the same length. We only do this when
-    // both date boundaries are explicit, so the arrow/% never implies a
-    // comparison against an arbitrary hidden period when the Dashboard is
-    // showing all-time data. The comparison uses the same engineer and
-    // discipline filters as the visible Dashboard.
+    // KPI trend badges compare against the immediately preceding equal-
+    // length period. If explicit From/To dates are chosen, we compare the
+    // visible filtered range against the previous range of the same length.
+    // If no explicit date range is selected, we default the comparison to
+    // the most recent 30 days vs the 30 days before that, while keeping the
+    // main KPI values themselves unchanged.
     let previousRows = null;
-    if(fromVal && toVal){
-      try{
+    let comparisonCurrentRows = null;
+    let comparisonNoteLabel = 'vs. previous period';
+    try{
+      const fetchRowsInRange = async (startVal, endExclusiveVal) => {
+        let q = sb.from('tasks').select('*, profiles(full_name, nickname, role, discipline)')
+          .gte('created_at', startVal)
+          .lt('created_at', endExclusiveVal);
+        if(engineerId) q = q.eq('employee_id', engineerId);
+        const accum = [];
+        let qPage = 0;
+        while(true){
+          const { data: qData, error: qError } = await q.range(qPage * PAGE_SIZE, qPage * PAGE_SIZE + PAGE_SIZE - 1);
+          if(qError) throw qError;
+          accum.push(...(qData || []));
+          if(!qData || qData.length < PAGE_SIZE) break;
+          qPage++;
+        }
+        return disciplineFilter ? accum.filter(r => r.profiles?.discipline === disciplineFilter) : accum;
+      };
+      if(fromVal && toVal){
         const curStart = new Date(fromVal + 'T00:00:00Z');
         const curEnd = new Date(toVal + 'T00:00:00Z');
         const dayCount = Math.max(1, Math.round((curEnd - curStart) / 86400000) + 1);
         const prevStart = new Date(curStart);
         prevStart.setUTCDate(prevStart.getUTCDate() - dayCount);
         const prevStartVal = prevStart.toISOString().slice(0,10);
-        let prevQuery = sb.from('tasks').select('*, profiles(full_name, nickname, role, discipline)')
-          .gte('created_at', prevStartVal)
-          .lt('created_at', fromVal);
-        if(engineerId) prevQuery = prevQuery.eq('employee_id', engineerId);
-        let prevPage = 0;
-        const prevAccum = [];
-        while(true){
-          const { data: prevData, error: prevError } = await prevQuery.range(prevPage * PAGE_SIZE, prevPage * PAGE_SIZE + PAGE_SIZE - 1);
-          if(prevError) throw prevError;
-          prevAccum.push(...(prevData || []));
-          if(!prevData || prevData.length < PAGE_SIZE) break;
-          prevPage++;
-        }
-        previousRows = disciplineFilter ? prevAccum.filter(r => r.profiles?.discipline === disciplineFilter) : prevAccum;
-      }catch(err){
-        console.warn('Dashboard previous-period comparison unavailable:', err);
-        previousRows = null;
+        comparisonCurrentRows = rows;
+        previousRows = await fetchRowsInRange(prevStartVal, fromVal);
+        comparisonNoteLabel = 'vs. previous period';
+      } else {
+        const today = new Date();
+        const currentEndExclusive = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1));
+        const currentStart = new Date(currentEndExclusive);
+        currentStart.setUTCDate(currentStart.getUTCDate() - 30);
+        const previousStart = new Date(currentStart);
+        previousStart.setUTCDate(previousStart.getUTCDate() - 30);
+        const currentStartVal = currentStart.toISOString().slice(0,10);
+        const currentEndExclusiveVal = currentEndExclusive.toISOString().slice(0,10);
+        const previousStartVal = previousStart.toISOString().slice(0,10);
+        comparisonCurrentRows = await fetchRowsInRange(currentStartVal, currentEndExclusiveVal);
+        previousRows = await fetchRowsInRange(previousStartVal, currentStartVal);
+        comparisonNoteLabel = 'vs. previous 30 days';
       }
+    }catch(err){
+      console.warn('Dashboard KPI comparison unavailable:', err);
+      previousRows = null;
+      comparisonCurrentRows = null;
     }
 
     currentDashRows = rows;
@@ -11321,31 +11342,34 @@ for a competing inline style first.`;
     // Same four metrics for the immediately preceding equal-length period,
     // used only for the arrow/% badges. The visible KPI values themselves
     // remain exactly the current filtered range, same as before.
-    let previousMetrics = null;
-    if(previousRows){
-      const prevLiftSet = new Set(previousRows.filter(r => r.lift_id).map(r => r.lift_id));
-      const prevByEngineer = {};
-      let prevDuration = 0;
-      previousRows.forEach(r => {
+    const computeComparisonMetrics = (srcRows) => {
+      if(!Array.isArray(srcRows)) return null;
+      const srcLiftSet = new Set(srcRows.filter(r => r.lift_id).map(r => r.lift_id));
+      const srcByEngineer = {};
+      let srcDuration = 0;
+      srcRows.forEach(r => {
         const id = r.employee_id;
-        if(!prevByEngineer[id]) prevByEngineer[id] = { rows:[] };
-        prevByEngineer[id].rows.push(r);
-        prevDuration += taskDurationMinutes(r, durationLabels);
+        if(!srcByEngineer[id]) srcByEngineer[id] = { rows:[] };
+        srcByEngineer[id].rows.push(r);
+        srcDuration += taskDurationMinutes(r, durationLabels);
       });
-      const prevScores = Object.values(prevByEngineer).map(e => {
+      const srcScores = Object.values(srcByEngineer).map(e => {
         const p = computeMonthlyScorePercents(e.rows, weightMap, target, durationLabels);
         const keys = Object.keys(p);
         return keys.length ? keys.reduce((sum,k) => sum + p[k], 0) / keys.length : 0;
       });
-      previousMetrics = {
-        score: prevScores.length ? prevScores.reduce((sum,v) => sum + v, 0) / prevScores.length : 0,
-        activities: previousRows.length,
-        lifts: prevLiftSet.size,
-        time: prevDuration
+      return {
+        score: srcScores.length ? srcScores.reduce((sum,v) => sum + v, 0) / srcScores.length : 0,
+        activities: srcRows.length,
+        lifts: srcLiftSet.size,
+        time: srcDuration
       };
-    }
+    };
 
-    const setTrend = (id, noteId, current, previous) => {
+    const currentComparisonMetrics = computeComparisonMetrics(comparisonCurrentRows);
+    const previousMetrics = computeComparisonMetrics(previousRows);
+
+    const setTrend = (id, noteId, current, previous, noteLabel) => {
       const badge = document.getElementById(id);
       const note = document.getElementById(noteId);
       if(!badge || !note) return;
@@ -11353,7 +11377,7 @@ for a competing inline style first.`;
       if(previous == null || !Number.isFinite(previous)){
         badge.textContent = '—';
         badge.classList.add('flat');
-        note.textContent = 'Select dates to compare';
+        note.textContent = noteLabel || 'vs. previous period';
         return;
       }
       if(previous === 0){
@@ -11364,7 +11388,7 @@ for a competing inline style first.`;
           badge.textContent = '↑ New';
           badge.classList.add('up');
         }
-        note.textContent = 'vs. previous period';
+        note.textContent = noteLabel || 'vs. previous period';
         return;
       }
       const delta = ((current - previous) / Math.abs(previous)) * 100;
@@ -11378,7 +11402,7 @@ for a competing inline style first.`;
         badge.textContent = `↓ ${Math.abs(delta).toFixed(0)}%`;
         badge.classList.add('down');
       }
-      note.textContent = 'vs. previous period';
+      note.textContent = noteLabel || 'vs. previous period';
     };
 
     const ringSize = dashOverviewMode === 'desktop' ? 92 : 72;
@@ -11391,10 +11415,10 @@ for a competing inline style first.`;
     document.getElementById('dashKpiValueActivities').textContent = rows.length.toLocaleString();
     document.getElementById('dashKpiValueLifts').textContent = liftSet.size.toLocaleString();
     document.getElementById('dashKpiValueTime').textContent = formatDurationShort(teamTotalDuration);
-    setTrend('dashTrendScore','dashTrendScoreNote',teamAvgScore,previousMetrics?.score ?? null);
-    setTrend('dashTrendActivities','dashTrendActivitiesNote',rows.length,previousMetrics?.activities ?? null);
-    setTrend('dashTrendLifts','dashTrendLiftsNote',liftSet.size,previousMetrics?.lifts ?? null);
-    setTrend('dashTrendTime','dashTrendTimeNote',teamTotalDuration,previousMetrics?.time ?? null);
+    setTrend('dashTrendScore','dashTrendScoreNote',currentComparisonMetrics?.score ?? null,previousMetrics?.score ?? null,comparisonNoteLabel);
+    setTrend('dashTrendActivities','dashTrendActivitiesNote',currentComparisonMetrics?.activities ?? null,previousMetrics?.activities ?? null,comparisonNoteLabel);
+    setTrend('dashTrendLifts','dashTrendLiftsNote',currentComparisonMetrics?.lifts ?? null,previousMetrics?.lifts ?? null,comparisonNoteLabel);
+    setTrend('dashTrendTime','dashTrendTimeNote',currentComparisonMetrics?.time ?? null,previousMetrics?.time ?? null,comparisonNoteLabel);
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
