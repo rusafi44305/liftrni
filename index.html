@@ -1517,54 +1517,59 @@
   }
 
   /* ============================================================
-     2026-10-04 — Dashboard visual refresh only.
-     Clean, compact analytics styling scoped to #view-dashboard so
-     no other tab inherits these changes. All existing IDs, queries,
-     permissions, exports, scoring and inspect behavior remain intact.
+     2026-10-04 — Dashboard reference-match pass.
+     Dashboard-only presentation: compact KPI cards with animated rings,
+     weekly trend + category analytics side-by-side, and discipline-specific
+     team activity summaries. Existing filters, exports, permissions,
+     scoring, Supabase queries and full leaderboard/inspect behavior stay intact.
   ============================================================ */
-  #view-dashboard{ --dash-radius:14px; }
+  #view-dashboard{
+    --dash-radius:12px;
+    --dash-gap:12px;
+  }
   #view-dashboard .dash-page-head{
-    display:flex; align-items:flex-end; justify-content:space-between; gap:16px;
-    margin-bottom:14px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:14px;
+    margin-bottom:10px;
   }
   #view-dashboard .dash-page-title{
-    font-family:'Space Grotesk',sans-serif; font-size:24px; line-height:1.1;
+    font-family:'Space Grotesk',sans-serif; font-size:23px; line-height:1.08;
     font-weight:700; letter-spacing:-0.025em; color:var(--text);
   }
-  #view-dashboard .dash-page-sub{ margin-top:4px; font-size:12px; color:var(--text-faint); }
+  #view-dashboard .dash-page-sub{ margin-top:3px; font-size:11.5px; color:var(--text-faint); }
   #view-dashboard .dash-admin-chip{
-    flex-shrink:0; font-size:10.5px; font-weight:700; letter-spacing:.02em;
-    color:var(--text-dim); background:var(--surface); border:1px solid var(--border);
-    border-radius:999px; padding:5px 9px;
+    flex-shrink:0; font-size:10px; font-weight:700; color:var(--text-dim);
+    background:var(--surface); border:1px solid var(--border); border-radius:9px;
+    padding:6px 9px;
   }
 
   #view-dashboard .dash-filter-toolbar{
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:end;
     background:var(--surface); border:1px solid var(--border); border-radius:var(--dash-radius);
-    padding:10px; margin-bottom:14px; box-shadow:none;
+    padding:8px; margin-bottom:12px; box-shadow:none;
   }
   #view-dashboard .dash-filter-grid{
-    display:grid; grid-template-columns:1fr 1fr 1.15fr 1fr; gap:8px;
+    display:grid; grid-template-columns:.86fr .86fr 1.2fr 1fr; gap:7px; min-width:0;
   }
   #view-dashboard .dash-filter-field{ min-width:0; }
   #view-dashboard .dash-filter-field label{
-    display:block; margin:0 0 5px 2px; font-size:9.5px; font-weight:700;
-    letter-spacing:.055em; text-transform:uppercase; color:var(--text-faint);
+    display:block; margin:0 0 4px 2px; font-size:8.5px; font-weight:700;
+    letter-spacing:.05em; text-transform:uppercase; color:var(--text-faint);
   }
   #view-dashboard .dash-filter-field .fselect{
-    width:100%; min-width:0; height:38px; padding:7px 10px;
-    border-radius:9px !important; background:var(--surface-alt) !important;
+    width:100%; min-width:0; height:34px; padding:6px 9px;
+    border-radius:8px !important; background:var(--surface-alt) !important;
     border:1px solid var(--border) !important; box-shadow:none !important;
-    font-size:12.5px; font-weight:600; color:var(--text);
+    font-size:11.5px; font-weight:600; color:var(--text);
   }
   #view-dashboard .dash-filter-actions{
-    display:flex; align-items:center; justify-content:space-between; gap:8px;
-    margin-top:9px;
+    display:flex; align-items:end; justify-content:flex-end; gap:7px; margin:0;
   }
-  #view-dashboard .dash-filter-secondary{ display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  #view-dashboard .dash-filter-secondary{ display:flex; align-items:center; gap:6px; flex-wrap:nowrap; }
   #view-dashboard .dash-kpi-trigger-wrap{ display:flex; }
   #view-dashboard .dash-filter-actions .queue-btn{
-    min-height:34px; padding:7px 11px; border-radius:8px !important;
-    font-size:11.5px; font-weight:650; box-shadow:none !important; transform:none !important;
+    min-height:34px; padding:6px 9px; border-radius:8px !important;
+    font-size:10.5px; font-weight:650; box-shadow:none !important; transform:none !important;
+    white-space:nowrap;
   }
   #view-dashboard .dash-filter-actions .filter-btn-excel,
   #view-dashboard .dash-filter-actions .filter-btn-pptx,
@@ -1572,15 +1577,9 @@
     background:var(--surface) !important; color:var(--text-dim) !important;
     border:1px solid var(--border) !important;
   }
-  #view-dashboard .dash-filter-actions .filter-btn-excel:hover,
-  #view-dashboard .dash-filter-actions .filter-btn-pptx:hover,
-  #view-dashboard .dash-filter-actions .dash-recalc-btn:hover{
-    color:var(--text) !important; border-color:color-mix(in srgb,var(--accent) 35%,var(--border)) !important;
-    background:var(--surface-alt) !important;
-  }
   #view-dashboard .dash-filter-actions .filter-btn-apply{
-    min-width:118px; background:var(--accent) !important; color:#fff !important;
-    border:1px solid var(--accent) !important;
+    background:var(--accent) !important; color:#fff !important;
+    border:1px solid var(--accent) !important; padding-left:13px; padding-right:13px;
   }
 
   #view-dashboard .dash-card{
@@ -1588,99 +1587,171 @@
     border-radius:var(--dash-radius) !important; box-shadow:none !important;
     backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
   }
-  #view-dashboard .dash-overview-card{ padding:16px !important; margin-bottom:12px; }
-  #view-dashboard .dash-section-head{
-    display:flex; align-items:flex-start; justify-content:space-between; gap:14px;
-    margin-bottom:13px;
+  #view-dashboard .dash-overview-head{
+    display:flex; align-items:end; justify-content:space-between; gap:12px;
+    margin:0 2px 7px;
   }
-  #view-dashboard .dash-section-title{ font-size:14px; font-weight:700; color:var(--text); }
+  #view-dashboard .dash-section-title{ font-size:14px; line-height:1.2; font-weight:700; color:var(--text); }
   #view-dashboard .dash-section-sub{ margin-top:2px; font-size:10.5px; color:var(--text-faint); }
-  #view-dashboard .dash-section-meta{
-    flex-shrink:0; font-size:10.5px; color:var(--text-faint); padding-top:2px;
-  }
+  #view-dashboard .dash-section-meta{ flex-shrink:0; font-size:10px; color:var(--text-faint); }
 
   #view-dashboard .dash-kpi-grid{
-    display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
-    border:1px solid var(--border); border-radius:12px; overflow:hidden;
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:12px;
   }
-  #view-dashboard .dash-kpi-cell{
-    min-width:0; padding:13px 10px 11px; display:flex; flex-direction:column;
-    align-items:center; justify-content:center; text-align:center;
-    border-left:1px solid var(--border); background:transparent;
+  #view-dashboard .dash-kpi-card{
+    min-width:0; display:grid; grid-template-columns:auto minmax(0,1fr); gap:10px; align-items:center;
+    padding:12px 13px !important;
   }
-  #view-dashboard .dash-kpi-cell:first-child{ border-left:0; }
-  #view-dashboard .dash-kpi-ring{ display:flex; align-items:center; justify-content:center; min-height:92px; }
-  #view-dashboard .dash-kpi-label{ margin-top:5px; font-size:11.5px; font-weight:700; color:var(--text); }
-  #view-dashboard .dash-kpi-note{ margin-top:2px; font-size:9.5px; color:var(--text-faint); }
+  #view-dashboard .dash-kpi-ring{ display:flex; align-items:center; justify-content:center; }
+  #view-dashboard .dash-kpi-copy{ min-width:0; }
+  #view-dashboard .dash-kpi-label{ font-size:11.5px; font-weight:700; color:var(--text); }
+  #view-dashboard .dash-kpi-value{
+    margin-top:1px; font-family:'Space Grotesk',sans-serif; font-size:21px; line-height:1.05;
+    font-weight:700; letter-spacing:-.02em; color:var(--text); font-variant-numeric:tabular-nums;
+  }
+  #view-dashboard .dash-kpi-note{ margin-top:2px; font-size:9.5px; line-height:1.25; color:var(--text-faint); }
+  #view-dashboard .dash-kpi-trend-line{ display:flex; align-items:center; gap:6px; margin-top:7px; min-height:22px; flex-wrap:wrap; }
+  #view-dashboard .dash-trend-badge{
+    display:inline-flex; align-items:center; gap:3px; min-height:20px; padding:3px 7px; border-radius:999px;
+    font-size:10px; line-height:1; font-weight:800; font-variant-numeric:tabular-nums;
+    background:var(--surface-alt); color:var(--text-faint);
+  }
+  #view-dashboard .dash-trend-badge.up{ background:var(--green-dim); color:var(--green); }
+  #view-dashboard .dash-trend-badge.down{ background:var(--red-dim); color:var(--red); }
+  #view-dashboard .dash-trend-badge.flat{ background:var(--surface-alt); color:var(--text-dim); }
+  #view-dashboard .dash-trend-caption{ font-size:8.5px; color:var(--text-faint); white-space:nowrap; }
 
-  #view-dashboard .dash-trend-block{
-    margin-top:15px; padding-top:13px; border-top:1px solid var(--border);
+  #view-dashboard .dash-primary-grid{
+    display:grid; grid-template-columns:minmax(0,1.45fr) minmax(320px,.9fr); gap:12px;
+    margin-bottom:12px; align-items:stretch;
   }
+  #view-dashboard .dash-primary-card{ min-width:0; padding:14px !important; }
   #view-dashboard .dash-chart-head{
-    display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:8px;
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:8px;
   }
-  #view-dashboard .dash-chart-title{ font-size:11.5px; font-weight:700; color:var(--text); }
-  #view-dashboard .dash-chart-note{ font-size:9.5px; color:var(--text-faint); }
+  #view-dashboard .dash-chart-title{ font-size:14px; font-weight:700; color:var(--text); }
+  #view-dashboard .dash-chart-note{ font-size:9.5px; color:var(--text-faint); text-align:right; }
   #view-dashboard #dashHeroTrendChart{ min-width:0; }
-
-  #view-dashboard .dash-performance-grid{
-    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:14px;
+  #view-dashboard #dashHeroTrendChart svg{ max-height:220px; }
+  #view-dashboard .dash-category-bars{
+    display:flex; align-items:flex-end; gap:7px; height:132px; margin:4px 0 10px;
   }
-  #view-dashboard .dash-performance-card{ padding:15px !important; min-width:0; }
-  #view-dashboard .dash-performance-card .placeholder-note{ margin-top:4px; }
+  #view-dashboard .dash-category-legend{ display:flex; flex-wrap:wrap; align-items:center; }
 
-  #view-dashboard .dash-leaderboard-section{ margin-bottom:14px; }
+  #view-dashboard .dash-discipline-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;
+  }
+  #view-dashboard .dash-discipline-card{ min-width:0; padding:13px !important; }
+  #view-dashboard .dash-discipline-head{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:8px;
+  }
+  #view-dashboard .dash-discipline-icon{
+    width:27px; height:27px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0; background:var(--surface-alt); color:var(--accent);
+  }
+  #view-dashboard .dash-rank-list{ display:flex; flex-direction:column; gap:3px; }
+  #view-dashboard .dash-rank-row{
+    width:100%; border:0; background:transparent; color:inherit; cursor:pointer;
+    display:grid; grid-template-columns:22px minmax(0,1.05fr) minmax(88px,.9fr) minmax(90px,1fr) 42px;
+    gap:7px; align-items:center; min-height:27px; padding:2px 0; text-align:left; font-family:'Inter',sans-serif;
+  }
+  #view-dashboard .dash-rank-row:hover .dash-rank-name{ color:var(--accent); }
+  #view-dashboard .dash-rank-num{
+    width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:var(--surface-alt); color:var(--text-dim); font-size:9.5px; font-weight:700;
+  }
+  #view-dashboard .dash-rank-row:first-child .dash-rank-num{ background:var(--amber-dim); color:var(--amber); }
+  #view-dashboard .dash-rank-name,
+  #view-dashboard .dash-rank-category{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #view-dashboard .dash-rank-name{ font-size:10.5px; font-weight:600; color:var(--text); }
+  #view-dashboard .dash-rank-category{ font-size:9.5px; color:var(--text-faint); }
+  #view-dashboard .dash-rank-bar{ height:6px; background:var(--surface-alt); border-radius:999px; overflow:hidden; }
+  #view-dashboard .dash-rank-score{ font-size:9.5px; text-align:right; color:var(--text-dim); font-variant-numeric:tabular-nums; }
+
+  #view-dashboard .dash-leaderboard-section{ margin-bottom:12px; }
   #view-dashboard .dash-leaderboard-head{
-    display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:0 2px 8px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:0 2px 7px;
   }
   #view-dashboard .dash-table-card{ padding:0 !important; overflow-x:auto; }
   #view-dashboard .dash-table-card table.data{ min-width:720px; }
   #view-dashboard .dash-table-card table.data th{
-    padding:10px 12px; background:var(--surface-alt); border-bottom:1px solid var(--border);
-    font-size:9.5px; letter-spacing:.055em; color:var(--text-faint);
+    padding:8px 10px; background:var(--surface-alt); border-bottom:1px solid var(--border);
+    font-size:8.5px; letter-spacing:.05em; color:var(--text-faint);
   }
-  #view-dashboard .dash-table-card table.data td{
-    padding:10px 12px; font-size:12.5px; vertical-align:middle;
-  }
+  #view-dashboard .dash-table-card table.data td{ padding:8px 10px; font-size:11.5px; vertical-align:middle; }
   #view-dashboard .dash-table-card table.data tbody tr{ transition:background .12s ease; }
   #view-dashboard .dash-table-card table.data tbody tr:hover{ background:var(--surface-alt); }
-  #view-dashboard .dash-table-card .rank-name{ font-size:12.5px; }
+  #view-dashboard .dash-table-card .rank-name{ font-size:11.5px; }
   #view-dashboard .dash-table-card .btn.inspect{
-    padding:4px 9px !important; font-size:10.5px !important; border-radius:7px !important;
+    padding:4px 8px !important; font-size:9.5px !important; border-radius:7px !important;
     box-shadow:none !important; transform:none !important;
   }
   #view-dashboard .dash-inspect-section{ margin-top:2px; }
   #view-dashboard .dash-inspect-list .mytask-item,
   #view-dashboard .dash-inspect-list .panel{ box-shadow:none !important; }
 
+  @media (max-width:980px){
+    #view-dashboard .dash-filter-toolbar{ grid-template-columns:1fr; }
+    #view-dashboard .dash-filter-actions{ justify-content:space-between; }
+    #view-dashboard .dash-kpi-card{ grid-template-columns:1fr; text-align:center; gap:3px; }
+    #view-dashboard .dash-kpi-copy{ text-align:center; }
+    #view-dashboard .dash-kpi-trend-line{ justify-content:center; }
+    #view-dashboard .dash-primary-grid{ grid-template-columns:1.2fr .9fr; }
+    #view-dashboard .dash-rank-row{ grid-template-columns:22px minmax(0,1fr) minmax(70px,.75fr) minmax(70px,.9fr) 38px; }
+  }
+
   @media (max-width:700px){
-    #view-dashboard .dash-page-head{ align-items:flex-start; margin-bottom:10px; }
+    #view-dashboard .dash-page-head{ align-items:flex-start; margin-bottom:8px; }
     #view-dashboard .dash-page-title{ font-size:20px; }
     #view-dashboard .dash-admin-chip{ display:none; }
-    #view-dashboard .dash-filter-toolbar{ padding:9px; margin-bottom:10px; }
+    #view-dashboard .dash-filter-toolbar{ padding:8px; margin-bottom:10px; }
     #view-dashboard .dash-filter-grid{ grid-template-columns:1fr 1fr; gap:7px; }
-    #view-dashboard .dash-filter-field .fselect{ height:42px; font-size:12px; }
+    #view-dashboard .dash-filter-field .fselect{ height:40px; font-size:12px; }
     #view-dashboard .dash-filter-actions{ display:grid; grid-template-columns:1fr; gap:7px; }
-    #view-dashboard .dash-filter-actions .filter-btn-apply{ width:100%; order:-1; min-height:42px; }
+    #view-dashboard .dash-filter-actions .filter-btn-apply{ width:100%; order:-1; min-height:40px; }
     #view-dashboard .dash-filter-secondary{ display:grid; grid-template-columns:1fr 1fr; gap:7px; width:100%; }
-    #view-dashboard .dash-filter-secondary .queue-btn{ width:100%; min-height:40px; }
+    #view-dashboard .dash-filter-secondary .queue-btn{ width:100%; min-height:38px; }
     #view-dashboard .dash-kpi-trigger-wrap{ grid-column:1 / -1; }
     #view-dashboard .dash-kpi-trigger-wrap .queue-btn{ width:100%; }
-    #view-dashboard .dash-overview-card{ padding:13px !important; margin-bottom:10px; }
-    #view-dashboard .dash-section-head{ margin-bottom:10px; }
-    #view-dashboard .dash-section-meta{ font-size:9.5px; }
-    #view-dashboard .dash-kpi-grid{ grid-template-columns:1fr 1fr; }
-    #view-dashboard .dash-kpi-cell{ padding:11px 8px 9px; border-left:1px solid var(--border); border-top:1px solid var(--border); }
-    #view-dashboard .dash-kpi-cell:nth-child(odd){ border-left:0; }
-    #view-dashboard .dash-kpi-cell:nth-child(-n+2){ border-top:0; }
-    #view-dashboard .dash-kpi-ring{ min-height:74px; }
+
+    #view-dashboard .dash-overview-head{ margin-bottom:7px; }
+    #view-dashboard .dash-kpi-grid{ grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+    #view-dashboard .dash-kpi-card{
+      grid-template-columns:72px minmax(0,1fr); text-align:left; gap:7px; padding:9px !important;
+    }
+    #view-dashboard .dash-kpi-copy{ text-align:left; }
+    #view-dashboard .dash-kpi-value{ font-size:18px; }
     #view-dashboard .dash-kpi-label{ font-size:10.5px; }
     #view-dashboard .dash-kpi-note{ font-size:9px; }
-    #view-dashboard .dash-trend-block{ margin-top:12px; padding-top:11px; }
-    #view-dashboard .dash-performance-grid{ grid-template-columns:1fr; gap:10px; margin-bottom:12px; }
-    #view-dashboard .dash-performance-card{ padding:13px !important; }
+    #view-dashboard .dash-kpi-trend-line{ justify-content:flex-start; gap:4px; margin-top:5px; }
+    #view-dashboard .dash-trend-badge{ font-size:9px; padding:3px 6px; }
+    #view-dashboard .dash-trend-caption{ font-size:8px; }
+
+    #view-dashboard .dash-primary-grid{ grid-template-columns:1fr; gap:10px; margin-bottom:10px; }
+    #view-dashboard .dash-primary-card{ padding:12px !important; }
+    #view-dashboard #dashHeroTrendChart svg{ max-height:none; }
+    #view-dashboard .dash-category-bars{ height:112px; gap:5px; }
+
+    #view-dashboard .dash-discipline-grid{ grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+    #view-dashboard .dash-discipline-card{ padding:10px !important; }
+    #view-dashboard .dash-discipline-icon{ display:none; }
+    #view-dashboard .dash-discipline-card .dash-section-title{ font-size:11px; }
+    #view-dashboard .dash-discipline-card .dash-section-sub{ font-size:8.5px; }
+    #view-dashboard .dash-rank-row{
+      grid-template-columns:16px minmax(0,1fr) minmax(46px,.7fr) 28px; gap:4px; min-height:24px;
+    }
+    #view-dashboard .dash-rank-num{ width:16px; height:16px; font-size:8px; }
+    #view-dashboard .dash-rank-name{ font-size:8.5px; }
+    #view-dashboard .dash-rank-category{ display:none; }
+    #view-dashboard .dash-rank-bar{ height:5px; }
+    #view-dashboard .dash-rank-score{ font-size:8px; }
     #view-dashboard .dash-leaderboard-head{ align-items:flex-start; flex-direction:column; gap:2px; }
     #view-dashboard .dash-table-card table.data{ min-width:650px; }
+  }
+
+  @media (max-width:380px){
+    #view-dashboard .dash-kpi-card{ grid-template-columns:64px minmax(0,1fr); }
+    #view-dashboard .dash-discipline-grid{ grid-template-columns:1fr; }
   }
 
 </style>
@@ -5085,6 +5156,7 @@
   // ============================================================
   const CHANGELOG = [
     { date:'2026-10-04', summary:'Fixed intermittent custom sub-category visibility in task-entry dropdowns: renderTaskForm now loads the existing dynamic field/sub-category cache before any category-specific dropdown options are assembled. This prevents newly added Reports/Support sub-categories from requiring a manual refresh while preserving the existing 2-minute cache, discipline filtering, custom-field behavior and all stored data.' },
+    { date:'2026-10-04', summary:'Team Dashboard visual redesign matched to the approved compact reference: four animated circular KPI cards with real previous-period trend badges when an explicit date range is selected, Weekly Activity Trend and By Category cards side-by-side on desktop, Mechanical/Electrical team activity cards below, tighter filters/table styling, and responsive mobile reflow. Existing Dashboard filters, exports, scoring, permissions, full leaderboard, engineer inspection, Supabase data and calculations were preserved.' },
     { date:'2026-10-03', summary:'Admin Task Fields built-in catalog synchronized to the existing working input forms without changing form behavior or historical task data: General Support stale Lift ID/Supplier Name mirrors corrected to Task Name; Team Activity and Pre-Sales metadata aligned; missing Technical Support and Reports built-in mirror rows supplied via a safe SQL sync. Custom fields/sub-categories (is_builtin=false) remain untouched and continue to render dynamically as before.' },
     { date:'2026-10-03', summary:'Quick Links Admin upgraded with an Edit icon and drag-and-drop reordering. Reordering persists through quick_links.sort_order and the read-only account-menu popup follows the saved order automatically. Adding a new link now appends after the current maximum sort_order so a reordered list stays stable. Requires the accompanying Superadmin-only UPDATE RLS policy for quick_links.' },
     { date:'2026-10-03', summary:'Home statistics visual refinement: desktop stat content is now left-aligned inside the existing single shared panel; mobile keeps the 2x2 layout but removes all interior divider lines and individual borders, with slightly smaller type and tighter padding. The single outer group border, live values, calculations and realtime refresh logic are unchanged.' },
@@ -10838,65 +10910,99 @@ for a competing inline style first.`;
     dashOverviewMode = mode;
     const container = document.getElementById('dashOverviewContainer');
     container.innerHTML = `
-      <div class="panel dash-card dash-overview-card">
-        <div class="dash-section-head">
-          <div>
-            <div class="dash-section-title">Team overview</div>
-            <div class="dash-section-sub">Selected period summary</div>
-          </div>
-          <div class="dash-section-meta"><span id="dashStatEngineers">—</span> engineers · <span id="dashStatCategories">—</span> categories</div>
+      <div class="dash-overview-head">
+        <div>
+          <div class="dash-section-title">Team overview</div>
+          <div class="dash-section-sub">Selected period summary</div>
         </div>
+        <div class="dash-section-meta"><span id="dashStatEngineers">—</span> engineers · <span id="dashStatCategories">—</span> categories</div>
+      </div>
 
-        <div class="dash-kpi-grid">
-          <div class="dash-kpi-cell">
-            <div class="dash-kpi-ring" id="dashRingScore"></div>
+      <div class="dash-kpi-grid">
+        <div class="panel dash-card dash-kpi-card">
+          <div class="dash-kpi-ring" id="dashRingScore"></div>
+          <div class="dash-kpi-copy">
             <div class="dash-kpi-label">Team score</div>
+            <div class="dash-kpi-value" id="dashKpiValueScore">—</div>
             <div class="dash-kpi-note">Overall performance</div>
-          </div>
-          <div class="dash-kpi-cell">
-            <div class="dash-kpi-ring" id="dashRingActivities"></div>
-            <div class="dash-kpi-label">Activities</div>
-            <div class="dash-kpi-note">Logged entries</div>
-          </div>
-          <div class="dash-kpi-cell">
-            <div class="dash-kpi-ring" id="dashRingLifts"></div>
-            <div class="dash-kpi-label">Lifts touched</div>
-            <div class="dash-kpi-note">Distinct lift IDs</div>
-          </div>
-          <div class="dash-kpi-cell">
-            <div class="dash-kpi-ring" id="dashRingTime"></div>
-            <div class="dash-kpi-label">Time logged</div>
-            <div class="dash-kpi-note">Tracked duration</div>
+            <div class="dash-kpi-trend-line"><span id="dashTrendScore" class="dash-trend-badge flat">—</span><span id="dashTrendScoreNote" class="dash-trend-caption">Select dates to compare</span></div>
           </div>
         </div>
+        <div class="panel dash-card dash-kpi-card">
+          <div class="dash-kpi-ring" id="dashRingActivities"></div>
+          <div class="dash-kpi-copy">
+            <div class="dash-kpi-label">Activities</div>
+            <div class="dash-kpi-value" id="dashKpiValueActivities">—</div>
+            <div class="dash-kpi-note">Logged entries</div>
+            <div class="dash-kpi-trend-line"><span id="dashTrendActivities" class="dash-trend-badge flat">—</span><span id="dashTrendActivitiesNote" class="dash-trend-caption">Select dates to compare</span></div>
+          </div>
+        </div>
+        <div class="panel dash-card dash-kpi-card">
+          <div class="dash-kpi-ring" id="dashRingLifts"></div>
+          <div class="dash-kpi-copy">
+            <div class="dash-kpi-label">Lifts touched</div>
+            <div class="dash-kpi-value" id="dashKpiValueLifts">—</div>
+            <div class="dash-kpi-note">Distinct lift IDs</div>
+            <div class="dash-kpi-trend-line"><span id="dashTrendLifts" class="dash-trend-badge flat">—</span><span id="dashTrendLiftsNote" class="dash-trend-caption">Select dates to compare</span></div>
+          </div>
+        </div>
+        <div class="panel dash-card dash-kpi-card">
+          <div class="dash-kpi-ring" id="dashRingTime"></div>
+          <div class="dash-kpi-copy">
+            <div class="dash-kpi-label">Time logged</div>
+            <div class="dash-kpi-value" id="dashKpiValueTime">—</div>
+            <div class="dash-kpi-note">Tracked duration</div>
+            <div class="dash-kpi-trend-line"><span id="dashTrendTime" class="dash-trend-badge flat">—</span><span id="dashTrendTimeNote" class="dash-trend-caption">Select dates to compare</span></div>
+          </div>
+        </div>
+      </div>
 
-        <div class="dash-trend-block">
+      <div class="dash-primary-grid">
+        <div class="panel dash-card dash-primary-card">
           <div class="dash-chart-head">
-            <div class="dash-chart-title">Weekly activity trend</div>
+            <div>
+              <div class="dash-chart-title">Weekly activity trend</div>
+              <div class="dash-section-sub">Activity by category over the selected period</div>
+            </div>
             <div class="dash-chart-note">Top categories + Other</div>
           </div>
           <div id="dashHeroTrendChart"></div>
         </div>
-      </div>
-
-      <div class="dash-performance-grid">
-        <div class="panel dash-card dash-performance-card">
+        <div class="panel dash-card dash-primary-card">
           <div class="dash-chart-head">
             <div>
-              <div class="dash-section-title" id="breakdownTitle">By category</div>
+              <div class="dash-chart-title" id="breakdownTitle">By category — whole team</div>
               <div class="dash-section-sub">Activity and tracked time</div>
             </div>
           </div>
           <div id="dashCategoryBreakdown"><div class="placeholder-note">Loading…</div></div>
         </div>
-        <div class="panel dash-card dash-performance-card">
-          <div class="dash-chart-head">
-            <div>
-              <div class="dash-section-title">Engineer activity</div>
-              <div class="dash-section-sub">Top engineers by score</div>
+      </div>
+
+      <div class="dash-discipline-grid">
+        <div class="panel dash-card dash-discipline-card">
+          <div class="dash-discipline-head">
+            <div style="display:flex; gap:9px; min-width:0;">
+              <div class="dash-discipline-icon">⚙</div>
+              <div style="min-width:0;">
+                <div class="dash-section-title">Team activity (Mechanical)</div>
+                <div class="dash-section-sub">Top engineers by score</div>
+              </div>
             </div>
           </div>
-          <div id="dashTopEngineersChart"><div class="placeholder-note">Loading…</div></div>
+          <div id="dashMechanicalActivity"><div class="placeholder-note">Loading…</div></div>
+        </div>
+        <div class="panel dash-card dash-discipline-card">
+          <div class="dash-discipline-head">
+            <div style="display:flex; gap:9px; min-width:0;">
+              <div class="dash-discipline-icon">ϟ</div>
+              <div style="min-width:0;">
+                <div class="dash-section-title">Team activity (Electrical)</div>
+                <div class="dash-section-sub">Top engineers by score</div>
+              </div>
+            </div>
+          </div>
+          <div id="dashElectricalActivity"><div class="placeholder-note">Loading…</div></div>
         </div>
       </div>`;
     return true;
@@ -10972,6 +11078,42 @@ for a competing inline style first.`;
     // time logged, everything) is automatically scoped to the selected
     // section with no separate filtering logic needed elsewhere.
     if(disciplineFilter) rows = rows.filter(r => r.profiles?.discipline === disciplineFilter);
+
+    // Trend badges compare the selected range with the immediately
+    // preceding range of exactly the same length. We only do this when
+    // both date boundaries are explicit, so the arrow/% never implies a
+    // comparison against an arbitrary hidden period when the Dashboard is
+    // showing all-time data. The comparison uses the same engineer and
+    // discipline filters as the visible Dashboard.
+    let previousRows = null;
+    if(fromVal && toVal){
+      try{
+        const curStart = new Date(fromVal + 'T00:00:00Z');
+        const curEnd = new Date(toVal + 'T00:00:00Z');
+        const dayCount = Math.max(1, Math.round((curEnd - curStart) / 86400000) + 1);
+        const prevStart = new Date(curStart);
+        prevStart.setUTCDate(prevStart.getUTCDate() - dayCount);
+        const prevStartVal = prevStart.toISOString().slice(0,10);
+        let prevQuery = sb.from('tasks').select('*, profiles(full_name, nickname, role, discipline)')
+          .gte('created_at', prevStartVal)
+          .lt('created_at', fromVal);
+        if(engineerId) prevQuery = prevQuery.eq('employee_id', engineerId);
+        let prevPage = 0;
+        const prevAccum = [];
+        while(true){
+          const { data: prevData, error: prevError } = await prevQuery.range(prevPage * PAGE_SIZE, prevPage * PAGE_SIZE + PAGE_SIZE - 1);
+          if(prevError) throw prevError;
+          prevAccum.push(...(prevData || []));
+          if(!prevData || prevData.length < PAGE_SIZE) break;
+          prevPage++;
+        }
+        previousRows = disciplineFilter ? prevAccum.filter(r => r.profiles?.discipline === disciplineFilter) : prevAccum;
+      }catch(err){
+        console.warn('Dashboard previous-period comparison unavailable:', err);
+        previousRows = null;
+      }
+    }
+
     currentDashRows = rows;
     const durationLabels = await getDurationLabelsByCategory();
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
@@ -11051,7 +11193,7 @@ for a competing inline style first.`;
         return Object.keys(catsThisWeek).reduce((sum, cat) => sum + (topCatsForTrend.includes(cat) ? 0 : catsThisWeek[cat]), 0);
       });
       if(otherValues.some(v => v > 0)) trendSeries.push({ label: 'Other', color: 'var(--text-faint)', values: otherValues });
-      document.getElementById('dashHeroTrendChart').innerHTML = mountainTrendSvg(trendSeries, weekKeysSorted, 600, 170);
+      document.getElementById('dashHeroTrendChart').innerHTML = mountainTrendSvg(trendSeries, weekKeysSorted, 600, 190);
     } else {
       document.getElementById('dashHeroTrendChart').innerHTML = '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
     }
@@ -11081,7 +11223,7 @@ for a competing inline style first.`;
       // the time figure reads faster living right where it's earned.
       const barsHtml = catSorted.map(([cat,count]) => {
         const c = CATEGORY_COLOR_VAR[cat] || '#8A63D2';
-        const targetH = Math.max(6, Math.round(count/maxCat*54));
+        const targetH = Math.max(7, Math.round(count/maxCat*102));
         const tracksDuration = (durationLabels[cat] || []).length > 0;
         const mins = tracksDuration ? rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0) : 0;
         const timeLabel = tracksDuration ? `<div style="font-size:10px; font-weight:700; color:${c}; margin-bottom:3px; white-space:nowrap;">${formatDurationShort(mins)}</div>` : '';
@@ -11104,8 +11246,8 @@ for a competing inline style first.`;
         </span>
       `).join('');
       document.getElementById('dashCategoryBreakdown').innerHTML = `
-        <div style="display:flex; align-items:flex-end; gap:6px; height:80px; margin-bottom:10px;">${barsHtml}</div>
-        <div style="display:flex; flex-wrap:wrap;">${legendHtml}</div>`;
+        <div class="dash-category-bars">${barsHtml}</div>
+        <div class="dash-category-legend">${legendHtml}</div>`;
       animateBars();
     }
  
@@ -11135,7 +11277,11 @@ for a competing inline style first.`;
     let teamTotalDuration = 0;
     rows.forEach(r => {
       const id = r.employee_id;
-      if(!byEngineer[id]) byEngineer[id] = { name: r.profiles ? displayName(r.profiles) : '—', total: 0, cats: {}, rows: [], duration: 0 };
+      if(!byEngineer[id]) byEngineer[id] = {
+        name: r.profiles ? displayName(r.profiles) : '—',
+        discipline: r.profiles?.discipline || '',
+        total: 0, cats: {}, rows: [], duration: 0
+      };
       byEngineer[id].total++;
       byEngineer[id].cats[r.category] = (byEngineer[id].cats[r.category]||0) + 1;
       byEngineer[id].rows.push(r);
@@ -11170,27 +11316,85 @@ for a competing inline style first.`;
     // meant to answer "how's the team doing", not "who's most active".
     const scoresInRange = Object.values(byEngineer).map(e => e.kpi);
     const teamAvgScore = scoresInRange.length ? scoresInRange.reduce((s,v) => s+v, 0) / scoresInRange.length : 0;
-    // Activities and Lifts are raw counts with no natural "percent of
-    // what" on their own — but shown relative to EACH OTHER (whichever
-    // is larger reads as the full ring, the smaller one its proportional
-    // share) gives a real, honest comparison instead of either an
-    // arbitrary fixed fill or two rings that are always both completely
-    // full regardless of the actual numbers.
     const ringMaxOfTwo = Math.max(rows.length, liftSet.size, 1);
-    // Bigger on desktop only — mobile stays exactly the size it already
-    // is (asked to keep as-is), desktop's rings sit in a roomier 2x2
-    // grid now and read better larger.
+
+    // Same four metrics for the immediately preceding equal-length period,
+    // used only for the arrow/% badges. The visible KPI values themselves
+    // remain exactly the current filtered range, same as before.
+    let previousMetrics = null;
+    if(previousRows){
+      const prevLiftSet = new Set(previousRows.filter(r => r.lift_id).map(r => r.lift_id));
+      const prevByEngineer = {};
+      let prevDuration = 0;
+      previousRows.forEach(r => {
+        const id = r.employee_id;
+        if(!prevByEngineer[id]) prevByEngineer[id] = { rows:[] };
+        prevByEngineer[id].rows.push(r);
+        prevDuration += taskDurationMinutes(r, durationLabels);
+      });
+      const prevScores = Object.values(prevByEngineer).map(e => {
+        const p = computeMonthlyScorePercents(e.rows, weightMap, target, durationLabels);
+        const keys = Object.keys(p);
+        return keys.length ? keys.reduce((sum,k) => sum + p[k], 0) / keys.length : 0;
+      });
+      previousMetrics = {
+        score: prevScores.length ? prevScores.reduce((sum,v) => sum + v, 0) / prevScores.length : 0,
+        activities: previousRows.length,
+        lifts: prevLiftSet.size,
+        time: prevDuration
+      };
+    }
+
+    const setTrend = (id, noteId, current, previous) => {
+      const badge = document.getElementById(id);
+      const note = document.getElementById(noteId);
+      if(!badge || !note) return;
+      badge.classList.remove('up','down','flat');
+      if(previous == null || !Number.isFinite(previous)){
+        badge.textContent = '—';
+        badge.classList.add('flat');
+        note.textContent = 'Select dates to compare';
+        return;
+      }
+      if(previous === 0){
+        if(current === 0){
+          badge.textContent = '→ 0%';
+          badge.classList.add('flat');
+        }else{
+          badge.textContent = '↑ New';
+          badge.classList.add('up');
+        }
+        note.textContent = 'vs. previous period';
+        return;
+      }
+      const delta = ((current - previous) / Math.abs(previous)) * 100;
+      if(Math.abs(delta) < 0.05){
+        badge.textContent = '→ 0%';
+        badge.classList.add('flat');
+      }else if(delta > 0){
+        badge.textContent = `↑ +${Math.abs(delta).toFixed(0)}%`;
+        badge.classList.add('up');
+      }else{
+        badge.textContent = `↓ ${Math.abs(delta).toFixed(0)}%`;
+        badge.classList.add('down');
+      }
+      note.textContent = 'vs. previous period';
+    };
+
     const ringSize = dashOverviewMode === 'desktop' ? 92 : 72;
     document.getElementById('dashRingScore').innerHTML = scoreRingSvg(teamAvgScore, '#1D9E75', ringSize, 'Team score', null, null, null, true);
     document.getElementById('dashRingActivities').innerHTML = scoreRingSvg((rows.length/ringMaxOfTwo)*100, '#378ADD', ringSize, 'Activities', null, null, String(rows.length), true);
     document.getElementById('dashRingLifts').innerHTML = scoreRingSvg((liftSet.size/ringMaxOfTwo)*100, '#D85A30', ringSize, 'Lifts touched', null, null, String(liftSet.size), true);
-    // Deliberately always a full ring rather than a percent-of-something
-    // — unlike Activities/Lifts, there's no honest natural comparison for
-    // minutes to be "relative to" (a different unit entirely), so this
-    // ring exists to hold the number, not to visually represent a share
-    // of anything. Same idea as Team Score being the one meaningful
-    // percentage among these four.
     document.getElementById('dashRingTime').innerHTML = scoreRingSvg(100, '#8A63D2', ringSize, 'Time logged', null, null, formatDurationShort(teamTotalDuration), true);
+
+    document.getElementById('dashKpiValueScore').textContent = `${teamAvgScore.toFixed(0)}%`;
+    document.getElementById('dashKpiValueActivities').textContent = rows.length.toLocaleString();
+    document.getElementById('dashKpiValueLifts').textContent = liftSet.size.toLocaleString();
+    document.getElementById('dashKpiValueTime').textContent = formatDurationShort(teamTotalDuration);
+    setTrend('dashTrendScore','dashTrendScoreNote',teamAvgScore,previousMetrics?.score ?? null);
+    setTrend('dashTrendActivities','dashTrendActivitiesNote',rows.length,previousMetrics?.activities ?? null);
+    setTrend('dashTrendLifts','dashTrendLiftsNote',liftSet.size,previousMetrics?.lifts ?? null);
+    setTrend('dashTrendTime','dashTrendTimeNote',teamTotalDuration,previousMetrics?.time ?? null);
 
     const lbBody = document.getElementById('dashLeaderboardBody');
     const rankBadge = (i) => i === 0
@@ -11199,39 +11403,38 @@ for a competing inline style first.`;
     const initials = (name) => (name || '?').split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
     const avatarColors = ['#D14343','#378ADD','#1D9E75','#D4537E','#B98900','#8A63D2'];
 
-    // Top engineers by score — a second, visual take on data the
-    // leaderboard table below already has (sorted there by activity
-    // count, not score), added for the infographic-style layout. Same
-    // permission gate as the leaderboard's own Score column: if an Admin
-    // isn't allowed to see individual scores, this stays hidden too
-    // rather than leaking scores through a side door.
-    const topEngineersEl = document.getElementById('dashTopEngineersChart');
-    if(topEngineersEl){
+    // Reference-style discipline cards: same Score values and same
+    // Superadmin permission gate as the full leaderboard, simply grouped
+    // by each engineer's Mechanical/Electrical profile discipline.
+    const renderDisciplineActivity = (containerId, discipline) => {
+      const el = document.getElementById(containerId);
+      if(!el) return;
       if(!canSeeIndividualKpi){
-        topEngineersEl.innerHTML = '<div class="placeholder-note">Restricted by Superadmin.</div>';
-      } else {
-        const topByScore = [...leaderboard].sort((a,b) => b[1].kpi - a[1].kpi).slice(0, 5);
-        if(!topByScore.length){
-          topEngineersEl.innerHTML = '<div class="placeholder-note">No activity in this range.</div>';
-        } else {
-          const maxKpi = Math.max(1, ...topByScore.map(([,e]) => e.kpi));
-          const rowsHtml = topByScore.map(([id, e], i) => {
-            const c = avatarColors[i % avatarColors.length];
-            const pct = Math.max(0, Math.min(100, e.kpi));
-            return `
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
-              <span style="font-size:10.5px; color:var(--text-faint); width:78px; flex-shrink:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${e.name}">${e.name}</span>
-              <div style="flex:1; height:8px; background:var(--surface-alt); border:1px solid var(--border); border-radius:99px; overflow:hidden; min-width:0;">
-                <div class="anim-bar-fill" data-w="${Math.max(pct/maxKpi*100, 4)}" style="width:0%; height:100%; background:${c}; border-radius:99px; box-shadow:none;"></div>
-              </div>
-              <span style="font-size:10.5px; color:var(--text-faint); width:32px; text-align:right; flex-shrink:0;">${e.kpi.toFixed(1)}</span>
-            </div>`;
-          }).join('');
-          topEngineersEl.innerHTML = rowsHtml;
-          animateBars();
-        }
+        el.innerHTML = '<div class="placeholder-note">Score visibility is restricted by Superadmin.</div>';
+        return;
       }
-    }
+      const list = leaderboard.filter(([,e]) => e.discipline === discipline).slice(0,5);
+      if(!list.length){
+        el.innerHTML = '<div class="placeholder-note" style="padding:10px;">No activity in this range.</div>';
+        return;
+      }
+      const colors = ['#378ADD','#1D9E75','#D85A30','#D4537E','#8A63D2'];
+      el.innerHTML = `<div class="dash-rank-list">${list.map(([id,e],i) => {
+        const topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0];
+        const topCatName = topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—';
+        const pct = Math.max(0, Math.min(100, e.kpi));
+        return `<button type="button" class="dash-rank-row" onclick="document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();" title="Inspect ${escapeHtml(e.name)}">
+          <span class="dash-rank-num">${i+1}</span>
+          <span class="dash-rank-name">${escapeHtml(e.name)}</span>
+          <span class="dash-rank-category">${escapeHtml(topCatName)}</span>
+          <span class="dash-rank-bar"><span class="anim-bar-fill" data-w="${Math.max(pct,4)}" style="display:block; width:0%; height:100%; background:${colors[i % colors.length]}; border-radius:999px;"></span></span>
+          <span class="dash-rank-score">${e.kpi.toFixed(1)}</span>
+        </button>`;
+      }).join('')}</div>`;
+    };
+    renderDisciplineActivity('dashMechanicalActivity','mechanical');
+    renderDisciplineActivity('dashElectricalActivity','electrical');
+    animateBars();
 
     lbBody.innerHTML = leaderboard.length ? leaderboard.map(([id, e], i) => {
       const topCat = Object.entries(e.cats).sort((a,b)=>b[1]-a[1])[0];
