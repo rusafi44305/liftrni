@@ -1631,12 +1631,12 @@
   #view-dashboard #dashHeroTrendChart{ min-width:0; }
   #view-dashboard #dashHeroTrendChart svg{ max-height:220px; }
   #view-dashboard #dashCategoryBreakdown{
-    flex:1; min-height:0; display:flex; flex-direction:column; justify-content:space-between;
+    flex:1; min-height:0; display:flex; flex-direction:column; justify-content:flex-start;
   }
   #view-dashboard .dash-category-bars{
-    display:flex; align-items:flex-end; gap:7px; flex:1; min-height:176px; margin:6px 0 8px;
+    display:flex; align-items:flex-end; gap:7px; flex:none; height:150px; min-height:150px; margin:8px 0 10px;
   }
-  #view-dashboard .dash-category-legend{ display:flex; flex-wrap:wrap; align-items:center; margin-top:auto; }
+  #view-dashboard .dash-category-legend{ display:flex; flex-wrap:wrap; align-items:center; margin-top:0; }
 
   #view-dashboard .dash-discipline-grid{
     display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;
@@ -11223,7 +11223,7 @@ for a competing inline style first.`;
       // the time figure reads faster living right where it's earned.
       const barsHtml = catSorted.map(([cat,count]) => {
         const c = CATEGORY_COLOR_VAR[cat] || '#8A63D2';
-        const targetH = Math.max(10, Math.round(count/maxCat*144));
+        const targetH = Math.max(10, Math.round(count/maxCat*136));
         const tracksDuration = (durationLabels[cat] || []).length > 0;
         const mins = tracksDuration ? rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0) : 0;
         const timeLabel = tracksDuration ? `<div style="font-size:10px; font-weight:700; color:${c}; margin-bottom:3px; white-space:nowrap;">${formatDurationShort(mins)}</div>` : '';
