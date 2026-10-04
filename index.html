@@ -1754,6 +1754,139 @@
     #view-dashboard .dash-discipline-grid{ grid-template-columns:1fr; }
   }
 
+  /* ===== Category mini-dashboard: compact, consistent across all categories ===== */
+  #view-category{ --cat-accent:var(--accent); }
+  #view-category .cat-page-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:14px; }
+  #view-category .cat-page-head-main{ min-width:0; }
+  #view-category .cat-page-title-row{ display:flex; align-items:center; gap:12px; margin-top:7px; }
+  #view-category .cat-page-icon{ width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; color:var(--cat-accent); background:color-mix(in srgb, var(--cat-accent) 12%, var(--surface)); border:1px solid color-mix(in srgb, var(--cat-accent) 16%, var(--border)); }
+  #view-category .cat-page-title{ font-size:24px; line-height:1.1; font-weight:750; letter-spacing:-.025em; color:var(--text); }
+  #view-category .cat-page-sub{ margin-top:4px; font-size:12px; color:var(--text-faint); }
+  #view-category .cat-log-add-btn{ min-height:42px; padding:9px 16px !important; border-radius:10px !important; background:var(--cat-accent) !important; border-color:var(--cat-accent) !important; color:#fff !important; box-shadow:none !important; white-space:nowrap; }
+
+  #view-category .cat-kpi-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:12px; }
+  #view-category .cat-kpi-card{ min-width:0; display:grid; grid-template-columns:48px minmax(0,1fr); align-items:center; gap:11px; padding:12px 13px !important; border-radius:12px !important; box-shadow:none !important; }
+  #view-category .cat-kpi-icon{ width:48px; height:48px; border-radius:13px; display:flex; align-items:center; justify-content:center; }
+  #view-category .cat-kpi-icon svg{ width:23px; height:23px; }
+  #view-category .cat-kpi-blue{ color:#1777E8; background:color-mix(in srgb,#1777E8 11%,var(--surface)); }
+  #view-category .cat-kpi-purple{ color:#7550E8; background:color-mix(in srgb,#7550E8 11%,var(--surface)); }
+  #view-category .cat-kpi-green{ color:#11A965; background:color-mix(in srgb,#11A965 11%,var(--surface)); }
+  #view-category .cat-kpi-orange{ color:#E78616; background:color-mix(in srgb,#E78616 11%,var(--surface)); }
+  #view-category .cat-kpi-copy{ min-width:0; }
+  #view-category .cat-kpi-value{ font-family:'Space Grotesk',sans-serif; font-size:22px; line-height:1; font-weight:750; color:var(--text); font-variant-numeric:tabular-nums; }
+  #view-category .cat-kpi-label{ margin-top:4px; font-size:10.5px; color:var(--text-dim); }
+  #view-category .cat-kpi-trend{ display:flex; align-items:center; gap:6px; min-height:16px; margin-top:5px; }
+  #view-category .cat-kpi-trend span{ font-size:10px; font-weight:750; color:var(--text-faint); }
+  #view-category .cat-kpi-trend span.up{ color:var(--green); }
+  #view-category .cat-kpi-trend span.down{ color:var(--red); }
+  #view-category .cat-kpi-trend small{ font-size:8.5px; color:var(--text-faint); white-space:nowrap; }
+
+  #view-category .cat-tools-shell{ margin-bottom:14px; border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden; }
+  #view-category .cat-tools-toggle{ width:100%; min-height:47px; padding:9px 13px; display:flex; align-items:center; justify-content:space-between; gap:12px; border:0; background:transparent; color:var(--text); cursor:pointer; font-family:'Inter',sans-serif; }
+  #view-category .cat-tools-toggle-left{ display:flex; align-items:center; gap:9px; min-width:0; }
+  #view-category .cat-tools-toggle-left > svg{ color:var(--cat-accent); flex-shrink:0; }
+  #view-category .cat-tools-toggle strong{ font-size:12.5px; }
+  #view-category .cat-filter-count{ padding:3px 7px; border-radius:999px; background:color-mix(in srgb,var(--cat-accent) 10%,var(--surface-alt)); color:var(--cat-accent); font-size:9px; font-weight:700; white-space:nowrap; }
+  #view-category .cat-tools-chevron{ color:var(--cat-accent); transition:transform .18s ease; flex-shrink:0; }
+  #view-category .cat-tools-shell.is-open .cat-tools-chevron{ transform:rotate(180deg); }
+  #view-category .cat-tools-body{ display:none; border-top:1px solid var(--border); padding:12px; }
+  #view-category .cat-tools-shell.is-open .cat-tools-body{ display:block; }
+  #view-category .cat-filter-grid{ display:grid; grid-template-columns:minmax(230px,1.45fr) repeat(3,minmax(135px,.8fr)); gap:10px; }
+  #view-category .cat-filter-field{ min-width:0; }
+  #view-category .cat-filter-field label{ display:block; margin:0 0 4px 2px; font-size:8.5px; font-weight:750; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); }
+  #view-category .cat-filter-field .fselect{ width:100%; height:38px; min-width:0; margin:0; cursor:pointer; }
+  #view-category .cat-filter-search-field{ grid-column:span 1; }
+  #view-category #catLogSearchWrap{ width:100%; max-width:none; height:38px; margin:0; border-radius:9px; box-shadow:none; }
+  #view-category #catLogSearch{ font-family:'Inter',sans-serif; font-weight:400; font-size:12px; }
+  #view-category #catFilterEngineer, #view-category #catFilterSubtype{ min-width:0; }
+  #view-category .cat-filter-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+  #view-category .cat-filter-actions .queue-btn{ min-height:37px; padding:7px 13px; border-radius:9px !important; font-size:10.5px; box-shadow:none !important; }
+  #view-category .cat-filter-actions .filter-btn-apply{ background:var(--cat-accent) !important; border-color:var(--cat-accent) !important; color:#fff !important; }
+  #view-category .cat-filter-actions .filter-btn-excel{ background:transparent !important; color:var(--green) !important; border:1px solid color-mix(in srgb,var(--green) 70%,var(--border)) !important; }
+
+  #view-category .cat-list-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 2px 8px; }
+  #view-category .cat-list-title{ font-size:16px; font-weight:750; color:var(--text); }
+  #view-category .cat-list-count{ display:inline-flex; margin-left:6px; padding:3px 7px; border-radius:999px; background:var(--surface-alt); color:var(--text-dim); font-size:9.5px; font-weight:650; vertical-align:2px; }
+  #view-category .cat-list-order{ padding:5px 9px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-faint); font-size:9.5px; }
+  #view-category .cat-log-cards{ display:flex; flex-direction:column; gap:7px; }
+  #view-category .cat-log-row{ position:relative; overflow:hidden; padding:9px 11px !important; border-radius:10px !important; border:1px solid var(--border) !important; box-shadow:none !important; }
+  #view-category .cat-log-row::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--cat-accent); }
+  #view-category .cat-row-summary{ display:grid; grid-template-columns:36px minmax(0,1.65fr) minmax(150px,.9fr) 92px auto auto; gap:10px; align-items:center; min-width:0; }
+  #view-category .cat-row-icon{ width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:var(--cat-accent); background:color-mix(in srgb,var(--cat-accent) 10%,var(--surface-alt)); }
+  #view-category .cat-row-main{ min-width:0; }
+  #view-category .cat-row-title-line{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; }
+  #view-category .cat-row-title{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:700; color:var(--text); }
+  #view-category .cat-row-pill{ display:inline-flex; align-items:center; max-width:150px; padding:2px 7px; border-radius:999px; background:var(--surface-alt); color:var(--text-dim); font-size:8.5px; font-weight:650; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #view-category .cat-row-lift-pill{ color:var(--cat-accent); background:color-mix(in srgb,var(--cat-accent) 9%,var(--surface-alt)); }
+  #view-category .cat-row-desc{ margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9.5px; color:var(--text-faint); }
+  #view-category .cat-row-owner, #view-category .cat-row-date{ min-width:0; display:flex; align-items:center; gap:5px; font-size:9.5px; color:var(--text-faint); }
+  #view-category .cat-row-owner span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #view-category .cat-row-date{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #view-category .cat-row-status{ max-width:110px; padding:4px 8px; border-radius:999px; background:var(--surface-alt); color:var(--text-dim); font-size:8.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #view-category .cat-row-actions{ display:flex; align-items:center; justify-content:flex-end; gap:4px; }
+  #view-category .cat-row-actions .btn{ width:30px; height:30px; padding:0 !important; display:flex; align-items:center; justify-content:center; border-radius:8px !important; font-size:0 !important; box-shadow:none !important; transform:none !important; }
+  #view-category .cat-row-actions .btn svg{ width:13px; height:13px; }
+  #view-category .search-result-details{ margin:9px 2px 0 45px !important; padding-top:9px !important; }
+
+  @media (max-width:1050px){
+    #view-category .cat-kpi-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    #view-category .cat-filter-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+    #view-category .cat-filter-search-field{ grid-column:span 2; }
+    #view-category .cat-row-summary{ grid-template-columns:36px minmax(0,1.5fr) minmax(130px,.8fr) 84px auto; }
+    #view-category .cat-row-status{ display:none; }
+  }
+  @media (max-width:700px){
+    #view-category .cat-page-head{ align-items:stretch; gap:10px; margin-bottom:10px; }
+    #view-category .cat-page-title-row{ gap:9px; }
+    #view-category .cat-page-icon{ width:42px; height:42px; border-radius:11px; }
+    #view-category .cat-page-title{ font-size:20px; }
+    #view-category .cat-page-sub{ font-size:10.5px; }
+    #view-category .cat-log-add-btn{ min-height:40px; padding:8px 12px !important; }
+    #view-category .cat-kpi-grid{ gap:8px; margin-bottom:10px; }
+    #view-category .cat-kpi-card{ grid-template-columns:38px minmax(0,1fr); gap:8px; padding:9px !important; }
+    #view-category .cat-kpi-icon{ width:38px; height:38px; border-radius:10px; }
+    #view-category .cat-kpi-icon svg{ width:19px; height:19px; }
+    #view-category .cat-kpi-value{ font-size:18px; }
+    #view-category .cat-kpi-label{ font-size:9px; }
+    #view-category .cat-kpi-trend{ margin-top:3px; gap:4px; }
+    #view-category .cat-kpi-trend small{ display:none; }
+    #view-category .cat-tools-shell{ margin-bottom:11px; }
+    #view-category .cat-tools-toggle{ min-height:44px; padding:8px 11px; }
+    #view-category .cat-tools-body{ padding:10px; }
+    #view-category .cat-filter-grid{ grid-template-columns:1fr 1fr; gap:8px; }
+    #view-category .cat-filter-search-field{ grid-column:1 / -1; }
+    #view-category #catFilterSubtypeWrap{ grid-column:1 / -1; }
+    #view-category .cat-filter-actions{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    #view-category .cat-filter-actions .queue-btn{ width:100%; min-height:40px; }
+    #view-category .cat-list-head{ margin-bottom:7px; }
+    #view-category .cat-list-title{ font-size:15px; }
+    #view-category .cat-list-order{ display:none; }
+    #view-category .cat-log-cards{ gap:8px; }
+    #view-category .cat-log-row{ padding:9px 10px !important; }
+    #view-category .cat-row-summary{ display:grid !important; grid-template-columns:34px minmax(0,1fr) auto; grid-template-areas:'icon main status' 'icon owner actions' 'icon date actions'; gap:5px 8px; align-items:center; }
+    #view-category .cat-row-icon{ grid-area:icon; align-self:start; }
+    #view-category .cat-row-main{ grid-area:main; }
+    #view-category .cat-row-owner{ grid-area:owner; }
+    #view-category .cat-row-date{ grid-area:date; }
+    #view-category .cat-row-status{ grid-area:status; display:block; max-width:88px; justify-self:end; }
+    #view-category .cat-row-actions{ grid-area:actions; align-self:end; }
+    #view-category .cat-row-title{ font-size:11px; }
+    #view-category .cat-row-pill{ max-width:125px; font-size:8px; padding:2px 6px; }
+    #view-category .cat-row-desc{ white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:9px; }
+    #view-category .cat-row-owner, #view-category .cat-row-date{ font-size:8.8px; }
+    #view-category .cat-row-actions .btn{ width:29px; height:29px; }
+    #view-category .search-result-details{ margin-left:0 !important; }
+  }
+  @media (max-width:520px){
+    #view-category .cat-page-head{ flex-direction:column; }
+    #view-category .cat-log-add-btn{ width:100%; }
+  }
+  @media (max-width:380px){
+    #view-category .cat-kpi-card{ grid-template-columns:1fr; text-align:center; }
+    #view-category .cat-kpi-icon{ margin:0 auto; }
+    #view-category .cat-kpi-trend{ justify-content:center; }
+  }
+
 </style>
 </head>
 <body>
@@ -2329,45 +2462,76 @@
  
   <!-- ============ CATEGORY LOG ============ -->
   <div class="view" id="view-category">
-    <div class="block-head">
-      <div>
+    <div class="cat-page-head">
+      <div class="cat-page-head-main">
         <div class="back-link" onclick="showView('home')">← Back to Home</div>
-        <div class="block-title" id="catLogTitle" style="margin-top:6px;">—</div>
-        <div class="block-sub" id="catLogSub">—</div>
+        <div class="cat-page-title-row">
+          <div class="cat-page-icon" id="catLogIcon" aria-hidden="true"></div>
+          <div style="min-width:0;">
+            <div class="cat-page-title" id="catLogTitle">—</div>
+            <div class="cat-page-sub" id="catLogSub">—</div>
+          </div>
+        </div>
       </div>
-      <button class="queue-btn" id="catLogAddBtn" onclick="logInThisCategory()">+ Log a task here</button>
+      <button class="queue-btn cat-log-add-btn" id="catLogAddBtn" onclick="logInThisCategory()">+ Log a task here</button>
     </div>
- 
-    <div class="filter-row" style="flex-wrap:wrap;">
-      <div class="searchbar" id="catLogSearchWrap" style="max-width:340px; margin-bottom:0;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="text" id="catLogSearch" placeholder="Search in this category..." oninput="filterCategoryLog()" style="font-family:'Inter'; font-weight:400; font-size:13.5px;">
+
+    <div class="cat-kpi-grid" id="catKpiGrid">
+      <div class="panel cat-kpi-card">
+        <div class="cat-kpi-icon cat-kpi-blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/><path d="M9 13h6M9 17h6"/></svg></div>
+        <div class="cat-kpi-copy"><div class="cat-kpi-value" id="catKpiTotal">—</div><div class="cat-kpi-label">Total entries</div><div class="cat-kpi-trend"><span id="catKpiTotalTrend">—</span><small>vs. previous 30 days</small></div></div>
       </div>
-      <input type="date" id="catFromMonth" class="fselect" style="cursor:pointer;">
-      <span style="align-self:center; color:var(--text-faint); font-size:12px;">to</span>
-      <input type="date" id="catToMonth" class="fselect" style="cursor:pointer;">
-      <div class="filter-row-actions">
-        <button class="queue-btn filter-btn-apply" onclick="showCategoryLog(currentCatKey)">Apply range</button>
-        <button class="queue-btn filter-btn-excel" onclick="exportCategoryToExcel()">⬇ Export to Excel</button>
+      <div class="panel cat-kpi-card">
+        <div class="cat-kpi-icon cat-kpi-purple"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="cat-kpi-copy"><div class="cat-kpi-value" id="catKpiEngineers">—</div><div class="cat-kpi-label">Engineers involved</div><div class="cat-kpi-trend"><span id="catKpiEngineersTrend">—</span><small>vs. previous 30 days</small></div></div>
+      </div>
+      <div class="panel cat-kpi-card">
+        <div class="cat-kpi-icon cat-kpi-green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10h4v10M10 20V4h4v16M16 20v-7h4v7"/></svg></div>
+        <div class="cat-kpi-copy"><div class="cat-kpi-value" id="catKpiMonth">—</div><div class="cat-kpi-label">Activities this month</div><div class="cat-kpi-trend"><span id="catKpiMonthTrend">—</span><small>vs. previous month</small></div></div>
+      </div>
+      <div class="panel cat-kpi-card">
+        <div class="cat-kpi-icon cat-kpi-orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+        <div class="cat-kpi-copy"><div class="cat-kpi-value" id="catKpiTime">—</div><div class="cat-kpi-label">Total time logged</div><div class="cat-kpi-trend"><span id="catKpiTimeTrend">—</span><small>vs. previous 30 days</small></div></div>
       </div>
     </div>
-    <!-- 2026-09-11: By Section/Engineer/Sub-category filters, same pattern
-         already used on Lift Trace — client-side only, populated from
-         whatever's actually in the currently-loaded rows rather than a
-         fixed master list. Sub-category filter only appears at all when
-         this category actually has one (checked in JS, not assumed). -->
-    <div id="catLogFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-      <select id="catFilterSection" class="fselect" style="cursor:pointer;" onchange="filterCategoryLog()">
-        <option value="">All sections</option>
-        <option value="Mechanical">Mechanical</option>
-        <option value="Electrical">Electrical</option>
-      </select>
-      <select id="catFilterEngineer" class="fselect" style="cursor:pointer;" onchange="filterCategoryLog()"><option value="">All engineers</option></select>
-      <select id="catFilterSubtype" class="fselect" style="display:none; cursor:pointer;" onchange="filterCategoryLog()"><option value="">All sub-categories</option></select>
+
+    <div class="cat-tools-shell" id="catToolsShell">
+      <button type="button" class="cat-tools-toggle" id="catToolsToggle" onclick="toggleCategoryTools()" aria-expanded="true" aria-controls="catToolsBody">
+        <span class="cat-tools-toggle-left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
+          <strong>Filters &amp; Export</strong>
+          <span class="cat-filter-count" id="catFilterCountBadge">4 filters</span>
+        </span>
+        <svg class="cat-tools-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="cat-tools-body" id="catToolsBody">
+        <div class="cat-filter-grid" id="catLogFilters">
+          <div class="cat-filter-field cat-filter-search-field">
+            <label for="catLogSearch">Search</label>
+            <div class="searchbar" id="catLogSearchWrap">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="catLogSearch" placeholder="Task, engineer, Lift ID, keyword..." oninput="filterCategoryLog()">
+            </div>
+          </div>
+          <div class="cat-filter-field"><label for="catFromMonth">From</label><input type="date" id="catFromMonth" class="fselect" style="cursor:pointer;"></div>
+          <div class="cat-filter-field"><label for="catToMonth">To</label><input type="date" id="catToMonth" class="fselect" style="cursor:pointer;"></div>
+          <div class="cat-filter-field"><label for="catFilterSection">Section</label><select id="catFilterSection" class="fselect" onchange="filterCategoryLog()"><option value="">All sections</option><option value="Mechanical">Mechanical</option><option value="Electrical">Electrical</option></select></div>
+          <div class="cat-filter-field"><label for="catFilterEngineer">Engineer</label><select id="catFilterEngineer" class="fselect" onchange="filterCategoryLog()"><option value="">All engineers</option></select></div>
+          <div class="cat-filter-field" id="catFilterSubtypeWrap"><label for="catFilterSubtype">Sub-category</label><select id="catFilterSubtype" class="fselect" onchange="filterCategoryLog()"><option value="">All sub-categories</option></select></div>
+        </div>
+        <div class="cat-filter-actions">
+          <button class="queue-btn filter-btn-excel" onclick="exportCategoryToExcel()">↓ Export to Excel</button>
+          <button class="queue-btn filter-btn-apply" onclick="applyCategoryFilters()">Apply filters</button>
+        </div>
+      </div>
     </div>
-    <div class="placeholder-note" id="catLogNoLiftNote" style="display:none; text-align:left; max-width:420px; margin-bottom:20px;">This category isn't tied to a Lift ID — entries are general activity.</div>
- 
-    <div id="catLogCards" style="margin-top:18px; display:flex; flex-direction:column; gap:10px;"></div>
+
+    <div class="cat-list-head">
+      <div class="cat-list-title">Tasks / Activities <span id="catVisibleCount" class="cat-list-count">—</span></div>
+      <div class="cat-list-order">Latest first</div>
+    </div>
+    <div class="placeholder-note" id="catLogNoLiftNote" style="display:none;">This category isn't tied to a Lift ID — entries are general activity.</div>
+    <div id="catLogCards" class="cat-log-cards"></div>
     <div class="placeholder-note" id="catLogEmpty" style="display:none;">No entries match this filter</div>
   </div>
  
@@ -5951,16 +6115,67 @@
   // manual refresh, even though the underlying delete had already
   // succeeded.
   let currentCatKey = null;
+  let categoryToolsUserChoice = null; // null = responsive default; boolean = user's explicit choice
+  let categoryKpiLoadToken = 0;
+
+  function setCategoryToolsOpen(open, remember=false){
+    const shell = document.getElementById('catToolsShell');
+    const toggle = document.getElementById('catToolsToggle');
+    if(!shell || !toggle) return;
+    shell.classList.toggle('is-open', !!open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(remember) categoryToolsUserChoice = !!open;
+  }
+
+  function toggleCategoryTools(){
+    const shell = document.getElementById('catToolsShell');
+    if(!shell) return;
+    setCategoryToolsOpen(!shell.classList.contains('is-open'), true);
+  }
+
+  function ensureCategoryToolsDefault(){
+    const open = categoryToolsUserChoice == null ? window.innerWidth > 700 : categoryToolsUserChoice;
+    setCategoryToolsOpen(open, false);
+  }
+
+  window.addEventListener('resize', () => {
+    if(categoryToolsUserChoice == null && document.getElementById('view-category')?.classList.contains('active')) ensureCategoryToolsDefault();
+  });
+
+  async function applyCategoryFilters(){
+    if(!currentCatKey) return;
+    const state = {
+      search: document.getElementById('catLogSearch')?.value || '',
+      section: document.getElementById('catFilterSection')?.value || '',
+      engineer: document.getElementById('catFilterEngineer')?.value || '',
+      subtype: document.getElementById('catFilterSubtype')?.value || ''
+    };
+    await showCategoryLog(currentCatKey);
+    const search = document.getElementById('catLogSearch');
+    const section = document.getElementById('catFilterSection');
+    const engineer = document.getElementById('catFilterEngineer');
+    const subtype = document.getElementById('catFilterSubtype');
+    if(search) search.value = state.search;
+    if(section && [...section.options].some(o => o.value === state.section)) section.value = state.section;
+    if(engineer && [...engineer.options].some(o => o.value === state.engineer)) engineer.value = state.engineer;
+    if(subtype && [...subtype.options].some(o => o.value === state.subtype)) subtype.value = state.subtype;
+    filterCategoryLog();
+  }
 
   async function showCategoryLog(key){
     currentCatKey = key;
     const meta = catMeta[key];
-    const color = CAT_COLOR[key];
+    const color = CATEGORY_COLOR_VAR[key] || CAT_COLOR[key] || 'var(--accent)';
+    const categoryView = document.getElementById('view-category');
+    categoryView.style.setProperty('--cat-accent', color);
     const titleEl = document.getElementById('catLogTitle');
     titleEl.textContent = meta.name;
-    titleEl.style.color = color;
-    document.getElementById('catLogAddBtn').style.borderColor = color;
-    document.getElementById('catLogAddBtn').style.color = color;
+    titleEl.style.color = '';
+    const iconEl = document.getElementById('catLogIcon');
+    if(iconEl) iconEl.innerHTML = categoryIconSvg(key, 23, 'currentColor');
+    ensureCategoryToolsDefault();
+    ['catKpiTotal','catKpiEngineers','catKpiMonth','catKpiTime'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent='—'; });
+    ['catKpiTotalTrend','catKpiEngineersTrend','catKpiMonthTrend','catKpiTimeTrend'].forEach(id => { const el=document.getElementById(id); if(el){ el.textContent='—'; el.className=''; } });
     // The search box used to be hidden entirely for categories with no Lift
     // ID, back when it could only search by Lift ID. Now that it also
     // searches by project name and keyword, it's useful everywhere — so it
@@ -6016,62 +6231,168 @@
     const subtypeKey = SUBTYPE_DETAILS_KEY[key];
     const subtypeSelect = document.getElementById('catFilterSubtype');
     const subtypesPresent = subtypeKey ? [...new Set(currentCatRows.map(r => (r.details||{})[subtypeKey]).filter(Boolean))].sort() : [];
+    const subtypeWrap = document.getElementById('catFilterSubtypeWrap');
     if(subtypesPresent.length){
       subtypeSelect.innerHTML = '<option value="">All sub-categories</option>' + subtypesPresent.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
       subtypeSelect.style.display = '';
+      if(subtypeWrap) subtypeWrap.style.display = '';
     } else {
-      subtypeSelect.style.display = 'none';
+      subtypeSelect.innerHTML = '<option value="">All sub-categories</option>';
+      subtypeSelect.style.display = '';
+      if(subtypeWrap) subtypeWrap.style.display = 'none';
     }
     document.getElementById('catFilterSection').value = '';
-    document.getElementById('catLogFilters').style.display = 'flex';
+    document.getElementById('catLogFilters').style.display = 'grid';
+    const filterBadge = document.getElementById('catFilterCountBadge');
+    if(filterBadge) filterBadge.textContent = `${subtypesPresent.length ? 5 : 4} filters`;
 
     currentCatRowsFiltered = currentCatRows;
     renderCategoryRows(currentCatRows, meta.hasLift);
+    updateCategoryMiniDashboard(key).catch(err => console.warn('Category KPI summary unavailable:', err));
+  }
+
+  async function updateCategoryMiniDashboard(key){
+    const token = ++categoryKpiLoadToken;
+    const meta = catMeta[key];
+    if(!meta) return;
+    const fromVal = document.getElementById('catFromMonth')?.value || '';
+    const toVal = document.getElementById('catToMonth')?.value || '';
+    const PAGE_SIZE = 1000;
+    const fetchAllCategoryRows = async () => {
+      let q = sb.from('tasks').select('employee_id, created_at, details').eq('category', key).order('created_at', {ascending:false});
+      const all = [];
+      let page = 0;
+      while(true){
+        const { data, error } = await q.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        if(error) throw error;
+        all.push(...(data || []));
+        if(!data || data.length < PAGE_SIZE) break;
+        page++;
+      }
+      return all;
+    };
+    // With no date-range filter, currentCatRows is already the complete category history.
+    // If a date range is active, fetch the complete category history only for these summary cards.
+    const allRows = (!fromVal && !toVal) ? currentCatRows : await fetchAllCategoryRows();
+    if(token !== categoryKpiLoadToken || currentCatKey !== key) return;
+    const durationLabels = await getDurationLabelsByCategory();
+    if(token !== categoryKpiLoadToken || currentCatKey !== key) return;
+
+    const total = allRows.length;
+    const engineers = new Set(allRows.map(r => r.employee_id).filter(Boolean)).size;
+    const now = new Date();
+    const todayStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const current30Start = todayStart - 29 * 86400000;
+    const previous30Start = current30Start - 30 * 86400000;
+    const current30End = todayStart + 86400000;
+    const monthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1);
+    const nextMonthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1);
+    const previousMonthStart = Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1);
+
+    const inWindow = (r, start, end) => { const t = new Date(r.created_at).getTime(); return Number.isFinite(t) && t >= start && t < end; };
+    const current30 = allRows.filter(r => inWindow(r, current30Start, current30End));
+    const previous30 = allRows.filter(r => inWindow(r, previous30Start, current30Start));
+    const thisMonthRows = allRows.filter(r => inWindow(r, monthStart, nextMonthStart));
+    const previousMonthRows = allRows.filter(r => inWindow(r, previousMonthStart, monthStart));
+    const totalTime = allRows.reduce((sum,r) => sum + taskDurationMinutes(r, durationLabels), 0);
+    const current30Time = current30.reduce((sum,r) => sum + taskDurationMinutes(r, durationLabels), 0);
+    const previous30Time = previous30.reduce((sum,r) => sum + taskDurationMinutes(r, durationLabels), 0);
+    const current30Engineers = new Set(current30.map(r => r.employee_id).filter(Boolean)).size;
+    const previous30Engineers = new Set(previous30.map(r => r.employee_id).filter(Boolean)).size;
+
+    const setValue = (id, value) => { const el=document.getElementById(id); if(el) el.textContent=value; };
+    const setTrend = (id, current, previous) => {
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.className = '';
+      if(previous === 0){
+        if(current === 0){ el.textContent = '→ 0%'; }
+        else { el.textContent = '↑ New'; el.classList.add('up'); }
+        return;
+      }
+      const delta = ((current - previous) / Math.abs(previous)) * 100;
+      if(Math.abs(delta) < .05) el.textContent = '→ 0%';
+      else if(delta > 0){ el.textContent = `↑ +${Math.abs(delta).toFixed(0)}%`; el.classList.add('up'); }
+      else { el.textContent = `↓ ${Math.abs(delta).toFixed(0)}%`; el.classList.add('down'); }
+    };
+
+    setValue('catKpiTotal', total.toLocaleString());
+    setValue('catKpiEngineers', engineers.toLocaleString());
+    setValue('catKpiMonth', thisMonthRows.length.toLocaleString());
+    setValue('catKpiTime', formatDurationShort(totalTime));
+    setTrend('catKpiTotalTrend', current30.length, previous30.length);
+    setTrend('catKpiEngineersTrend', current30Engineers, previous30Engineers);
+    setTrend('catKpiMonthTrend', thisMonthRows.length, previousMonthRows.length);
+    setTrend('catKpiTimeTrend', current30Time, previous30Time);
   }
  
   // Every field the engineer filled in is stored in `details` — show all of it, not just Lift ID
   function renderCategoryRows(rows, hasLift){
     const el = document.getElementById('catLogCards');
+    const visibleCount = document.getElementById('catVisibleCount');
+    if(visibleCount){
+      visibleCount.textContent = rows.length === currentCatRows.length ? `${rows.length} entries` : `${rows.length} of ${currentCatRows.length}`;
+    }
+    const summaryForRow = (row) => {
+      const d = row.details || {};
+      const keys = ['Summary','Notes','Problem Details','Problem Statement','Solution Statement','Support provided','Remarks','Remark','Short Description','Impact'];
+      if(row.notes) return String(row.notes);
+      for(const k of keys){
+        const v = d[k];
+        if(v != null && v !== '' && !(Array.isArray(v) && !v.length)) return Array.isArray(v) ? v.join(', ') : String(v);
+      }
+      return '';
+    };
+    const statusForRow = (details) => details['Status'] || details['Solution Status'] || details['Acceptance Status'] || '';
     el.innerHTML = rows.map(row => {
       const emp = row.profiles ? displayName(row.profiles) : '—';
       const date = new Date(row.created_at).toLocaleDateString('en-GB', {day:'2-digit', month:'short', year:'numeric'});
       const details = row.details || {};
+      const subtypeKey = SUBTYPE_DETAILS_KEY[currentCatKey];
+      const subtype = subtypeKey ? details[subtypeKey] : '';
+      const discipline = details['Discipline'] || '';
+      const title = row.project_name || (row.lift_id ? `Lift ${row.lift_id}` : '(untitled)');
+      const summary = summaryForRow(row);
+      const status = statusForRow(details);
       const fieldsHtml = Object.entries(details)
         .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
-        .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${k}</span><span class="detail-v">${Array.isArray(v) ? v.join(', ') : v}</span></div>`)
+        .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${escapeHtml(k)}</span><span class="detail-v">${escapeHtml(Array.isArray(v) ? v.join(', ') : String(v))}</span></div>`)
         .join('');
-      // Edit history is shown to everyone read-only, matching Lift Search and
-      // My Tasks — only the Edit button itself (further above) is restricted
-      // to whoever logged the entry.
       const hist = row.edit_history || [];
       const historyHtml = hist.length
         ? `<details style="margin-top:12px;">
             <summary style="cursor:pointer; color:var(--text-faint); font-size:12px;">${hist.length} previous version${hist.length>1?'s':''}</summary>
             <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
               ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
-                <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${h.by || 'someone'}</div>
-                <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+                <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${escapeHtml(h.by || 'someone')}</div>
+                <div>${escapeHtml(h.previous.project_name || '(untitled)')}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
               </div>`).join('')}
             </div>
           </details>`
         : '';
-      return `<div class="panel cat-log-row" style="padding:14px 20px;" data-lift="${(row.lift_id||'').toLowerCase()}">
-        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
-          <div class="cat-log-title-block">
-            ${hasLift ? `<div class="mono" style="font-weight:700; font-size:14px; margin-bottom:2px;">Lift ${row.lift_id || '—'}</div>` : ''}
-            <div style="font-weight:600;">${row.project_name || '(untitled)'}${subLabelsHtml(row.details)}</div>
+      const pills = [
+        hasLift && row.lift_id ? `<span class="cat-row-pill cat-row-lift-pill">Lift ${escapeHtml(row.lift_id)}</span>` : '',
+        discipline ? `<span class="cat-row-pill">${escapeHtml(discipline)}</span>` : '',
+        subtype ? `<span class="cat-row-pill">${escapeHtml(subtype)}</span>` : ''
+      ].filter(Boolean).join('');
+      const statusHtml = `<span class="cat-row-status${status ? '' : ' empty'}">${status ? escapeHtml(status) : '—'}</span>`;
+      return `<div class="panel cat-log-row" data-lift="${escapeHtml((row.lift_id||'').toLowerCase())}">
+        <div class="cat-row-summary">
+          <div class="cat-row-icon">${categoryIconSvg(currentCatKey, 16, 'currentColor')}</div>
+          <div class="cat-row-main">
+            <div class="cat-row-title-line"><div class="cat-row-title">${escapeHtml(title)}</div>${pills}</div>
+            ${summary ? `<div class="cat-row-desc">${escapeHtml(summary)}</div>` : ''}
           </div>
-          <div class="cat-log-meta-block" style="text-align:right; font-size:12px; color:var(--text-faint); margin-left:auto;">
-            <div>${emp}</div>
-            <div class="mono">${date}${row.edit_history && row.edit_history.length ? ' · edited' : ''}</div>
-            <div style="margin-top:6px; display:flex; gap:4px; justify-content:flex-end;">
-              ${row.employee_id === currentUser?.id ? `<button class="btn edit" style="padding:6px; font-size:11px;" onclick="openEditTask('${row.id}')" title="Edit" aria-label="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>` : ''}
-              <button class="btn view-details" style="padding:6px; font-size:11px;" onclick="toggleSearchResultDetails(this)" title="View details" aria-label="View details"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-              ${(currentProfile?.role === 'superadmin' || row.employee_id === currentUser?.id) ? `<button class="btn remove" style="padding:6px; font-size:11px;" onclick="deleteTaskEntry('${row.id}')" title="Delete" aria-label="Delete"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
-            </div>
+          <div class="cat-row-owner"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>${escapeHtml(emp)}</span></div>
+          <div class="cat-row-date"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>${date}</div>
+          ${statusHtml}
+          <div class="cat-row-actions">
+            <button class="btn view-details" onclick="toggleSearchResultDetails(this)" title="View details" aria-label="View details"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+            ${row.employee_id === currentUser?.id ? `<button class="btn edit" onclick="openEditTask('${row.id}')" title="Edit" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>` : ''}
+            ${(currentProfile?.role === 'superadmin' || row.employee_id === currentUser?.id) ? `<button class="btn remove" onclick="deleteTaskEntry('${row.id}')" title="Delete" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
           </div>
         </div>
-        <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+        <div class="search-result-details" style="display:none;">
           <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
           ${historyHtml}
         </div>
