@@ -3722,6 +3722,15 @@
     let fields = taskForms[cat] || [];
     const discipline = (currentProfile && currentProfile.discipline === 'electrical') ? 'electrical' : 'mechanical';
 
+    // 2026-10-04: custom sub-categories/fields must be loaded BEFORE any
+    // category-specific logic below reads dynamicFieldOptions. Previously
+    // Reports (and other sub-category-aware forms) could build their
+    // dropdown from an empty/stale cache, then refresh the cache later in
+    // this same render — too late to rebuild the already-calculated options.
+    // loadDynamicFieldOptions() keeps its existing 2-minute cache guard, so
+    // repeat renders remain cheap; Admin save paths still force-refresh it.
+    await loadDynamicFieldOptions();
+
     updateCategoryLinksButton(cat);
 
     // The category dropdown itself picks up that category's own bold theme
@@ -4881,6 +4890,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-04', summary:'Fixed intermittent custom sub-category visibility in task-entry dropdowns: renderTaskForm now loads the existing dynamic field/sub-category cache before any category-specific dropdown options are assembled. This prevents newly added Reports/Support sub-categories from requiring a manual refresh while preserving the existing 2-minute cache, discipline filtering, custom-field behavior and all stored data.' },
     { date:'2026-10-03', summary:'Admin Task Fields built-in catalog synchronized to the existing working input forms without changing form behavior or historical task data: General Support stale Lift ID/Supplier Name mirrors corrected to Task Name; Team Activity and Pre-Sales metadata aligned; missing Technical Support and Reports built-in mirror rows supplied via a safe SQL sync. Custom fields/sub-categories (is_builtin=false) remain untouched and continue to render dynamically as before.' },
     { date:'2026-10-03', summary:'Quick Links Admin upgraded with an Edit icon and drag-and-drop reordering. Reordering persists through quick_links.sort_order and the read-only account-menu popup follows the saved order automatically. Adding a new link now appends after the current maximum sort_order so a reordered list stays stable. Requires the accompanying Superadmin-only UPDATE RLS policy for quick_links.' },
     { date:'2026-10-03', summary:'Home statistics visual refinement: desktop stat content is now left-aligned inside the existing single shared panel; mobile keeps the 2x2 layout but removes all interior divider lines and individual borders, with slightly smaller type and tighter padding. The single outer group border, live values, calculations and realtime refresh logic are unchanged.' },
