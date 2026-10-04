@@ -1811,8 +1811,7 @@
   #view-category .cat-log-cards{ display:flex; flex-direction:column; gap:7px; }
   #view-category .cat-log-row{ position:relative; overflow:hidden; padding:9px 11px !important; border-radius:10px !important; border:1px solid var(--border) !important; box-shadow:none !important; }
   #view-category .cat-log-row::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--cat-accent); }
-  #view-category .cat-row-summary{ display:grid; grid-template-columns:36px minmax(0,1.65fr) minmax(150px,.9fr) 92px auto auto; gap:10px; align-items:center; min-width:0; }
-  #view-category .cat-row-icon{ width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; color:var(--cat-accent); background:color-mix(in srgb,var(--cat-accent) 10%,var(--surface-alt)); }
+  #view-category .cat-row-summary{ display:grid; grid-template-columns:minmax(0,1.65fr) minmax(150px,.9fr) 92px auto auto; gap:10px; align-items:center; min-width:0; }
   #view-category .cat-row-main{ min-width:0; }
   #view-category .cat-row-title-line{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; }
   #view-category .cat-row-title{ min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:700; color:var(--text); }
@@ -1826,13 +1825,13 @@
   #view-category .cat-row-actions{ display:flex; align-items:center; justify-content:flex-end; gap:4px; }
   #view-category .cat-row-actions .btn{ width:30px; height:30px; padding:0 !important; display:flex; align-items:center; justify-content:center; border-radius:8px !important; font-size:0 !important; box-shadow:none !important; transform:none !important; }
   #view-category .cat-row-actions .btn svg{ width:13px; height:13px; }
-  #view-category .search-result-details{ margin:9px 2px 0 45px !important; padding-top:9px !important; }
+  #view-category .search-result-details{ margin:9px 2px 0 2px !important; padding-top:9px !important; }
 
   @media (max-width:1050px){
     #view-category .cat-kpi-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
     #view-category .cat-filter-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
     #view-category .cat-filter-search-field{ grid-column:span 2; }
-    #view-category .cat-row-summary{ grid-template-columns:36px minmax(0,1.5fr) minmax(130px,.8fr) 84px auto; }
+    #view-category .cat-row-summary{ grid-template-columns:minmax(0,1.5fr) minmax(130px,.8fr) 84px auto; }
     #view-category .cat-row-status{ display:none; }
   }
   @media (max-width:700px){
@@ -1863,8 +1862,7 @@
     #view-category .cat-list-order{ display:none; }
     #view-category .cat-log-cards{ gap:8px; }
     #view-category .cat-log-row{ padding:9px 10px !important; }
-    #view-category .cat-row-summary{ display:grid !important; grid-template-columns:34px minmax(0,1fr) auto; grid-template-areas:'icon main status' 'icon owner actions' 'icon date actions'; gap:5px 8px; align-items:center; }
-    #view-category .cat-row-icon{ grid-area:icon; align-self:start; }
+    #view-category .cat-row-summary{ display:grid !important; grid-template-columns:minmax(0,1fr) auto; grid-template-areas:'main status' 'owner actions' 'date actions'; gap:5px 8px; align-items:center; }
     #view-category .cat-row-main{ grid-area:main; }
     #view-category .cat-row-owner{ grid-area:owner; }
     #view-category .cat-row-date{ grid-area:date; }
@@ -6378,7 +6376,6 @@
       const statusHtml = `<span class="cat-row-status${status ? '' : ' empty'}">${status ? escapeHtml(status) : '—'}</span>`;
       return `<div class="panel cat-log-row" data-lift="${escapeHtml((row.lift_id||'').toLowerCase())}">
         <div class="cat-row-summary">
-          <div class="cat-row-icon">${categoryIconSvg(currentCatKey, 16, 'currentColor')}</div>
           <div class="cat-row-main">
             <div class="cat-row-title-line"><div class="cat-row-title">${escapeHtml(title)}</div>${pills}</div>
             ${summary ? `<div class="cat-row-desc">${escapeHtml(summary)}</div>` : ''}
