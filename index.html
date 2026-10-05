@@ -1913,7 +1913,7 @@
 
   /* ---------- HOME COMMAND CENTER — 2026-10-05 ---------- */
   #view-home .home-command-grid{
-    display:grid; grid-template-columns:minmax(0,.88fr) minmax(0,1.22fr); gap:14px;
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px;
     align-items:stretch; margin-bottom:12px;
   }
   #view-home .home-command-copy{
@@ -1929,12 +1929,14 @@
   #view-home .home-command-sub{ margin-top:7px; font-size:14px; font-weight:600; color:var(--text-dim); }
   #view-home .home-command-meta{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:9px; font-size:10.5px; color:var(--text-faint); }
   #view-home .home-meta-sep{ opacity:.55; }
-  #view-home .home-command-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+  #view-home .home-command-actions{
+    display:grid; grid-template-columns:auto minmax(0,1fr); gap:8px; align-items:center; margin-top:16px;
+  }
   #view-home .home-action-btn{
     min-height:40px; border-radius:9px; padding:8px 14px; font-family:'Inter',sans-serif; font-size:12px; font-weight:700;
     display:inline-flex; align-items:center; justify-content:center; gap:7px; cursor:pointer; transition:background .14s ease,border-color .14s ease;
   }
-  #view-home .home-action-btn.primary{ background:var(--accent); color:#fff; border:1px solid var(--accent); }
+  #view-home .home-action-btn.primary{ background:var(--accent); color:#fff; border:1px solid var(--accent); white-space:nowrap; }
   #view-home .home-action-btn.primary:hover{ background:#254CBE; }
   #view-home .home-action-btn.secondary{ background:var(--surface); color:var(--accent); border:1px solid color-mix(in srgb,var(--accent) 48%,var(--border)); }
   #view-home .home-action-btn.secondary:hover{ background:var(--accent-dim); }
@@ -1942,7 +1944,7 @@
   #view-home .home-trace-drawer{ display:none; margin-top:10px; }
   #view-home .home-trace-drawer.open{ display:block; animation:homeDrawerIn .18s ease; }
   @keyframes homeDrawerIn{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:translateY(0);} }
-  #view-home .home-trace-search{ max-width:none; box-shadow:none; background:var(--surface); }
+  #view-home .home-trace-search{ max-width:none; width:100%; min-width:0; box-shadow:none; background:var(--surface); }
   #view-home .home-trace-search input{ font-size:12px; min-width:0; }
   #view-home .home-trace-search button{ padding:8px 13px; font-size:11.5px; }
   #view-home .home-trace-drawer .search-hint{ margin-top:6px; padding-left:2px; font-size:9.5px; }
@@ -2044,7 +2046,7 @@
     #view-home .home-greeting{ font-size:24px; }
     #view-home .home-command-sub{ font-size:11px; }
     #view-home .home-command-meta{ font-size:9px; margin-top:7px; }
-    #view-home .home-command-actions{ display:grid; grid-template-columns:1fr 1fr; gap:7px; margin-top:12px; }
+    #view-home .home-command-actions{ display:grid; grid-template-columns:1fr; gap:7px; margin-top:12px; }
     #view-home .home-action-btn{ width:100%; min-height:42px; padding:7px 8px; font-size:10.5px; }
     #view-home .home-trend-card{ padding:12px; }
     #view-home .home-trend-title{ font-size:12px; }
@@ -2066,9 +2068,17 @@
     #view-home .home-today-metric span{ font-size:8px; }
     #view-home .home-category-section,
     #view-home .home-recent-section{ padding:10px; }
-    #view-home .home-cat-grid{ grid-template-columns:1fr !important; }
-    #view-home .home-cat-grid .cat-tile{ min-height:84px; }
+    #view-home .home-cat-grid{ grid-template-columns:repeat(2,minmax(0,1fr)) !important; gap:7px; }
+    #view-home .home-cat-grid .cat-tile{ min-height:104px; padding:9px; }
     #view-home .home-cat-grid .cat-desc{ display:none; }
+    #view-home .home-cat-grid .cat-icon{ width:26px; height:26px; margin-bottom:8px; font-size:8.5px; }
+    #view-home .home-cat-grid .cat-search-btn{ width:23px; height:23px; top:8px; right:8px; }
+    #view-home .home-cat-grid .cat-search-btn svg{ width:11px; height:11px; }
+    #view-home .home-cat-grid .cat-bottom-row{ gap:5px; align-items:flex-end; }
+    #view-home .home-cat-grid .cat-name{ font-size:10px; line-height:1.2; margin-bottom:2px; }
+    #view-home .home-cat-grid .cat-count{ font-size:8.2px; margin-top:3px; white-space:nowrap; }
+    #view-home .home-cat-grid .cat-pct-badge{ font-size:9px; flex-shrink:0; }
+    #view-home .home-cat-progress{ margin-top:6px; height:4px; }
     #view-home .feed-item{ grid-template-columns:1fr; gap:5px; }
   }
 </style>
@@ -2543,7 +2553,7 @@
     <section class="home-command-grid">
       <div class="home-command-copy">
         <div class="eyebrow">R&amp;I Operations</div>
-        <h1 class="home-greeting" id="homeGreeting">Assalamualaikum</h1>
+        <h1 class="home-greeting" id="homeGreeting">Welcome Back</h1>
         <div class="home-command-sub">Every lift. Every task, traced.</div>
         <div class="home-command-meta">
           <span id="homeGreetingDate">—</span>
@@ -2554,19 +2564,13 @@
           <button type="button" class="home-action-btn primary" onclick="openHomeTaskEntry()">
             <span class="home-action-plus">＋</span> Log a new task
           </button>
-          <button type="button" class="home-action-btn secondary" onclick="toggleHomeTrace()">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            Trace a lift / project
-          </button>
-        </div>
-        <div class="home-trace-drawer" id="homeTraceDrawer">
           <div class="searchbar home-trace-search">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             <input type="text" id="homeSearchInput" placeholder="Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') traceFromHome();">
-            <button onclick="traceFromHome()">Trace</button>
+            <button type="button" onclick="traceFromHome()">Trace</button>
           </div>
-          <div class="search-hint">Search task title, Lift ID, project name, engineer, or any keyword.</div>
         </div>
+        <div class="search-hint">Search task title, Lift ID, project name, engineer, or any keyword.</div>
       </div>
 
       <div class="indicator-panel home-trend-card">
@@ -3377,8 +3381,7 @@
     const dateEl = document.getElementById('homeGreetingDate');
     const todayEl = document.getElementById('homeTodayDate');
     const name = (currentProfile && currentProfile.full_name ? currentProfile.full_name.trim() : '');
-    const formal = name ? (/^mr\.?\s/i.test(name) ? name : `Mr. ${name}`) : 'Mr.';
-    if(greeting) greeting.textContent = `Assalamualaikum, ${formal}`;
+    if(greeting) greeting.textContent = name ? `Welcome Back ${name}` : 'Welcome Back';
     const now = new Date();
     const label = now.toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
     if(dateEl) dateEl.textContent = label;
