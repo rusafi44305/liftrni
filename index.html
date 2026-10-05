@@ -1542,10 +1542,32 @@
     padding:6px 9px;
   }
 
+  #view-dashboard .dash-tools-shell{
+    margin-bottom:12px; border:1px solid var(--border); border-radius:var(--dash-radius);
+    background:var(--surface); overflow:hidden; box-shadow:none;
+  }
+  #view-dashboard .dash-tools-toggle{
+    width:100%; min-height:46px; padding:8px 12px; display:flex; align-items:center;
+    justify-content:space-between; gap:12px; border:0; background:transparent;
+    color:var(--text); cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  #view-dashboard .dash-tools-toggle-left{ display:flex; align-items:center; gap:8px; min-width:0; }
+  #view-dashboard .dash-tools-toggle-left > svg{ color:var(--accent); flex-shrink:0; }
+  #view-dashboard .dash-tools-toggle strong{ font-size:12.5px; }
+  #view-dashboard .dash-filter-count{
+    display:inline-flex; align-items:center; min-height:20px; padding:2px 7px; border-radius:999px;
+    background:color-mix(in srgb, var(--accent) 10%, var(--surface-alt));
+    color:var(--accent); font-size:9.5px; font-weight:700; white-space:nowrap;
+  }
+  #view-dashboard .dash-tools-chevron{ color:var(--accent); transition:transform .18s ease; flex-shrink:0; }
+  #view-dashboard .dash-tools-shell.is-open .dash-tools-chevron{ transform:rotate(180deg); }
+  #view-dashboard .dash-tools-body{ display:none; border-top:1px solid var(--border); }
+  #view-dashboard .dash-tools-shell.is-open .dash-tools-body{ display:block; }
+
   #view-dashboard .dash-filter-toolbar{
     display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; align-items:end;
-    background:var(--surface); border:1px solid var(--border); border-radius:var(--dash-radius);
-    padding:8px; margin-bottom:12px; box-shadow:none;
+    background:transparent; border:0; border-radius:0;
+    padding:8px; margin-bottom:0; box-shadow:none;
   }
   #view-dashboard .dash-filter-grid{
     display:grid; grid-template-columns:.86fr .86fr 1.2fr 1fr; gap:7px; min-width:0;
@@ -1702,6 +1724,9 @@
 
   @media (max-width:700px){
     #view-dashboard .dash-page-head{ align-items:flex-start; margin-bottom:8px; }
+    #view-dashboard .dash-tools-shell{ margin-bottom:10px; }
+    #view-dashboard .dash-tools-toggle{ min-height:44px; padding:8px 10px; }
+    #view-dashboard .dash-tools-shell .dash-filter-toolbar{ margin-bottom:0; }
     #view-dashboard .dash-page-title{ font-size:20px; }
     #view-dashboard .dash-admin-chip{ display:none; }
     #view-dashboard .dash-filter-toolbar{ padding:8px; margin-bottom:10px; }
@@ -2744,38 +2769,50 @@
       <div class="dash-admin-chip">Analytics overview</div>
     </div>
 
-    <div class="dash-filter-toolbar">
-      <div class="dash-filter-grid">
-        <div class="dash-filter-field">
-          <label for="dashFromMonth">From</label>
-          <input type="date" id="dashFromMonth" class="fselect" style="cursor:pointer;">
-        </div>
-        <div class="dash-filter-field">
-          <label for="dashToMonth">To</label>
-          <input type="date" id="dashToMonth" class="fselect" style="cursor:pointer;">
-        </div>
-        <div class="dash-filter-field">
-          <label for="dashEngineerSelect">Engineer</label>
-          <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
-        </div>
-        <div class="dash-filter-field">
-          <label for="dashDisciplineSelect">Section</label>
-          <select id="dashDisciplineSelect" class="fselect" style="cursor:pointer;">
-            <option value="">All sections</option>
-            <option value="mechanical">Mechanical</option>
-            <option value="electrical">Electrical</option>
-          </select>
-        </div>
-      </div>
-      <div class="dash-filter-actions">
-        <div class="dash-filter-secondary">
-          <button class="queue-btn filter-btn-excel" onclick="exportDashboardToExcel()">↓ Excel</button>
-          <button class="queue-btn filter-btn-pptx" onclick="exportDashboardToPptx()">↓ PPTX</button>
-          <div id="dashKpiTriggerWrap" class="dash-kpi-trigger-wrap" style="display:none;">
-            <button class="queue-btn dash-recalc-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate score</button>
+    <div class="dash-tools-shell" id="dashToolsShell">
+      <button type="button" class="dash-tools-toggle" id="dashToolsToggle" onclick="toggleDashboardTools()" aria-expanded="true" aria-controls="dashToolsBody">
+        <span class="dash-tools-toggle-left">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
+          <strong>Filters &amp; Export</strong>
+          <span class="dash-filter-count">4 filters</span>
+        </span>
+        <svg class="dash-tools-chevron" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="dash-tools-body" id="dashToolsBody">
+        <div class="dash-filter-toolbar">
+          <div class="dash-filter-grid">
+            <div class="dash-filter-field">
+              <label for="dashFromMonth">From</label>
+              <input type="date" id="dashFromMonth" class="fselect" style="cursor:pointer;">
+            </div>
+            <div class="dash-filter-field">
+              <label for="dashToMonth">To</label>
+              <input type="date" id="dashToMonth" class="fselect" style="cursor:pointer;">
+            </div>
+            <div class="dash-filter-field">
+              <label for="dashEngineerSelect">Engineer</label>
+              <select id="dashEngineerSelect" class="fselect" style="cursor:pointer;"><option value="">All engineers</option></select>
+            </div>
+            <div class="dash-filter-field">
+              <label for="dashDisciplineSelect">Section</label>
+              <select id="dashDisciplineSelect" class="fselect" style="cursor:pointer;">
+                <option value="">All sections</option>
+                <option value="mechanical">Mechanical</option>
+                <option value="electrical">Electrical</option>
+              </select>
+            </div>
+          </div>
+          <div class="dash-filter-actions">
+            <div class="dash-filter-secondary">
+              <button class="queue-btn filter-btn-excel" onclick="exportDashboardToExcel()">↓ Excel</button>
+              <button class="queue-btn filter-btn-pptx" onclick="exportDashboardToPptx()">↓ PPTX</button>
+              <div id="dashKpiTriggerWrap" class="dash-kpi-trigger-wrap" style="display:none;">
+                <button class="queue-btn dash-recalc-btn" onclick="triggerTeamKpiRecalc()" title="Recalculate team score from the latest logged tasks">↻ Recalculate score</button>
+              </div>
+            </div>
+            <button class="queue-btn filter-btn-apply" onclick="loadDashboard()">Apply filters</button>
           </div>
         </div>
-        <button class="queue-btn filter-btn-apply" onclick="loadDashboard()">Apply filters</button>
       </div>
     </div>
 
@@ -6137,6 +6174,32 @@
 
   window.addEventListener('resize', () => {
     if(categoryToolsUserChoice == null && document.getElementById('view-category')?.classList.contains('active')) ensureCategoryToolsDefault();
+  });
+
+  let dashboardToolsUserChoice = null; // null = responsive default; boolean = user's explicit choice
+
+  function setDashboardToolsOpen(open, remember=false){
+    const shell = document.getElementById('dashToolsShell');
+    const toggle = document.getElementById('dashToolsToggle');
+    if(!shell || !toggle) return;
+    shell.classList.toggle('is-open', !!open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(remember) dashboardToolsUserChoice = !!open;
+  }
+
+  function toggleDashboardTools(){
+    const shell = document.getElementById('dashToolsShell');
+    if(!shell) return;
+    setDashboardToolsOpen(!shell.classList.contains('is-open'), true);
+  }
+
+  function ensureDashboardToolsDefault(){
+    const open = dashboardToolsUserChoice == null ? window.innerWidth > 700 : dashboardToolsUserChoice;
+    setDashboardToolsOpen(open, false);
+  }
+
+  window.addEventListener('resize', () => {
+    if(dashboardToolsUserChoice == null && document.getElementById('view-dashboard')?.classList.contains('active')) ensureDashboardToolsDefault();
   });
 
   async function applyCategoryFilters(){
@@ -11335,6 +11398,7 @@ for a competing inline style first.`;
   });
 
   async function loadDashboard(){
+    ensureDashboardToolsDefault();
     // Builds the mobile or desktop card grouping (see comment above) if
     // it isn't already the current one — must happen before anything
     // below tries to populate #dashRingScore etc., since those elements
