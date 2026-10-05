@@ -1923,14 +1923,14 @@
   }
   #view-home .home-command-copy .eyebrow{ margin-bottom:8px; font-size:11.5px; }
   #view-home .home-greeting{
-    margin:0; color:var(--text); white-space:nowrap; overflow:hidden; display:flex; align-items:baseline; gap:8px; min-width:0;
-    font-family:'Space Grotesk',sans-serif; line-height:1.06;
+    margin:0; color:var(--text); white-space:nowrap; overflow:hidden; display:flex; align-items:baseline; gap:7px; min-width:0; max-width:100%;
+    font-family:'Space Grotesk',sans-serif; font-size:clamp(28px,2.25vw,34px); line-height:1.06; font-weight:750; letter-spacing:-.025em;
   }
   #view-home .home-greeting-prefix{
-    flex:0 0 auto; font-family:'Space Grotesk',sans-serif; font-size:38px; line-height:1.06; font-weight:750; letter-spacing:-.025em; color:var(--text); white-space:nowrap;
+    flex:0 0 auto; font-family:inherit; font-size:inherit; line-height:inherit; font-weight:inherit; letter-spacing:inherit; color:var(--text); white-space:nowrap;
   }
   #view-home .home-greeting-name{
-    min-width:0; font-size:38px; line-height:1.06; letter-spacing:-.025em; font-weight:750; color:var(--text); white-space:nowrap;
+    min-width:0; font-size:inherit; line-height:inherit; letter-spacing:inherit; font-weight:inherit; color:var(--text); white-space:nowrap;
   }
   #view-home .home-command-sub{ margin-top:7px; font-size:15px; font-weight:600; color:var(--text-dim); }
   #view-home .home-command-meta{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:9px; font-size:12px; color:var(--text-faint); }
@@ -2066,20 +2066,20 @@
   }
   @media (max-width:600px){
     #view-home .home-command-copy{ padding:14px; }
-    #view-home .home-greeting{ gap:6px; }
-    #view-home .home-greeting-prefix{ font-size:27px; }
-    #view-home .home-greeting-name{ font-size:27px; }
+    #view-home .home-greeting{ gap:4px; font-size:clamp(18px,5.8vw,23px); }
     #view-home .home-command-sub{ font-size:12.5px; }
     #view-home .home-command-meta{ font-size:10.5px; margin-top:7px; }
     #view-home .home-command-actions{ display:grid; grid-template-columns:1fr; gap:7px; margin-top:12px; }
     #view-home .home-action-btn{ width:100%; min-height:44px; padding:8px 9px; font-size:11.5px; }
-    #view-home .home-trend-card{ padding:12px; }
+    #view-home .home-trend-card{ padding:12px 12px 16px; overflow:hidden; }
     #view-home .home-trend-title{ font-size:13.5px; }
     #view-home .home-trend-sub{ font-size:10px; }
     #view-home .home-trend-preset{ min-width:32px; min-height:26px; padding:4px 6px; font-size:9.5px; }
-    #view-home .home-trend-card .trend-svg{ height:100px; }
-    #view-home .home-trend-card .trend-legend-row{ overflow-x:auto; }
-    #view-home .home-trend-card .trend-labels-row{ padding-left:28px; padding-right:10px; }
+    #view-home .home-trend-card .trend-chart-wrap{ margin-top:10px; }
+    #view-home .home-trend-card .trend-svg{ height:112px; }
+    #view-home .home-trend-card .trend-labels-row{ padding-left:28px; padding-right:10px; margin-top:5px; }
+    #view-home .home-trend-card .trend-legend-row{ margin-top:8px; padding-bottom:1px; gap:5px 10px; flex-wrap:wrap; overflow:visible; }
+    #view-home .home-trend-card .trend-legend-item{ font-size:9.3px; }
     #view-home .trend-point-dot{ width:5px; height:5px; border-width:1px; }
     #view-home .home-stats > .stat-card.home-kpi-card{ grid-template-columns:34px minmax(0,1fr); gap:7px; padding:9px !important; }
     #view-home .home-kpi-icon{ width:34px; height:34px; border-radius:9px; }
@@ -3710,23 +3710,32 @@
     const prefix = greeting?.querySelector('.home-greeting-prefix');
     const nameEl = document.getElementById('homeGreetingName');
     if(!greeting || !prefix || !nameEl) return;
+
+    // Let CSS establish a sensible desktop/mobile base size first. Both
+    // parts inherit one font size so Welcome Back and the user's name can
+    // never drift out of proportion. Then shrink only when the actual
+    // rendered name needs it.
+    greeting.style.fontSize = '';
     prefix.style.fontSize = '';
     nameEl.style.fontSize = '';
+
     requestAnimationFrame(() => {
-      const styles = getComputedStyle(greeting);
-      const gap = parseFloat(styles.columnGap || styles.gap) || 0;
-      const natural = prefix.scrollWidth + nameEl.scrollWidth + gap;
       const available = greeting.clientWidth;
-      if(!available || !natural || natural <= available) return;
-      const base = parseFloat(getComputedStyle(nameEl).fontSize) || 38;
-      let fitted = Math.max(window.innerWidth <= 600 ? 15 : 18, base * (available / natural) * 0.985);
-      prefix.style.fontSize = `${fitted}px`;
-      nameEl.style.fontSize = `${fitted}px`;
+      if(!available) return;
+      let fitted = parseFloat(getComputedStyle(greeting).fontSize) || (window.innerWidth <= 600 ? 22 : 34);
+      greeting.style.fontSize = `${fitted}px`;
+
+      const minReadable = window.innerWidth <= 600 ? 12 : 18;
+      const natural = greeting.scrollWidth;
+      if(natural > available){
+        fitted = Math.max(minReadable, fitted * (available / natural) * 0.985);
+        greeting.style.fontSize = `${fitted}px`;
+      }
+
       let guard = 0;
-      while((prefix.scrollWidth + nameEl.scrollWidth + gap) > available && fitted > 14 && guard < 18){
-        fitted -= 0.5;
-        prefix.style.fontSize = `${fitted}px`;
-        nameEl.style.fontSize = `${fitted}px`;
+      while(greeting.scrollWidth > available && fitted > 11 && guard < 40){
+        fitted -= 0.4;
+        greeting.style.fontSize = `${fitted}px`;
         guard++;
       }
     });
@@ -3750,6 +3759,26 @@
   window.addEventListener('resize', () => {
     if(document.getElementById('view-home')?.classList.contains('active')) fitHomeGreetingToLine();
   });
+
+  // Web fonts can finish loading after the first profile render. Re-fit once
+  // the final font metrics are available, and whenever the greeting card
+  // itself changes width (mobile rotation, browser chrome, split-screen).
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(() => {
+      if(document.getElementById('view-home')?.classList.contains('active')) fitHomeGreetingToLine();
+    });
+  }
+  if(typeof ResizeObserver !== 'undefined') {
+    let lastHomeGreetingWidth = 0;
+    const homeGreetingResizeObserver = new ResizeObserver(entries => {
+      const width = entries[0]?.contentRect?.width || 0;
+      if(Math.abs(width - lastHomeGreetingWidth) < 1) return;
+      lastHomeGreetingWidth = width;
+      if(document.getElementById('view-home')?.classList.contains('active')) fitHomeGreetingToLine();
+    });
+    const homeGreetingContainer = document.getElementById('homeGreeting')?.parentElement;
+    if(homeGreetingContainer) homeGreetingResizeObserver.observe(homeGreetingContainer);
+  }
 
   function setHomeTrendPreset(preset, btn){
     const toEl = document.getElementById('trendTo');
