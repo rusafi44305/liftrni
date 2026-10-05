@@ -4040,10 +4040,10 @@
         panel.innerHTML = items.map((it, i) => `
           <div class="suggest-item${i === activeIndex ? ' active' : ''}" data-i="${i}">
             <div style="min-width:0; overflow:hidden;">
-              <span class="kind">${it.kind}</span>
-              <div class="main">${it.main}</div>
+              <span class="kind">${escapeHtml(it.kind)}</span>
+              <div class="main">${escapeHtml(it.main)}</div>
             </div>
-            <div class="sub">${it.sub}</div>
+            <div class="sub">${escapeHtml(it.sub)}</div>
           </div>`).join('');
         panel.querySelectorAll('.suggest-item').forEach(el => {
           el.addEventListener('mousedown', (e) => {
@@ -4095,11 +4095,18 @@
     window.addEventListener('scroll', () => { if(panel._owner === inputEl) positionPanel(); }, true);
   }
 
-  // Search-bar suggestions: shared session cache for Lift ID + Project Name.
-  // The universal Search & Trace matcher can search engineer identity, Remarks,
-  // Notes and every details value; autocomplete intentionally stays focused on
-  // reusable identifiers/names only. Engineer names are NOT suggested because
-  // Search & Trace already provides an Engineer filter.
+  // ============================================================
+  // AUTOCOMPLETE DATA INDEX
+  // Two deliberately different behaviours share one cached task snapshot:
+  //   1) Task logging/editing forms are FIELD-SPECIFIC. A Task Name input
+  //      only suggests historical Task Name values; Remarks only suggests
+  //      historical Remarks values; custom text fields follow the same rule.
+  //   2) Home / Search & Trace / category quick-search are GLOBAL. They can
+  //      suggest text found anywhere in a task record (Lift ID, project/title,
+  //      Notes, Remarks, built-in fields, custom fields, chips, etc.).
+  // Engineer names are intentionally NOT included in the suggestion index;
+  // Search & Trace already has a dedicated Engineer filter.
+  // ============================================================
   let searchSuggestionCache = null;
   let searchSuggestionCachePromise = null;
   let searchSuggestionCacheLoadedAt = 0;
@@ -4108,6 +4115,29 @@
   function invalidateSearchSuggestionCache(){
     searchSuggestionCache = null;
     searchSuggestionCacheLoadedAt = 0;
+  }
+
+  function normalizeSuggestionFieldLabel(label){
+    return String(label || '').replace(/\*/g, '').trim().toLowerCase();
+  }
+
+  function suggestionPrimitiveValues(value){
+    if(value === null || value === undefined) return [];
+    if(Array.isArray(value)) return value.flatMap(suggestionPrimitiveValues);
+    if(typeof value === 'object') return Object.values(value).flatMap(suggestionPrimitiveValues);
+    const text = String(value).trim();
+    return text ? [text] : [];
+  }
+
+  function pushSuggestionRanked(source, q, limit = 10){
+    const starts = [];
+    const contains = [];
+    for(const it of source || []){
+      if(!it.search.includes(q)) continue;
+      (it.search.startsWith(q) ? starts : contains).push(it);
+      if(starts.length + contains.length >= limit * 4) break;
+    }
+    return starts.concat(contains).slice(0, limit);
   }
 
   async function loadSearchSuggestionCache(force = false){
@@ -4121,7 +4151,7 @@
       let page = 0;
       while(true){
         const { data, error } = await sb.from('tasks')
-          .select('lift_id, project_name, category, created_at, profiles(full_name, nickname)')
+          .select('lift_id, project_name, category, created_at, details, notes')
           .order('created_at', { ascending: false })
           .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
         if(error) throw error;
@@ -4130,38 +4160,78 @@
         page++;
       }
 
-      // Rows arrive newest first, so the first occurrence preserves the most
-      // recently logged context while collapsing repeated values in the DB.
-      const lifts = [];
-      const projects = [];
-      const seenLifts = new Set();
-      const seenProjects = new Set();
+      // Newest rows arrive first. Dedupe globally by the displayed value so a
+      // repeated phrase does not flood the dropdown, while retaining the most
+      // recent field/category context for that phrase.
+      const global = [];
+      const globalSeen = new Set();
+      const byField = new Map();
+
+      const addGlobal = (value, kind, row) => {
+        const text = String(value ?? '').trim();
+        if(!text) return;
+        const key = text.toLowerCase();
+        if(globalSeen.has(key)) return;
+        globalSeen.add(key);
+        global.push({
+          kind: kind || 'Text',
+          main: text,
+          value: text,
+          search: key,
+          sub: `${catMeta[row.category]?.name || row.category || 'Activity'} · ${timeAgoShort(row.created_at)}`
+        });
+      };
+
+      const addFieldValue = (label, value, row) => {
+        const fieldKey = normalizeSuggestionFieldLabel(label);
+        if(!fieldKey) return;
+        if(!byField.has(fieldKey)) byField.set(fieldKey, []);
+        const bucket = byField.get(fieldKey);
+        // Keep a hidden Set on the array while building so identical historic
+        // values collapse to the newest occurrence for this exact field only.
+        if(!bucket._seen) bucket._seen = new Set();
+        suggestionPrimitiveValues(value).forEach(text => {
+          const key = text.toLowerCase();
+          if(bucket._seen.has(key)) return;
+          bucket._seen.add(key);
+          bucket.push({
+            kind: label,
+            main: text,
+            value: text,
+            search: key,
+            sub: `${catMeta[row.category]?.name || row.category || 'Activity'} · ${timeAgoShort(row.created_at)}`
+          });
+        });
+      };
+
       rows.forEach(row => {
-        const lift = String(row.lift_id || '').trim();
-        const project = String(row.project_name || '').trim();
-        if(lift){
-          const key = lift.toLowerCase();
-          if(!seenLifts.has(key)){
-            seenLifts.add(key);
-            lifts.push({
-              kind: 'Lift ID', main: lift, value: lift, search: key,
-              sub: `${catMeta[row.category]?.name || row.category} · ${timeAgoShort(row.created_at)}`
-            });
-          }
-        }
-        if(project){
-          const key = project.toLowerCase();
-          if(!seenProjects.has(key)){
-            seenProjects.add(key);
-            projects.push({
-              kind: 'Project', main: project, value: project, search: key,
-              sub: row.profiles ? displayName(row.profiles) : `${catMeta[row.category]?.name || row.category} · ${timeAgoShort(row.created_at)}`
-            });
-          }
-        }
+        // Put the most useful identifiers into the global index first. If the
+        // same text is also present inside details, the clearer Lift/Project
+        // label wins because addGlobal keeps the first (newest) occurrence.
+        addGlobal(row.lift_id, 'Lift ID', row);
+        addGlobal(row.project_name, 'Project / Task', row);
+
+        const details = row.details && typeof row.details === 'object' ? row.details : {};
+        Object.entries(details).forEach(([label, value]) => {
+          suggestionPrimitiveValues(value).forEach(text => addGlobal(text, label, row));
+          addFieldValue(label, value, row);
+        });
+
+        // `tasks.notes` is a convenience copy of common Notes/Remarks fields.
+        // Add it only after details so the dropdown keeps the original field
+        // label (e.g. "Remarks") whenever that richer context exists.
+        if(row.notes) addGlobal(row.notes, 'Notes', row);
+
+        // Older records may have Lift ID in the dedicated column even if their
+        // details JSON predates the field-value copy. This fallback is still
+        // field-correct because it is indexed only under "Lift ID".
+        if(row.lift_id) addFieldValue('Lift ID', row.lift_id, row);
       });
 
-      searchSuggestionCache = { lifts, projects };
+      // Remove the temporary Sets before retaining the cache.
+      byField.forEach(bucket => { try{ delete bucket._seen; }catch(e){} });
+
+      searchSuggestionCache = { global, byField };
       searchSuggestionCacheLoadedAt = Date.now();
       return searchSuggestionCache;
     })();
@@ -4175,17 +4245,17 @@
 
   function warmSearchSuggestionCache(){
     if(!currentUser) return;
-    loadSearchSuggestionCache().catch(err => console.warn('Search suggestion cache unavailable:', err));
+    loadSearchSuggestionCache().catch(err => console.warn('Suggestion cache unavailable:', err));
   }
 
+  // GLOBAL suggestions for search bars: any text stored anywhere in a task,
+  // excluding engineer identity (which is deliberately handled by the filter).
   async function fetchSearchSuggestions(term){
     try{
       const cache = await loadSearchSuggestionCache();
       const q = String(term || '').trim().toLowerCase();
       if(!q) return { data: [], error: null };
-      const data = cache.lifts.filter(it => it.search.includes(q)).slice(0, 5)
-        .concat(cache.projects.filter(it => it.search.includes(q)).slice(0, 4));
-      return { data, error: null };
+      return { data: pushSuggestionRanked(cache.global, q, 10), error: null };
     } catch(error){
       return { data: null, error };
     }
@@ -4194,51 +4264,49 @@
     return rows || [];
   }
 
-  // Lift ID field (task-logging form) suggestions: Lift ID only, the
-  // "additional info" is where it was last logged.
-  function fetchLiftIdFieldSuggestions(term){
-    const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\\$&');
-    return sb.from('tasks')
-      .select('lift_id, category, created_at, profiles(full_name, nickname)')
-      .ilike('lift_id', `%${safeTerm}%`)
-      .order('created_at', { ascending: false })
-      .limit(20);
+  // FIELD-SPECIFIC suggestions for the task form. Only historical values from
+  // the exact same field label are considered, so e.g. Remarks can never leak
+  // into Task Name suggestions and Project Name can never leak into Remarks.
+  async function fetchFieldSpecificSuggestions(fieldLabel, term){
+    try{
+      const cache = await loadSearchSuggestionCache();
+      const q = String(term || '').trim().toLowerCase();
+      if(!q) return { data: [], error: null };
+      const bucket = cache.byField.get(normalizeSuggestionFieldLabel(fieldLabel)) || [];
+      return { data: pushSuggestionRanked(bucket, q, 8), error: null };
+    } catch(error){
+      return { data: null, error };
+    }
   }
-  function mapLiftIdFieldSuggestions(rows){
-    const seen = new Map();
-    rows.forEach(row => {
-      if(row.lift_id && !seen.has(row.lift_id)){
-        seen.set(row.lift_id, { kind: 'Lift ID', main: row.lift_id, value: row.lift_id,
-          sub: `${catMeta[row.category]?.name || row.category} · ${row.profiles ? displayName(row.profiles) : 'unknown'} · ${timeAgoShort(row.created_at)}` });
-      }
-    });
-    return [...seen.values()].slice(0, 6);
+  function mapFieldSpecificSuggestions(rows){
+    return rows || [];
   }
 
-  // Every category's "Task Name" / "Project Name" / "Client / Project
-  // Name" field (section:'identity', anything other than Lift ID) writes
-  // into the same tasks.project_name column — confirmed in
-  // collectFormData()'s own logic below, which already treats them
-  // interchangeably when picking a title for the feed/log. One shared
-  // source covers all of them for exactly the same reason it already
-  // covers the search boxes.
-  function fetchProjectNameFieldSuggestions(term){
-    const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\$&');
-    return sb.from('tasks')
-      .select('project_name, category, created_at, profiles(full_name, nickname)')
-      .ilike('project_name', `%${safeTerm}%`)
-      .order('created_at', { ascending: false })
-      .limit(20);
+  function taskInputFieldLabel(el){
+    if(!el) return '';
+    // row2text inputs each have their own label immediately beside them; use
+    // that before falling back to the enclosing .form-field label.
+    const directLabel = el.parentElement?.querySelector(':scope > .field-label');
+    if(directLabel) return directLabel.textContent.replace('*','').trim();
+    const fieldLabel = el.closest('.form-field')?.querySelector('.field-label');
+    return fieldLabel ? fieldLabel.textContent.replace('*','').trim() : '';
   }
-  function mapProjectNameFieldSuggestions(rows){
-    const seen = new Map();
-    rows.forEach(row => {
-      if(row.project_name && !seen.has(row.project_name)){
-        seen.set(row.project_name, { kind: 'Logged before', main: row.project_name, value: row.project_name,
-          sub: `${catMeta[row.category]?.name || row.category} · ${row.profiles ? displayName(row.profiles) : 'unknown'} · ${timeAgoShort(row.created_at)}` });
-      }
+
+  function bindTaskFieldSuggestionInputs(){
+    const root = document.getElementById('dynamicForm');
+    if(!root) return;
+    // Only free-entry text controls get autocomplete. Date/month/number/select
+    // controls already have purpose-built UI and should not receive text hints.
+    root.querySelectorAll('input.ti[type="text"], textarea').forEach(el => {
+      const label = taskInputFieldLabel(el);
+      if(!label) return;
+      attachSuggestions(el, {
+        buildQuery: (term) => fetchFieldSpecificSuggestions(label, term),
+        mapRows: mapFieldSpecificSuggestions,
+        debounceMs: 90,
+        onPick: (it, inputEl) => { inputEl.value = it.value; }
+      });
     });
-    return [...seen.values()].slice(0, 6);
   }
 
   // Wiring is intentionally idempotent. Besides the initial bind, Search
@@ -5012,24 +5080,10 @@
       });
     }
 
-    // 2026-09-30: suggestions on the Lift ID field, wherever it appears —
-    // this form is rebuilt from scratch on every category/type change, so
-    // re-running this each time (attachSuggestions no-ops on an input it's
-    // already bound, via dataset.suggestBound) picks up the fresh element.
-    document.querySelectorAll('#dynamicForm input[data-field-label="Lift ID"]').forEach(el => {
-      attachSuggestions(el, {
-        buildQuery: fetchLiftIdFieldSuggestions, mapRows: mapLiftIdFieldSuggestions,
-        onPick: (it, inputEl) => { inputEl.value = it.value; }
-      });
-    });
-    (currentFormFields || []).forEach(f => {
-      if(f.t !== 'text' || f.section !== 'identity' || f.l === 'Lift ID') return;
-      const el = document.querySelector(`#dynamicForm input[data-field-label="${f.l}"]`);
-      if(el) attachSuggestions(el, {
-        buildQuery: fetchProjectNameFieldSuggestions, mapRows: mapProjectNameFieldSuggestions,
-        onPick: (it, inputEl) => { inputEl.value = it.value; }
-      });
-    });
+    // Task-entry autocomplete is intentionally field-specific. The form is
+    // rebuilt whenever category/sub-type changes, so bind the freshly-rendered
+    // text inputs and textareas each time.
+    bindTaskFieldSuggestionInputs();
   }
  
   function toggleSearchResultDetails(btn){
@@ -6325,8 +6379,8 @@
     loadHomeOverview();
     setDefaultTrendRange();
     loadActivityTrend();
-    // Warm the shared Lift ID / Project Name suggestion index in the
-    // background so Home and Search autocomplete are usually instant by the
+    // Warm the shared global + field-specific suggestion index in the
+    // background so Home, Search and task-form autocomplete are usually instant by the
     // time the person starts typing. This is never awaited, so app boot is not
     // blocked by the cache request.
     setTimeout(() => warmSearchSuggestionCache(), 250);
