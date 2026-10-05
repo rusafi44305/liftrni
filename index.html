@@ -1964,6 +1964,23 @@
   #view-home .home-trend-card .trend-labels-row > div{ font-size:10.5px; }
   #view-home .home-trend-card .trend-legend-row{ margin-top:7px; gap:10px; }
   #view-home .home-trend-card .trend-legend-item{ font-size:10.5px; }
+  #view-home .home-trend-card .trend-labels-row{ padding-left:34px; padding-right:12px; }
+  #view-home .trend-series-path{
+    stroke-dasharray:900; stroke-dashoffset:900; animation:homeTrendDraw .85s cubic-bezier(.22,.72,.3,1) forwards;
+  }
+  #view-home .trend-area-path{ animation:homeTrendAreaIn .55s ease .25s both; }
+  #view-home .trend-point-layer{ position:absolute; inset:0; pointer-events:none; z-index:2; }
+  #view-home .trend-point-dot{
+    position:absolute; width:6px; height:6px; border-radius:50%; transform:translate(-50%,-50%) scale(.55);
+    border:1.5px solid var(--surface); box-sizing:border-box; opacity:0; animation:homeTrendPointIn .28s ease .58s forwards;
+  }
+  @keyframes homeTrendDraw{ to{ stroke-dashoffset:0; } }
+  @keyframes homeTrendAreaIn{ from{ opacity:0; } to{ opacity:1; } }
+  @keyframes homeTrendPointIn{ to{ opacity:1; transform:translate(-50%,-50%) scale(1); } }
+  @media (prefers-reduced-motion:reduce){
+    #view-home .trend-series-path{ animation:none; stroke-dashoffset:0; }
+    #view-home .trend-area-path, #view-home .trend-point-dot{ animation:none; opacity:1; transform:translate(-50%,-50%) scale(1); }
+  }
 
   #view-home .home-stats{
     display:grid !important; grid-template-columns:repeat(4,minmax(0,1fr)) !important; gap:10px !important;
@@ -2054,6 +2071,8 @@
     #view-home .home-trend-preset{ min-width:32px; min-height:26px; padding:4px 6px; font-size:9.5px; }
     #view-home .home-trend-card .trend-svg{ height:100px; }
     #view-home .home-trend-card .trend-legend-row{ overflow-x:auto; }
+    #view-home .home-trend-card .trend-labels-row{ padding-left:28px; padding-right:10px; }
+    #view-home .trend-point-dot{ width:5px; height:5px; border-width:1px; }
     #view-home .home-stats > .stat-card.home-kpi-card{ grid-template-columns:34px minmax(0,1fr); gap:7px; padding:9px !important; }
     #view-home .home-kpi-icon{ width:34px; height:34px; border-radius:9px; }
     #view-home .home-kpi-icon svg{ width:18px; height:18px; }
@@ -2671,7 +2690,7 @@
         <div class="home-trend-head">
           <div>
             <div class="home-trend-title">Activity Trend</div>
-            <div class="home-trend-sub">Tasks and R&amp;I projects over time</div>
+            <div class="home-trend-sub">Tasks and R&amp;I activity over time</div>
           </div>
           <div class="home-trend-presets" aria-label="Activity trend range">
             <button type="button" class="home-trend-preset" onclick="setHomeTrendPreset('30D', this)">30D</button>
@@ -2688,13 +2707,15 @@
         </div>
         <div class="trend-chart-wrap">
           <svg id="trendChart" viewBox="0 0 560 150" preserveAspectRatio="none" class="trend-svg"></svg>
+          <div id="trendPointLayer" class="trend-point-layer" aria-hidden="true"></div>
           <div id="trendEndDot" class="trend-end-dot" style="display:none;"></div>
         </div>
         <div id="trendChartLabels" class="trend-labels-row"></div>
         <div class="trend-legend-row">
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--accent);"></span>Team Activity</div>
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--green);"></span>R&amp;I Projects</div>
-          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--text-faint);"></span>All other categories</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--c-rni);"></span>Team Activity</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--c-postsales);"></span>Post-Sales Activity</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--c-techsupport);"></span>Technical Support</div>
+          <div class="trend-legend-item"><span class="trend-legend-dot" style="background:var(--text-faint);"></span>Other</div>
         </div>
       </div>
     </section>
@@ -11338,121 +11359,127 @@ for a competing inline style first.`;
     const fromDate = new Date(fromEl.value + 'T00:00:00');
     const toDate = new Date(toEl.value + 'T23:59:59');
 
-    // Tasks are plotted by Perform Date (when the work actually happened,
-    // editable at logging time) rather than created_at (when the row was
-    // inserted) — someone backfilling a task from last month should have
-    // it show up in last month's trend, not today's. Perform Date lives
-    // inside the flexible details field rather than its own column, so it
-    // isn't practical to filter for it precisely on the server the way a
-    // real column would be — fetched broadly instead and matched against
-    // the selected range here, which is fine at this app's data volume.
-    // Older entries logged before Perform Date existed don't have one, so
-    // they fall back to created_at rather than silently dropping off the
-    // chart. Project counts stay based on created_at regardless — a
-    // project doesn't have a "Perform Date" concept the way a task does.
-    const [tasksRes, projectsRes] = await Promise.all([
-      sb.from('tasks').select('created_at, category, details'),
-      sb.from('dev_projects').select('created_at').gte('created_at', fromEl.value).lte('created_at', toEl.value + 'T23:59:59')
-    ]);
-    if(tasksRes.error){ console.error('activity trend:', tasksRes.error.message); return; }
-    if(projectsRes.error){ console.error('activity trend (projects):', projectsRes.error.message); }
+    // Keep the same Perform Date rule used elsewhere on Home/Dashboard:
+    // a task is charted when the work happened, falling back to created_at
+    // for older rows that pre-date the Perform Date field.
+    const { data: taskRows, error } = await sb.from('tasks').select('created_at, category, details');
+    if(error){ console.error('activity trend:', error.message); return; }
 
-    // Build one bucket per calendar month spanning the selected range, even
-    // for months with zero activity, so the lines don't skip gaps. Every
-    // task category except Team Activity is combined into one "other" total;
-    // projects created in R&I Project Manager get their own separate count.
+    // Build one calendar-month bucket across the selected range. The visual
+    // now mirrors the approved reference: Team Activity, Post-Sales Activity
+    // and Technical Support each get their own series; every remaining task
+    // category is folded into one neutral Other line.
     const buckets = [];
     const cursor = new Date(fromDate.getFullYear(), fromDate.getMonth(), 1);
     const end = new Date(toDate.getFullYear(), toDate.getMonth(), 1);
     while(cursor <= end){
-      buckets.push({ key: `${cursor.getFullYear()}-${cursor.getMonth()}`, label: cursor.toLocaleDateString('en-GB', {month:'short'}), rni: 0, other: 0, projects: 0 });
+      buckets.push({
+        key: `${cursor.getFullYear()}-${cursor.getMonth()}`,
+        label: cursor.toLocaleDateString('en-GB', {month:'short'}),
+        rni: 0,
+        postsales: 0,
+        techsupport: 0,
+        other: 0
+      });
       cursor.setMonth(cursor.getMonth() + 1);
     }
-    (tasksRes.data || []).forEach(row => {
+
+    (taskRows || []).forEach(row => {
       const performDate = row.details && row.details['Perform Date'];
       const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(row.created_at);
       if(d < fromDate || d > toDate) return;
       const key = `${d.getFullYear()}-${d.getMonth()}`;
       const bucket = buckets.find(b => b.key === key);
       if(!bucket) return;
-      if(row.category === 'rni') bucket.rni++; else bucket.other++;
-    });
-    (projectsRes.data || []).forEach(row => {
-      if(!row.created_at) return;
-      const d = new Date(row.created_at);
-      const key = `${d.getFullYear()}-${d.getMonth()}`;
-      const bucket = buckets.find(b => b.key === key);
-      if(bucket) bucket.projects++;
+      if(row.category === 'rni') bucket.rni++;
+      else if(row.category === 'postsales') bucket.postsales++;
+      else if(row.category === 'techsupport') bucket.techsupport++;
+      else bucket.other++;
     });
 
     renderTrendChart(buckets);
   }
 
   function renderTrendChart(months){
-    const max = Math.max(...months.map(m => Math.max(m.rni, m.other, m.projects)), 1);
-    const w = 560, h = 130, pad = 10;
-    const stepX = months.length > 1 ? (w - pad*2) / (months.length - 1) : 0;
+    const chart = document.getElementById('trendChart');
+    const pointLayer = document.getElementById('trendPointLayer');
+    const labels = document.getElementById('trendChartLabels');
+    if(!chart || !labels || !months.length) return;
+
+    const w = 560, h = 150;
+    const padL = 34, padR = 12, padT = 10, padB = 10;
+    const plotW = w - padL - padR;
+    const plotH = h - padT - padB;
+    const rawMax = Math.max(...months.map(m => Math.max(m.rni, m.postsales, m.techsupport, m.other)), 1);
+    const niceStep = rawMax <= 20 ? 5 : rawMax <= 40 ? 10 : rawMax <= 80 ? 20 : Math.ceil(rawMax / 4 / 10) * 10;
+    const yMax = Math.max(niceStep * 4, rawMax);
+    const stepX = months.length > 1 ? plotW / (months.length - 1) : 0;
+
+    const series = [
+      { key:'rni', label:'Team Activity', color:'var(--c-rni)', fill:'trendFillTeam' },
+      { key:'postsales', label:'Post-Sales Activity', color:'var(--c-postsales)', fill:'trendFillPost' },
+      { key:'techsupport', label:'Technical Support', color:'var(--c-techsupport)', fill:'trendFillTech' },
+      { key:'other', label:'Other', color:'var(--text-faint)', fill:null }
+    ];
 
     function buildLine(key){
       const pts = months.map((m,i) => {
-        const x = months.length > 1 ? pad + i*stepX : w/2;
-        const y = h - pad - ((m[key]/max) * (h - pad*2));
-        return { x, y, v: m[key] };
+        const x = months.length > 1 ? padL + i * stepX : padL + plotW / 2;
+        const y = padT + plotH - ((m[key] / yMax) * plotH);
+        return { x, y, v:m[key] };
       });
-      let path = `M ${pts[0].x} ${pts[0].y}`;
+      let path = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
       for(let i=1;i<pts.length;i++){
-        const prev = pts[i-1], cur = pts[i];
-        const midX = (prev.x + cur.x)/2;
-        path += ` C ${midX} ${prev.y}, ${midX} ${cur.y}, ${cur.x} ${cur.y}`;
+        const prev=pts[i-1], cur=pts[i];
+        const midX=(prev.x+cur.x)/2;
+        path += ` C ${midX.toFixed(2)} ${prev.y.toFixed(2)}, ${midX.toFixed(2)} ${cur.y.toFixed(2)}, ${cur.x.toFixed(2)} ${cur.y.toFixed(2)}`;
       }
-      return { pts, path };
+      return {pts,path};
     }
 
-    const rniLine = buildLine('rni');
-    const otherLine = buildLine('other');
-    const projectsLine = buildLine('projects');
-    const last = rniLine.pts[rniLine.pts.length - 1];
-    const firstX = rniLine.pts[0].x;
-    const areaPath = `${rniLine.path} L ${last.x} ${h-pad} L ${firstX} ${h-pad} Z`;
-
-    // 2026-09-26: Apple Health/Stocks-style redesign, replacing the
-    // earlier neon-glow HUD look. One dashed midline instead of three;
-    // Team Activity is the primary line (the team's own logged work) and
-    // gets a soft gradient fill down to the baseline; R&I Projects and
-    // All other categories are clean thin lines with no fill, so three
-    // overlapping filled areas don't turn into visual noise; only the
-    // primary line gets an end-point dot rather than one on every point
-    // of every line. Colors are CSS vars, not fixed hex, so this reads
-    // correctly in both themes automatically — same approach as the
-    // dashboard's category bars. Per-point hover targets are kept
-    // (invisible, larger hit area) so hovering still reveals the exact
-    // count per month per series, just without a visible dot cluttering
-    // the line.
-    document.getElementById('trendChart').innerHTML = `
+    const built = Object.fromEntries(series.map(s => [s.key, buildLine(s.key)]));
+    const gridValues = [0,1,2,3,4].map(i => (yMax / 4) * i);
+    const defs = `
       <defs>
-        <linearGradient id="trendFillGrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" style="stop-color:var(--accent); stop-opacity:0.28"/>
-          <stop offset="100%" style="stop-color:var(--accent); stop-opacity:0"/>
+        <linearGradient id="trendFillTeam" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color:var(--c-rni);stop-opacity:.18"/>
+          <stop offset="100%" style="stop-color:var(--c-rni);stop-opacity:0"/>
         </linearGradient>
-      </defs>
-      <line x1="${pad}" y1="${h/2}" x2="${w-pad}" y2="${h/2}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3 4"/>
-      <path d="${otherLine.path}" fill="none" stroke="var(--text-faint)" stroke-width="1.6" stroke-linecap="round" opacity="0.8"/>
-      <path d="${projectsLine.path}" fill="none" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round"/>
-      <path d="${areaPath}" fill="url(#trendFillGrad)"/>
-      <path d="${rniLine.path}" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>
-      ${rniLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>Team Activity — ${p.v}</title></circle>`).join('')}
-      ${projectsLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>R&amp;I Projects — ${p.v}</title></circle>`).join('')}
-      ${otherLine.pts.map(p => `<circle cx="${p.x}" cy="${p.y}" r="8" fill="transparent"><title>All other categories — ${p.v}</title></circle>`).join('')}
-    `;
-    // End dot: HTML element placed by percentage of the viewBox (560x150),
-    // so it stays a true circle no matter how the SVG stretches.
-    const dot = document.getElementById('trendEndDot');
-    if(dot){
-      dot.style.left = (last.x / 560 * 100) + '%';
-      dot.style.top = (last.y / 150 * 100) + '%';
-      dot.style.display = 'block';
+        <linearGradient id="trendFillPost" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color:var(--c-postsales);stop-opacity:.09"/>
+          <stop offset="100%" style="stop-color:var(--c-postsales);stop-opacity:0"/>
+        </linearGradient>
+        <linearGradient id="trendFillTech" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" style="stop-color:var(--c-techsupport);stop-opacity:.08"/>
+          <stop offset="100%" style="stop-color:var(--c-techsupport);stop-opacity:0"/>
+        </linearGradient>
+      </defs>`;
+
+    const grid = gridValues.map((value, i) => {
+      const y = padT + plotH - (i / 4) * plotH;
+      return `<g>
+        <line x1="${padL}" y1="${y.toFixed(2)}" x2="${w-padR}" y2="${y.toFixed(2)}" stroke="var(--border)" stroke-width="1" opacity="${i===0 ? '.65' : '.45'}" ${i===0 ? '' : 'stroke-dasharray="3 4"'}/>
+        <text x="${padL-7}" y="${(y+3).toFixed(2)}" text-anchor="end" fill="var(--text-faint)" style="font-size:8px;font-family:Inter,sans-serif;">${Math.round(value)}</text>
+      </g>`;
+    }).join('');
+
+    const areas = series.filter(s => s.fill).map(s => {
+      const line=built[s.key];
+      const area = `${line.path} L ${line.pts[line.pts.length-1].x.toFixed(2)} ${(padT+plotH).toFixed(2)} L ${line.pts[0].x.toFixed(2)} ${(padT+plotH).toFixed(2)} Z`;
+      return `<path class="trend-area-path" d="${area}" fill="url(#${s.fill})"/>`;
+    }).join('');
+
+    const paths = series.map((s, idx) => `<path class="trend-series-path" d="${built[s.key].path}" fill="none" stroke="${s.color}" stroke-width="${idx===0 ? 2.35 : idx===3 ? 1.55 : 1.85}" stroke-linecap="round" stroke-linejoin="round" opacity="${idx===3 ? '.82' : '1'}"/>`).join('');
+
+    chart.innerHTML = `${defs}${grid}${areas}${paths}`;
+
+    if(pointLayer){
+      pointLayer.innerHTML = series.map(s => built[s.key].pts.map(p => `
+        <span class="trend-point-dot" title="${s.label}: ${p.v}" style="left:${(p.x/w*100).toFixed(3)}%;top:${(p.y/h*100).toFixed(3)}%;background:${s.color};"></span>`).join('')).join('');
     }
-    document.getElementById('trendChartLabels').innerHTML = months.map(m => `<div>${m.label}</div>`).join('');
+    const oldEndDot = document.getElementById('trendEndDot');
+    if(oldEndDot) oldEndDot.style.display='none';
+    labels.innerHTML = months.map(m => `<div>${m.label}</div>`).join('');
   }
  
   // ============ MY TASKS (real data) ============
