@@ -2268,15 +2268,22 @@
   }
   #view-gantt .gantt-project-card:hover{ border-color:color-mix(in srgb,var(--project-accent,var(--accent)) 34%,var(--border)); box-shadow:none; }
   #view-gantt .gantt-project-card::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--project-accent,var(--accent)); z-index:3; }
-  #view-gantt .proj-zone{ position:relative; }
-  #view-gantt .proj-zone-fill{ display:none; }
+  #view-gantt .proj-zone{ position:relative; overflow:hidden; }
+  #view-gantt .proj-zone-fill{
+    display:block; position:absolute; top:0; bottom:0; left:0; width:0;
+    background:color-mix(in srgb,var(--green) 16%,var(--surface)); pointer-events:none; z-index:0;
+    transition:width .35s ease;
+  }
   #view-gantt .project-summary-row{
-    display:grid; grid-template-columns:minmax(250px,1.6fr) minmax(155px,.8fr) minmax(105px,.5fr) minmax(125px,.65fr) minmax(90px,.42fr) minmax(165px,.8fr) auto;
+    position:relative; z-index:1; width:100%; box-sizing:border-box; min-width:0;
+    display:grid; grid-template-columns:minmax(210px,1.5fr) minmax(120px,.75fr) minmax(70px,.35fr) minmax(110px,.55fr) minmax(80px,.4fr) minmax(166px,max-content);
     gap:12px; align-items:center; padding:12px 12px 12px 15px;
   }
   #view-gantt .project-main{ min-width:0; }
   #view-gantt .project-title-line{ display:flex; align-items:center; gap:8px; min-width:0; flex-wrap:wrap; }
-  #view-gantt .project-name{ min-width:0; font-size:13.5px; line-height:1.25; font-weight:760; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #view-gantt .project-name{ min-width:0; max-width:100%; font-size:13.5px; line-height:1.25; font-weight:760; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #view-gantt .project-inline-progress{ font-size:11.5px; line-height:1; font-weight:780; color:var(--green); white-space:nowrap; flex:0 0 auto; }
+  #view-gantt .project-inline-progress.empty{ font-size:9px; font-weight:600; color:var(--text-faint); font-style:italic; }
   #view-gantt .project-impact-chip{ display:inline-flex; align-items:center; max-width:180px; padding:3px 7px; border-radius:6px; font-size:8.8px; line-height:1.2; font-weight:750; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   #view-gantt .project-visibility-note{ margin-top:4px; font-size:9px; color:var(--text-faint); }
   #view-gantt .project-meta-cell{ min-width:0; display:flex; align-items:center; gap:7px; color:var(--text-dim); }
@@ -2292,8 +2299,8 @@
   #view-gantt .project-progress-value.empty{ font-size:8.5px; font-weight:600; color:var(--text-faint); font-style:italic; }
   #view-gantt .project-progress-track{ height:6px; border-radius:999px; background:var(--surface-alt); overflow:hidden; }
   #view-gantt .project-progress-fill{ height:100%; width:0; border-radius:999px; background:var(--project-status-color,var(--accent)); transition:width .35s ease; }
-  #view-gantt .project-actions{ display:flex; align-items:center; justify-content:flex-end; gap:5px; flex-wrap:nowrap; }
-  #view-gantt .project-icon-btn{ width:31px; height:31px; min-height:31px; padding:0 !important; border-radius:8px !important; display:inline-flex; align-items:center; justify-content:center; box-shadow:none !important; }
+  #view-gantt .project-actions{ min-width:166px; max-width:100%; display:flex; align-items:center; justify-content:flex-end; gap:5px; flex-wrap:nowrap; justify-self:end; }
+  #view-gantt .project-icon-btn{ width:31px; height:31px; min-width:31px; min-height:31px; flex:0 0 31px; padding:0 !important; border-radius:8px !important; display:inline-flex; align-items:center; justify-content:center; box-shadow:none !important; }
   #view-gantt .project-icon-btn svg{ width:14px; height:14px; }
   #view-gantt .project-icon-btn.publish{ background:var(--accent-dim) !important; color:var(--accent) !important; border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border)) !important; }
   #view-gantt .project-icon-btn.ppt{ background:color-mix(in srgb,#D85A30 10%,var(--surface)) !important; color:#D85A30 !important; border:1px solid color-mix(in srgb,#D85A30 30%,var(--border)) !important; }
@@ -2301,49 +2308,46 @@
   #view-gantt .project-icon-btn.view:hover{ color:var(--accent) !important; }
 
   #view-gantt .project-expanded-shell{
-    display:none; grid-template-columns:minmax(250px,.9fr) minmax(0,1.3fr); gap:10px; padding:10px 12px 12px 15px; border-top:1px solid var(--border); background:color-mix(in srgb,var(--surface-alt) 35%,var(--surface));
+    display:none; padding:10px 12px 12px 15px; border-top:1px solid var(--border); background:color-mix(in srgb,var(--surface-alt) 35%,var(--surface));
   }
   #view-gantt .project-info-column{ display:flex; flex-direction:column; gap:9px; min-width:0; }
   #view-gantt .project-detail-card{ min-width:0; padding:11px; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
   #view-gantt .project-detail-title{ display:flex; align-items:center; gap:7px; margin-bottom:9px; font-size:11px; font-weight:760; color:var(--text); }
   #view-gantt .project-detail-title svg{ width:14px; height:14px; color:var(--text-dim); }
-  #view-gantt .project-overview-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
-  #view-gantt .project-overview-item{ padding:8px 9px; min-width:0; border-right:1px solid var(--border); border-bottom:1px solid var(--border); }
-  #view-gantt .project-overview-item:nth-child(2n){ border-right:0; }
-  #view-gantt .project-overview-item:nth-last-child(-n+2){ border-bottom:0; }
+  #view-gantt .project-overview-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  #view-gantt .project-overview-item{ padding:8px 9px; min-width:0; border-right:1px solid var(--border); }
+  #view-gantt .project-overview-item:last-child{ border-right:0; }
   #view-gantt .project-overview-label{ font-size:8.5px; color:var(--text-faint); }
   #view-gantt .project-overview-value{ margin-top:3px; font-size:10.5px; font-weight:650; color:var(--text); word-break:break-word; }
   #view-gantt .project-yes-chip{ display:inline-flex; padding:2px 6px; border-radius:6px; background:var(--green-dim); color:var(--green); font-size:9px; font-weight:750; }
   #view-gantt .project-briefing-text{ font-size:10.5px; line-height:1.5; color:var(--text-dim); white-space:pre-wrap; word-break:break-word; }
-  #view-gantt .project-timeline-card{ min-width:0; }
+  #view-gantt .project-timeline-card{ min-width:0; margin-top:10px; }
   #view-gantt .project-timeline-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
   #view-gantt .project-timeline-head .project-detail-title{ margin-bottom:0; }
   #view-gantt .project-task-count{ color:var(--text-faint); font-weight:600; }
   #view-gantt .project-add-task-btn{ padding:5px 9px !important; font-size:9.5px !important; border-radius:8px !important; }
-  #view-gantt .project-timeline-card .proj-gantt-task-row{ padding:7px 5px !important; }
-  #view-gantt .project-timeline-card .gantt-task-bar-track{ height:18px !important; }
-  #view-gantt .project-timeline-card .gantt-task-name-block{ width:155px !important; }
-  #view-gantt .project-timeline-card .gantt-ticks-name-spacer{ width:155px !important; }
+  #view-gantt .project-timeline-card .proj-gantt-task-row{ padding:8px 6px !important; }
+  #view-gantt .project-timeline-card .gantt-task-bar-track{ height:20px !important; }
+  #view-gantt .project-timeline-card .gantt-task-name-block{ width:170px !important; }
+  #view-gantt .project-timeline-card .gantt-ticks-name-spacer{ width:170px !important; }
   #view-gantt .project-legend{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
   #view-gantt .project-legend .leg-item{ font-size:9.5px; }
 
   @media (max-width:1100px){
-    #view-gantt .project-summary-row{ grid-template-columns:minmax(230px,1.35fr) minmax(145px,.75fr) minmax(120px,.62fr) minmax(90px,.42fr) minmax(150px,.75fr) auto; }
+    #view-gantt .project-summary-row{ grid-template-columns:minmax(200px,1.35fr) minmax(130px,.8fr) minmax(110px,.65fr) minmax(82px,.4fr) minmax(166px,max-content); }
     #view-gantt .project-summary-row .project-collab-cell{ display:none; }
   }
   @media (max-width:860px){
     #view-gantt .project-kpi-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
     #view-gantt .project-filter-grid{ grid-template-columns:1fr 1fr; }
     #view-gantt .project-export-btn{ grid-column:1 / -1; width:100%; }
-    #view-gantt .project-summary-row{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:'main status' 'lead actions' 'target actions' 'progress progress'; gap:7px 10px; }
+    #view-gantt .project-summary-row{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:'main status' 'lead target' 'actions actions'; gap:7px 10px; }
     #view-gantt .project-main{ grid-area:main; }
     #view-gantt .project-lead-cell{ grid-area:lead; }
     #view-gantt .project-target-cell{ grid-area:target; }
     #view-gantt .project-status-cell{ grid-area:status; justify-self:end; }
-    #view-gantt .project-progress-cell{ grid-area:progress; }
-    #view-gantt .project-actions{ grid-area:actions; align-self:end; }
+    #view-gantt .project-actions{ grid-area:actions; min-width:0; width:100%; justify-content:flex-end; flex-wrap:wrap; }
     #view-gantt .project-collab-cell{ display:none; }
-    #view-gantt .project-expanded-shell{ grid-template-columns:1fr; }
   }
   @media (max-width:600px){
     #view-gantt .project-page-head{ align-items:stretch; gap:10px; }
@@ -2373,6 +2377,10 @@
     #view-gantt .project-actions{ gap:4px; }
     #view-gantt .project-expanded-shell{ padding:9px 8px 10px 11px; }
     #view-gantt .project-detail-card{ padding:9px; }
+    #view-gantt .project-overview-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    #view-gantt .project-overview-item{ border-right:1px solid var(--border); border-bottom:1px solid var(--border); }
+    #view-gantt .project-overview-item:nth-child(2n){ border-right:0; }
+    #view-gantt .project-overview-item:nth-last-child(-n+2){ border-bottom:0; }
     #view-gantt .project-timeline-card{ overflow-x:auto; }
     #view-gantt .project-timeline-card #projGanttChart{ min-width:0; }
   }
@@ -5650,7 +5658,7 @@
 
     openProjectDetailId = projectId;
     setDetailsToggleLabel(btn, 'Hide details');
-    shell.style.display = 'grid';
+    shell.style.display = 'block';
     await loadProjectTasks(projectId);
   }
 
@@ -5919,10 +5927,10 @@
     const progress = projectProgressPercent(projectId);
     if(progress !== null){
       fill.style.width = `${progress}%`;
-      label.outerHTML = `<span id="projProgressRow-${projectId}" class="project-progress-value">${progress}%</span>`;
+      label.outerHTML = `<span id="projProgressRow-${projectId}" class="project-inline-progress">${progress}%</span>`;
     } else {
       fill.style.width = '0%';
-      label.outerHTML = `<span id="projProgressRow-${projectId}" class="project-progress-value empty">No breakdown</span>`;
+      label.outerHTML = `<span id="projProgressRow-${projectId}" class="project-inline-progress empty">No specific breakdown</span>`;
     }
   }
 
@@ -6107,6 +6115,7 @@
   // ============================================================
   const CHANGELOG = [
     { date:'2026-10-05', summary:'Projects tab redesigned as a professional colorful portfolio: compact KPI cards, collapsible filters/export, full-width project cards with icon actions and functional progress tracks, plus a two-column Overview/Briefing + Task Timeline detail view. Home Welcome Back typography restored to the same large size as the user name while retaining single-line auto-fit.' },
+    { date:'2026-10-05', summary:'Projects follow-up: restored the earlier header-zone progress treatment with percentage beside the project name, fixed action-icon containment, and returned expanded project details to a vertical Overview/Project Briefing followed by a full-width Gantt timeline.' },
     { date:'2026-10-05', summary:'Dashboard performance optimization: all-time overview tasks now use a lean short-lived cache, date/engineer/section filters and 30-day trend comparisons run locally from that snapshot, support lookups load in parallel, edit history is fetched only for an inspected engineer, and autocomplete cache warming waits for browser idle time. Home greeting typography also separates subtitle-sized Welcome Back from the existing large single-line user name.' },
     { date:'2026-10-04', summary:'Fixed intermittent custom sub-category visibility in task-entry dropdowns: renderTaskForm now loads the existing dynamic field/sub-category cache before any category-specific dropdown options are assembled. This prevents newly added Reports/Support sub-categories from requiring a manual refresh while preserving the existing 2-minute cache, discipline filtering, custom-field behavior and all stored data.' },
     { date:'2026-10-04', summary:'Team Dashboard visual redesign matched to the approved compact reference: four animated circular KPI cards with real previous-period trend badges when an explicit date range is selected, Weekly Activity Trend and By Category cards side-by-side on desktop, Mechanical/Electrical team activity cards below, tighter filters/table styling, and responsive mobile reflow. Existing Dashboard filters, exports, scoring, permissions, full leaderboard, engineer inspection, Supabase data and calculations were preserved.' },
@@ -11596,17 +11605,18 @@ for a competing inline style first.`;
       const progress = projectProgressPercent(p.id);
       const progressWidth = progress !== null ? progress : 0;
       const progressLabel = progress !== null
-        ? `<span id="projProgressRow-${p.id}" class="project-progress-value">${progress}%</span>`
-        : `<span id="projProgressRow-${p.id}" class="project-progress-value empty">No breakdown</span>`;
+        ? `<span id="projProgressRow-${p.id}" class="project-inline-progress">${progress}%</span>`
+        : `<span id="projProgressRow-${p.id}" class="project-inline-progress empty">No specific breakdown</span>`;
       const projectName = escapeHtml(p.name || 'Untitled project');
       const impact = escapeHtml(p.impact_type || 'Other');
       const visibilityText = p.published ? 'Visible to team' : 'Private to owner / lead';
 
       return `<div class="gantt-project-card" style="--project-accent:${impactColor}; --project-status-color:${statusColor};">
         <div class="proj-zone">
+          <div class="proj-zone-fill" id="projFill-${p.id}" style="width:${progressWidth}%;"></div>
           <div class="project-summary-row">
             <div class="project-main">
-              <div class="project-title-line"><div class="project-name" title="${projectName}">${projectName}</div><span class="project-impact-chip" style="background:color-mix(in srgb,${impactColor} 12%,var(--surface)); color:${impactColor};">${impact}</span></div>
+              <div class="project-title-line"><div class="project-name" title="${projectName}">${projectName}</div>${progressLabel}<span class="project-impact-chip" style="background:color-mix(in srgb,${impactColor} 12%,var(--surface)); color:${impactColor};">${impact}</span></div>
               <div class="project-visibility-note">${visibilityText}</div>
             </div>
             <div class="project-meta-cell project-lead-cell">
@@ -11622,10 +11632,6 @@ for a competing inline style first.`;
               <div class="project-meta-copy"><div class="project-meta-primary">${fmt(p.target_date)}</div><div class="project-meta-secondary">Target Date</div></div>
             </div>
             <div class="project-status-cell"><span class="project-status-chip" style="background:color-mix(in srgb,${statusColor} 12%,var(--surface)); color:${statusColor}; border:1px solid color-mix(in srgb,${statusColor} 24%,var(--border));">${escapeHtml(p.status || '—')}</span></div>
-            <div class="project-progress-cell">
-              <div class="project-progress-top"><span class="project-progress-label">Progress</span>${progressLabel}</div>
-              <div class="project-progress-track"><div class="project-progress-fill" id="projFill-${p.id}" style="width:${progressWidth}%;"></div></div>
-            </div>
             <div class="project-actions">
               ${canManageProject ? (p.published
                 ? `<button class="btn project-icon-btn publish" onclick="toggleDevProjectPublished('${p.id}', false)" title="Hide from everyone but you" aria-label="Hide"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 3.5 9A15 15 0 0 1 12 21a15 15 0 0 1-3.5-9A15 15 0 0 1 12 3z"/><path d="m4 4 16 16"/></svg></button>`
