@@ -11625,7 +11625,8 @@ for a competing inline style first.`;
       // the time figure reads faster living right where it's earned.
       const barsHtml = catSorted.map(([cat,count]) => {
         const c = CATEGORY_COLOR_VAR[cat] || '#8A63D2';
-        const targetH = Math.max(10, Math.round(count/maxCat*136));
+        const barMaxH = dashOverviewMode === 'mobile' ? 82 : 136;
+        const targetH = Math.max(dashOverviewMode === 'mobile' ? 7 : 10, Math.round(count/maxCat*barMaxH));
         const tracksDuration = (durationLabels[cat] || []).length > 0;
         const mins = tracksDuration ? rows.filter(r => r.category === cat).reduce((sum, r) => sum + taskDurationMinutes(r, durationLabels), 0) : 0;
         const timeLabel = tracksDuration ? `<div style="font-size:10px; font-weight:700; color:${c}; margin-bottom:3px; white-space:nowrap;">${formatDurationShort(mins)}</div>` : '';
