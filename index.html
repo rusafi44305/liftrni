@@ -1923,8 +1923,14 @@
   }
   #view-home .home-command-copy .eyebrow{ margin-bottom:8px; font-size:11.5px; }
   #view-home .home-greeting{
-    font-family:'Space Grotesk',sans-serif; font-size:38px; line-height:1.06; letter-spacing:-.025em;
-    margin:0; font-weight:750; color:var(--text); white-space:nowrap; overflow-wrap:normal; word-break:normal;
+    margin:0; color:var(--text); white-space:nowrap; overflow:hidden; display:flex; align-items:baseline; gap:8px; min-width:0;
+    font-family:'Space Grotesk',sans-serif; line-height:1.06;
+  }
+  #view-home .home-greeting-prefix{
+    flex:0 0 auto; font-family:'Inter',sans-serif; font-size:15px; line-height:1.2; font-weight:600; letter-spacing:0; color:var(--text-dim);
+  }
+  #view-home .home-greeting-name{
+    min-width:0; font-size:38px; line-height:1.06; letter-spacing:-.025em; font-weight:750; color:var(--text); white-space:nowrap;
   }
   #view-home .home-command-sub{ margin-top:7px; font-size:15px; font-weight:600; color:var(--text-dim); }
   #view-home .home-command-meta{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:9px; font-size:12px; color:var(--text-faint); }
@@ -2060,7 +2066,9 @@
   }
   @media (max-width:600px){
     #view-home .home-command-copy{ padding:14px; }
-    #view-home .home-greeting{ font-size:27px; }
+    #view-home .home-greeting{ gap:6px; }
+    #view-home .home-greeting-prefix{ font-size:12.5px; }
+    #view-home .home-greeting-name{ font-size:27px; }
     #view-home .home-command-sub{ font-size:12.5px; }
     #view-home .home-command-meta{ font-size:10.5px; margin-top:7px; }
     #view-home .home-command-actions{ display:grid; grid-template-columns:1fr; gap:7px; margin-top:12px; }
@@ -2666,7 +2674,7 @@
     <section class="home-command-grid">
       <div class="home-command-copy">
         <div class="eyebrow">R&amp;I Operations</div>
-        <h1 class="home-greeting" id="homeGreeting">Welcome Back</h1>
+        <h1 class="home-greeting" id="homeGreeting"><span class="home-greeting-prefix">Welcome Back</span><span class="home-greeting-name" id="homeGreetingName"></span></h1>
         <div class="home-command-sub">Every lift. Every task, traced.</div>
         <div class="home-command-meta">
           <span id="homeGreetingDate">—</span>
@@ -3517,31 +3525,34 @@
 
   function fitHomeGreetingToLine(){
     const greeting = document.getElementById('homeGreeting');
-    if(!greeting) return;
-    greeting.style.fontSize = '';
+    const prefix = greeting?.querySelector('.home-greeting-prefix');
+    const nameEl = document.getElementById('homeGreetingName');
+    if(!greeting || !prefix || !nameEl) return;
+    nameEl.style.fontSize = '';
     requestAnimationFrame(() => {
-      const available = greeting.clientWidth;
-      const natural = greeting.scrollWidth;
+      const gap = parseFloat(getComputedStyle(greeting).columnGap || getComputedStyle(greeting).gap) || 0;
+      const available = Math.max(0, greeting.clientWidth - prefix.offsetWidth - gap);
+      const natural = nameEl.scrollWidth;
       if(!available || !natural || natural <= available) return;
-      const base = parseFloat(getComputedStyle(greeting).fontSize) || 38;
+      const base = parseFloat(getComputedStyle(nameEl).fontSize) || 38;
       let fitted = Math.max(16, base * (available / natural) * 0.985);
-      greeting.style.fontSize = `${fitted}px`;
+      nameEl.style.fontSize = `${fitted}px`;
       let guard = 0;
-      while(greeting.scrollWidth > greeting.clientWidth && fitted > 14 && guard < 12){
+      while(nameEl.scrollWidth > available && fitted > 14 && guard < 16){
         fitted -= 0.5;
-        greeting.style.fontSize = `${fitted}px`;
+        nameEl.style.fontSize = `${fitted}px`;
         guard++;
       }
     });
   }
 
   function updateHomeGreeting(){
-    const greeting = document.getElementById('homeGreeting');
+    const nameEl = document.getElementById('homeGreetingName');
     const dateEl = document.getElementById('homeGreetingDate');
     const todayEl = document.getElementById('homeTodayDate');
     const name = (currentProfile && currentProfile.full_name ? currentProfile.full_name.trim() : '');
-    if(greeting){
-      greeting.textContent = name ? `Welcome Back ${name}` : 'Welcome Back';
+    if(nameEl){
+      nameEl.textContent = name || '';
       fitHomeGreetingToLine();
     }
     const now = new Date();
@@ -5931,6 +5942,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-05', summary:'Dashboard performance optimization: all-time overview tasks now use a lean short-lived cache, date/engineer/section filters and 30-day trend comparisons run locally from that snapshot, support lookups load in parallel, edit history is fetched only for an inspected engineer, and autocomplete cache warming waits for browser idle time. Home greeting typography also separates subtitle-sized Welcome Back from the existing large single-line user name.' },
     { date:'2026-10-04', summary:'Fixed intermittent custom sub-category visibility in task-entry dropdowns: renderTaskForm now loads the existing dynamic field/sub-category cache before any category-specific dropdown options are assembled. This prevents newly added Reports/Support sub-categories from requiring a manual refresh while preserving the existing 2-minute cache, discipline filtering, custom-field behavior and all stored data.' },
     { date:'2026-10-04', summary:'Team Dashboard visual redesign matched to the approved compact reference: four animated circular KPI cards with real previous-period trend badges when an explicit date range is selected, Weekly Activity Trend and By Category cards side-by-side on desktop, Mechanical/Electrical team activity cards below, tighter filters/table styling, and responsive mobile reflow. Existing Dashboard filters, exports, scoring, permissions, full leaderboard, engineer inspection, Supabase data and calculations were preserved.' },
     { date:'2026-10-03', summary:'Admin Task Fields built-in catalog synchronized to the existing working input forms without changing form behavior or historical task data: General Support stale Lift ID/Supplier Name mirrors corrected to Task Name; Team Activity and Pre-Sales metadata aligned; missing Technical Support and Reports built-in mirror rows supplied via a safe SQL sync. Custom fields/sub-categories (is_builtin=false) remain untouched and continue to render dynamically as before.' },
@@ -6379,11 +6391,24 @@
     loadHomeOverview();
     setDefaultTrendRange();
     loadActivityTrend();
-    // Warm the shared global + field-specific suggestion index in the
-    // background so Home, Search and task-form autocomplete are usually instant by the
-    // time the person starts typing. This is never awaited, so app boot is not
-    // blocked by the cache request.
-    setTimeout(() => warmSearchSuggestionCache(), 250);
+    // Warm the shared suggestion index only when the browser has breathing
+    // room. The old 250 ms timer made this large all-task fetch compete with
+    // Home/Dashboard queries immediately after login. Typing before the idle
+    // warm-up still loads the cache on demand, so autocomplete behavior is unchanged.
+    const scheduleSuggestionWarm = () => {
+      const runWarm = () => {
+        // Never compete with an actively viewed Team Dashboard. If the user
+        // needs suggestions first, typing still starts the cache on demand.
+        if(document.getElementById('view-dashboard')?.classList.contains('active')){
+          setTimeout(scheduleSuggestionWarm, 2500);
+          return;
+        }
+        warmSearchSuggestionCache();
+      };
+      if('requestIdleCallback' in window) requestIdleCallback(runWarm, { timeout: 3000 });
+      else setTimeout(runWarm, 400);
+    };
+    setTimeout(scheduleSuggestionWarm, 1800);
     loadNotifications();
     checkDeadlineNotificationsClientSide();
     checkChatUnreadCount();
@@ -7601,6 +7626,7 @@
     const { error } = await sb.from('tasks').delete().eq('id', id);
     if(error){ alert('Could not delete: ' + error.message); return; }
     invalidateSearchSuggestionCache();
+    invalidateDashboardDataCache();
     scheduleHomeOverviewRefresh(0);
     // Refresh whichever view(s) currently show this entry.
     if(currentCatKey) showCategoryLog(currentCatKey);
@@ -7681,6 +7707,7 @@
  
     if(error){ alert('Could not save changes: ' + error.message); return; }
     invalidateSearchSuggestionCache();
+    invalidateDashboardDataCache();
     closeEditModal();
     scheduleHomeOverviewRefresh(0);
     // refresh whichever view we're looking at
@@ -8290,9 +8317,15 @@
     .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
       scheduleHomeOverviewRefresh();
       invalidateSearchSuggestionCache();
+    invalidateDashboardDataCache();
     })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'dev_projects' }, () => scheduleHomeOverviewRefresh())
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => scheduleHomeOverviewRefresh())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+      scheduleHomeOverviewRefresh();
+      invalidateDashboardDataCache();
+      const dashSel = document.getElementById('dashEngineerSelect');
+      if(dashSel) delete dashSel.dataset.loaded;
+    })
     .subscribe();
  
   // Collect every field the person filled in #dynamicForm into one details object
@@ -8569,6 +8602,7 @@
         return;
       }
       invalidateSearchSuggestionCache();
+    invalidateDashboardDataCache();
       showFormPopup(`Successfully submitted ${payload.length} task${payload.length>1?'s':''} — ready for your next entry.`, 'success');
       queuedTasks = [];
       renderQueue();
@@ -11943,17 +11977,83 @@ for a competing inline style first.`;
   async function populateDashEngineerSelect(){
     const sel = document.getElementById('dashEngineerSelect');
     if(sel.dataset.loaded) return;
-    const { data } = await sb.from('profiles').select('id, full_name, nickname').eq('status', 'active').order('full_name');
+    const previousValue = sel.value;
+    const { data, error } = await sb.from('profiles').select('id, full_name, nickname').eq('status', 'active').order('full_name');
+    if(error) throw error;
+    // Rebuild rather than append so a realtime profile refresh can never
+    // duplicate engineer options in the filter.
+    sel.innerHTML = '<option value="">All engineers</option>';
     (data||[]).forEach(p => {
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = `${p.full_name} (${p.nickname || '—'})`;
       sel.appendChild(opt);
     });
+    if(previousValue && [...sel.options].some(o => o.value === previousValue)) sel.value = previousValue;
     sel.dataset.loaded = '1';
   }
  
   let currentDashRows = [];
+
+  // Dashboard performance cache. The overview only needs a lean task shape,
+  // so it no longer downloads edit_history and every other task column just
+  // to draw summary cards. One all-time snapshot is reused for date/engineer/
+  // discipline filters and the previous-period trend calculations.
+  let dashboardDataCache = null;
+  let dashboardDataCacheLoadedAt = 0;
+  let dashboardDataCacheUserId = null;
+  let dashboardDataCachePromise = null;
+  const DASHBOARD_DATA_CACHE_TTL = 90 * 1000;
+  const DASHBOARD_TASK_SELECT = 'id, category, created_at, employee_id, lift_id, project_name, details, notes, profiles(full_name, nickname, role, discipline)';
+
+  function invalidateDashboardDataCache(){
+    dashboardDataCache = null;
+    dashboardDataCacheLoadedAt = 0;
+    dashboardDataCacheUserId = null;
+  }
+
+  async function getDashboardBaseRows(force = false){
+    const sameUser = dashboardDataCacheUserId === currentUser?.id;
+    const fresh = sameUser && dashboardDataCache && (Date.now() - dashboardDataCacheLoadedAt < DASHBOARD_DATA_CACHE_TTL);
+    if(!force && fresh) return dashboardDataCache;
+    if(dashboardDataCachePromise) return dashboardDataCachePromise;
+
+    dashboardDataCachePromise = (async () => {
+      const accum = [];
+      const PAGE_SIZE = 1000;
+      let page = 0;
+      while(true){
+        const { data, error } = await sb.from('tasks')
+          .select(DASHBOARD_TASK_SELECT)
+          .order('created_at', { ascending: true })
+          .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        if(error) throw error;
+        accum.push(...(data || []));
+        if(!data || data.length < PAGE_SIZE) break;
+        page++;
+      }
+      dashboardDataCache = accum;
+      dashboardDataCacheLoadedAt = Date.now();
+      dashboardDataCacheUserId = currentUser?.id || null;
+      return accum;
+    })();
+
+    try{
+      return await dashboardDataCachePromise;
+    } finally {
+      dashboardDataCachePromise = null;
+    }
+  }
+
+  function dashboardRowsInCreatedRange(sourceRows, startVal, endExclusiveVal){
+    const startMs = startVal ? Date.parse(startVal + 'T00:00:00Z') : -Infinity;
+    const endMs = endExclusiveVal ? Date.parse(endExclusiveVal + 'T00:00:00Z') : Infinity;
+    return (sourceRows || []).filter(r => {
+      const t = Date.parse(r.created_at);
+      return Number.isFinite(t) && t >= startMs && t < endMs;
+    });
+  }
+
   // The Dashboard overview's card groupings genuinely differ by screen
   // size, not just reflow — on mobile, Team Score and the Weekly Trend
   // share one card side by side; on desktop they're each their own card,
@@ -12078,125 +12178,93 @@ for a competing inline style first.`;
 
   async function loadDashboard(){
     ensureDashboardToolsDefault();
-    // Builds the mobile or desktop card grouping (see comment above) if
-    // it isn't already the current one — must happen before anything
-    // below tries to populate #dashRingScore etc., since those elements
-    // only exist once this has actually run at least once.
     renderDashOverviewIfNeeded();
-    // Defensive: if either pre-step fails (a network blip, anything), don't
-    // let it silently abort the whole function and leave the page stuck on
-    // "Loading…" forever — log it and continue straight to the main query,
-    // which is the part that actually matters for showing data by default.
-    try{ await populateDashEngineerSelect(); } catch(e){ console.error('populateDashEngineerSelect failed:', e); }
-    try{ await loadAppSettings(); } catch(e){ console.error('loadAppSettings failed:', e); }
-    renderKpiTriggerButton();
-    // 2026-09-19: switched from month-only to full day-level filtering —
-    // fromVal/toVal are now real "YYYY-MM-DD" dates, not "YYYY-MM". gte
-    // works directly on the from-date now (no need to append "-01"); the
-    // to-date is made inclusive of its whole day by advancing to the
-    // start of the next calendar day and filtering strictly before that,
-    // same pattern as before just at day granularity instead of month.
-    const fromVal = document.getElementById('dashFromMonth').value; // "2026-01-15"
+
+    const fromVal = document.getElementById('dashFromMonth').value;
     const toVal = document.getElementById('dashToMonth').value;
     const engineerId = document.getElementById('dashEngineerSelect').value;
     const disciplineFilter = document.getElementById('dashDisciplineSelect').value;
- 
-    let query = sb.from('tasks').select('*, profiles(full_name, nickname, role, discipline)');
-    if(fromVal) query = query.gte('created_at', fromVal);
-    if(toVal){
-      const nextDay = new Date(toVal + 'T00:00:00');
-      nextDay.setDate(nextDay.getDate() + 1);
-      query = query.lt('created_at', nextDay.toISOString().slice(0,10));
-    }
-    if(engineerId) query = query.eq('employee_id', engineerId);
 
-    // 2026-09-23: real, confirmed bug fix — this had no pagination at
-    // all, so it silently relied on a single request, which Supabase
-    // caps at a maximum row count per call (commonly 1000) regardless
-    // of how many rows actually match. Once total activity passed that
-    // cap, everything computed here — category breakdown, leaderboard,
-    // time logged, not just the headline Activities count — was quietly
-    // working from an incomplete slice of the real data, which is
-    // exactly the gap reported against Home's own total. Fixed by
-    // paging through in batches of 1000 until a page comes back short,
-    // accumulating the true complete set before computing anything.
-    let rows = [];
-    let page = 0;
-    const PAGE_SIZE = 1000;
-    while(true){
-      const { data, error } = await query.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
-      document.getElementById('dashAsOf').textContent = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
-      if(error){ document.getElementById('dashCategoryBreakdown').innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
-      rows = rows.concat(data || []);
-      if(!data || data.length < PAGE_SIZE) break;
-      page++;
-    }
-    // Applied client-side (filtering by a joined table's own column
-    // isn't a plain .eq() on the main query) — done here, right after
-    // pagination completes and before any calculation touches the
-    // rows, so every downstream number (category breakdown, leaderboard,
-    // time logged, everything) is automatically scoped to the selected
-    // section with no separate filtering logic needed elsewhere.
-    if(disciplineFilter) rows = rows.filter(r => r.profiles?.discipline === disciplineFilter);
+    // Start all independent requests together. The task snapshot is cached and
+    // lean; settings, engineer options, duration metadata and KPI weights no
+    // longer wait for one another before the Dashboard can calculate.
+    const engineerOptionsPromise = populateDashEngineerSelect().catch(e => {
+      console.error('populateDashEngineerSelect failed:', e);
+    });
+    const appSettingsPromise = loadAppSettings().catch(e => {
+      console.error('loadAppSettings failed:', e);
+    });
+    const durationPromise = getDurationLabelsByCategory().catch(e => {
+      console.error('getDurationLabelsByCategory failed:', e);
+      const map = {};
+      Object.entries(BUILTIN_DURATION_FIELDS).forEach(([cat, labels]) => { map[cat] = [...labels]; });
+      return map;
+    });
+    const weightPromise = sb.from('kpi_weights').select('*');
+    const baseRowsPromise = getDashboardBaseRows();
 
-    // KPI trend badges compare against the immediately preceding equal-
-    // length period. If explicit From/To dates are chosen, we compare the
-    // visible filtered range against the previous range of the same length.
-    // If no explicit date range is selected, we default the comparison to
-    // the most recent 30 days vs the 30 days before that, while keeping the
-    // main KPI values themselves unchanged.
+    let baseRows, durationLabels, weightResult;
+    try{
+      [baseRows, durationLabels, weightResult] = await Promise.all([
+        baseRowsPromise,
+        durationPromise,
+        weightPromise,
+        engineerOptionsPromise,
+        appSettingsPromise
+      ]).then(values => [values[0], values[1], values[2]]);
+    }catch(error){
+      document.getElementById('dashCategoryBreakdown').innerHTML = `<div class="placeholder-note">Could not load: ${escapeHtml(error.message || String(error))}</div>`;
+      return;
+    }
+    renderKpiTriggerButton();
+    document.getElementById('dashAsOf').textContent = new Date().toLocaleString('en-GB', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+    // Apply engineer + section to the cached all-time snapshot first. This is
+    // the reusable scope from which both the visible period and comparison
+    // period are derived locally with no extra Supabase task query.
+    let scopedRows = baseRows || [];
+    if(engineerId) scopedRows = scopedRows.filter(r => r.employee_id === engineerId);
+    if(disciplineFilter) scopedRows = scopedRows.filter(r => r.profiles?.discipline === disciplineFilter);
+
+    let rows = scopedRows;
+    if(fromVal || toVal){
+      const endExclusive = toVal ? (() => {
+        const d = new Date(toVal + 'T00:00:00Z');
+        d.setUTCDate(d.getUTCDate() + 1);
+        return d.toISOString().slice(0,10);
+      })() : null;
+      rows = dashboardRowsInCreatedRange(scopedRows, fromVal || null, endExclusive);
+    }
+
+    // KPI trend badges use the same cached snapshot. This removes the two
+    // separate 30-day task downloads that used to repeat data already present
+    // in the default all-time Dashboard load.
     let previousRows = null;
     let comparisonCurrentRows = null;
     let comparisonNoteLabel = 'vs. previous period';
-    try{
-      const fetchRowsInRange = async (startVal, endExclusiveVal) => {
-        let q = sb.from('tasks').select('*, profiles(full_name, nickname, role, discipline)')
-          .gte('created_at', startVal)
-          .lt('created_at', endExclusiveVal);
-        if(engineerId) q = q.eq('employee_id', engineerId);
-        const accum = [];
-        let qPage = 0;
-        while(true){
-          const { data: qData, error: qError } = await q.range(qPage * PAGE_SIZE, qPage * PAGE_SIZE + PAGE_SIZE - 1);
-          if(qError) throw qError;
-          accum.push(...(qData || []));
-          if(!qData || qData.length < PAGE_SIZE) break;
-          qPage++;
-        }
-        return disciplineFilter ? accum.filter(r => r.profiles?.discipline === disciplineFilter) : accum;
-      };
-      if(fromVal && toVal){
-        const curStart = new Date(fromVal + 'T00:00:00Z');
-        const curEnd = new Date(toVal + 'T00:00:00Z');
-        const dayCount = Math.max(1, Math.round((curEnd - curStart) / 86400000) + 1);
-        const prevStart = new Date(curStart);
-        prevStart.setUTCDate(prevStart.getUTCDate() - dayCount);
-        const prevStartVal = prevStart.toISOString().slice(0,10);
-        comparisonCurrentRows = rows;
-        previousRows = await fetchRowsInRange(prevStartVal, fromVal);
-        comparisonNoteLabel = 'vs. previous period';
-      } else {
-        const today = new Date();
-        const currentEndExclusive = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1));
-        const currentStart = new Date(currentEndExclusive);
-        currentStart.setUTCDate(currentStart.getUTCDate() - 30);
-        const previousStart = new Date(currentStart);
-        previousStart.setUTCDate(previousStart.getUTCDate() - 30);
-        const currentStartVal = currentStart.toISOString().slice(0,10);
-        const currentEndExclusiveVal = currentEndExclusive.toISOString().slice(0,10);
-        const previousStartVal = previousStart.toISOString().slice(0,10);
-        comparisonCurrentRows = await fetchRowsInRange(currentStartVal, currentEndExclusiveVal);
-        previousRows = await fetchRowsInRange(previousStartVal, currentStartVal);
-        comparisonNoteLabel = 'vs. previous 30 days';
-      }
-    }catch(err){
-      console.warn('Dashboard KPI comparison unavailable:', err);
-      previousRows = null;
-      comparisonCurrentRows = null;
+    if(fromVal && toVal){
+      const curStart = new Date(fromVal + 'T00:00:00Z');
+      const curEnd = new Date(toVal + 'T00:00:00Z');
+      const dayCount = Math.max(1, Math.round((curEnd - curStart) / 86400000) + 1);
+      const prevStart = new Date(curStart);
+      prevStart.setUTCDate(prevStart.getUTCDate() - dayCount);
+      comparisonCurrentRows = rows;
+      previousRows = dashboardRowsInCreatedRange(scopedRows, prevStart.toISOString().slice(0,10), fromVal);
+      comparisonNoteLabel = 'vs. previous period';
+    }else{
+      const today = new Date();
+      const currentEndExclusive = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 1));
+      const currentStart = new Date(currentEndExclusive);
+      currentStart.setUTCDate(currentStart.getUTCDate() - 30);
+      const previousStart = new Date(currentStart);
+      previousStart.setUTCDate(previousStart.getUTCDate() - 30);
+      comparisonCurrentRows = dashboardRowsInCreatedRange(scopedRows, currentStart.toISOString().slice(0,10), currentEndExclusive.toISOString().slice(0,10));
+      previousRows = dashboardRowsInCreatedRange(scopedRows, previousStart.toISOString().slice(0,10), currentStart.toISOString().slice(0,10));
+      comparisonNoteLabel = 'vs. previous 30 days';
     }
 
     currentDashRows = rows;
-    const durationLabels = await getDurationLabelsByCategory();
+    const weightData = (!weightResult?.error && weightResult?.data) ? weightResult.data : [];
     const liftSet = new Set(rows.filter(r=>r.lift_id).map(r=>r.lift_id));
     // 2026-09-19: excludes Admin-role people specifically from this count
     // — Superadmins and regular Users/Engineers still count, only the
@@ -12333,8 +12401,8 @@ for a competing inline style first.`;
       animateBars();
     }
  
-    // Leaderboard: per engineer totals + their top category, built from the same filtered rows
-    const { data: weightData } = await sb.from('kpi_weights').select('*');
+    // Leaderboard: per engineer totals + their top category, built from the same filtered rows.
+    // KPI weights were fetched in parallel with the task snapshot above.
     const weightMap = {};
     (weightData||[]).forEach(w => weightMap[w.category] = w.weight);
     const canSeeIndividualKpi = currentProfile.role === 'superadmin' || (currentProfile.role === 'admin' && appSettings.admins_see_kpi);
@@ -12560,7 +12628,36 @@ for a competing inline style first.`;
       const sel = document.getElementById('dashEngineerSelect');
       const label = sel.options[sel.selectedIndex]?.textContent || 'this engineer';
       document.getElementById('dashInspectDetailName').textContent = label;
-      const sortedRows = [...rows].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+      // edit_history can become large over time, so the team overview no
+      // longer downloads it for every task. Fetch only the selected engineer's
+      // visible rows when their individual entries are actually inspected.
+      let inspectRows = rows;
+      if(rows.length){
+        try{
+          const historyById = new Map();
+          const PAGE_SIZE = 1000;
+          let page = 0;
+          let historyQuery = sb.from('tasks').select('id, edit_history').eq('employee_id', engineerId);
+          if(fromVal) historyQuery = historyQuery.gte('created_at', fromVal);
+          if(toVal){
+            const nextDay = new Date(toVal + 'T00:00:00Z');
+            nextDay.setUTCDate(nextDay.getUTCDate() + 1);
+            historyQuery = historyQuery.lt('created_at', nextDay.toISOString().slice(0,10));
+          }
+          while(true){
+            const { data: historyRows, error: historyError } = await historyQuery.range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+            if(historyError) throw historyError;
+            (historyRows || []).forEach(r => historyById.set(r.id, r.edit_history || []));
+            if(!historyRows || historyRows.length < PAGE_SIZE) break;
+            page++;
+          }
+          inspectRows = rows.map(r => ({ ...r, edit_history: historyById.get(r.id) || [] }));
+        }catch(err){
+          console.warn('Dashboard edit history could not be loaded:', err);
+        }
+      }
+      const sortedRows = [...inspectRows].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
       document.getElementById('dashInspectDetailList').innerHTML = sortedRows.length ? sortedRows.map(r => {
         const details = r.details || {};
         const fieldsHtml = Object.entries(details)
