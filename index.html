@@ -7575,18 +7575,31 @@
     renderCategoryRows(filtered, meta.hasLift);
   }
 
-  // Checks Lift ID, project name, and every value actually entered into this
-  // task's category-specific fields — not just Lift ID — so searching finds
-  // an entry by any keyword that appears anywhere in it.
+  // Universal task keyword matcher used by both Category search and Search & Trace.
+  // It intentionally covers the visible identity fields, engineer identity, Notes,
+  // and every value stored inside details (including Remarks and any dynamic/custom
+  // field values). Values are checked recursively so arrays or future nested JSON
+  // structures remain searchable too.
   function rowMatchesKeyword(r, q){
-    if((r.lift_id||'').toLowerCase().includes(q)) return true;
-    if((r.project_name||'').toLowerCase().includes(q)) return true;
-    if((r.notes||'').toLowerCase().includes(q)) return true;
-    const details = r.details || {};
-    return Object.values(details).some(v => {
-      const text = Array.isArray(v) ? v.join(' ') : String(v ?? '');
-      return text.toLowerCase().includes(q);
-    });
+    const needle = String(q ?? '').trim().toLowerCase();
+    if(!needle) return true;
+    const valueHasKeyword = (value) => {
+      if(value === null || value === undefined) return false;
+      if(Array.isArray(value)) return value.some(valueHasKeyword);
+      if(typeof value === 'object') return Object.values(value).some(valueHasKeyword);
+      return String(value).toLowerCase().includes(needle);
+    };
+    const directValues = [
+      r.lift_id,
+      r.project_name,
+      r.notes,
+      r.profiles?.full_name,
+      r.profiles?.nickname,
+      r.category,
+      catMeta[r.category]?.name
+    ];
+    if(directValues.some(valueHasKeyword)) return true;
+    return valueHasKeyword(r.details || {});
   }
  
   // ============ HOME: live "Recent activity" feed (everyone's inputs, real-time) ============
@@ -10694,33 +10707,30 @@ for a competing inline style first.`;
     const toolsShell = document.getElementById('liftTraceToolsShell');
     if(toolsShell) toolsShell.style.display = 'none';
 
-    // Case-insensitive, partial match on either field — a strict exact match
-    // on lift_id used to miss real entries over something as small as a typed
-    // space or different letter casing than how it was originally logged.
-    // Commas are stripped from the term since PostgREST's .or() filter syntax
-    // uses commas as a separator and a literal comma would break the query.
-    const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\\$&');
-    let { data, error } = await sb.from('tasks')
-      .select('*, profiles(full_name, nickname)')
-      .or(`lift_id.ilike.%${safeTerm}%,project_name.ilike.%${safeTerm}%`)
-      .order('created_at', { ascending: true });
-
-    if(error){ resultEl.innerHTML = `<div class="placeholder-note">Could not search: ${error.message}</div>`; return; }
-
-    // A direct Lift ID / project name match is the common case and stays
-    // fast — but the term might instead be a keyword sitting inside some
-    // other field (e.g. a word from a Problem Statement). Postgres can't
-    // easily search inside a JSON blob through this simple query, so as a
-    // fallback, pull everything and check every field client-side the same
-    // way the category log already does — only when the fast path found
-    // nothing, so this never slows down the common case.
-    if(!data || !data.length){
-      const { data: allData, error: allError } = await sb.from('tasks').select('*, profiles(full_name, nickname)').order('created_at', { ascending: true });
-      if(!allError && allData){
-        const q = term.toLowerCase();
-        data = allData.filter(r => rowMatchesKeyword(r, q));
-      }
+    // Search & Trace is deliberately universal on every search: Lift ID,
+    // project name, Notes, engineer identity, Remarks and every built-in/custom
+    // value stored in details are all considered together. Supabase returns a
+    // maximum page of rows at a time, so paginate the visible task set first,
+    // then apply the same client-side matcher used by Category search. This
+    // avoids the old behaviour where details/Remarks were searched only if a
+    // Lift ID or project-name query happened to return zero rows.
+    const SEARCH_PAGE_SIZE = 1000;
+    const allData = [];
+    let searchPage = 0;
+    let searchError = null;
+    while(true){
+      const { data: pageData, error: pageError } = await sb.from('tasks')
+        .select('*, profiles(full_name, nickname)')
+        .order('created_at', { ascending: true })
+        .range(searchPage * SEARCH_PAGE_SIZE, searchPage * SEARCH_PAGE_SIZE + SEARCH_PAGE_SIZE - 1);
+      if(pageError){ searchError = pageError; break; }
+      allData.push(...(pageData || []));
+      if(!pageData || pageData.length < SEARCH_PAGE_SIZE) break;
+      searchPage++;
     }
+    if(searchError){ resultEl.innerHTML = `<div class="placeholder-note">Could not search: ${searchError.message}</div>`; return; }
+    const q = term.toLowerCase();
+    const data = allData.filter(r => rowMatchesKeyword(r, q));
 
     if(!data || !data.length){
       liftSearchRows = [];
