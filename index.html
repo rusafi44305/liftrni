@@ -1924,7 +1924,7 @@
   #view-home .home-command-copy .eyebrow{ margin-bottom:8px; font-size:11.5px; }
   #view-home .home-greeting{
     font-family:'Space Grotesk',sans-serif; font-size:38px; line-height:1.06; letter-spacing:-.025em;
-    margin:0; font-weight:750; color:var(--text); overflow-wrap:anywhere;
+    margin:0; font-weight:750; color:var(--text); white-space:nowrap; overflow-wrap:normal; word-break:normal;
   }
   #view-home .home-command-sub{ margin-top:7px; font-size:15px; font-weight:600; color:var(--text-dim); }
   #view-home .home-command-meta{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:9px; font-size:12px; color:var(--text-faint); }
@@ -2080,6 +2080,98 @@
     #view-home .home-cat-grid .cat-pct-badge{ font-size:10.5px; flex-shrink:0; }
     #view-home .home-cat-progress{ margin-top:6px; height:4px; }
     #view-home .feed-item{ grid-template-columns:1fr; gap:5px; }
+  }
+
+  /* ---------- SEARCH & TRACE — 2026-10-05 ---------- */
+  #view-search .search-page-head{ margin-bottom:10px; }
+  #view-search .search-page-head .back-link{ margin-bottom:7px; }
+  #view-search .search-page-title{ font-family:'Space Grotesk',sans-serif; font-size:25px; line-height:1.08; font-weight:750; letter-spacing:-.025em; color:var(--text); }
+  #view-search .search-page-sub{ margin-top:4px; font-size:12.5px; line-height:1.35; color:var(--text-faint); }
+  #view-search .search-command-card{ padding:12px !important; margin-bottom:12px; border-radius:13px !important; box-shadow:none !important; }
+  #view-search .search-command-card .searchbar{ max-width:none; width:100%; margin:0; min-height:43px; border-radius:10px; box-shadow:none; }
+  #view-search .search-command-card .searchbar input{ min-width:0; font-size:13px; font-weight:500 !important; }
+  #view-search .search-command-card .searchbar button{ min-height:35px; padding:7px 18px; font-size:12px; font-weight:700; border-radius:8px; }
+
+  #view-search .search-tools-shell{ margin-bottom:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden; }
+  #view-search .search-tools-toggle{ width:100%; min-height:45px; padding:8px 12px; display:flex; align-items:center; justify-content:space-between; gap:12px; border:0; background:transparent; color:var(--text); cursor:pointer; font-family:'Inter',sans-serif; }
+  #view-search .search-tools-toggle-left{ display:flex; align-items:center; gap:8px; min-width:0; }
+  #view-search .search-tools-toggle-left > svg{ color:var(--accent); flex-shrink:0; }
+  #view-search .search-tools-toggle strong{ font-size:12.5px; }
+  #view-search .search-filter-count{ display:inline-flex; align-items:center; min-height:20px; padding:2px 7px; border-radius:999px; background:var(--accent-dim); color:var(--accent); font-size:9.5px; font-weight:700; white-space:nowrap; }
+  #view-search .search-tools-chevron{ color:var(--accent); transition:transform .18s ease; flex-shrink:0; }
+  #view-search .search-tools-shell.is-open .search-tools-chevron{ transform:rotate(180deg); }
+  #view-search .search-tools-body{ display:none; border-top:1px solid var(--border); padding:11px 12px 12px; }
+  #view-search .search-tools-shell.is-open .search-tools-body{ display:block; }
+  #view-search .search-filter-grid{ display:grid !important; grid-template-columns:repeat(3,minmax(0,1fr)) auto; gap:10px; align-items:end; margin:0 !important; }
+  #view-search .search-filter-field{ min-width:0; }
+  #view-search .search-filter-field label{ display:block; margin:0 0 4px 2px; font-size:9px; font-weight:750; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); }
+  #view-search .search-filter-field .fselect{ width:100%; height:38px; min-width:0; margin:0; cursor:pointer; }
+  #view-search .search-clear-btn{ min-height:38px; padding:7px 12px !important; border-radius:9px !important; background:transparent !important; color:var(--accent) !important; border:1px solid color-mix(in srgb,var(--accent) 42%,var(--border)) !important; box-shadow:none !important; white-space:nowrap; font-size:10.5px !important; }
+
+  #view-search .search-results-shell{ border:1px solid var(--border); border-radius:13px; background:var(--surface); padding:12px; }
+  #view-search .search-results-head{ display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:10px; }
+  #view-search .search-results-title{ font-size:17px; font-weight:750; color:var(--text); }
+  #view-search .search-results-meta{ margin-top:3px; font-size:11px; color:var(--text-faint); }
+  #view-search .search-sort{ min-height:34px; padding:5px 28px 5px 9px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-dim); font-size:10.5px; cursor:pointer; }
+  #view-search .search-result-list{ display:flex; flex-direction:column; gap:6px; }
+  #view-search .search-result-row{ position:relative; overflow:hidden; padding:9px 10px !important; border:1px solid var(--border) !important; border-radius:10px !important; box-shadow:none !important; background:color-mix(in srgb,var(--surface) 92%,var(--surface-alt)) !important; }
+  #view-search .search-result-row::before{ content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--search-accent,var(--accent)); }
+  #view-search .search-result-summary{ display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.8fr) 92px auto auto; gap:10px; align-items:center; min-width:0; }
+  #view-search .search-result-main{ min-width:0; }
+  #view-search .search-result-tags{ display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin-bottom:4px; }
+  #view-search .search-result-tags .tag{ font-size:8.5px; padding:2px 6px; }
+  #view-search .search-discipline{ display:inline-flex; align-items:center; padding:2px 7px; border-radius:999px; background:var(--surface-alt); color:var(--text-dim); font-size:8.5px; font-weight:650; }
+  #view-search .search-result-title{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12.5px; font-weight:700; color:var(--text); }
+  #view-search .search-result-context{ margin-top:3px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9.8px; color:var(--text-faint); }
+  #view-search .search-result-owner, #view-search .search-result-date{ min-width:0; display:flex; align-items:center; gap:5px; font-size:9.5px; color:var(--text-faint); }
+  #view-search .search-result-owner span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #view-search .search-result-date{ white-space:nowrap; font-variant-numeric:tabular-nums; }
+  #view-search .search-result-status{ max-width:105px; padding:4px 8px; border-radius:999px; background:var(--surface-alt); color:var(--text-dim); font-size:8.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; text-align:center; }
+  #view-search .search-result-status.good{ background:var(--green-dim); color:var(--green); }
+  #view-search .search-result-status.progress{ background:var(--accent-dim); color:var(--accent); }
+  #view-search .search-result-status.review{ background:color-mix(in srgb,#8A63D2 12%,var(--surface)); color:#7652D3; }
+  #view-search .search-result-status.bad{ background:var(--red-dim); color:var(--red); }
+  #view-search .search-view-btn{ min-height:31px; padding:6px 10px !important; border-radius:8px !important; background:var(--surface) !important; color:var(--accent) !important; border:1px solid color-mix(in srgb,var(--accent) 30%,var(--border)) !important; box-shadow:none !important; font-size:9.5px !important; font-weight:700 !important; white-space:nowrap; }
+  #view-search .search-result-details{ margin:9px 2px 0 !important; padding-top:9px !important; border-top:1px solid var(--border); }
+  #view-search .search-result-details .detail-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:6px 16px; }
+
+  @media (max-width:900px){
+    #view-search .search-filter-grid{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+    #view-search .search-clear-btn{ grid-column:1 / -1; justify-self:end; }
+    #view-search .search-result-summary{ grid-template-columns:minmax(0,1.25fr) minmax(130px,.7fr) 82px auto; }
+    #view-search .search-result-status{ display:none; }
+  }
+  @media (max-width:700px){
+    #view-search .search-page-title{ font-size:22px; }
+    #view-search .search-page-sub{ font-size:11px; }
+    #view-search .search-command-card{ padding:9px !important; margin-bottom:10px; }
+    #view-search .search-command-card .searchbar{ min-height:42px; }
+    #view-search .search-command-card .searchbar input{ font-size:12px; }
+    #view-search .search-command-card .searchbar button{ padding:7px 12px; font-size:10.5px; }
+    #view-search .search-tools-shell{ margin-bottom:10px; }
+    #view-search .search-tools-toggle{ min-height:44px; padding:8px 10px; }
+    #view-search .search-tools-body{ padding:9px; }
+    #view-search .search-filter-grid{ grid-template-columns:1fr 1fr; gap:8px; }
+    #view-search .search-filter-field:first-child{ grid-column:1 / -1; }
+    #view-search .search-clear-btn{ grid-column:1 / -1; width:100%; min-height:40px; }
+    #view-search .search-results-shell{ padding:9px; }
+    #view-search .search-results-head{ align-items:flex-start; gap:8px; }
+    #view-search .search-results-title{ font-size:14px; }
+    #view-search .search-results-meta{ font-size:9.5px; }
+    #view-search .search-sort{ min-height:32px; font-size:9.5px; padding-left:7px; }
+    #view-search .search-result-list{ gap:7px; }
+    #view-search .search-result-row{ padding:9px !important; }
+    #view-search .search-result-summary{ grid-template-columns:minmax(0,1fr) auto; grid-template-areas:'main status' 'owner view' 'date view'; gap:5px 8px; align-items:center; }
+    #view-search .search-result-main{ grid-area:main; }
+    #view-search .search-result-owner{ grid-area:owner; }
+    #view-search .search-result-date{ grid-area:date; }
+    #view-search .search-result-status{ grid-area:status; display:block; max-width:88px; justify-self:end; }
+    #view-search .search-view-btn{ grid-area:view; align-self:end; min-height:30px; padding:5px 9px !important; }
+    #view-search .search-result-title{ font-size:11px; white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+    #view-search .search-result-context{ font-size:9px; }
+    #view-search .search-result-owner, #view-search .search-result-date{ font-size:8.8px; }
+    #view-search .search-result-tags .tag, #view-search .search-discipline{ font-size:8px; }
+    #view-search .search-result-details{ margin-left:0 !important; margin-right:0 !important; }
   }
 </style>
 </head>
@@ -2674,29 +2766,53 @@
        theme work, which is how the search ended up inline on Home
        instead of being its own tab. -->
   <div class="view" id="view-search">
-    <div class="searchbar" style="max-width:100%; margin-bottom:14px;">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="liftSearchInput" placeholder="Enter a Lift ID, project name, or keyword…" style="font-weight:600;" onkeydown="if(event.key==='Enter') runLiftSearch();">
-      <button onclick="runLiftSearch()">Trace</button>
+    <div class="search-page-head">
+      <div class="back-link" onclick="showView('home')">← Back to Home</div>
+      <div class="search-page-title">Search &amp; Trace</div>
+      <div class="search-page-sub">Find a lift, project, engineer, task title or keyword across R&amp;I activity.</div>
     </div>
 
-    <!-- Filters narrow down the current search results client-side —
-         they don't re-query the database, so they only make sense (and
-         only get populated) once a search has actually run. Engineer
-         options are built from whoever actually appears in the current
-         results, not the whole company roster, since that's the only
-         list that's ever useful here. -->
-    <div id="liftTraceFilters" style="display:none; flex-wrap:wrap; gap:8px; margin-bottom:12px;">
-      <select id="liftFilterCategory" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
-      <select id="liftFilterEngineer" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
-      <select id="liftFilterSection" class="fselect" style="cursor:pointer;" onchange="applyLiftTraceFilters()">
-        <option value="">All sections</option>
-        <option value="Mechanical">Mechanical</option>
-        <option value="Electrical">Electrical</option>
-      </select>
+    <div class="panel search-command-card">
+      <div class="searchbar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="liftSearchInput" placeholder="Lift ID, project name, engineer, task title or keyword…" onkeydown="if(event.key==='Enter') runLiftSearch();">
+        <button onclick="runLiftSearch()">Search</button>
+      </div>
     </div>
 
-    <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace to see its full history across every category.</div></div>
+    <div class="search-tools-shell" id="liftTraceToolsShell" style="display:none;">
+      <button type="button" class="search-tools-toggle" id="liftTraceToolsToggle" onclick="toggleLiftTraceTools()" aria-expanded="true" aria-controls="liftTraceToolsBody">
+        <span class="search-tools-toggle-left">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16l-6 7v5l-4 2v-7z"/></svg>
+          <strong>Filters</strong>
+          <span class="search-filter-count" id="liftFilterCountBadge">3 filters</span>
+        </span>
+        <svg class="search-tools-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      <div class="search-tools-body" id="liftTraceToolsBody">
+        <div id="liftTraceFilters" class="search-filter-grid">
+          <div class="search-filter-field">
+            <label for="liftFilterCategory">Category</label>
+            <select id="liftFilterCategory" class="fselect" onchange="applyLiftTraceFilters()"><option value="">All categories</option></select>
+          </div>
+          <div class="search-filter-field">
+            <label for="liftFilterEngineer">Engineer</label>
+            <select id="liftFilterEngineer" class="fselect" onchange="applyLiftTraceFilters()"><option value="">All engineers</option></select>
+          </div>
+          <div class="search-filter-field">
+            <label for="liftFilterSection">Section / Discipline</label>
+            <select id="liftFilterSection" class="fselect" onchange="applyLiftTraceFilters()">
+              <option value="">All sections</option>
+              <option value="Mechanical">Mechanical</option>
+              <option value="Electrical">Electrical</option>
+            </select>
+          </div>
+          <button type="button" class="queue-btn search-clear-btn" onclick="clearLiftTraceFilters()">↻ Clear filters</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="liftSearchResult"><div class="placeholder-note">Enter a Lift ID, project name, engineer, task title or keyword above and click Search.</div></div>
   </div>
  
   <!-- ============ CATEGORY LOG ============ -->
@@ -3376,17 +3492,44 @@
     if(willOpen) setTimeout(() => document.getElementById('homeSearchInput')?.focus(), 60);
   }
 
+  function fitHomeGreetingToLine(){
+    const greeting = document.getElementById('homeGreeting');
+    if(!greeting) return;
+    greeting.style.fontSize = '';
+    requestAnimationFrame(() => {
+      const available = greeting.clientWidth;
+      const natural = greeting.scrollWidth;
+      if(!available || !natural || natural <= available) return;
+      const base = parseFloat(getComputedStyle(greeting).fontSize) || 38;
+      let fitted = Math.max(16, base * (available / natural) * 0.985);
+      greeting.style.fontSize = `${fitted}px`;
+      let guard = 0;
+      while(greeting.scrollWidth > greeting.clientWidth && fitted > 14 && guard < 12){
+        fitted -= 0.5;
+        greeting.style.fontSize = `${fitted}px`;
+        guard++;
+      }
+    });
+  }
+
   function updateHomeGreeting(){
     const greeting = document.getElementById('homeGreeting');
     const dateEl = document.getElementById('homeGreetingDate');
     const todayEl = document.getElementById('homeTodayDate');
     const name = (currentProfile && currentProfile.full_name ? currentProfile.full_name.trim() : '');
-    if(greeting) greeting.textContent = name ? `Welcome Back ${name}` : 'Welcome Back';
+    if(greeting){
+      greeting.textContent = name ? `Welcome Back ${name}` : 'Welcome Back';
+      fitHomeGreetingToLine();
+    }
     const now = new Date();
     const label = now.toLocaleDateString('en-GB', {weekday:'short', day:'2-digit', month:'short', year:'numeric'});
     if(dateEl) dateEl.textContent = label;
     if(todayEl) todayEl.textContent = label;
   }
+
+  window.addEventListener('resize', () => {
+    if(document.getElementById('view-home')?.classList.contains('active')) fitHomeGreetingToLine();
+  });
 
   function setHomeTrendPreset(preset, btn){
     const toEl = document.getElementById('trendTo');
@@ -10453,6 +10596,55 @@ for a competing inline style first.`;
   // result actually find its row (findTaskById checks this too), and lets a
   // saved edit refresh this same view instead of only the category log.
   let liftSearchRows = [];
+  let liftTraceToolsUserChoice = null;
+  let liftSearchSortMode = 'newest';
+
+  function setLiftTraceToolsOpen(open, remember=false){
+    const shell = document.getElementById('liftTraceToolsShell');
+    const toggle = document.getElementById('liftTraceToolsToggle');
+    if(!shell || !toggle) return;
+    shell.classList.toggle('is-open', !!open);
+    toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    if(remember) liftTraceToolsUserChoice = !!open;
+  }
+
+  function toggleLiftTraceTools(){
+    const shell = document.getElementById('liftTraceToolsShell');
+    if(!shell) return;
+    setLiftTraceToolsOpen(!shell.classList.contains('is-open'), true);
+  }
+
+  function ensureLiftTraceToolsDefault(){
+    const open = liftTraceToolsUserChoice == null ? window.innerWidth > 700 : liftTraceToolsUserChoice;
+    setLiftTraceToolsOpen(open, false);
+  }
+
+  function updateLiftTraceFilterBadge(){
+    const badge = document.getElementById('liftFilterCountBadge');
+    if(!badge) return;
+    const count = ['liftFilterCategory','liftFilterEngineer','liftFilterSection']
+      .map(id => document.getElementById(id)?.value || '')
+      .filter(Boolean).length;
+    badge.textContent = count ? `${count} applied` : '3 filters';
+  }
+
+  function clearLiftTraceFilters(){
+    ['liftFilterCategory','liftFilterEngineer','liftFilterSection'].forEach(id => {
+      const el = document.getElementById(id);
+      if(el) el.value = '';
+    });
+    updateLiftTraceFilterBadge();
+    applyLiftTraceFilters();
+  }
+
+  function setLiftSearchSort(mode){
+    liftSearchSortMode = mode === 'oldest' ? 'oldest' : 'newest';
+    applyLiftTraceFilters();
+  }
+
+  window.addEventListener('resize', () => {
+    if(liftTraceToolsUserChoice == null && document.getElementById('view-search')?.classList.contains('active')) ensureLiftTraceToolsDefault();
+  });
 
   // Home's search box is a separate element (homeSearchInput) from the
   // real Lift Trace tab's own input (liftSearchInput) — deliberately not
@@ -10474,9 +10666,10 @@ for a competing inline style first.`;
   async function runLiftSearch(){
     const term = document.getElementById('liftSearchInput').value.trim();
     const resultEl = document.getElementById('liftSearchResult');
-    if(!term){ resultEl.innerHTML = '<div class="placeholder-note">Enter a Lift ID, project name, or keyword above and click Trace.</div>'; return; }
+    if(!term){ resultEl.innerHTML = '<div class="placeholder-note">Enter a Lift ID, project name, engineer, task title or keyword above and click Search.</div>'; return; }
     resultEl.innerHTML = '<div class="placeholder-note">Searching…</div>';
-    document.getElementById('liftTraceFilters').style.display = 'none';
+    const toolsShell = document.getElementById('liftTraceToolsShell');
+    if(toolsShell) toolsShell.style.display = 'none';
 
     // Case-insensitive, partial match on either field — a strict exact match
     // on lift_id used to miss real entries over something as small as a typed
@@ -10527,7 +10720,9 @@ for a competing inline style first.`;
     document.getElementById('liftFilterEngineer').innerHTML = '<option value="">All engineers</option>' +
       [...engineersPresent.entries()].sort((a,b) => a[1].localeCompare(b[1])).map(([id, name]) => `<option value="${id}">${name}</option>`).join('');
     document.getElementById('liftFilterSection').value = '';
-    document.getElementById('liftTraceFilters').style.display = 'flex';
+    liftSearchSortMode = 'newest';
+    updateLiftTraceFilterBadge();
+    if(toolsShell){ toolsShell.style.display = 'block'; ensureLiftTraceToolsDefault(); }
 
     renderLiftTraceResults(data);
   }
@@ -10549,6 +10744,7 @@ for a competing inline style first.`;
       if(section && (r.details || {})['Discipline'] !== section) return false;
       return true;
     });
+    updateLiftTraceFilterBadge();
     renderLiftTraceResults(filtered);
   }
 
@@ -10558,81 +10754,94 @@ for a competing inline style first.`;
       resultEl.innerHTML = '<div class="placeholder-note">No entries match the selected filters.</div>';
       return;
     }
-    // Group by Lift ID — a project-name search can genuinely match several
-    // different lifts, so each distinct lift gets its own card + timeline
-    // rather than assuming (like the old code did) that every result shares
-    // one Lift ID. Grouping key is trimmed/lowercased so a Lift ID logged
-    // once with a stray trailing space doesn't get split into its own
-    // separate "lift" — the display still shows the original text as typed.
-    const groups = new Map();
-    for(const row of data){
-      const display = row.lift_id || '(no Lift ID)';
-      const key = display.trim().toLowerCase();
-      if(!groups.has(key)) groups.set(key, { display: display.trim(), rows: [] });
-      groups.get(key).rows.push(row);
-    }
 
-    resultEl.innerHTML = [...groups.values()].map(({ display: liftId, rows }) => {
-      const latest = rows[rows.length - 1];
-      const header = `
-        <div class="lift-header">
-          <div class="lift-id-row">
-            <div class="lift-id">#${liftId}</div>
-            <div class="status-chip">${catMeta[latest.category]?.name || latest.category} — most recent activity</div>
+    const rows = [...data].sort((a,b) => {
+      const diff = new Date(b.created_at) - new Date(a.created_at);
+      return liftSearchSortMode === 'oldest' ? -diff : diff;
+    });
+    const term = document.getElementById('liftSearchInput')?.value.trim() || '';
+    const liftSet = new Set(rows.filter(r => r.lift_id).map(r => String(r.lift_id).trim().toLowerCase()));
+    const engineerSet = new Set(rows.filter(r => r.employee_id).map(r => r.employee_id));
+    const categorySet = new Set(rows.map(r => r.category).filter(Boolean));
+    const statusForRow = (details) => details['Status'] || details['Solution Status'] || details['Acceptance Status'] || '';
+    const statusClassFor = (status) => {
+      const s = String(status || '').toLowerCase();
+      if(/blocked|not solved|rework|cancel/.test(s)) return 'bad';
+      if(/complete|completed|solved|accepted/.test(s)) return 'good';
+      if(/under review|review|observation/.test(s)) return 'review';
+      if(/in progress|progress|ongoing|open/.test(s)) return 'progress';
+      return '';
+    };
+
+    const rowsHtml = rows.map(row => {
+      const details = row.details || {};
+      const discipline = details['Discipline'] || '';
+      const status = statusForRow(details);
+      const emp = row.profiles ? displayName(row.profiles) : '—';
+      const date = new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+      const title = row.project_name || (row.lift_id ? `Lift ${row.lift_id}` : '(untitled)');
+      const subtypeKey = SUBTYPE_DETAILS_KEY[row.category];
+      const subtype = subtypeKey ? details[subtypeKey] : '';
+      const context = row.lift_id ? `Lift ${row.lift_id}` : (subtype || row.notes || 'R&I activity');
+      const fieldsHtml = Object.entries(details)
+        .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
+        .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${escapeHtml(k)}</span><span class="detail-v">${escapeHtml(Array.isArray(v) ? v.join(', ') : String(v))}</span></div>`)
+        .join('');
+      const hist = row.edit_history || [];
+      const historyHtml = hist.length
+        ? `<details style="margin-top:12px;">
+            <summary style="cursor:pointer; color:var(--text-faint); font-size:12px;">${hist.length} previous version${hist.length>1?'s':''}</summary>
+            <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
+              ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
+                <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${escapeHtml(h.by || 'someone')}</div>
+                <div>${escapeHtml(h.previous.project_name || '(untitled)')}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
+              </div>`).join('')}
+            </div>
+          </details>`
+        : '';
+      const canEdit = row.employee_id === currentUser?.id;
+      const accent = CATEGORY_COLOR_VAR[row.category] || 'var(--accent)';
+      return `<div class="t-card search-result-row" style="--search-accent:${accent};">
+        <div class="search-result-summary">
+          <div class="search-result-main">
+            <div class="search-result-tags">
+              <span class="tag c-${row.category}">${escapeHtml(catMeta[row.category]?.name || row.category)}</span>
+              ${discipline ? `<span class="search-discipline">${escapeHtml(discipline)}</span>` : ''}
+            </div>
+            <div class="search-result-title">${escapeHtml(title)}</div>
+            <div class="search-result-context">${escapeHtml(context)}</div>
           </div>
-          <div class="lift-project">${latest.project_name || ''}</div>
-        </div>`;
-
-      const timeline = `
-        <div class="block-head"><div class="block-title">Full timeline</div><div class="block-sub">${rows.length} entr${rows.length===1?'y':'ies'} across every category</div></div>
-        <div class="timeline">
-          ${rows.map((row,i) => {
-            const details = row.details || {};
-            const fieldsHtml = Object.entries(details)
-              .filter(([k,v]) => v !== '' && v !== null && !(Array.isArray(v) && v.length===0))
-              .map(([k,v]) => `<div class="detail-field"><span class="detail-k">${k}</span><span class="detail-v">${Array.isArray(v) ? v.join(', ') : v}</span></div>`)
-              .join('');
-            // Edit history is shown to everyone read-only — only the Edit
-            // button itself (further below) is restricted to whoever logged
-            // the entry. Showing who made each past change, not just that a
-            // change happened, so this stays meaningful to a non-owner too.
-            const hist = row.edit_history || [];
-            const historyHtml = hist.length
-              ? `<details style="margin-top:12px;">
-                  <summary style="cursor:pointer; color:var(--text-faint); font-size:12px;">${hist.length} previous version${hist.length>1?'s':''}</summary>
-                  <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
-                    ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
-                      <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${h.by || 'someone'}</div>
-                      <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
-                    </div>`).join('')}
-                  </div>
-                </details>`
-              : '';
-            const canEdit = row.employee_id === currentUser?.id;
-            return `
-            <div class="t-item">
-              <div class="t-dot ${TIMELINE_DOT_COLORS[i % TIMELINE_DOT_COLORS.length]}"></div>
-              <div class="t-card">
-                <div class="t-top"><div class="t-title">${row.project_name || '(untitled)'} <span class="tag c-${row.category}" style="margin-left:6px;">${catMeta[row.category]?.name || row.category}</span>${subLabelsHtml(row.details)}</div><div class="t-date">${new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</div></div>
-                <div class="t-desc">${row.notes || ''}</div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px; gap:10px;">
-                  <div class="t-emp">Logged by ${row.profiles ? displayName(row.profiles) : '—'}</div>
-                  <button class="btn view-details" style="padding:6px; font-size:11.5px; flex-shrink:0;" onclick="toggleSearchResultDetails(this)" title="View details" aria-label="View details"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
-                </div>
-                <div class="search-result-details" style="display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
-                  <div class="detail-grid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:6px 16px;">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12.5px;">No additional fields recorded.</span>'}</div>
-                  ${historyHtml}
-                  ${canEdit ? `<button class="btn edit" style="margin-top:12px; padding:6px; font-size:12px;" onclick="openEditTask('${row.id}')" title="Edit this entry" aria-label="Edit this entry"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>` : ''}
-                  ${(currentProfile?.role === 'superadmin' || canEdit) ? `<button class="btn remove" style="margin-top:12px; margin-left:6px; padding:6px; font-size:12px;" onclick="deleteTaskEntry('${row.id}')" title="Delete this entry" aria-label="Delete this entry"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : ''}
-                </div>
-              </div>
-            </div>`;
-          }).join('')}
-        </div>`;
-
-      return `<div style="margin-bottom:18px;">${header}${timeline}</div>`;
+          <div class="search-result-owner"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg><span>${escapeHtml(emp)}</span></div>
+          <div class="search-result-date"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></svg>${date}</div>
+          <span class="search-result-status ${statusClassFor(status)}">${status ? escapeHtml(status) : '—'}</span>
+          <button class="btn search-view-btn" onclick="toggleSearchResultDetails(this)" title="View details" aria-label="View details">View →</button>
+        </div>
+        <div class="search-result-details" style="display:none;">
+          <div class="detail-grid">${fieldsHtml || '<span style="color:var(--text-faint); font-size:12px;">No additional fields recorded.</span>'}</div>
+          ${historyHtml}
+          <div style="display:flex; gap:6px; margin-top:10px; flex-wrap:wrap;">
+            ${canEdit ? `<button class="btn edit" style="padding:6px; font-size:12px;" onclick="openEditTask('${row.id}')" title="Edit this entry" aria-label="Edit this entry"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>` : ''}
+            ${(currentProfile?.role === 'superadmin' || canEdit) ? `<button class="btn remove" style="padding:6px; font-size:12px;" onclick="deleteTaskEntry('${row.id}')" title="Delete this entry" aria-label="Delete this entry"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></button>` : ''}
+          </div>
+        </div>
+      </div>`;
     }).join('');
+
+    resultEl.innerHTML = `<div class="search-results-shell">
+      <div class="search-results-head">
+        <div>
+          <div class="search-results-title">Search results for “${escapeHtml(term)}”</div>
+          <div class="search-results-meta">${rows.length} ${rows.length===1?'activity':'activities'} · ${liftSet.size} ${liftSet.size===1?'lift':'lifts'} · ${engineerSet.size} ${engineerSet.size===1?'engineer':'engineers'} · ${categorySet.size} ${categorySet.size===1?'category':'categories'}</div>
+        </div>
+        <select class="search-sort" onchange="setLiftSearchSort(this.value)" aria-label="Sort search results">
+          <option value="newest" ${liftSearchSortMode==='newest'?'selected':''}>Newest first</option>
+          <option value="oldest" ${liftSearchSortMode==='oldest'?'selected':''}>Oldest first</option>
+        </select>
+      </div>
+      <div class="search-result-list">${rowsHtml}</div>
+    </div>`;
   }
+
  
   // ============ R&I DEVELOPMENT DASHBOARD (real data) ============
   let devPeople = []; // active profiles, for Lead select + Collaborator chips
