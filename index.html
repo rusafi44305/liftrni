@@ -3625,6 +3625,7 @@
     if(name === 'mytasks' && typeof renderTaskForm === 'function') renderTaskForm();
     if(name === 'profile' && typeof loadProfile === 'function') loadProfile();
     if(name === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
+    if(name === 'search' && typeof bindSearchSuggestionInputs === 'function') bindSearchSuggestionInputs();
     if(name === 'gantt' && typeof loadDevDashboard === 'function') loadDevDashboard();
     if(name === 'chat' && typeof loadChatMessages === 'function') loadChatMessages();
     if(name === 'notebook' && typeof loadNotebook === 'function') loadNotebook();
@@ -4015,7 +4016,7 @@
   // mapRows(rows, term) -> array of {main, sub, kind, value}, already
   // deduped/capped — kept separate from the query itself since the two
   // fetchers below need different matching/grouping logic on the result.
-  function attachSuggestions(inputEl, { buildQuery, mapRows, onPick, minChars = 2 }){
+  function attachSuggestions(inputEl, { buildQuery, mapRows, onPick, minChars = 2, debounceMs = 280 }){
     if(!inputEl || inputEl.dataset.suggestBound) return;
     inputEl.dataset.suggestBound = 'true';
     let debounceTimer = null, requestToken = 0, activeIndex = -1, items = [];
@@ -4075,7 +4076,7 @@
 
     inputEl.addEventListener('input', () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(runSearch, 280);
+      debounceTimer = setTimeout(runSearch, debounceMs);
     });
     inputEl.addEventListener('keydown', (e) => {
       if(panel.style.display !== 'block' || panel._owner !== inputEl) return;
@@ -4094,31 +4095,103 @@
     window.addEventListener('scroll', () => { if(panel._owner === inputEl) positionPanel(); }, true);
   }
 
-  // Search-bar suggestions: Lift ID and Project Name both, mixed. Term is
-  // escaped the same way runLiftSearch() already does, for the same
-  // reason (a literal comma would break PostgREST's .or() syntax).
-  function fetchSearchSuggestions(term){
-    const safeTerm = term.replace(/,/g, ' ').replace(/[%_]/g, '\\$&');
-    return sb.from('tasks')
-      .select('lift_id, project_name, category, created_at, profiles(full_name, nickname)')
-      .or(`lift_id.ilike.%${safeTerm}%,project_name.ilike.%${safeTerm}%`)
-      .order('created_at', { ascending: false })
-      .limit(40);
+  // Search-bar suggestions: shared session cache for Lift ID + Project Name.
+  // The universal Search & Trace matcher can search engineer identity, Remarks,
+  // Notes and every details value; autocomplete intentionally stays focused on
+  // reusable identifiers/names only. Engineer names are NOT suggested because
+  // Search & Trace already provides an Engineer filter.
+  let searchSuggestionCache = null;
+  let searchSuggestionCachePromise = null;
+  let searchSuggestionCacheLoadedAt = 0;
+  const SEARCH_SUGGESTION_CACHE_TTL = 5 * 60 * 1000;
+
+  function invalidateSearchSuggestionCache(){
+    searchSuggestionCache = null;
+    searchSuggestionCacheLoadedAt = 0;
   }
-  function mapSearchSuggestions(rows, term){
-    const q = term.toLowerCase();
-    const lifts = new Map(), projects = new Map();
-    rows.forEach(row => {
-      if(row.lift_id && row.lift_id.toLowerCase().includes(q) && !lifts.has(row.lift_id)){
-        lifts.set(row.lift_id, { kind: 'Lift ID', main: row.lift_id, value: row.lift_id,
-          sub: `${catMeta[row.category]?.name || row.category} · ${timeAgoShort(row.created_at)}` });
+
+  async function loadSearchSuggestionCache(force = false){
+    const fresh = searchSuggestionCache && (Date.now() - searchSuggestionCacheLoadedAt < SEARCH_SUGGESTION_CACHE_TTL);
+    if(!force && fresh) return searchSuggestionCache;
+    if(searchSuggestionCachePromise) return searchSuggestionCachePromise;
+
+    searchSuggestionCachePromise = (async () => {
+      const rows = [];
+      const PAGE_SIZE = 1000;
+      let page = 0;
+      while(true){
+        const { data, error } = await sb.from('tasks')
+          .select('lift_id, project_name, category, created_at, profiles(full_name, nickname)')
+          .order('created_at', { ascending: false })
+          .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        if(error) throw error;
+        rows.push(...(data || []));
+        if(!data || data.length < PAGE_SIZE) break;
+        page++;
       }
-      if(row.project_name && row.project_name.toLowerCase().includes(q) && !projects.has(row.project_name)){
-        projects.set(row.project_name, { kind: 'Project', main: row.project_name, value: row.project_name,
-          sub: row.profiles ? displayName(row.profiles) : '' });
-      }
-    });
-    return [...lifts.values()].slice(0, 5).concat([...projects.values()].slice(0, 4));
+
+      // Rows arrive newest first, so the first occurrence preserves the most
+      // recently logged context while collapsing repeated values in the DB.
+      const lifts = [];
+      const projects = [];
+      const seenLifts = new Set();
+      const seenProjects = new Set();
+      rows.forEach(row => {
+        const lift = String(row.lift_id || '').trim();
+        const project = String(row.project_name || '').trim();
+        if(lift){
+          const key = lift.toLowerCase();
+          if(!seenLifts.has(key)){
+            seenLifts.add(key);
+            lifts.push({
+              kind: 'Lift ID', main: lift, value: lift, search: key,
+              sub: `${catMeta[row.category]?.name || row.category} · ${timeAgoShort(row.created_at)}`
+            });
+          }
+        }
+        if(project){
+          const key = project.toLowerCase();
+          if(!seenProjects.has(key)){
+            seenProjects.add(key);
+            projects.push({
+              kind: 'Project', main: project, value: project, search: key,
+              sub: row.profiles ? displayName(row.profiles) : `${catMeta[row.category]?.name || row.category} · ${timeAgoShort(row.created_at)}`
+            });
+          }
+        }
+      });
+
+      searchSuggestionCache = { lifts, projects };
+      searchSuggestionCacheLoadedAt = Date.now();
+      return searchSuggestionCache;
+    })();
+
+    try{
+      return await searchSuggestionCachePromise;
+    } finally {
+      searchSuggestionCachePromise = null;
+    }
+  }
+
+  function warmSearchSuggestionCache(){
+    if(!currentUser) return;
+    loadSearchSuggestionCache().catch(err => console.warn('Search suggestion cache unavailable:', err));
+  }
+
+  async function fetchSearchSuggestions(term){
+    try{
+      const cache = await loadSearchSuggestionCache();
+      const q = String(term || '').trim().toLowerCase();
+      if(!q) return { data: [], error: null };
+      const data = cache.lifts.filter(it => it.search.includes(q)).slice(0, 5)
+        .concat(cache.projects.filter(it => it.search.includes(q)).slice(0, 4));
+      return { data, error: null };
+    } catch(error){
+      return { data: null, error };
+    }
+  }
+  function mapSearchSuggestions(rows){
+    return rows || [];
   }
 
   // Lift ID field (task-logging form) suggestions: Lift ID only, the
@@ -4168,27 +4241,28 @@
     return [...seen.values()].slice(0, 6);
   }
 
-  // Wiring: the 3 search boxes are static markup, present once at page
-  // load, so this only needs to run once. The task-logging form's Lift ID
-  // field is handled separately, at the end of renderTaskForm() — that
-  // form is rebuilt from scratch every time a category/type changes.
-  (function(){
+  // Wiring is intentionally idempotent. Besides the initial bind, Search
+  // calls this again whenever its tab opens so a replaced/re-rendered input can
+  // never lose autocomplete. attachSuggestions() itself guards against double
+  // binding with data-suggest-bound.
+  function bindSearchSuggestionInputs(){
     const home = document.getElementById('homeSearchInput');
     if(home) attachSuggestions(home, {
-      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions,
+      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions, debounceMs: 120,
       onPick: (it, el) => { el.value = it.value; traceFromHome(); }
     });
     const liftPage = document.getElementById('liftSearchInput');
     if(liftPage) attachSuggestions(liftPage, {
-      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions,
+      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions, debounceMs: 120,
       onPick: (it, el) => { el.value = it.value; runLiftSearch(); }
     });
     const quick = document.getElementById('catQuickSearchInput');
     if(quick) attachSuggestions(quick, {
-      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions,
+      buildQuery: fetchSearchSuggestions, mapRows: mapSearchSuggestions, debounceMs: 120,
       onPick: (it, el) => { el.value = it.value; submitCatQuickSearch(); }
     });
-  })();
+  }
+  bindSearchSuggestionInputs();
 
   function reqStar(f){ return f.req ? '<span class="required-star">*</span>' : ''; }
 
@@ -6251,6 +6325,11 @@
     loadHomeOverview();
     setDefaultTrendRange();
     loadActivityTrend();
+    // Warm the shared Lift ID / Project Name suggestion index in the
+    // background so Home and Search autocomplete are usually instant by the
+    // time the person starts typing. This is never awaited, so app boot is not
+    // blocked by the cache request.
+    setTimeout(() => warmSearchSuggestionCache(), 250);
     loadNotifications();
     checkDeadlineNotificationsClientSide();
     checkChatUnreadCount();
@@ -7467,6 +7546,7 @@
     if(!confirm('Delete this entry permanently? This cannot be undone.')) return;
     const { error } = await sb.from('tasks').delete().eq('id', id);
     if(error){ alert('Could not delete: ' + error.message); return; }
+    invalidateSearchSuggestionCache();
     scheduleHomeOverviewRefresh(0);
     // Refresh whichever view(s) currently show this entry.
     if(currentCatKey) showCategoryLog(currentCatKey);
@@ -7546,6 +7626,7 @@
     }).eq('id', editingTaskRow.id);
  
     if(error){ alert('Could not save changes: ' + error.message); return; }
+    invalidateSearchSuggestionCache();
     closeEditModal();
     scheduleHomeOverviewRefresh(0);
     // refresh whichever view we're looking at
@@ -8152,7 +8233,10 @@
   // those tables. Direct post-save refreshes below remain the immediate fallback
   // for the person performing the action in this browser.
   sb.channel('public:home-overview-stats')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => scheduleHomeOverviewRefresh())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+      scheduleHomeOverviewRefresh();
+      invalidateSearchSuggestionCache();
+    })
     .on('postgres_changes', { event: '*', schema: 'public', table: 'dev_projects' }, () => scheduleHomeOverviewRefresh())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => scheduleHomeOverviewRefresh())
     .subscribe();
@@ -8430,6 +8514,7 @@
         showFormPopup('Could not save: ' + error.message, 'error');
         return;
       }
+      invalidateSearchSuggestionCache();
       showFormPopup(`Successfully submitted ${payload.length} task${payload.length>1?'s':''} — ready for your next entry.`, 'success');
       queuedTasks = [];
       renderQueue();
