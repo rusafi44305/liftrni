@@ -2750,6 +2750,149 @@
     #view-admin #approvedUsersPanel td:last-child::before{ content:''; flex:1; }
   }
 </style>
+
+<style>
+  /* ============================================================
+     2026-10-11 — Compact Admin accordion workspace
+     Existing Admin functions/IDs are preserved. This only nests the
+     management sections inside the Management Tools cards and removes the
+     duplicate local sidebar from the visible layout.
+  ============================================================ */
+  #view-admin .admin-local-nav{ display:none !important; }
+  #view-admin .admin-center-layout{ display:block !important; }
+  #view-admin .admin-center-main{ width:100%; min-width:0; }
+
+  #view-admin .admin-tool-grid.admin-accordion{
+    display:flex !important; flex-direction:column; gap:9px; margin-bottom:18px;
+  }
+  #view-admin .admin-accordion-item{
+    border:1px solid var(--border); border-radius:15px; background:var(--surface);
+    overflow:hidden; box-shadow:0 3px 14px rgba(15,23,42,.035); transition:.18s ease;
+  }
+  #view-admin .admin-accordion-item.open{
+    border-color:color-mix(in srgb, var(--accent) 55%, var(--border));
+    box-shadow:0 8px 24px rgba(15,23,42,.07), 0 0 0 1px color-mix(in srgb, var(--accent) 10%, transparent);
+  }
+  #view-admin .admin-accordion-item > .admin-tool-card{
+    width:100%; border:0 !important; border-radius:0 !important; box-shadow:none !important;
+    background:transparent; padding:13px 15px; transform:none !important;
+  }
+  #view-admin .admin-accordion-item.open > .admin-tool-card{
+    background:linear-gradient(90deg, color-mix(in srgb, var(--accent) 6%, var(--surface)), var(--surface));
+  }
+  #view-admin .admin-accordion-item > .admin-tool-card:focus-visible{
+    outline:2px solid var(--accent); outline-offset:-2px;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] .admin-tool-icon{ color:var(--c-rni); background:color-mix(in srgb, var(--c-rni) 12%, var(--surface)); }
+  #view-admin .admin-accordion-item[data-admin-key="score"] .admin-tool-icon{ color:var(--green); background:color-mix(in srgb, var(--green) 12%, var(--surface)); }
+  #view-admin .admin-accordion-item[data-admin-key="category"] .admin-tool-icon{ color:var(--amber); background:color-mix(in srgb, var(--amber) 12%, var(--surface)); }
+  #view-admin .admin-accordion-item[data-admin-key="quick"] .admin-tool-icon{ color:var(--accent); background:var(--accent-dim); }
+  #view-admin .admin-accordion-item[data-admin-key="archive"] .admin-tool-icon{ color:var(--red); background:color-mix(in srgb, var(--red) 12%, var(--surface)); }
+  #view-admin .admin-accordion-item .admin-tool-arrow{
+    width:24px; height:24px; border-radius:50%; border:1px solid var(--border);
+    display:inline-flex; align-items:center; justify-content:center; font-size:15px;
+    transition:transform .18s ease, background .18s ease; flex:0 0 auto;
+  }
+  #view-admin .admin-accordion-item.open .admin-tool-arrow{
+    transform:rotate(180deg); background:var(--accent-dim); color:var(--accent);
+  }
+  #view-admin .admin-accordion-body{
+    display:none; border-top:1px solid var(--border); padding:14px;
+    background:color-mix(in srgb, var(--surface-alt) 28%, var(--surface));
+  }
+  #view-admin .admin-accordion-item.open > .admin-accordion-body{ display:block; }
+
+  #view-admin .admin-accordion-body > .admin-section-card,
+  #view-admin .admin-users-pane > .admin-section-card{
+    box-shadow:none; margin:0; border-radius:12px;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="score"] #kpiWeightsBlock > .block-head,
+  #view-admin .admin-accordion-item[data-admin-key="category"] #categoryLinksBlock > .block-head,
+  #view-admin .admin-accordion-item[data-admin-key="quick"] #quickLinksBlock > .block-head,
+  #view-admin .admin-accordion-item[data-admin-key="archive"] #dataArchiveBlock > .block-head{
+    display:none !important;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="score"] #kpiWeightsBlock,
+  #view-admin .admin-accordion-item[data-admin-key="category"] #categoryLinksBlock,
+  #view-admin .admin-accordion-item[data-admin-key="quick"] #quickLinksBlock,
+  #view-admin .admin-accordion-item[data-admin-key="archive"] #dataArchiveBlock{
+    border:0; background:transparent; box-shadow:none; overflow:visible;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="score"] #kpiWeightsPanel.open,
+  #view-admin .admin-accordion-item[data-admin-key="category"] #categoryLinksAdminPanel.open,
+  #view-admin .admin-accordion-item[data-admin-key="quick"] #quickLinksAdminPanel.open,
+  #view-admin .admin-accordion-item[data-admin-key="archive"] #dataArchivePanel.open{
+    border-top:0 !important; background:transparent !important;
+  }
+
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #customFieldsBlock{
+    border:0; box-shadow:none; background:transparent; overflow:visible; margin:0;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #customFieldsBlock > .block-head{
+    padding:0 0 11px; margin:0 0 10px; border-bottom:1px solid var(--border); justify-content:flex-end;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #customFieldsBlock > .block-head > div:first-child{ display:none; }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #customFieldsBlock > .block-head .btn-toggle{ display:none !important; }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #customFieldsPanel.open{
+    border-top:0 !important; background:transparent !important;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #fieldGuideBlock{
+    margin:12px 0 0; box-shadow:none; background:var(--surface); border-radius:12px;
+  }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #fieldGuideBlock .block-title{ font-size:13px; }
+  #view-admin .admin-accordion-item[data-admin-key="fields"] #fieldGuideBlock .block-sub{ font-size:10.5px; }
+
+  #view-admin .admin-users-tabs{
+    display:flex; gap:6px; margin-bottom:11px; overflow-x:auto; scrollbar-width:none;
+  }
+  #view-admin .admin-users-tabs::-webkit-scrollbar{ display:none; }
+  #view-admin .admin-users-tab{
+    border:1px solid var(--border); background:var(--surface); color:var(--text-dim);
+    border-radius:9px; padding:7px 11px; font:600 11.5px 'Inter'; cursor:pointer;
+    display:inline-flex; align-items:center; gap:6px; white-space:nowrap;
+  }
+  #view-admin .admin-users-tab.active{
+    color:var(--accent); border-color:color-mix(in srgb, var(--accent) 45%, var(--border));
+    background:var(--accent-dim);
+  }
+  #view-admin .admin-users-tab-badge{
+    min-width:18px; height:18px; padding:0 5px; border-radius:999px;
+    display:inline-flex; align-items:center; justify-content:center;
+    background:color-mix(in srgb, var(--red) 14%, var(--surface)); color:var(--red); font-size:9.5px;
+  }
+  #view-admin .admin-users-pane{ display:none; }
+  #view-admin .admin-users-pane.active{ display:block; }
+  #view-admin .admin-users-pane > .block-head{ display:none !important; }
+  #view-admin .admin-users-pane #pendingSigninsPanel{ margin:0 !important; box-shadow:none; border-radius:12px; }
+  #view-admin .admin-users-pane #approvedUsersPanel{
+    max-height:100000px !important; opacity:1 !important; border-top:0 !important; background:transparent !important;
+  }
+  #view-admin .admin-users-pane .admin-approved-section > .block-head{ display:none !important; }
+  #view-admin .admin-users-pane .role-grid{ margin:0 !important; }
+
+  @media (max-width:760px){
+    #view-admin .admin-hero{ margin-bottom:10px; }
+    #view-admin .admin-hero-actions{ gap:6px; }
+    #view-admin .admin-overview-grid{ margin-bottom:12px; }
+    #view-admin .admin-tools-title{ margin-top:2px; }
+    #view-admin .admin-accordion-item{ border-radius:13px; }
+    #view-admin .admin-accordion-item > .admin-tool-card{ padding:11px 12px; }
+    #view-admin .admin-tool-name{ font-size:12px; }
+    #view-admin .admin-tool-desc{ font-size:9.8px; line-height:1.25; }
+    #view-admin .admin-tool-icon{ width:34px; height:34px; }
+    #view-admin .admin-accordion-body{ padding:10px; }
+    #view-admin .admin-users-tabs{ margin-bottom:8px; }
+    #view-admin .admin-users-tab{ padding:6px 9px; font-size:10.5px; }
+    #view-admin .admin-accordion-item[data-admin-key="fields"] #customFieldsBlock > .block-head{
+      flex-direction:column; align-items:stretch; gap:8px;
+    }
+    #view-admin .admin-accordion-item[data-admin-key="fields"] #customFieldsBlock > .block-head > div:last-child{
+      width:100%; justify-content:flex-start;
+    }
+    #view-admin .admin-accordion-item[data-admin-key="archive"] #dataArchivePanel{ padding:8px !important; }
+  }
+</style>
+
 </head>
 <body>
  
@@ -10363,15 +10506,154 @@ for a competing inline style first.`;
   }
 
   // ============ REAL ADMIN PANEL ============
+  let adminAccordionInitialized = false;
+
+  function initAdminCompactAccordion(){
+    if(adminAccordionInitialized) return;
+    const view = document.getElementById('view-admin');
+    const grid = view?.querySelector('.admin-tool-grid');
+    if(!view || !grid) return;
+
+    const cards = [...grid.querySelectorAll(':scope > .admin-tool-card')];
+    const configs = [
+      { key:'users' }, { key:'fields' }, { key:'score' },
+      { key:'category' }, { key:'quick' }, { key:'archive' }
+    ];
+    if(cards.length < configs.length) return;
+
+    grid.classList.add('admin-accordion');
+    configs.forEach((cfg, index) => {
+      const card = cards[index];
+      const item = document.createElement('section');
+      item.className = 'admin-accordion-item';
+      item.dataset.adminKey = cfg.key;
+      const body = document.createElement('div');
+      body.className = 'admin-accordion-body';
+      body.id = `adminAccordionBody-${cfg.key}`;
+      card.type = 'button';
+      card.removeAttribute('onclick');
+      card.setAttribute('aria-expanded','false');
+      card.setAttribute('aria-controls', body.id);
+      card.addEventListener('click', () => toggleAdminWorkspace(cfg.key));
+      grid.insertBefore(item, card);
+      item.append(card, body);
+    });
+
+    const usersBody = document.getElementById('adminAccordionBody-users');
+    const pendingPanel = document.getElementById('pendingSigninsPanel');
+    const pendingHead = pendingPanel?.previousElementSibling;
+    const approvedPanel = document.getElementById('approvedUsersPanel');
+    const approvedCard = approvedPanel?.closest('.admin-section-card');
+    const roleGrid = view.querySelector('.role-grid');
+    const accessHead = roleGrid?.previousElementSibling;
+    if(usersBody && pendingPanel && approvedCard && roleGrid){
+      const tabs = document.createElement('div');
+      tabs.className = 'admin-users-tabs';
+      tabs.innerHTML = `
+        <button type="button" class="admin-users-tab active" data-admin-users-tab="pending" onclick="setAdminUsersTab('pending')">Pending sign-ins <span class="admin-users-tab-badge" id="adminUsersPendingBadge">0</span></button>
+        <button type="button" class="admin-users-tab" data-admin-users-tab="approved" onclick="setAdminUsersTab('approved')">Approved users</button>
+        <button type="button" class="admin-users-tab" data-admin-users-tab="access" onclick="setAdminUsersTab('access')">Access levels</button>`;
+      const pendingPane = document.createElement('div');
+      pendingPane.className = 'admin-users-pane active';
+      pendingPane.dataset.adminUsersPane = 'pending';
+      const approvedPane = document.createElement('div');
+      approvedPane.className = 'admin-users-pane';
+      approvedPane.dataset.adminUsersPane = 'approved';
+      const accessPane = document.createElement('div');
+      accessPane.className = 'admin-users-pane';
+      accessPane.dataset.adminUsersPane = 'access';
+      usersBody.append(tabs, pendingPane, approvedPane, accessPane);
+      if(pendingHead) pendingPane.appendChild(pendingHead);
+      pendingPane.appendChild(pendingPanel);
+      approvedCard.classList.add('admin-approved-section');
+      approvedPane.appendChild(approvedCard);
+      if(accessHead) accessPane.appendChild(accessHead);
+      accessPane.appendChild(roleGrid);
+      approvedPanel.classList.add('open');
+    }
+
+    const moveInto = (key, ids) => {
+      const body = document.getElementById(`adminAccordionBody-${key}`);
+      if(!body) return;
+      ids.forEach(id => {
+        const node = document.getElementById(id);
+        if(node) body.appendChild(node);
+      });
+    };
+    moveInto('fields', ['customFieldsBlock', 'fieldGuideBlock']);
+    moveInto('score', ['kpiWeightsBlock']);
+    moveInto('category', ['categoryLinksBlock']);
+    moveInto('quick', ['quickLinksBlock']);
+    moveInto('archive', ['dataArchiveBlock']);
+
+    adminAccordionInitialized = true;
+    toggleAdminWorkspace('users', true);
+  }
+
+  function setAdminUsersTab(tab){
+    document.querySelectorAll('#view-admin [data-admin-users-tab]').forEach(btn => btn.classList.toggle('active', btn.dataset.adminUsersTab === tab));
+    document.querySelectorAll('#view-admin [data-admin-users-pane]').forEach(pane => pane.classList.toggle('active', pane.dataset.adminUsersPane === tab));
+    if(tab === 'approved') document.getElementById('approvedUsersPanel')?.classList.add('open');
+  }
+
+  function prepareAdminWorkspace(key){
+    if(key === 'users'){
+      document.getElementById('approvedUsersPanel')?.classList.add('open');
+    } else if(key === 'fields'){
+      const panel = document.getElementById('customFieldsPanel');
+      if(panel){ panel.classList.add('open'); loadCustomFieldsPanel(); }
+    } else if(key === 'score'){
+      const panel = document.getElementById('kpiWeightsPanel');
+      if(panel){ panel.classList.add('open'); loadKpiWeights(); }
+    } else if(key === 'category'){
+      const panel = document.getElementById('categoryLinksAdminPanel');
+      if(panel){ panel.classList.add('open'); loadCategoryLinksAdminPanel(); }
+    } else if(key === 'quick'){
+      const panel = document.getElementById('quickLinksAdminPanel');
+      if(panel){ panel.classList.add('open'); loadQuickLinksAdminPanel(); }
+    } else if(key === 'archive'){
+      const panel = document.getElementById('dataArchivePanel');
+      if(panel){ panel.classList.add('open'); loadArchivesList(); }
+    }
+  }
+
+  function toggleAdminWorkspace(key, forceOpen=false){
+    initAdminCompactAccordion();
+    const item = document.querySelector(`#view-admin .admin-accordion-item[data-admin-key="${key}"]`);
+    if(!item) return;
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('#view-admin .admin-accordion-item').forEach(other => {
+      other.classList.remove('open');
+      other.querySelector(':scope > .admin-tool-card')?.setAttribute('aria-expanded','false');
+    });
+    if(wasOpen && !forceOpen) return;
+    item.classList.add('open');
+    item.querySelector(':scope > .admin-tool-card')?.setAttribute('aria-expanded','true');
+    prepareAdminWorkspace(key);
+  }
+
   function adminJumpTo(targetId){
-    const el = document.getElementById(targetId);
+    initAdminCompactAccordion();
+    const targetMap = {
+      pendingSigninsPanel:['users','pending'], approvedUsersPanel:['users','approved'],
+      customFieldsBlock:['fields'], fieldGuideBlock:['fields'], kpiWeightsBlock:['score'],
+      categoryLinksBlock:['category'], quickLinksBlock:['quick'], dataArchiveBlock:['archive']
+    };
+    const mapped = targetMap[targetId];
+    if(mapped){
+      toggleAdminWorkspace(mapped[0], true);
+      if(mapped[1]) setAdminUsersTab(mapped[1]);
+    }
+    const el = document.getElementById(targetId) || document.querySelector(`#view-admin .admin-accordion-item[data-admin-key="${mapped?.[0] || ''}"]`);
     if(!el) return;
-    el.scrollIntoView({ behavior:'smooth', block:'start' });
-    // Keep the target clear of the sticky app header / mobile Admin nav.
-    setTimeout(() => window.scrollBy({ top: -86, behavior:'smooth' }), 260);
+    setTimeout(() => {
+      el.scrollIntoView({ behavior:'smooth', block:'start' });
+      setTimeout(() => window.scrollBy({ top:-76, behavior:'smooth' }), 220);
+    }, 40);
   }
 
   async function loadAdminPanel(){
+    initAdminCompactAccordion();
     const { data: pending } = await sb.from('profiles').select('*').eq('status', 'pending');
     const { data: approved } = await sb.from('profiles').select('*').eq('status', 'active');
  
@@ -10381,6 +10663,7 @@ for a competing inline style first.`;
     setAdminMetric('adminActiveUsersStat', activeCountNum);
     setAdminMetric('adminPendingUsersStat', pendingCountNum);
     setAdminMetric('adminNavPendingCount', pendingCountNum);
+    setAdminMetric('adminUsersPendingBadge', pendingCountNum);
     setAdminMetric('adminCategoryCountStat', Object.keys(catMeta || {}).length || 6);
     const menuPending = document.getElementById('accountMenuPending');
     if(menuPending){
@@ -10458,6 +10741,8 @@ for a competing inline style first.`;
         <td data-label="Status"><span class="tag green">Active</span></td>
         <td data-label="Actions">${isSuperadmin ? `<button class="btn remove" style="padding:6px;" onclick="removeUser('${p.id}', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : '<span style="color:var(--text-faint); font-size:12px;">—</span>'}</td></tr>`).join('');
     }
+    const openAdminWorkspace = document.querySelector('#view-admin .admin-accordion-item.open')?.dataset.adminKey;
+    if(openAdminWorkspace) prepareAdminWorkspace(openAdminWorkspace);
   }
  
   async function approveUser(id){
