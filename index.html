@@ -10617,7 +10617,8 @@ for a competing inline style first.`;
     moveInto('archive', ['dataArchiveBlock']);
 
     adminAccordionInitialized = true;
-    toggleAdminWorkspace('users', true);
+    // Keep every Admin management section collapsed on first load.
+    // A Superadmin explicitly opens the section they want to manage.
   }
 
   function setAdminUsersTab(tab){
