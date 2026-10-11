@@ -2564,6 +2564,191 @@
     .tutorial-cards{grid-template-columns:1fr;}
   }
 
+
+
+  /* ============================================================
+     2026-10-11 — Admin Center modernization
+     Visual restructuring only: existing Supabase actions, permissions,
+     lazy-loaders, field management, archive flow and account controls
+     remain the same. New overview cards and navigation are presentation
+     helpers around the existing Admin sections.
+  ============================================================ */
+  #view-admin{ max-width:100%; }
+  #view-admin .admin-center-layout{
+    display:grid; grid-template-columns:220px minmax(0,1fr); gap:18px; align-items:start;
+  }
+  #view-admin .admin-local-nav{
+    position:sticky; top:82px; border:1px solid var(--border); border-radius:18px;
+    background:var(--surface); box-shadow:var(--shadow); padding:16px 12px;
+    min-width:0;
+  }
+  #view-admin .admin-local-title{
+    font-family:'Space Grotesk'; font-size:18px; font-weight:700; padding:2px 8px 4px;
+  }
+  #view-admin .admin-local-sub{ font-size:11.5px; color:var(--text-faint); padding:0 8px 12px; }
+  #view-admin .admin-nav-list{ display:flex; flex-direction:column; gap:5px; }
+  #view-admin .admin-nav-item{
+    width:100%; border:0; background:transparent; color:var(--text-dim); cursor:pointer;
+    display:flex; align-items:center; gap:10px; text-align:left; padding:9px 10px;
+    border-radius:10px; font:600 12.5px 'Inter'; transition:.16s ease;
+  }
+  #view-admin .admin-nav-item:hover{ background:var(--surface-alt); color:var(--text); }
+  #view-admin .admin-nav-item.primary{ background:var(--accent-dim); color:var(--accent); }
+  #view-admin .admin-nav-item svg{ width:16px; height:16px; flex:0 0 auto; }
+  #view-admin .admin-nav-count{
+    margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:999px;
+    display:inline-flex; align-items:center; justify-content:center; font-size:10.5px;
+    background:color-mix(in srgb, var(--amber) 18%, var(--surface)); color:var(--amber);
+  }
+  #view-admin .admin-center-main{ min-width:0; }
+  #view-admin .admin-hero{
+    display:flex; justify-content:space-between; gap:16px; align-items:flex-start;
+    background:linear-gradient(135deg, color-mix(in srgb, var(--accent) 8%, var(--surface)) 0%, var(--surface) 46%, color-mix(in srgb, var(--c-presales) 7%, var(--surface)) 100%);
+    border:1px solid var(--border); border-radius:18px; padding:20px 22px; box-shadow:var(--shadow); margin-bottom:14px;
+  }
+  #view-admin .admin-hero-eyebrow{ display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  #view-admin .admin-hero-title{ font-family:'Space Grotesk'; font-size:26px; line-height:1.1; font-weight:700; }
+  #view-admin .admin-hero-sub{ font-size:12.5px; color:var(--text-faint); margin-top:5px; line-height:1.45; }
+  #view-admin .admin-super-badge{
+    display:inline-flex; align-items:center; gap:5px; padding:4px 8px; border-radius:999px;
+    font-size:10.5px; font-weight:700; background:color-mix(in srgb, var(--amber) 18%, var(--surface)); color:var(--amber);
+  }
+  #view-admin .admin-hero-actions{ display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; }
+  #view-admin .admin-hero-action{
+    border:1px solid var(--border); background:var(--surface); color:var(--text-dim); cursor:pointer;
+    border-radius:10px; padding:8px 11px; font:600 11.5px 'Inter'; display:flex; gap:7px; align-items:center;
+  }
+  #view-admin .admin-hero-action.primary{ background:var(--accent); color:white; border-color:var(--accent); }
+  #view-admin .admin-overview-grid{
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; margin-bottom:14px;
+  }
+  #view-admin .admin-stat{
+    border:1px solid var(--border); border-radius:15px; background:var(--surface); padding:14px;
+    display:flex; align-items:center; gap:11px; min-width:0; box-shadow:var(--shadow);
+  }
+  #view-admin .admin-stat-icon{
+    width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  #view-admin .admin-stat-icon svg{ width:20px; height:20px; }
+  #view-admin .admin-stat[data-tone="blue"] .admin-stat-icon{ background:var(--accent-dim); color:var(--accent); }
+  #view-admin .admin-stat[data-tone="green"] .admin-stat-icon{ background:color-mix(in srgb, var(--green) 15%, var(--surface)); color:var(--green); }
+  #view-admin .admin-stat[data-tone="amber"] .admin-stat-icon{ background:color-mix(in srgb, var(--amber) 15%, var(--surface)); color:var(--amber); }
+  #view-admin .admin-stat[data-tone="purple"] .admin-stat-icon{ background:color-mix(in srgb, var(--c-rni) 15%, var(--surface)); color:var(--c-rni); }
+  #view-admin .admin-stat-value{ font-family:'Space Grotesk'; font-size:22px; line-height:1; font-weight:700; font-variant-numeric:tabular-nums; }
+  #view-admin .admin-stat-label{ font-size:11.5px; font-weight:700; margin-top:3px; }
+  #view-admin .admin-stat-sub{ font-size:10.5px; color:var(--text-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #view-admin .admin-tools-title{ font-family:'Space Grotesk'; font-size:16px; font-weight:700; margin:4px 0 8px; }
+  #view-admin .admin-tool-grid{
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; margin-bottom:16px;
+  }
+  #view-admin .admin-tool-card{
+    border:1px solid var(--border); background:var(--surface); color:var(--text); border-radius:14px; padding:12px;
+    cursor:pointer; display:flex; gap:10px; align-items:center; text-align:left; transition:.16s ease; min-width:0;
+  }
+  #view-admin .admin-tool-card:hover{ transform:translateY(-1px); border-color:color-mix(in srgb, var(--accent) 45%, var(--border)); box-shadow:var(--shadow); }
+  #view-admin .admin-tool-icon{
+    width:36px; height:36px; border-radius:11px; background:var(--surface-alt); color:var(--accent);
+    display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+  }
+  #view-admin .admin-tool-card:nth-child(2) .admin-tool-icon{ color:var(--c-rni); background:color-mix(in srgb, var(--c-rni) 12%, var(--surface)); }
+  #view-admin .admin-tool-card:nth-child(3) .admin-tool-icon{ color:var(--green); background:color-mix(in srgb, var(--green) 12%, var(--surface)); }
+  #view-admin .admin-tool-card:nth-child(4) .admin-tool-icon{ color:var(--amber); background:color-mix(in srgb, var(--amber) 12%, var(--surface)); }
+  #view-admin .admin-tool-card:nth-child(5) .admin-tool-icon{ color:var(--accent); background:var(--accent-dim); }
+  #view-admin .admin-tool-card:nth-child(6) .admin-tool-icon{ color:var(--red); background:color-mix(in srgb, var(--red) 12%, var(--surface)); }
+  #view-admin .admin-tool-icon svg{ width:18px; height:18px; }
+  #view-admin .admin-tool-name{ font-size:12.5px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #view-admin .admin-tool-desc{ font-size:10.5px; color:var(--text-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  #view-admin .admin-tool-arrow{ margin-left:auto; color:var(--text-faint); font-size:16px; }
+
+  /* Existing Admin sections inherit the new visual language without changing their behavior. */
+  #view-admin .admin-center-main > .block-head{
+    margin:18px 2px 8px; padding:0; align-items:center;
+  }
+  #view-admin .admin-center-main > .block-head .block-title{ font-size:16px; }
+  #view-admin .admin-section-card{
+    border-radius:15px; background:var(--surface); box-shadow:var(--shadow); margin-bottom:10px;
+  }
+  #view-admin .admin-section-card .block-head{ padding:13px 14px; align-items:center; }
+  #view-admin .admin-section-card .block-title{ font-size:15px; }
+  #view-admin .admin-section-card .block-sub{ margin-top:2px; line-height:1.4; }
+  #view-admin .admin-section-card .btn-toggle{
+    background:var(--surface-alt); color:var(--text-dim); border-color:var(--border) !important;
+    border-radius:9px; min-width:58px;
+  }
+  #view-admin .admin-section-card .admin-fold-panel.open{ background:color-mix(in srgb, var(--surface-alt) 32%, transparent) !important; }
+  #view-admin .role-grid{ gap:9px; margin-bottom:10px !important; }
+  #view-admin .role-card{ border-radius:14px; padding:14px; box-shadow:none; }
+  #view-admin .role-card:nth-child(1) .role-icon{ background:var(--surface-alt) !important; color:var(--text-dim) !important; }
+  #view-admin .role-card:nth-child(2) .role-icon{ background:var(--accent-dim) !important; color:var(--accent) !important; }
+  #view-admin .role-card:nth-child(3) .role-icon{ background:color-mix(in srgb, var(--amber) 18%, var(--surface)) !important; color:var(--amber) !important; }
+  #view-admin #pendingSigninsPanel{
+    border:1px solid var(--border); border-radius:15px; background:var(--surface); box-shadow:var(--shadow);
+    padding:5px 14px !important; margin-bottom:10px !important;
+  }
+  #view-admin .approve-row{ padding:12px 3px; }
+  #view-admin #approvedUsersPanel{ padding:4px 14px 12px !important; }
+  #view-admin #approvedUsersPanel table.data{ margin:0; }
+  #view-admin #approvedUsersPanel th{ font-size:10.5px; }
+  #view-admin #approvedUsersPanel td{ font-size:12px; }
+
+  @media (max-width: 1080px){
+    #view-admin .admin-center-layout{ grid-template-columns:190px minmax(0,1fr); gap:12px; }
+    #view-admin .admin-overview-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+    #view-admin .admin-tool-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media (max-width: 760px){
+    #view-admin .admin-center-layout{ display:block; }
+    #view-admin .admin-local-nav{
+      position:sticky; top:50px; z-index:18; padding:7px; margin-bottom:10px; border-radius:13px;
+      overflow-x:auto; scrollbar-width:none; white-space:nowrap;
+    }
+    #view-admin .admin-local-nav::-webkit-scrollbar{ display:none; }
+    #view-admin .admin-local-title, #view-admin .admin-local-sub{ display:none; }
+    #view-admin .admin-nav-list{ flex-direction:row; gap:5px; width:max-content; }
+    #view-admin .admin-nav-item{ width:auto; padding:7px 9px; font-size:11px; }
+    #view-admin .admin-nav-item svg{ width:14px; height:14px; }
+    #view-admin .admin-nav-count{ height:18px; min-width:18px; font-size:9.5px; }
+    #view-admin .admin-hero{ padding:15px; border-radius:15px; flex-direction:column; }
+    #view-admin .admin-hero-title{ font-size:21px; }
+    #view-admin .admin-hero-sub{ font-size:11.5px; }
+    #view-admin .admin-hero-actions{ width:100%; justify-content:flex-start; }
+    #view-admin .admin-hero-action{ flex:1 1 auto; justify-content:center; }
+    #view-admin .admin-overview-grid{ grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    #view-admin .admin-stat{ padding:10px; gap:8px; border-radius:13px; }
+    #view-admin .admin-stat-icon{ width:34px; height:34px; border-radius:10px; }
+    #view-admin .admin-stat-icon svg{ width:17px; height:17px; }
+    #view-admin .admin-stat-value{ font-size:18px; }
+    #view-admin .admin-stat-label{ font-size:10.5px; }
+    #view-admin .admin-stat-sub{ font-size:9.5px; }
+    #view-admin .admin-tool-grid{ grid-template-columns:1fr; gap:7px; }
+    #view-admin .admin-tool-card{ padding:10px 11px; }
+    #view-admin .admin-tool-desc{ white-space:normal; line-height:1.3; }
+    #view-admin .admin-center-main > .block-head{ margin-top:14px; }
+    #view-admin .admin-section-card .block-head{ align-items:flex-start; gap:8px; }
+    #view-admin .admin-section-card .block-head > *:last-child:not(:only-child){ margin-left:0; }
+    #view-admin .admin-section-card .block-head > div:last-child[style*="display:flex"]{ width:100%; }
+    #view-admin .admin-section-card .btn-toggle{ margin-left:auto !important; }
+    #view-admin .role-grid{ grid-template-columns:1fr; }
+    #view-admin #approvedUsersPanel{ padding:3px 9px 10px !important; }
+    #view-admin #approvedUsersPanel > div{ overflow:visible !important; }
+    #view-admin #approvedUsersPanel table,
+    #view-admin #approvedUsersPanel tbody,
+    #view-admin #approvedUsersPanel tr,
+    #view-admin #approvedUsersPanel td{ display:block; width:100%; }
+    #view-admin #approvedUsersPanel thead{ display:none; }
+    #view-admin #approvedUsersPanel tr{
+      border:1px solid var(--border); background:var(--surface); border-radius:12px; padding:9px 10px; margin:7px 0;
+    }
+    #view-admin #approvedUsersPanel td{
+      border:0; padding:4px 0; display:flex; align-items:center; justify-content:space-between; gap:12px; text-align:right;
+    }
+    #view-admin #approvedUsersPanel td::before{
+      content:attr(data-label); color:var(--text-faint); font-size:10px; font-weight:600; text-align:left; flex:0 0 72px;
+    }
+    #view-admin #approvedUsersPanel td:first-child{ font-size:12.5px; font-weight:700; }
+    #view-admin #approvedUsersPanel td:last-child{ justify-content:flex-end; padding-top:7px; border-top:1px solid var(--border); margin-top:4px; }
+    #view-admin #approvedUsersPanel td:last-child::before{ content:''; flex:1; }
+  }
 </style>
 </head>
 <body>
@@ -3783,7 +3968,52 @@
  
   <!-- ============ ADMIN ============ -->
   <div class="view" id="view-admin">
-    <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
+    <div class="admin-center-layout">
+      <aside class="admin-local-nav" aria-label="Admin sections">
+        <div class="admin-local-title">Admin Panel</div>
+        <div class="admin-local-sub">Manage your R&amp;I system</div>
+        <div class="admin-nav-list">
+          <button class="admin-nav-item primary" onclick="adminJumpTo('adminCenterTop')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 13h6V4H4zM14 20h6V11h-6zM4 20h6v-3H4zM14 7h6V4h-6z"/></svg>Admin Center</button>
+          <button class="admin-nav-item" onclick="adminJumpTo('pendingSigninsPanel')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>Users &amp; Permissions <span class="admin-nav-count" id="adminNavPendingCount">0</span></button>
+          <button class="admin-nav-item" onclick="adminJumpTo('customFieldsBlock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5M2 16l10 5 10-5"/></svg>Task Fields</button>
+          <button class="admin-nav-item" onclick="adminJumpTo('kpiWeightsBlock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></svg>Score Settings</button>
+          <button class="admin-nav-item" onclick="adminJumpTo('categoryLinksBlock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg>Category Links</button>
+          <button class="admin-nav-item" onclick="adminJumpTo('quickLinksBlock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1a1.7 1.7 0 0 0 1.9.3A1.7 1.7 0 0 0 10 3h4a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9A1.7 1.7 0 0 0 21 10v4a1.7 1.7 0 0 0-1.6 1Z"/></svg>Quick Links</button>
+          <button class="admin-nav-item" onclick="adminJumpTo('dataArchiveBlock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>Data Archive</button>
+          <button class="admin-nav-item" onclick="adminJumpTo('fieldGuideBlock')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4v15.5A2.5 2.5 0 0 0 6.5 22H20V4Z"/><path d="M8 8h8M8 12h6"/></svg>Field Guide</button>
+        </div>
+      </aside>
+      <div class="admin-center-main" id="adminCenterTop">
+        <div class="admin-hero">
+          <div>
+            <div class="admin-hero-eyebrow"><span class="admin-super-badge">♛ Superadmin only</span></div>
+            <div class="admin-hero-title">Admin Center</div>
+            <div class="admin-hero-sub">Control users, task fields, scoring, links and data maintenance from one focused workspace.</div>
+          </div>
+          <div class="admin-hero-actions">
+            <button class="admin-hero-action" onclick="adminJumpTo('pendingSigninsPanel')">Review sign-ins</button>
+            <button class="admin-hero-action primary" onclick="adminJumpTo('customFieldsBlock')">Task fields</button>
+          </div>
+        </div>
+
+        <div class="admin-overview-grid" aria-label="Admin overview">
+          <div class="admin-stat" data-tone="blue"><div class="admin-stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg></div><div><div class="admin-stat-value" id="adminActiveUsersStat">—</div><div class="admin-stat-label">Active accounts</div><div class="admin-stat-sub">Approved team members</div></div></div>
+          <div class="admin-stat" data-tone="amber"><div class="admin-stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div><div class="admin-stat-value" id="adminPendingUsersStat">—</div><div class="admin-stat-label">Pending sign-ins</div><div class="admin-stat-sub">Awaiting review</div></div></div>
+          <div class="admin-stat" data-tone="purple"><div class="admin-stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5M2 16l10 5 10-5"/></svg></div><div><div class="admin-stat-value" id="adminCategoryCountStat">6</div><div class="admin-stat-label">Task categories</div><div class="admin-stat-sub">Core R&amp;I workflow</div></div></div>
+          <div class="admin-stat" data-tone="green"><div class="admin-stat-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></div><div><div class="admin-stat-value">3</div><div class="admin-stat-label">Access roles</div><div class="admin-stat-sub">Engineer · Admin · Superadmin</div></div></div>
+        </div>
+
+        <div class="admin-tools-title">Management tools</div>
+        <div class="admin-tool-grid">
+          <button class="admin-tool-card" onclick="adminJumpTo('pendingSigninsPanel')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span><span><div class="admin-tool-name">Users &amp; Permissions</div><div class="admin-tool-desc">Approve sign-ins, roles and disciplines</div></span><span class="admin-tool-arrow">›</span></button>
+          <button class="admin-tool-card" onclick="adminJumpTo('customFieldsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5M2 16l10 5 10-5"/></svg></span><span><div class="admin-tool-name">Task Fields</div><div class="admin-tool-desc">Manage built-in mirrors and custom fields</div></span><span class="admin-tool-arrow">›</span></button>
+          <button class="admin-tool-card" onclick="adminJumpTo('kpiWeightsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></svg></span><span><div class="admin-tool-name">Score Settings</div><div class="admin-tool-desc">Weights, targets and visibility controls</div></span><span class="admin-tool-arrow">›</span></button>
+          <button class="admin-tool-card" onclick="adminJumpTo('categoryLinksBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></span><span><div class="admin-tool-name">Category Links</div><div class="admin-tool-desc">Links shown inside task-entry categories</div></span><span class="admin-tool-arrow">›</span></button>
+          <button class="admin-tool-card" onclick="adminJumpTo('quickLinksBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></span><span><div class="admin-tool-name">Quick Links</div><div class="admin-tool-desc">Homepage/account shortcut links and ordering</div></span><span class="admin-tool-arrow">›</span></button>
+          <button class="admin-tool-card" onclick="adminJumpTo('dataArchiveBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span><span><div class="admin-tool-name">Data Archive</div><div class="admin-tool-desc">Backup old periods and manage archives</div></span><span class="admin-tool-arrow">›</span></button>
+        </div>
+
+        <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
     <div class="role-grid" style="margin-bottom:14px;">
       <div class="role-card">
         <div class="role-icon" style="background:var(--surface-alt); color:var(--text-dim);">U</div>
@@ -3927,16 +4157,13 @@
       <div style="overflow-x:auto;">
       <table class="data">
         <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Discipline</th><th>Status</th><th></th></tr></thead>
-        <tbody>
-          <tr><td class="rank-name">Hakim (57913)</td><td class="mono" style="font-size:12px;">hakim@gmail.com</td><td><span class="tag gray">Engineer</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" style="padding:6px;" onclick="removeUser('Hakim (57913)', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></td></tr>
-          <tr><td class="rank-name">Iftekhar (44154)</td><td class="mono" style="font-size:12px;">iftekhar@gmail.com</td><td><span class="tag gray">Engineer</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" style="padding:6px;" onclick="removeUser('Iftekhar (44154)', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></td></tr>
-          <tr><td class="rank-name">Mahabub (58150)</td><td class="mono" style="font-size:12px;">mahabub@gmail.com</td><td><span class="tag blue">Admin</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" style="padding:6px;" onclick="removeUser('Mahabub (58150)', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></td></tr>
-          <tr><td class="rank-name">Arun (66636)</td><td class="mono" style="font-size:12px;">arun@gmail.com</td><td><span class="tag gold">Superadmin</span></td><td><span class="tag gray">Mechanical</span></td><td><span class="tag green">Active</span></td><td><button class="btn remove" style="padding:6px;" onclick="removeUser('Arun (66636)', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button></td></tr>
-        </tbody>
+        <tbody><tr><td colspan="6"><div class="placeholder-note">Loading…</div></td></tr></tbody>
       </table>
       </div>
     </div>
     </div>
+      </div><!-- /admin-center-main -->
+    </div><!-- /admin-center-layout -->
   </div>
  
 </main>
@@ -6516,6 +6743,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-11', summary:'Admin Center visually modernized and made mobile-first without changing its existing Supabase behavior: added a responsive local Admin navigator, live overview counts from the same profile queries, management shortcut cards, refreshed role/section styling, and card-style approved-user rows on mobile. Existing approvals, role/discipline updates, Score settings, Task Fields, Category Links, Quick Links, Data Archive, lazy loading and permissions remain intact.' },
     { date:'2026-10-05', summary:'Projects tab redesigned as a professional colorful portfolio: compact KPI cards, collapsible filters/export, full-width project cards with icon actions and functional progress tracks, plus a two-column Overview/Briefing + Task Timeline detail view. Home Welcome Back typography restored to the same large size as the user name while retaining single-line auto-fit.' },
     { date:'2026-10-05', summary:'Projects follow-up: restored the earlier header-zone progress treatment with percentage beside the project name, fixed action-icon containment, and returned expanded project details to a vertical Overview/Project Briefing followed by a full-width Gantt timeline.' },
     { date:'2026-10-05', summary:'Dashboard performance optimization: all-time overview tasks now use a lean short-lived cache, date/engineer/section filters and 30-day trend comparisons run locally from that snapshot, support lookups load in parallel, edit history is fetched only for an inspected engineer, and autocomplete cache warming waits for browser idle time. Home greeting typography also separates subtitle-sized Welcome Back from the existing large single-line user name.' },
@@ -10135,11 +10363,25 @@ for a competing inline style first.`;
   }
 
   // ============ REAL ADMIN PANEL ============
+  function adminJumpTo(targetId){
+    const el = document.getElementById(targetId);
+    if(!el) return;
+    el.scrollIntoView({ behavior:'smooth', block:'start' });
+    // Keep the target clear of the sticky app header / mobile Admin nav.
+    setTimeout(() => window.scrollBy({ top: -86, behavior:'smooth' }), 260);
+  }
+
   async function loadAdminPanel(){
     const { data: pending } = await sb.from('profiles').select('*').eq('status', 'pending');
     const { data: approved } = await sb.from('profiles').select('*').eq('status', 'active');
  
+    const activeCountNum = (approved||[]).length;
     const pendingCountNum = (pending||[]).length;
+    const setAdminMetric = (id, value) => { const el = document.getElementById(id); if(el) el.textContent = value; };
+    setAdminMetric('adminActiveUsersStat', activeCountNum);
+    setAdminMetric('adminPendingUsersStat', pendingCountNum);
+    setAdminMetric('adminNavPendingCount', pendingCountNum);
+    setAdminMetric('adminCategoryCountStat', Object.keys(catMeta || {}).length || 6);
     const menuPending = document.getElementById('accountMenuPending');
     if(menuPending){
       menuPending.style.display = pendingCountNum ? 'flex' : 'none';
@@ -10208,13 +10450,13 @@ for a competing inline style first.`;
     const tbody = document.querySelector('#view-admin table.data tbody');
     if(tbody){
       tbody.innerHTML = (approved||[]).map(p => `
-        <tr><td class="rank-name">${p.full_name||p.email} ${p.nickname ? '('+p.nickname+')' : ''}</td><td class="mono" style="font-size:12px;">${p.email}</td>
-        <td><span class="tag ${p.role==='superadmin'?'gold':p.role==='admin'?'blue':'gray'}">${p.role}</span></td>
-        <td>${isSuperadmin
+        <tr><td class="rank-name" data-label="Name">${p.full_name||p.email} ${p.nickname ? '('+p.nickname+')' : ''}</td><td class="mono" data-label="Email" style="font-size:12px;">${p.email}</td>
+        <td data-label="Role"><span class="tag ${p.role==='superadmin'?'gold':p.role==='admin'?'blue':'gray'}">${p.role}</span></td>
+        <td data-label="Discipline">${isSuperadmin
           ? `<select class="role-select" style="font-size:11.5px; padding:3px 6px;" onchange="updateUserDiscipline('${p.id}', this.value)"><option value="mechanical" ${p.discipline==='mechanical'?'selected':''}>Mechanical</option><option value="electrical" ${p.discipline==='electrical'?'selected':''}>Electrical</option></select>`
           : `<span class="tag gray">${p.discipline === 'electrical' ? 'Electrical' : 'Mechanical'}</span>`}</td>
-        <td><span class="tag green">Active</span></td>
-        <td>${isSuperadmin ? `<button class="btn remove" style="padding:6px;" onclick="removeUser('${p.id}', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : '<span style="color:var(--text-faint); font-size:12px;">—</span>'}</td></tr>`).join('');
+        <td data-label="Status"><span class="tag green">Active</span></td>
+        <td data-label="Actions">${isSuperadmin ? `<button class="btn remove" style="padding:6px;" onclick="removeUser('${p.id}', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : '<span style="color:var(--text-faint); font-size:12px;">—</span>'}</td></tr>`).join('');
     }
   }
  
