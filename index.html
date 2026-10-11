@@ -2893,6 +2893,39 @@
   }
 </style>
 
+<style>
+  /* 2026-10-11 — Mobile-only spacing fixes for Admin summary cards and Dashboard KPI loading state. */
+  @media (max-width: 760px){
+    #view-admin .admin-stat > div:last-child{
+      min-width:0;
+      flex:1 1 auto;
+      max-width:100%;
+    }
+    #view-admin .admin-stat-sub{
+      white-space:normal;
+      overflow:visible;
+      text-overflow:clip;
+      overflow-wrap:anywhere;
+      line-height:1.28;
+      padding-right:1px;
+    }
+  }
+
+  @media (max-width: 700px){
+    #view-dashboard .dash-kpi-card{
+      padding:10px 9px 15px !important;
+    }
+    #view-dashboard .dash-kpi-trend-line{
+      min-height:27px;
+      margin-top:7px;
+      margin-bottom:2px;
+      align-content:center;
+    }
+    #view-dashboard .dash-trend-caption{
+      line-height:1.25;
+    }
+  }
+</style>
 </head>
 <body>
  
