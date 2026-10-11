@@ -2926,6 +2926,99 @@
     }
   }
 </style>
+
+<style id="chatPresenceStyles">
+/* 2026-10-11: Team Chat presence + last-active layout. Visual-only shell around
+   the existing shared chat; message IDs/actions remain unchanged. */
+#view-chat .chat-shell{
+  display:grid;
+  grid-template-columns:minmax(250px, 30%) minmax(0, 1fr);
+  gap:12px;
+  min-height:560px;
+  height:66vh;
+  max-height:700px;
+}
+#view-chat .chat-status-panel,
+#view-chat .chat-conversation-panel{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:18px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+  min-width:0;
+}
+#view-chat .chat-status-panel{ display:flex; flex-direction:column; }
+#view-chat .chat-status-head{ padding:15px 15px 10px; flex-shrink:0; }
+#view-chat .chat-status-title{ font-size:17px; font-weight:760; color:var(--text); letter-spacing:-.02em; }
+#view-chat .chat-status-sub{ margin-top:3px; font-size:11px; color:var(--text-faint); }
+#view-chat .chat-people-search-wrap{ position:relative; margin-top:11px; }
+#view-chat .chat-people-search{
+  width:100%; border:1px solid var(--border); border-radius:11px; background:var(--surface-alt);
+  color:var(--text); padding:9px 10px 9px 33px; font-size:12px; outline:none;
+}
+#view-chat .chat-people-search:focus{ border-color:var(--accent); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent); }
+#view-chat .chat-people-search-icon{ position:absolute; left:11px; top:50%; transform:translateY(-50%); color:var(--text-faint); pointer-events:none; }
+#view-chat .chat-presence-tabs{ display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-top:9px; }
+#view-chat .chat-presence-tab{
+  border:0; background:transparent; color:var(--text-dim); border-radius:9px; padding:7px 5px;
+  font-size:10.5px; font-weight:700; cursor:pointer; white-space:nowrap;
+}
+#view-chat .chat-presence-tab.active{ background:color-mix(in srgb, var(--accent) 12%, var(--surface)); color:var(--accent); }
+#view-chat .chat-presence-count{ display:inline-flex; min-width:20px; height:18px; align-items:center; justify-content:center; border-radius:999px; margin-left:4px; background:var(--surface-alt); font-size:9px; }
+#view-chat .chat-presence-tab.active .chat-presence-count{ background:var(--accent); color:#fff; }
+#view-chat .chat-people-list{ overflow-y:auto; padding:2px 8px 10px; flex:1; min-height:0; }
+#view-chat .chat-person-row{
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:9px;
+  padding:9px 8px; border-radius:11px; min-width:0;
+}
+#view-chat .chat-person-row + .chat-person-row{ border-top:1px solid color-mix(in srgb, var(--border) 70%, transparent); }
+#view-chat .chat-person-row:hover{ background:var(--surface-alt); }
+#view-chat .chat-person-avatar-wrap{ position:relative; width:36px; height:36px; flex-shrink:0; }
+#view-chat .chat-person-avatar{ width:36px; height:36px; border-radius:50%; object-fit:cover; display:block; }
+#view-chat .chat-person-fallback{ width:36px; height:36px; border-radius:50%; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:750; }
+#view-chat .chat-person-online-badge{ position:absolute; right:-1px; bottom:0; width:10px; height:10px; border-radius:50%; background:#18a765; border:2px solid var(--surface); }
+#view-chat .chat-person-main{ min-width:0; }
+#view-chat .chat-person-name{ color:var(--text); font-size:11.5px; font-weight:720; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#view-chat .chat-person-meta{ color:var(--text-faint); font-size:9.5px; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#view-chat .chat-person-status{ display:flex; align-items:center; gap:5px; color:var(--text-faint); font-size:9.5px; text-align:right; white-space:nowrap; }
+#view-chat .chat-online-dot{ width:7px; height:7px; border-radius:50%; background:#18a765; flex:0 0 auto; box-shadow:0 0 0 2px color-mix(in srgb, #18a765 12%, transparent); }
+#view-chat .chat-offline-dot{ width:7px; height:7px; border-radius:50%; background:var(--text-faint); opacity:.55; flex:0 0 auto; }
+#view-chat .chat-conversation-panel{ padding:0; display:flex; flex-direction:column; min-height:0; }
+#view-chat .chat-conversation-head{
+  min-height:66px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border-bottom:1px solid var(--border); flex-shrink:0; background:color-mix(in srgb, var(--surface) 94%, var(--accent) 6%);
+}
+#view-chat .chat-conversation-title{ display:flex; align-items:center; gap:10px; min-width:0; }
+#view-chat .chat-conversation-icon{ width:34px; height:34px; border-radius:11px; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, var(--accent) 14%, var(--surface)); color:var(--accent); flex-shrink:0; }
+#view-chat .chat-conversation-name{ font-size:16px; font-weight:760; color:var(--text); }
+#view-chat .chat-conversation-summary{ font-size:10.5px; color:var(--text-faint); margin-top:2px; }
+#view-chat #chatMessages{ min-height:0; }
+#view-chat .chat-composer{ position:relative; border-top:1px solid var(--border); padding:11px 13px; flex-shrink:0; background:var(--surface); }
+#view-chat .chat-composer-row{ display:flex; gap:8px; align-items:flex-end; }
+#view-chat #chatInput{ min-width:0; }
+#view-chat .chat-send-icon{ width:42px; height:42px; min-width:42px; padding:0 !important; display:inline-flex; align-items:center; justify-content:center; border-radius:12px !important; }
+#view-chat .chat-empty-people{ padding:18px 10px; color:var(--text-faint); font-size:11px; text-align:center; }
+#view-chat .chat-presence-setup-note{ margin:0 10px 9px; padding:8px 9px; border-radius:9px; background:color-mix(in srgb, var(--amber) 10%, var(--surface)); color:var(--text-dim); font-size:9.5px; line-height:1.35; }
+@media (max-width:760px){
+  #view-chat{ padding-bottom:8px; }
+  #view-chat .chat-shell{ grid-template-columns:1fr; height:auto; max-height:none; min-height:0; gap:10px; }
+  #view-chat .chat-status-panel{ max-height:48vh; min-height:310px; border-radius:16px; }
+  #view-chat .chat-conversation-panel{ height:58vh; min-height:430px; border-radius:16px; }
+  #view-chat .chat-status-head{ padding:12px 12px 8px; }
+  #view-chat .chat-status-title{ font-size:16px; }
+  #view-chat .chat-status-sub{ font-size:10px; }
+  #view-chat .chat-person-row{ padding:8px 6px; gap:8px; }
+  #view-chat .chat-person-status{ font-size:9px; }
+  #view-chat .chat-conversation-head{ min-height:58px; padding:10px 12px; }
+  #view-chat .chat-conversation-name{ font-size:15px; }
+  #view-chat #chatMessages{ padding:13px 11px !important; gap:11px !important; }
+  #view-chat .chat-msg{ max-width:90% !important; }
+  #view-chat .chat-composer{ padding:9px; }
+  #view-chat #chatInput{ padding:9px 10px !important; font-size:12.5px !important; }
+  #view-chat .chat-send-icon{ width:39px; height:39px; min-width:39px; }
+}
+</style>
+
 </head>
 <body>
  
@@ -3707,21 +3800,41 @@
 
   <!-- ============ TEAM CHAT ============ -->
   <div class="view" id="view-chat">
-    <div class="block-head">
-      <div><div class="block-title">Team Chat</div><div class="block-sub">One shared conversation — everyone approved is already in it. Type @ to mention someone.</div></div>
-    </div>
-    <div class="panel" style="padding:0; display:flex; flex-direction:column; height:62vh; max-height:640px; overflow:hidden;">
-      <div id="chatMessages" style="flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px;">
-        <div class="placeholder-note">Loading…</div>
-      </div>
-      <div style="position:relative; border-top:1px solid var(--border); padding:12px 16px; flex-shrink:0;">
-        <div id="chatMentionDropdown" style="display:none; position:absolute; bottom:100%; left:16px; right:16px; margin-bottom:6px; background:var(--surface); border:1.5px solid var(--border); border-radius:10px; max-height:200px; overflow-y:auto; box-shadow:0 -8px 20px rgba(0,0,0,0.2); z-index:50;"></div>
-        <div id="chatEditingNotice" style="display:none; font-size:11.5px; color:var(--accent); margin-bottom:6px;">Editing message… <span style="text-decoration:underline; cursor:pointer;" onclick="cancelEditChatMessage()">Cancel</span></div>
-        <div style="display:flex; gap:10px; align-items:flex-end;">
-          <textarea id="chatInput" placeholder="Message the team... use @ to mention someone" rows="1" style="flex:1; resize:none; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-family:'Inter'; font-size:13.5px; max-height:110px;" oninput="onChatInput(this)" onkeydown="onChatKeydown(event)"></textarea>
-          <button class="submit-btn" id="chatSendBtn" style="margin-top:0; padding:11px 22px; flex-shrink:0;" onclick="sendChatMessage()">Send</button>
+    <div class="chat-shell">
+      <aside class="chat-status-panel" aria-label="Team online status">
+        <div class="chat-status-head">
+          <div class="chat-status-title">Team Status</div>
+          <div class="chat-status-sub" id="chatTeamStatusSub">Loading approved team members…</div>
+          <div class="chat-people-search-wrap">
+            <svg class="chat-people-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg>
+            <input id="chatPeopleSearch" class="chat-people-search" type="search" placeholder="Search team members…" autocomplete="off" oninput="renderChatTeamStatus()">
+          </div>
+          <div class="chat-presence-tabs" role="tablist" aria-label="Presence filter">
+            <button class="chat-presence-tab active" data-presence-filter="all" onclick="setChatPresenceFilter('all', this)">All <span class="chat-presence-count" id="chatAllCount">0</span></button>
+            <button class="chat-presence-tab" data-presence-filter="online" onclick="setChatPresenceFilter('online', this)">Online <span class="chat-presence-count" id="chatOnlineCount">0</span></button>
+            <button class="chat-presence-tab" data-presence-filter="offline" onclick="setChatPresenceFilter('offline', this)">Offline <span class="chat-presence-count" id="chatOfflineCount">0</span></button>
+          </div>
         </div>
-      </div>
+        <div id="chatPresenceSetupNote" class="chat-presence-setup-note" style="display:none;">Online status is live. Last-active time will appear after the one-time presence database update is applied.</div>
+        <div id="chatPeopleList" class="chat-people-list"><div class="chat-empty-people">Loading team status…</div></div>
+      </aside>
+      <section class="chat-conversation-panel" aria-label="Shared team conversation">
+        <div class="chat-conversation-head">
+          <div class="chat-conversation-title">
+            <div class="chat-conversation-icon"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg></div>
+            <div style="min-width:0;"><div class="chat-conversation-name">Team Chat</div><div class="chat-conversation-summary" id="chatPresenceSummary">One shared conversation · loading team status…</div></div>
+          </div>
+        </div>
+        <div id="chatMessages" style="flex:1; overflow-y:auto; padding:18px 20px; display:flex; flex-direction:column; gap:14px;"><div class="placeholder-note">Loading…</div></div>
+        <div class="chat-composer">
+          <div id="chatMentionDropdown" style="display:none; position:absolute; bottom:100%; left:12px; right:12px; margin-bottom:6px; background:var(--surface); border:1.5px solid var(--border); border-radius:10px; max-height:220px; overflow-y:auto; box-shadow:0 -8px 20px rgba(0,0,0,0.2); z-index:50;"></div>
+          <div id="chatEditingNotice" style="display:none; font-size:11.5px; color:var(--accent); margin-bottom:6px;">Editing message… <span style="text-decoration:underline; cursor:pointer;" onclick="cancelEditChatMessage()">Cancel</span></div>
+          <div class="chat-composer-row">
+            <textarea id="chatInput" placeholder="Message the team... use @ to mention someone" rows="1" style="flex:1; resize:none; padding:10px 14px; border-radius:10px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); font-family:'Inter'; font-size:13.5px; max-height:110px;" oninput="onChatInput(this)" onkeydown="onChatKeydown(event)"></textarea>
+            <button class="submit-btn chat-send-icon" id="chatSendBtn" title="Send" aria-label="Send message" onclick="sendChatMessage()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg></button>
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -6916,6 +7029,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-10-11', summary:'Team Chat redesigned with a responsive Team Status roster: approved users can see who is online via Supabase Realtime Presence and, after the one-time presence-status setup, when offline teammates were last active. Existing shared-chat messages, mentions, unread badges, edit/delete and notifications remain intact.' },
     { date:'2026-10-11', summary:'Admin Center visually modernized and made mobile-first without changing its existing Supabase behavior: added a responsive local Admin navigator, live overview counts from the same profile queries, management shortcut cards, refreshed role/section styling, and card-style approved-user rows on mobile. Existing approvals, role/discipline updates, Score settings, Task Fields, Category Links, Quick Links, Data Archive, lazy loading and permissions remain intact.' },
     { date:'2026-10-05', summary:'Projects tab redesigned as a professional colorful portfolio: compact KPI cards, collapsible filters/export, full-width project cards with icon actions and functional progress tracks, plus a two-column Overview/Briefing + Task Timeline detail view. Home Welcome Back typography restored to the same large size as the user name while retaining single-line auto-fit.' },
     { date:'2026-10-05', summary:'Projects follow-up: restored the earlier header-zone progress treatment with percentage beside the project name, fixed action-icon containment, and returned expanded project details to a vertical Overview/Project Briefing followed by a full-width Gantt timeline.' },
@@ -7315,6 +7429,8 @@
     if(confirm('Log out of Walton Lift R&I?')) signOutUser();
   }
   async function signOutUser(){
+    try{ await recordLastActive(true); }catch(e){}
+    try{ await stopTeamPresence(); }catch(e){}
     await sb.auth.signOut();
     // Belt-and-braces: wipe any leftover Supabase auth keys so a stale/corrupted
     // entry can never cause the next sign-in attempt to fail silently.
@@ -7435,6 +7551,7 @@
     avatarEl.title = 'Account menu';
     document.getElementById('accountMenuName').textContent = `${profile.full_name} (${profile.nickname})`;
     showAuthScreen('app');
+    startTeamPresence();
     updateHomeGreeting();
     loadHomeTodaySnapshot();
     loadHomeFeed();
@@ -8850,18 +8967,207 @@
   // ============ TEAM CHAT ============
   let chatPeople = [];
   let chatPeopleLoaded = false;
+  let chatPeopleLoadedAt = 0;
   let chatMentionedIds = new Set();
   let chatSubscribed = false;
+  let teamPresenceChannel = null;
+  let teamPresenceUserId = null;
+  let chatOnlineUserIds = new Set();
+  let chatPresenceFilter = 'all';
+  let lastActiveTimer = null;
+  let lastSeenColumnSupported = true;
+  let teamPresenceConnected = null;
+  let presenceRelativeTimer = null;
 
-  async function loadChatPeople(){
-    if(chatPeopleLoaded) return;
-    const { data } = await sb.from('profiles').select('id, full_name, nickname, avatar_url, role').eq('status', 'active').order('full_name');
-    chatPeople = data || [];
-    chatPeopleLoaded = true;
+  function roleLabelForChat(role){
+    if(role === 'superadmin') return 'Superadmin';
+    if(role === 'admin') return 'Admin';
+    return 'Engineer';
+  }
+  function disciplineLabelForChat(discipline){
+    if(discipline === 'electrical') return 'Electrical';
+    if(discipline === 'mechanical') return 'Mechanical';
+    return discipline ? String(discipline) : '';
   }
 
+  async function loadChatPeople(force=false){
+    if(!force && chatPeopleLoaded && Date.now() - chatPeopleLoadedAt < 60000) return;
+    const { data, error } = await sb.from('profiles')
+      .select('id, full_name, nickname, avatar_url, role, discipline')
+      .eq('status', 'active').order('full_name');
+    if(error){ console.warn('Could not load team presence list:', error.message); return; }
+    chatPeople = data || [];
+
+    // Last-active timestamps live in their own tiny table rather than the
+    // profiles table. That avoids triggering the app's existing wildcard
+    // profiles Realtime listener every minute just because someone is online.
+    const { data: seenRows, error: seenError } = await sb.from('user_presence_status').select('user_id, last_seen_at');
+    if(seenError){
+      lastSeenColumnSupported = false;
+    } else {
+      lastSeenColumnSupported = true;
+      const seenMap = new Map((seenRows || []).map(r => [r.user_id, r.last_seen_at]));
+      chatPeople.forEach(p => { p.last_seen_at = seenMap.get(p.id) || null; });
+    }
+    chatPeopleLoaded = true;
+    chatPeopleLoadedAt = Date.now();
+    renderChatTeamStatus();
+  }
+
+  function formatChatLastActive(iso){
+    if(!iso) return 'Offline';
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return 'Offline';
+    const diff = Math.max(0, Date.now() - d.getTime());
+    const mins = Math.floor(diff / 60000);
+    if(mins < 1) return 'Just now';
+    if(mins < 60) return `${mins} min ago`;
+    const hours = Math.floor(mins / 60);
+    if(hours < 24) return `${hours} hr${hours === 1 ? '' : 's'} ago`;
+    const days = Math.floor(hours / 24);
+    const time = d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    if(days === 1) return `Yesterday, ${time}`;
+    if(days < 7) return `${days} days ago`;
+    return d.toLocaleString([], {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+  }
+
+  function chatPersonAvatarForList(p){
+    const name = displayName(p);
+    const online = chatOnlineUserIds.has(p.id);
+    const core = p.avatar_url
+      ? `<img class="chat-person-avatar" src="${escapeHtml(p.avatar_url)}" alt="">`
+      : `<div class="chat-person-fallback" style="background:${chatAvatarColor(p.id || name)}">${initials(name)}</div>`;
+    return `<div class="chat-person-avatar-wrap">${core}${online ? '<span class="chat-person-online-badge" aria-label="Online"></span>' : ''}</div>`;
+  }
+
+  function renderChatTeamStatus(){
+    const list = document.getElementById('chatPeopleList');
+    if(!list) return;
+    const q = (document.getElementById('chatPeopleSearch')?.value || '').trim().toLowerCase();
+    const all = chatPeople.slice();
+    const total = all.length;
+    const onlineCount = all.reduce((n,p) => n + (chatOnlineUserIds.has(p.id) ? 1 : 0), 0);
+    const offlineCount = Math.max(0, total - onlineCount);
+    const setText = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = String(val); };
+    setText('chatAllCount', total); setText('chatOnlineCount', onlineCount); setText('chatOfflineCount', offlineCount);
+    const sub = document.getElementById('chatTeamStatusSub'); if(sub) sub.textContent = `${onlineCount} online · ${total} approved members`;
+    const summary = document.getElementById('chatPresenceSummary'); if(summary) summary.textContent = `One shared conversation · ${onlineCount} online · ${total} members`;
+    const setupNote = document.getElementById('chatPresenceSetupNote');
+    if(setupNote){
+      const needsSetup = teamPresenceConnected === false || !lastSeenColumnSupported;
+      setupNote.style.display = needsSetup ? 'block' : 'none';
+      if(needsSetup) setupNote.textContent = 'Presence setup is required once in Supabase before Online / Last active status can be shared with the team.';
+    }
+    let rows = all.filter(p => {
+      const online = chatOnlineUserIds.has(p.id);
+      if(chatPresenceFilter === 'online' && !online) return false;
+      if(chatPresenceFilter === 'offline' && online) return false;
+      if(!q) return true;
+      return `${p.full_name || ''} ${p.nickname || ''} ${roleLabelForChat(p.role)} ${disciplineLabelForChat(p.discipline)}`.toLowerCase().includes(q);
+    });
+    rows.sort((a,b) => {
+      const ao = chatOnlineUserIds.has(a.id) ? 1 : 0, bo = chatOnlineUserIds.has(b.id) ? 1 : 0;
+      if(ao !== bo) return bo - ao;
+      const at = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
+      const bt = b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0;
+      if(at !== bt) return bt - at;
+      return displayName(a).localeCompare(displayName(b));
+    });
+    if(!rows.length){ list.innerHTML = '<div class="chat-empty-people">No team members match this filter.</div>'; return; }
+    list.innerHTML = rows.map(p => {
+      const online = chatOnlineUserIds.has(p.id);
+      const meta = [roleLabelForChat(p.role), disciplineLabelForChat(p.discipline)].filter(Boolean).join(' · ');
+      const status = online ? 'Online now' : formatChatLastActive(p.last_seen_at);
+      return `<div class="chat-person-row" data-person-id="${p.id}">
+        ${chatPersonAvatarForList(p)}
+        <div class="chat-person-main"><div class="chat-person-name">${escapeHtml(displayName(p))}${p.id === currentUser?.id ? ' <span style="color:var(--text-faint);font-weight:600;">(You)</span>' : ''}</div><div class="chat-person-meta">${escapeHtml(meta)}</div></div>
+        <div class="chat-person-status"><span class="${online ? 'chat-online-dot' : 'chat-offline-dot'}"></span><span>${escapeHtml(status)}</span></div>
+      </div>`;
+    }).join('');
+  }
+
+  function setChatPresenceFilter(filter, btn){
+    chatPresenceFilter = filter;
+    document.querySelectorAll('#view-chat .chat-presence-tab').forEach(el => el.classList.toggle('active', el === btn));
+    renderChatTeamStatus();
+  }
+
+  function syncTeamPresenceFromChannel(){
+    if(!teamPresenceChannel) return;
+    const state = teamPresenceChannel.presenceState() || {};
+    const next = new Set();
+    Object.values(state).forEach(group => (Array.isArray(group) ? group : []).forEach(presence => { if(presence?.user_id) next.add(presence.user_id); }));
+    const now = new Date().toISOString();
+    chatOnlineUserIds.forEach(id => {
+      if(!next.has(id)){
+        const person = chatPeople.find(p => p.id === id);
+        if(person) person.last_seen_at = now;
+      }
+    });
+    chatOnlineUserIds = next;
+    renderChatTeamStatus();
+  }
+
+  async function recordLastActive(force=false){
+    if(!currentUser || !lastSeenColumnSupported || (!force && document.visibilityState === 'hidden')) return;
+    const now = new Date().toISOString();
+    const { error } = await sb.from('user_presence_status').upsert(
+      { user_id: currentUser.id, last_seen_at: now },
+      { onConflict:'user_id' }
+    );
+    if(error){
+      if(/user_presence_status|relation .* does not exist|schema cache/i.test(error.message || '')){ lastSeenColumnSupported = false; renderChatTeamStatus(); }
+      else console.warn('Could not update last-active time:', error.message);
+      return;
+    }
+    const own = chatPeople.find(p => p.id === currentUser.id); if(own) own.last_seen_at = now;
+  }
+
+  async function startTeamPresence(){
+    if(!currentUser || currentProfile?.status !== 'active') return;
+    if(teamPresenceChannel && teamPresenceUserId === currentUser.id) return;
+    if(teamPresenceChannel){ try{ await teamPresenceChannel.untrack(); }catch(e){} try{ await sb.removeChannel(teamPresenceChannel); }catch(e){} }
+    teamPresenceUserId = currentUser.id;
+    teamPresenceChannel = sb.channel('team-presence', { config: { private: true } });
+    teamPresenceChannel
+      .on('presence', {event:'sync'}, syncTeamPresenceFromChannel)
+      .on('presence', {event:'join'}, syncTeamPresenceFromChannel)
+      .on('presence', {event:'leave'}, syncTeamPresenceFromChannel)
+      .subscribe(async status => {
+        if(status === 'SUBSCRIBED'){
+          teamPresenceConnected = true;
+          await teamPresenceChannel.track({ user_id: currentUser.id, online_at: new Date().toISOString() });
+          syncTeamPresenceFromChannel();
+        } else if(status === 'CHANNEL_ERROR' || status === 'TIMED_OUT'){
+          teamPresenceConnected = false;
+          renderChatTeamStatus();
+          console.warn('Team presence channel could not connect:', status);
+        }
+      });
+    await recordLastActive();
+    clearInterval(lastActiveTimer); lastActiveTimer = setInterval(recordLastActive, 60000);
+    clearInterval(presenceRelativeTimer); presenceRelativeTimer = setInterval(() => { if(document.getElementById('view-chat')?.classList.contains('active')) renderChatTeamStatus(); }, 30000);
+  }
+
+  async function stopTeamPresence(){
+    clearInterval(lastActiveTimer); lastActiveTimer = null;
+    clearInterval(presenceRelativeTimer); presenceRelativeTimer = null;
+    if(teamPresenceChannel){ try{ await teamPresenceChannel.untrack(); }catch(e){} try{ await sb.removeChannel(teamPresenceChannel); }catch(e){} }
+    teamPresenceChannel = null; teamPresenceUserId = null; teamPresenceConnected = null; chatOnlineUserIds = new Set();
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible'){
+      recordLastActive();
+      if(currentUser && currentProfile?.status === 'active' && !teamPresenceChannel) startTeamPresence();
+    } else {
+      recordLastActive(true); // best-effort final timestamp before a suspended/closed mobile tab
+    }
+  });
+
   async function loadChatMessages(){
-    await loadChatPeople();
+    await loadChatPeople(true);
+    renderChatTeamStatus();
     const el = document.getElementById('chatMessages');
     el.innerHTML = '<div class="placeholder-note">Loading…</div>';
     const { data, error } = await sb.from('chat_messages').select('*').order('created_at', { ascending: true }).limit(200);
@@ -8971,7 +9277,11 @@
       dropdown.style.display = 'none';
       return;
     }
-    dropdown.innerHTML = matches.map(p => `<div style="padding:9px 12px; cursor:pointer; font-size:13px;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="pickChatMention('${p.id}', '${escapeHtml(displayName(p)).replace(/'/g, "\\'")}')">${escapeHtml(displayName(p))}</div>`).join('');
+    dropdown.innerHTML = matches.map(p => {
+      const online = chatOnlineUserIds.has(p.id);
+      const status = online ? 'Online now' : formatChatLastActive(p.last_seen_at);
+      return `<div style="padding:8px 11px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="pickChatMention('${p.id}', '${escapeHtml(displayName(p)).replace(/'/g, "\\'")}')"><span style="font-size:12.5px; font-weight:650; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(displayName(p))}</span><span style="display:flex;align-items:center;gap:5px;font-size:9.5px;color:var(--text-faint);white-space:nowrap;"><span class="${online ? 'chat-online-dot' : 'chat-offline-dot'}"></span>${escapeHtml(status)}</span></div>`;
+    }).join('');
     dropdown.style.display = 'block';
   }
 
@@ -9042,20 +9352,30 @@
     }
   }
 
+  function setChatSendButtonMode(editing){
+    const btn = document.getElementById('chatSendBtn');
+    if(!btn) return;
+    btn.title = editing ? 'Save edit' : 'Send';
+    btn.setAttribute('aria-label', editing ? 'Save edited message' : 'Send message');
+    btn.innerHTML = editing
+      ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m5 12 4 4L19 6"></path></svg>'
+      : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m22 2-7 20-4-9-9-4Z"></path><path d="M22 2 11 13"></path></svg>';
+  }
+
   function editChatMessage(id, text){
     editingChatMessageId = id;
     const input = document.getElementById('chatInput');
     input.value = text;
     input.focus();
     document.getElementById('chatEditingNotice').style.display = 'block';
-    document.getElementById('chatSendBtn').textContent = 'Save';
+    setChatSendButtonMode(true);
   }
 
   function cancelEditChatMessage(){
     editingChatMessageId = null;
     document.getElementById('chatInput').value = '';
     document.getElementById('chatEditingNotice').style.display = 'none';
-    document.getElementById('chatSendBtn').textContent = 'Send';
+    setChatSendButtonMode(false);
   }
 
   async function deleteChatMessage(id){
