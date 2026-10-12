@@ -2790,6 +2790,9 @@
     #view-admin #approvedUsersPanel td:last-child{ justify-content:flex-end; padding-top:7px; border-top:1px solid var(--border); margin-top:4px; }
     #view-admin #approvedUsersPanel td:last-child::before{ content:''; flex:1; }
   }
+
+  .field-option-sort-row.is-dragging-option{opacity:.55; background:var(--surface-alt);}
+  .field-option-sort-row.is-dragging-option .field-option-drag-handle{cursor:grabbing;}
 </style>
 
 <style>
@@ -12388,21 +12391,131 @@ for a competing inline style first.`;
     return [{ label: null, category: 'customfield', field_key: field.id }];
   }
 
+  let draggedFieldOptionId = null;
+  let fieldOptionPointerDrag = null;
+
+  function fieldOptionDragAfterElement(container, y){
+    const rows = Array.from(container.querySelectorAll('.field-option-sort-row:not(.is-dragging-option)'));
+    return rows.reduce((closest, child) => {
+      const box = child.getBoundingClientRect();
+      const offset = y - box.top - box.height / 2;
+      if(offset < 0 && offset > closest.offset) return { offset, element: child };
+      return closest;
+    }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+  }
+
+  function handleFieldOptionDragStart(e, optionId){
+    draggedFieldOptionId = optionId;
+    const row = e.currentTarget;
+    row.classList.add('is-dragging-option');
+    if(e.dataTransfer){
+      e.dataTransfer.effectAllowed = 'move';
+      try{ e.dataTransfer.setData('text/plain', optionId); }catch(_e){}
+    }
+  }
+
+  function handleFieldOptionDragEnd(e){
+    e.currentTarget.classList.remove('is-dragging-option');
+    draggedFieldOptionId = null;
+  }
+
+  function handleFieldOptionDragOver(e){
+    e.preventDefault();
+    const container = e.currentTarget;
+    const dragged = draggedFieldOptionId ? container.querySelector(`[data-option-id="${draggedFieldOptionId}"]`) : null;
+    if(!dragged) return;
+    const after = fieldOptionDragAfterElement(container, e.clientY);
+    if(after) container.insertBefore(dragged, after);
+    else container.appendChild(dragged);
+    if(e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  }
+
+  async function handleFieldOptionDrop(e){
+    e.preventDefault();
+    const container = e.currentTarget;
+    if(!container || !draggedFieldOptionId) return;
+    await persistFieldOptionOrder(container);
+    draggedFieldOptionId = null;
+  }
+
+  function startFieldOptionPointerDrag(e){
+    // Mouse uses native HTML drag/drop above. Pointer handling here is
+    // specifically for touch/pen so option ordering works on mobile too.
+    if(e.pointerType === 'mouse') return;
+    const handle = e.currentTarget;
+    const row = handle.closest('.field-option-sort-row');
+    const container = row?.closest('.field-option-sort-list');
+    if(!row || !container) return;
+    e.preventDefault();
+    fieldOptionPointerDrag = { pointerId:e.pointerId, handle, row, container };
+    row.classList.add('is-dragging-option');
+    try{ handle.setPointerCapture(e.pointerId); }catch(_e){}
+  }
+
+  function moveFieldOptionPointerDrag(e){
+    const st = fieldOptionPointerDrag;
+    if(!st || e.pointerId !== st.pointerId) return;
+    e.preventDefault();
+
+    const panel = st.container.closest('.panel');
+    if(panel){
+      const pr = panel.getBoundingClientRect();
+      const edge = 48;
+      if(e.clientY < pr.top + edge) panel.scrollTop -= 16;
+      else if(e.clientY > pr.bottom - edge) panel.scrollTop += 16;
+    }
+
+    const after = fieldOptionDragAfterElement(st.container, e.clientY);
+    if(after) st.container.insertBefore(st.row, after);
+    else st.container.appendChild(st.row);
+  }
+
+  async function endFieldOptionPointerDrag(e){
+    const st = fieldOptionPointerDrag;
+    if(!st || e.pointerId !== st.pointerId) return;
+    e.preventDefault();
+    st.row.classList.remove('is-dragging-option');
+    try{ st.handle.releasePointerCapture(e.pointerId); }catch(_e){}
+    fieldOptionPointerDrag = null;
+    await persistFieldOptionOrder(st.container);
+  }
+
+  async function persistFieldOptionOrder(container){
+    const ids = Array.from(container.querySelectorAll('.field-option-sort-row')).map(el => el.dataset.optionId).filter(Boolean);
+    if(!ids.length) return;
+    const results = await Promise.all(ids.map((id, idx) =>
+      sb.from('chip_options').update({ sort_order:(idx + 1) * 10 }).eq('id', id).select('id')
+    ));
+    const failed = results.find(r => r.error || !r.data?.length);
+    if(failed){
+      alert('Could not save the new option order. Please check that Superadmins have UPDATE permission for chip_options.');
+      const fieldId = container.dataset.fieldId;
+      const field = customFieldsCache.find(f => f.id === fieldId);
+      if(field) renderFieldOptionsModal(field);
+      return;
+    }
+    await loadDynamicFieldOptions(true);
+    showFormPopup('Option order updated.', 'success');
+  }
+
   async function renderFieldOptionsModal(field){
     const keys = fieldOptionKeys(field);
     const sections = await Promise.all(keys.map(async k => {
       const { data } = await sb.from('chip_options').select('*').eq('category', k.category).eq('field_key', k.field_key).order('sort_order');
       const rows = data || [];
       const rowsHtml = rows.length
-        ? rows.map(r => `<div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border);">
-            <span style="font-size:13.5px;">${escapeHtml(r.label)}</span>
-            <button class="btn remove" style="padding:6px;" onclick="deleteFieldOptionRow('${r.id}', '${field.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        ? rows.map(r => `<div class="field-option-sort-row" data-option-id="${r.id}" draggable="true" ondragstart="handleFieldOptionDragStart(event, '${r.id}')" ondragend="handleFieldOptionDragEnd(event)" style="display:flex; align-items:center; gap:9px; padding:7px 0; border-bottom:1px solid var(--border); cursor:grab;">
+            <span class="field-option-drag-handle" title="Drag to reorder" aria-label="Drag to reorder" onpointerdown="startFieldOptionPointerDrag(event)" onpointermove="moveFieldOptionPointerDrag(event)" onpointerup="endFieldOptionPointerDrag(event)" onpointercancel="endFieldOptionPointerDrag(event)" style="display:inline-flex; align-items:center; justify-content:center; width:24px; height:28px; color:var(--text-faint); flex-shrink:0; cursor:grab; touch-action:none; user-select:none;">
+              <svg width="12" height="16" viewBox="0 0 12 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="2" r="1.4"/><circle cx="9" cy="2" r="1.4"/><circle cx="3" cy="8" r="1.4"/><circle cx="9" cy="8" r="1.4"/><circle cx="3" cy="14" r="1.4"/><circle cx="9" cy="14" r="1.4"/></svg>
+            </span>
+            <span style="font-size:13.5px; flex:1; min-width:0;">${escapeHtml(r.label)}</span>
+            <button class="btn remove" style="padding:6px; flex-shrink:0;" onclick="deleteFieldOptionRow('${r.id}', '${field.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
           </div>`).join('')
         : '<div class="placeholder-note">No options yet.</div>';
       const inputId = `newFieldOptionInput_${k.category}_${k.field_key}`;
       return `<div style="margin-bottom:14px;">
         ${k.label ? `<div style="font-size:11px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px;">${k.label}</div>` : ''}
-        <div>${rowsHtml}</div>
+        <div class="field-option-sort-list" data-field-id="${field.id}" data-category="${k.category}" data-field-key="${k.field_key}" ondragover="handleFieldOptionDragOver(event)" ondrop="handleFieldOptionDrop(event)">${rowsHtml}</div>
         <div style="display:flex; gap:8px; margin-top:10px;">
           <input type="text" id="${inputId}" placeholder="e.g. New option" style="flex:1; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text);" onkeydown="if(event.key==='Enter') addFieldOption('${field.id}', '${k.category}', '${k.field_key}', '${inputId}');">
           <button class="queue-btn" onclick="addFieldOption('${field.id}', '${k.category}', '${k.field_key}', '${inputId}')">+ Add</button>
@@ -12433,8 +12546,9 @@ for a competing inline style first.`;
     const input = document.getElementById(inputId);
     const label = input.value.trim();
     if(!label) return;
-    const { count } = await sb.from('chip_options').select('*', { count: 'exact', head: true }).eq('category', category).eq('field_key', fieldKey);
-    const { error } = await sb.from('chip_options').insert({ category, field_key: fieldKey, label, sort_order: count || 0 });
+    const { data: lastRows } = await sb.from('chip_options').select('sort_order').eq('category', category).eq('field_key', fieldKey).order('sort_order', { ascending:false }).limit(1);
+    const nextSortOrder = ((lastRows && lastRows.length ? Number(lastRows[0].sort_order) : 0) || 0) + 10;
+    const { error } = await sb.from('chip_options').insert({ category, field_key: fieldKey, label, sort_order: nextSortOrder });
     if(error){ alert('Could not add: ' + error.message); return; }
     const field = customFieldsCache.find(f => f.id === fieldId);
     if(field) renderFieldOptionsModal(field);
