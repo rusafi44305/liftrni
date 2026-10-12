@@ -14093,6 +14093,7 @@ for a competing inline style first.`;
         </div>
       </div>
 
+      ${currentProfile?.role === 'superadmin' ? `
       <div class="dash-discipline-grid">
         <div class="panel dash-card dash-discipline-card">
           <div class="dash-discipline-head">
@@ -14118,7 +14119,7 @@ for a competing inline style first.`;
           </div>
           <div id="dashElectricalActivity"><div class="placeholder-note">Loading…</div></div>
         </div>
-      </div>`;
+      </div>` : ''}`;
     return true;
   }
   window.addEventListener('resize', () => {
