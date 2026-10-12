@@ -3054,6 +3054,169 @@
 }
 </style>
 
+
+<style id="adminInnerToolsRefinementStyles">
+/* 2026-10-12 — Admin underlying tools refinement.
+   Layout only: existing Supabase calls, IDs and action handlers stay intact. */
+#view-admin .admin-users-toolbar{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  margin:0 0 10px; flex-wrap:wrap;
+}
+#view-admin .admin-users-search{
+  position:relative; flex:1 1 260px; max-width:360px;
+}
+#view-admin .admin-users-search svg{
+  position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text-faint); pointer-events:none;
+}
+#view-admin .admin-users-search input{
+  width:100%; box-sizing:border-box; padding:9px 12px 9px 34px; border-radius:10px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font:500 12px 'Inter';
+}
+#view-admin .admin-users-search input:focus{ outline:none; border-color:color-mix(in srgb, var(--accent) 55%, var(--border)); box-shadow:0 0 0 3px var(--accent-dim); }
+#view-admin .admin-users-count{ font-size:11px; color:var(--text-faint); white-space:nowrap; }
+#view-admin .admin-approved-table-wrap{ overflow:auto; border:1px solid var(--border); border-radius:13px; background:var(--surface); }
+#view-admin table.admin-approved-table{ width:100%; min-width:800px; margin:0 !important; }
+#view-admin table.admin-approved-table th{ padding:9px 10px; background:var(--surface-alt); font-size:10px; letter-spacing:.02em; }
+#view-admin table.admin-approved-table td{ padding:10px; vertical-align:middle; }
+#view-admin .admin-approved-user{ display:flex; align-items:center; gap:9px; min-width:190px; }
+#view-admin .admin-approved-avatar{ width:32px; height:32px; border-radius:50%; overflow:hidden; flex:0 0 auto; display:flex; align-items:center; justify-content:center; color:white; font-size:10.5px; font-weight:700; background:var(--accent); }
+#view-admin .admin-approved-avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+#view-admin .admin-approved-name{ font-size:12px; font-weight:700; line-height:1.25; }
+#view-admin .admin-approved-email{ font-size:10.5px; color:var(--text-faint); font-family:'IBM Plex Mono'; margin-top:2px; max-width:210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#view-admin .admin-approved-role{ display:inline-flex; align-items:center; border-radius:999px; padding:4px 8px; background:var(--surface-alt); color:var(--text-dim); font-size:10.5px; font-weight:700; text-transform:capitalize; }
+#view-admin .admin-approved-role.admin{ background:var(--accent-dim); color:var(--accent); }
+#view-admin .admin-approved-role.superadmin{ background:color-mix(in srgb, var(--amber) 18%, var(--surface)); color:var(--amber); }
+#view-admin .admin-approved-status{ display:inline-flex; align-items:center; gap:5px; color:var(--green); font-size:10.5px; font-weight:700; white-space:nowrap; }
+#view-admin .admin-approved-status::before{ content:''; width:7px; height:7px; border-radius:50%; background:var(--green); }
+#view-admin .admin-approved-last{ font-size:10.5px; color:var(--text-faint); line-height:1.35; white-space:normal; min-width:100px; }
+#view-admin .admin-approved-footer{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:10px; flex-wrap:wrap; }
+#view-admin .admin-approved-pager{ display:flex; gap:5px; margin-left:auto; }
+#view-admin .admin-page-btn{ min-width:30px; height:30px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--text-dim); cursor:pointer; font:600 11px 'Inter'; }
+#view-admin .admin-page-btn.active{ background:var(--accent); color:white; border-color:var(--accent); }
+#view-admin .admin-page-btn:disabled{ opacity:.45; cursor:default; }
+
+#view-admin .admin-field-category{ border:1px solid var(--border); border-radius:13px; background:var(--surface); overflow:hidden; margin-bottom:8px; }
+#view-admin .admin-field-category-head{ width:100%; border:0; background:transparent; color:var(--text); display:grid; grid-template-columns:minmax(0,1fr) auto auto; align-items:center; gap:10px; text-align:left; padding:11px 12px; cursor:pointer; }
+#view-admin .admin-field-category-head:hover{ background:var(--surface-alt); }
+#view-admin .admin-field-category-name{ font-size:12.5px; font-weight:700; }
+#view-admin .admin-field-category-meta{ font-size:10px; color:var(--text-faint); white-space:nowrap; }
+#view-admin .admin-field-category-arrow{ color:var(--text-faint); font-size:17px; transition:transform .18s ease; }
+#view-admin .admin-field-category.open .admin-field-category-arrow{ transform:rotate(90deg); color:var(--accent); }
+#view-admin .admin-field-category-body{ display:none; padding:10px 11px 12px; border-top:1px solid var(--border); background:color-mix(in srgb, var(--surface-alt) 24%, var(--surface)); }
+#view-admin .admin-field-category.open .admin-field-category-body{ display:block; }
+#view-admin .admin-field-category-actions{ display:flex; justify-content:flex-end; gap:7px; margin-bottom:9px; }
+#view-admin .admin-field-subtype-card{ margin-bottom:9px !important; padding:10px 11px 8px !important; border-radius:10px !important; }
+#view-admin .draggable-field-row{ min-width:0; }
+#view-admin .draggable-field-row > div:first-child{ min-width:0; }
+#view-admin .draggable-field-row span{ overflow-wrap:anywhere; }
+
+#view-admin .admin-score-layout{ display:grid; grid-template-columns:minmax(0,1.15fr) minmax(260px,.85fr); gap:10px; }
+#view-admin .admin-config-card{ border:1px solid var(--border); border-radius:13px; background:var(--surface); padding:13px; min-width:0; }
+#view-admin .admin-config-card-wide{ grid-column:1 / -1; }
+#view-admin .admin-config-title{ font-size:13px; font-weight:700; margin-bottom:3px; }
+#view-admin .admin-config-sub{ font-size:10.5px; color:var(--text-faint); line-height:1.45; margin-bottom:10px; }
+#view-admin .admin-weight-row{ display:grid; grid-template-columns:minmax(0,1fr) 84px; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border); }
+#view-admin .admin-weight-row:last-of-type{ border-bottom:0; }
+#view-admin .admin-weight-row span{ font-size:12px; }
+#view-admin .admin-weight-row input,
+#view-admin .admin-target-row input{ width:100%; box-sizing:border-box; padding:7px 9px; border-radius:8px; border:1px solid var(--border); background:var(--surface-alt); color:var(--text); text-align:right; }
+#view-admin .admin-target-row{ display:grid; grid-template-columns:minmax(0,1fr) 110px auto; align-items:end; gap:8px; }
+#view-admin .admin-target-row label{ font-size:11px; color:var(--text-dim); }
+#view-admin .admin-permission-row{ display:flex; align-items:center; justify-content:space-between; gap:16px; padding:11px 0; border-bottom:1px solid var(--border); }
+#view-admin .admin-permission-row:last-child{ border-bottom:0; }
+#view-admin .admin-permission-title{ font-size:12px; font-weight:700; }
+#view-admin .admin-permission-sub{ font-size:10.5px; color:var(--text-faint); line-height:1.4; margin-top:2px; max-width:620px; }
+
+#view-admin .admin-link-category{ border:1px solid var(--border); border-radius:12px; background:var(--surface); overflow:hidden; margin-bottom:8px; }
+#view-admin .admin-link-category-head{ width:100%; padding:10px 12px; border:0; background:transparent; color:var(--text); cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:10px; font:700 12px 'Inter'; text-align:left; }
+#view-admin .admin-link-category-head:hover{ background:var(--surface-alt); }
+#view-admin .admin-link-category-arrow{ transition:transform .18s ease; color:var(--text-faint); }
+#view-admin .admin-link-category.open .admin-link-category-arrow{ transform:rotate(90deg); color:var(--accent); }
+#view-admin .admin-link-category-body{ display:none; padding:10px 12px 12px; border-top:1px solid var(--border); }
+#view-admin .admin-link-category.open .admin-link-category-body{ display:block; }
+#view-admin .admin-category-link-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+#view-admin .admin-category-link-row:last-child{ border-bottom:0; }
+#view-admin .admin-category-link-main{ min-width:0; flex:1; }
+#view-admin .admin-category-link-label{ font-size:12px; font-weight:700; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#view-admin .admin-category-link-url{ font-size:10px; color:var(--text-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+#view-admin #quickLinksAdminPanel .panel{ border:1px solid var(--border); border-radius:13px; box-shadow:none; }
+#view-admin .quick-link-admin-row{ padding:9px 0 !important; }
+#view-admin .quick-link-admin-row > div:nth-child(2){ min-width:0; }
+
+#view-admin #dataArchivePanel{ display:grid; gap:10px; }
+#view-admin #dataArchivePanel > div:first-child{ display:grid !important; grid-template-columns:auto auto 160px auto 160px auto; align-items:center; gap:8px !important; margin:0 !important; padding:12px; border:1px solid var(--border); border-radius:12px; background:var(--surface); }
+#view-admin #dataArchivePanel > label{ margin:0 !important; padding:10px 12px; border:1px solid color-mix(in srgb, var(--amber) 30%, var(--border)); border-radius:11px; background:color-mix(in srgb, var(--amber) 8%, var(--surface)); line-height:1.4; }
+#view-admin #archiveStatusMsg{ margin:0 !important; }
+#view-admin #archivesList > div{ background:var(--surface); border-radius:12px !important; padding:11px 12px !important; }
+
+@media (max-width:760px){
+  #view-admin .admin-users-toolbar{ align-items:stretch; }
+  #view-admin .admin-users-search{ flex-basis:100%; max-width:none; }
+  #view-admin .admin-users-count{ width:100%; }
+  #view-admin .admin-approved-table-wrap{ overflow:visible; border:0; background:transparent; }
+  #view-admin table.admin-approved-table{ min-width:0 !important; width:100%; display:block; }
+  #view-admin table.admin-approved-table thead{ display:none; }
+  #view-admin table.admin-approved-table tbody{ display:block; }
+  #view-admin table.admin-approved-table tr{
+    display:grid !important; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:9px 10px;
+    width:100%; padding:11px !important; margin:0 0 9px !important; border:1px solid var(--border) !important;
+    border-radius:13px !important; background:var(--surface) !important; box-sizing:border-box;
+  }
+  #view-admin table.admin-approved-table td{
+    display:flex !important; flex-direction:column; align-items:flex-start !important; justify-content:flex-start !important;
+    width:auto !important; min-width:0; padding:0 !important; margin:0 !important; border:0 !important; text-align:left !important; gap:3px !important;
+  }
+  #view-admin table.admin-approved-table td::before{
+    content:attr(data-label) !important; flex:none !important; color:var(--text-faint); font-size:9px; font-weight:700; letter-spacing:.02em; text-transform:uppercase;
+  }
+  #view-admin table.admin-approved-table td[data-label="User"]{ grid-column:1 / -1; }
+  #view-admin table.admin-approved-table td[data-label="User"]::before{ display:none; }
+  #view-admin table.admin-approved-table td[data-label="Actions"]{ grid-column:1 / -1; flex-direction:row !important; justify-content:flex-end !important; align-items:center !important; padding-top:7px !important; border-top:1px solid var(--border) !important; }
+  #view-admin table.admin-approved-table td[data-label="Actions"]::before{ display:none; }
+  #view-admin .admin-approved-user{ min-width:0; width:100%; }
+  #view-admin .admin-approved-avatar{ width:36px; height:36px; }
+  #view-admin .admin-approved-email{ max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+  #view-admin .admin-approved-last{ min-width:0; font-size:10px; }
+  #view-admin .admin-approved-footer{ align-items:flex-start; }
+  #view-admin .admin-approved-pager{ margin-left:0; width:100%; justify-content:flex-end; }
+
+  #view-admin .approve-row{ padding:12px !important; border:1px solid var(--border); border-radius:12px; margin-bottom:8px; background:var(--surface); }
+  #view-admin .approve-row > div:last-child{ display:grid !important; grid-template-columns:1fr 1fr; gap:8px !important; }
+  #view-admin .approve-row .role-select{ width:100%; min-width:0; }
+  #view-admin .approve-row .btn{ width:100%; margin:0 !important; }
+  #view-admin .au-email{ overflow-wrap:anywhere; word-break:break-word; }
+
+  #view-admin .admin-field-category-head{ grid-template-columns:minmax(0,1fr) auto; }
+  #view-admin .admin-field-category-meta{ display:none; }
+  #view-admin .admin-field-category-body{ padding:8px; }
+  #view-admin .admin-field-category-actions{ justify-content:stretch; }
+  #view-admin .admin-field-category-actions .btn,
+  #view-admin .admin-field-category-actions .queue-btn{ width:100%; }
+  #view-admin .admin-field-subtype-card{ padding:9px !important; }
+  #view-admin .draggable-field-row{ align-items:flex-start !important; flex-wrap:wrap; }
+  #view-admin .draggable-field-row > div:last-child{ width:100%; justify-content:flex-end !important; }
+
+  #view-admin .admin-score-layout{ grid-template-columns:1fr; }
+  #view-admin .admin-config-card-wide{ grid-column:auto; }
+  #view-admin .admin-target-row{ grid-template-columns:1fr 90px; }
+  #view-admin .admin-target-row .submit-btn{ grid-column:1 / -1; width:100%; }
+  #view-admin .admin-permission-row{ align-items:flex-start; }
+
+  #view-admin .admin-category-link-row{ align-items:flex-start; }
+  #view-admin .admin-category-link-url{ white-space:normal; overflow-wrap:anywhere; }
+
+  #view-admin #dataArchivePanel > div:first-child{ grid-template-columns:1fr 1fr !important; }
+  #view-admin #dataArchivePanel > div:first-child > *{ min-width:0; width:100%; box-sizing:border-box; }
+  #view-admin #archiveBtn12{ grid-column:1 / -1; }
+  #view-admin #dataArchivePanel > div:first-child > span{ display:none; }
+  #view-admin #archiveBtnCustom{ grid-column:1 / -1; }
+  #view-admin #archivesList > div{ align-items:flex-start !important; }
+  #view-admin #archivesList > div > div:last-child{ width:100%; }
+  #view-admin #archivesList .btn{ flex:1 1 auto; }
+}
+</style>
+
 </head>
 <body>
  
@@ -4485,12 +4648,20 @@
     <div class="admin-section-card">
     <div class="block-head"><div><div class="block-title">Approved users</div><div class="block-sub"><span id="approvedCountText">— active accounts</span> · Add / Remove is Superadmin-only</div></div><button class="btn btn-toggle" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAdminSection(this, 'approvedUsersPanel', 'Show', 'Hide')">Show</button></div>
     <div class="no-shine admin-fold-panel" id="approvedUsersPanel" style="padding:8px 20px;">
-      <div style="overflow-x:auto;">
-      <table class="data">
-        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Discipline</th><th>Status</th><th></th></tr></thead>
-        <tbody><tr><td colspan="6"><div class="placeholder-note">Loading…</div></td></tr></tbody>
-      </table>
+      <div class="admin-users-toolbar">
+        <div class="admin-users-search">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+          <input id="adminApprovedSearch" type="search" placeholder="Search users, email or ID…" oninput="filterAdminApprovedUsers(this.value)">
+        </div>
+        <div class="admin-users-count" id="adminApprovedVisibleCount">—</div>
       </div>
+      <div class="admin-approved-table-wrap">
+        <table class="data admin-approved-table">
+          <thead><tr><th>User</th><th>Employee ID</th><th>Role</th><th>Discipline</th><th>Status</th><th>Last active</th><th></th></tr></thead>
+          <tbody id="adminApprovedUsersBody"><tr><td colspan="7"><div class="placeholder-note">Loading…</div></td></tr></tbody>
+        </table>
+      </div>
+      <div class="admin-approved-footer" id="adminApprovedUsersFooter"></div>
     </div>
     </div>
       </div><!-- /admin-center-main -->
@@ -5580,32 +5751,37 @@
     const byCategory = { postsales: [], surveyissues: [] };
     (data || []).forEach(row => { if(byCategory[row.category]) byCategory[row.category].push(row); });
 
-    const sectionHtml = (catKey, catLabel) => {
+    const sectionHtml = (catKey, catLabel, open=false) => {
       const rows = byCategory[catKey];
       const rowsHtml = rows.length
-        ? rows.map(r => `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:7px 0; border-bottom:1px solid var(--border);">
-            <div style="min-width:0;">
-              <div style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(r.label)}</div>
-              <div style="font-size:11px; color:var(--text-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(r.url)}</div>
-            </div>
-            <button class="btn remove" style="padding:6px; flex-shrink:0;" onclick="deleteCategoryLink('${r.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
+        ? rows.map(r => `<div class="admin-category-link-row">
+            <div class="admin-category-link-main"><div class="admin-category-link-label">${escapeHtml(r.label)}</div><div class="admin-category-link-url">${escapeHtml(r.url)}</div></div>
+            <button class="btn remove" style="padding:6px; flex-shrink:0;" onclick="deleteCategoryLink('${r.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
           </div>`).join('')
         : '<div class="placeholder-note">No links yet.</div>';
-      return `<div class="panel">
-        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-          <div class="panel-title" style="margin:0;">${catLabel}</div>
-          <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAddLinkForm('${catKey}', this)">+ Add a link</button>
+      return `<section class="admin-link-category${open ? ' open' : ''}">
+        <button type="button" class="admin-link-category-head" onclick="toggleAdminLinkCategory(this)"><span>${catLabel}</span><span class="admin-link-category-arrow">›</span></button>
+        <div class="admin-link-category-body">
+          <div>${rowsHtml}</div>
+          <div style="display:flex; justify-content:flex-end; margin-top:10px;"><button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="toggleAddLinkForm('${catKey}', this)">+ Add a link</button></div>
+          <div id="addLinkForm-${catKey}" style="display:none; flex-direction:column; gap:8px; margin-top:10px;">
+            <input type="text" id="newLinkLabel-${catKey}" placeholder="Link name, e.g. Warranty Policy PDF" style="width:100%; padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
+            <input type="text" id="newLinkUrl-${catKey}" placeholder="https://…" style="width:100%; padding:9px 12px; border-radius:9px; border:1px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
+            <button class="queue-btn" onclick="addCategoryLink('${catKey}')">+ Add link</button>
+          </div>
         </div>
-        <div style="margin-top:14px;">${rowsHtml}</div>
-        <div id="addLinkForm-${catKey}" style="display:none; flex-direction:column; gap:8px; margin-top:14px;">
-          <input type="text" id="newLinkLabel-${catKey}" placeholder="Link name, e.g. Warranty Policy PDF" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
-          <input type="text" id="newLinkUrl-${catKey}" placeholder="https://…" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
-          <button class="queue-btn" onclick="addCategoryLink('${catKey}')">+ Add link</button>
-        </div>
-      </div>`;
+      </section>`;
     };
 
-    panel.innerHTML = `<div class="split-grid">${sectionHtml('postsales', 'Post-Sales Activity')}${sectionHtml('surveyissues', 'Reports')}</div>`;
+    panel.innerHTML = `${sectionHtml('postsales', 'Post-Sales Activity', true)}${sectionHtml('surveyissues', 'Reports', false)}`;
+  }
+
+  function toggleAdminLinkCategory(btn){
+    const section = btn?.closest('.admin-link-category');
+    if(!section) return;
+    const willOpen = !section.classList.contains('open');
+    section.parentElement?.querySelectorAll('.admin-link-category').forEach(el => el.classList.remove('open'));
+    if(willOpen) section.classList.add('open');
   }
 
   // The add-link form starts collapsed for both categories — most visits
@@ -10430,7 +10606,7 @@
     if(error){ listEl.innerHTML = `<div class="placeholder-note">Could not load archives: ${error.message}</div>`; return; }
     if(!data.length){ listEl.innerHTML = '<div class="placeholder-note">No archives yet.</div>'; return; }
     listEl.innerHTML = data.map(a => `
-      <div style="padding:10px 12px; border:1px solid var(--border); border-radius:9px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+      <div class="admin-archive-row" style="padding:10px 12px; border:1px solid var(--border); border-radius:9px; margin-bottom:8px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
         <div>
           <div style="font-weight:600; font-size:13px;">${escapeHtml(a.period_label)}</div>
           <div style="font-size:11px; color:var(--text-faint);">${a.task_count} tasks · ${a.project_count} projects · archived ${new Date(a.created_at).toLocaleDateString('en-GB')}</div>
@@ -11072,6 +11248,84 @@ for a competing inline style first.`;
     }, 40);
   }
 
+  let adminApprovedUsersCache = [];
+  let adminApprovedSearchQuery = '';
+  let adminApprovedPage = 1;
+  let adminApprovedLastSeen = new Map();
+
+  function filterAdminApprovedUsers(value){
+    adminApprovedSearchQuery = String(value || '').trim().toLowerCase();
+    adminApprovedPage = 1;
+    renderAdminApprovedUsers();
+  }
+
+  function setAdminApprovedPage(page){
+    adminApprovedPage = Math.max(1, Number(page) || 1);
+    renderAdminApprovedUsers();
+  }
+
+  function adminLastActiveLabel(userId){
+    try{
+      if(typeof chatOnlineUserIds !== 'undefined' && chatOnlineUserIds?.has?.(userId)) return 'Online now';
+    }catch(_){ }
+    const iso = adminApprovedLastSeen.get(userId);
+    if(!iso) return '—';
+    if(typeof formatChatLastActive === 'function') return formatChatLastActive(iso).replace(/^Last active\s*/,'');
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('en-GB', {day:'2-digit', month:'short', hour:'numeric', minute:'2-digit'});
+  }
+
+  function renderAdminApprovedUsers(){
+    const tbody = document.getElementById('adminApprovedUsersBody');
+    const footer = document.getElementById('adminApprovedUsersFooter');
+    const countEl = document.getElementById('adminApprovedVisibleCount');
+    if(!tbody || !footer) return;
+    const isSuperadmin = currentProfile?.role === 'superadmin';
+    const query = adminApprovedSearchQuery;
+    const filtered = adminApprovedUsersCache.filter(p => {
+      if(!query) return true;
+      return `${p.full_name || ''} ${p.nickname || ''} ${p.email || ''} ${p.role || ''} ${p.discipline || ''}`.toLowerCase().includes(query);
+    });
+    const pageSize = window.innerWidth <= 760 ? 6 : 8;
+    const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
+    if(adminApprovedPage > pageCount) adminApprovedPage = pageCount;
+    const start = (adminApprovedPage - 1) * pageSize;
+    const rows = filtered.slice(start, start + pageSize);
+    if(countEl) countEl.textContent = `${filtered.length} of ${adminApprovedUsersCache.length} approved users`;
+    if(!rows.length){
+      tbody.innerHTML = '<tr><td colspan="7"><div class="placeholder-note">No approved users match this search.</div></td></tr>';
+    }else{
+      tbody.innerHTML = rows.map(p => {
+        const name = p.full_name || p.email || 'Unnamed user';
+        const empId = p.nickname || '—';
+        const avatar = p.avatar_url
+          ? `<span class="admin-approved-avatar"><img src="${escapeHtml(p.avatar_url)}" alt=""></span>`
+          : `<span class="admin-approved-avatar">${escapeHtml(initials(name))}</span>`;
+        const roleClass = p.role === 'superadmin' ? 'superadmin' : p.role === 'admin' ? 'admin' : 'engineer';
+        const last = adminLastActiveLabel(p.id);
+        return `<tr>
+          <td data-label="User"><div class="admin-approved-user">${avatar}<div style="min-width:0;"><div class="admin-approved-name">${escapeHtml(name)}</div><div class="admin-approved-email">${escapeHtml(p.email || '')}</div></div></div></td>
+          <td data-label="Employee ID" class="mono">${escapeHtml(empId)}</td>
+          <td data-label="Role"><span class="admin-approved-role ${roleClass}">${escapeHtml(p.role || 'engineer')}</span></td>
+          <td data-label="Discipline">${isSuperadmin
+            ? `<select class="role-select" style="font-size:11px; padding:5px 7px; max-width:130px;" onchange="updateUserDiscipline('${p.id}', this.value)"><option value="mechanical" ${p.discipline==='mechanical'?'selected':''}>Mechanical</option><option value="electrical" ${p.discipline==='electrical'?'selected':''}>Electrical</option></select>`
+            : `<span class="tag gray">${p.discipline === 'electrical' ? 'Electrical' : 'Mechanical'}</span>`}</td>
+          <td data-label="Status"><span class="admin-approved-status">Active</span></td>
+          <td data-label="Last active"><span class="admin-approved-last">${escapeHtml(last)}</span></td>
+          <td data-label="Actions">${isSuperadmin ? `<button class="btn remove" style="padding:6px;" onclick="removeUser('${p.id}', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : '<span style="color:var(--text-faint);">—</span>'}</td>
+        </tr>`;
+      }).join('');
+    }
+    const rangeEnd = Math.min(start + pageSize, filtered.length);
+    const pages = Array.from({length:pageCount}, (_,i) => i+1);
+    const pageButtons = pageCount > 1 ? `<div class="admin-approved-pager">
+      <button class="admin-page-btn" onclick="setAdminApprovedPage(${adminApprovedPage-1})" ${adminApprovedPage<=1?'disabled':''}>‹</button>
+      ${pages.slice(Math.max(0, adminApprovedPage-3), Math.min(pageCount, adminApprovedPage+2)).map(pg => `<button class="admin-page-btn ${pg===adminApprovedPage?'active':''}" onclick="setAdminApprovedPage(${pg})">${pg}</button>`).join('')}
+      <button class="admin-page-btn" onclick="setAdminApprovedPage(${adminApprovedPage+1})" ${adminApprovedPage>=pageCount?'disabled':''}>›</button>
+    </div>` : '';
+    footer.innerHTML = `<div class="admin-users-count">${filtered.length ? `Showing ${start+1}–${rangeEnd} of ${filtered.length}` : '0 users'}</div>${pageButtons}`;
+  }
+
   async function loadAdminPanel(){
     initAdminCompactAccordion();
     const { data: pending } = await sb.from('profiles').select('*').eq('status', 'pending');
@@ -11150,17 +11404,15 @@ for a competing inline style first.`;
     }
  
     document.getElementById('approvedCountText').textContent = `${(approved||[]).length} active account${(approved||[]).length===1?'':'s'}`;
-    const tbody = document.querySelector('#view-admin table.data tbody');
-    if(tbody){
-      tbody.innerHTML = (approved||[]).map(p => `
-        <tr><td class="rank-name" data-label="Name">${p.full_name||p.email} ${p.nickname ? '('+p.nickname+')' : ''}</td><td class="mono" data-label="Email" style="font-size:12px;">${p.email}</td>
-        <td data-label="Role"><span class="tag ${p.role==='superadmin'?'gold':p.role==='admin'?'blue':'gray'}">${p.role}</span></td>
-        <td data-label="Discipline">${isSuperadmin
-          ? `<select class="role-select" style="font-size:11.5px; padding:3px 6px;" onchange="updateUserDiscipline('${p.id}', this.value)"><option value="mechanical" ${p.discipline==='mechanical'?'selected':''}>Mechanical</option><option value="electrical" ${p.discipline==='electrical'?'selected':''}>Electrical</option></select>`
-          : `<span class="tag gray">${p.discipline === 'electrical' ? 'Electrical' : 'Mechanical'}</span>`}</td>
-        <td data-label="Status"><span class="tag green">Active</span></td>
-        <td data-label="Actions">${isSuperadmin ? `<button class="btn remove" style="padding:6px;" onclick="removeUser('${p.id}', this)" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>` : '<span style="color:var(--text-faint); font-size:12px;">—</span>'}</td></tr>`).join('');
+    adminApprovedUsersCache = approved || [];
+    adminApprovedLastSeen = new Map();
+    if(adminApprovedUsersCache.length){
+      try{
+        const { data: lastSeenRows, error: lastSeenErr } = await sb.from('user_presence_status').select('user_id, last_seen_at').in('user_id', adminApprovedUsersCache.map(p => p.id));
+        if(!lastSeenErr) adminApprovedLastSeen = new Map((lastSeenRows || []).map(r => [r.user_id, r.last_seen_at]));
+      }catch(_){ }
     }
+    renderAdminApprovedUsers();
     const openAdminWorkspace = document.querySelector('#view-admin .admin-accordion-item.open')?.dataset.adminKey;
     if(openAdminWorkspace) prepareAdminWorkspace(openAdminWorkspace);
   }
@@ -11208,55 +11460,41 @@ for a competing inline style first.`;
     }
     const weightMap = {};
     (data||[]).forEach(w => weightMap[w.category] = w.weight);
-    // Reports is deliberately excluded here — it no longer contributes to
-    // Score at all, whether positively or as a settable weight. Its one
-    // exception, Error Report, still affects Score, but always as a
-    // penalty using the weight of whichever OTHER category was picked as
-    // the error's category — never its own separate weight.
     const scorableKeys = Object.keys(catMeta).filter(k => k !== 'surveyissues');
-    el.innerHTML = scorableKeys.map(key => `
-      <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border);">
-        <span style="font-size:13.5px;">${catMeta[key].name}</span>
-        <input type="number" step="0.1" min="0" id="kw_${key}" value="${weightMap[key] ?? 1}" style="width:80px; padding:6px 10px; border-radius:7px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); text-align:right;">
-      </div>`).join('') + `<button class="submit-btn" style="margin-top:14px;" onclick="saveKpiWeights()">Save weights</button>
-      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
-        <div style="font-size:13.5px; font-weight:600;">Monthly target</div>
-        <div style="font-size:11.5px; color:var(--text-faint); max-width:420px; margin-bottom:10px;">The weighted-points value that counts as 100% for the month. Monthly Score is capped at 100 — going past this target doesn't push the number any higher. Overall Score is the average of every month's already-capped percentage, so it can never exceed 100 either.</div>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <input type="number" step="0.1" min="0.1" id="monthlyScoreTargetInput" value="${appSettings.monthly_score_target ?? 20}" style="width:100px; padding:6px 10px; border-radius:7px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); text-align:right;">
-          <button class="submit-btn" style="margin-top:0;" onclick="saveMonthlyScoreTarget()">Save target</button>
-        </div>
-      </div>
-      <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px;">
-        <div>
-          <div style="font-size:13.5px; font-weight:600;">Let Admins see individual engineer Scores</div>
-          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">When off, Admins still see team totals but individual Scores on the Dashboard leaderboard show a lock instead. Superadmins can always see everyone's.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="adminsSeeKpiToggle" ${appSettings.admins_see_kpi ? 'checked' : ''} onchange="toggleAdminsSeeKpi(this)">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px;">
-        <div>
-          <div style="font-size:13.5px; font-weight:600;">Let Admins see Error Report detail</div>
-          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">Separate from Score visibility above — this controls whether Admins can see how many Error Reports an engineer has and their point impact on the Dashboard leaderboard. Everyone can always see their own, on their own Profile page. Superadmins can always see everyone's.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="adminsSeeErrorReportsToggle" ${appSettings.admins_see_error_reports ? 'checked' : ''} onchange="toggleAdminsSeeErrorReports(this)">
-          <span class="switch-track"></span>
-        </label>
-      </div>
-      <div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:16px;">
-        <div>
-          <div style="font-size:13.5px; font-weight:600;">Let Admins trigger team Score recalculation</div>
-          <div style="font-size:11.5px; color:var(--text-faint); max-width:360px;">Every engineer can always recalculate their own Score. This governs whether Admins can trigger a recalculation for the whole team from the Dashboard — Superadmins can always do this.</div>
-        </div>
-        <label class="switch">
-          <input type="checkbox" id="adminsTriggerKpiToggle" ${appSettings.admins_trigger_kpi ? 'checked' : ''} onchange="toggleAdminsTriggerKpi(this)">
-          <span class="switch-track"></span>
-        </label>
+    const weightRows = scorableKeys.map(key => `
+      <div class="admin-weight-row">
+        <span>${catMeta[key].name}</span>
+        <input type="number" step="0.1" min="0" id="kw_${key}" value="${weightMap[key] ?? 1}">
+      </div>`).join('');
+    const permissionRow = (title, sub, inputId, checked, handler) => `
+      <div class="admin-permission-row">
+        <div><div class="admin-permission-title">${title}</div><div class="admin-permission-sub">${sub}</div></div>
+        <label class="switch"><input type="checkbox" id="${inputId}" ${checked ? 'checked' : ''} onchange="${handler}(this)"><span class="switch-track"></span></label>
       </div>`;
+    el.innerHTML = `<div class="admin-score-layout">
+      <section class="admin-config-card">
+        <div class="admin-config-title">Category weights</div>
+        <div class="admin-config-sub">Controls how strongly each task category contributes to an engineer's Score.</div>
+        ${weightRows}
+        <button class="submit-btn" style="margin-top:12px;" onclick="saveKpiWeights()">Save weights</button>
+      </section>
+      <section class="admin-config-card">
+        <div class="admin-config-title">Monthly Score target</div>
+        <div class="admin-config-sub">Weighted points that count as 100% for a month. The monthly and overall Score remain capped at 100.</div>
+        <div class="admin-target-row">
+          <label>Target points</label>
+          <input type="number" step="0.1" min="0.1" id="monthlyScoreTargetInput" value="${appSettings.monthly_score_target ?? 20}">
+          <button class="submit-btn" style="margin:0; width:auto;" onclick="saveMonthlyScoreTarget()">Save</button>
+        </div>
+      </section>
+      <section class="admin-config-card admin-config-card-wide">
+        <div class="admin-config-title">Score visibility & controls</div>
+        <div class="admin-config-sub">These settings affect Admin visibility only. Superadmins always retain full access.</div>
+        ${permissionRow('Let Admins see individual engineer Scores', 'When off, Admins still see team totals but individual Scores on the Dashboard leaderboard show a lock.', 'adminsSeeKpiToggle', appSettings.admins_see_kpi, 'toggleAdminsSeeKpi')}
+        ${permissionRow('Let Admins see Error Report detail', 'Controls whether Admins can see Error Report counts and point impact on the Dashboard leaderboard.', 'adminsSeeErrorReportsToggle', appSettings.admins_see_error_reports, 'toggleAdminsSeeErrorReports')}
+        ${permissionRow('Let Admins trigger team Score recalculation', 'Every engineer can still recalculate their own Score; this controls the team-wide action.', 'adminsTriggerKpiToggle', appSettings.admins_trigger_kpi, 'toggleAdminsTriggerKpi')}
+      </section>
+    </div>`;
   }
  
   async function saveKpiWeights(){
@@ -12309,7 +12547,7 @@ for a competing inline style first.`;
         const cardBg = catColorVar ? `color-mix(in srgb, ${catColorVar} 26%, var(--surface-alt))` : 'var(--surface-alt)';
         const headerColor = catColorVar || 'var(--accent)';
         const cardBorder = catColorVar ? `border-left:4px solid ${catColorVar};` : '';
-        return `<div style="margin-bottom:18px; padding:12px 14px 12px 16px; border-radius:10px; background:${cardBg}; ${cardBorder}">
+        return `<div class="admin-field-subtype-card" style="margin-bottom:18px; padding:12px 14px 12px 16px; border-radius:10px; background:${cardBg}; ${cardBorder}">
           ${allSubtypes.length > 1 ? `<div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px;">
             <span style="font-size:13px; font-weight:600; color:${headerColor};">${subType || 'Shared across all sub-categories'}</span>
             ${subType && customSubtypeIdByName[subType] ? `<button class="btn remove" style="padding:4px 10px; font-size:11px; display:inline-flex; align-items:center; gap:5px; white-space:nowrap;" onclick="deleteCustomSubtype('${customSubtypeIdByName[subType]}', '${subType.replace(/'/g,"\\'")}')" title="Delete this whole sub-category (not just a field)" aria-label="Delete sub-category"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>Delete sub-category</button>` : ''}
@@ -12320,14 +12558,27 @@ for a competing inline style first.`;
       const addSubcatBtn = SUBCATEGORY_CAPABLE.includes(catKey)
         ? `<button class="btn" style="padding:5px 12px; font-size:11.5px;" onclick="openQuickAddSubcategoryModal('${catKey}')">+ Add sub-category</button>`
         : '';
-      return `<div class="panel" style="margin-bottom:18px;">
-        <div class="panel-title" style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-          <span>${catMeta[catKey]?.name || catKey}</span>
-          ${addSubcatBtn}
+      const openClass = catKey === 'rni' ? ' open' : '';
+      return `<section class="admin-field-category${openClass}" data-field-category="${catKey}">
+        <button type="button" class="admin-field-category-head" onclick="toggleAdminFieldCategory(this)">
+          <span class="admin-field-category-name">${catMeta[catKey]?.name || catKey}</span>
+          <span class="admin-field-category-meta">${catRows.length} field${catRows.length===1?'':'s'}</span>
+          <span class="admin-field-category-arrow">›</span>
+        </button>
+        <div class="admin-field-category-body">
+          ${addSubcatBtn ? `<div class="admin-field-category-actions">${addSubcatBtn}</div>` : ''}
+          ${subTypeHtml}
         </div>
-        ${subTypeHtml}
-      </div>`;
+      </section>`;
     }).join('');
+  }
+
+  function toggleAdminFieldCategory(btn){
+    const section = btn?.closest('.admin-field-category');
+    if(!section) return;
+    const willOpen = !section.classList.contains('open');
+    section.parentElement?.querySelectorAll('.admin-field-category').forEach(el => el.classList.remove('open'));
+    if(willOpen) section.classList.add('open');
   }
 
   // Drag-and-drop reordering — deliberately scoped to within one exact
