@@ -1694,6 +1694,19 @@
   #view-dashboard .dash-leaderboard-head{
     display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin:0 2px 7px;
   }
+  #view-dashboard .dash-leaderboard-head-copy{ min-width:0; }
+  #view-dashboard .dash-leaderboard-filter-wrap{ display:flex; align-items:center; justify-content:flex-end; gap:7px; flex-shrink:0; }
+  #view-dashboard .dash-lb-segment{
+    display:inline-flex; align-items:center; gap:3px; padding:3px; border:1px solid var(--border);
+    background:var(--surface); border-radius:10px; box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }
+  #view-dashboard .dash-lb-filter-btn{
+    border:0; background:transparent; color:var(--text-dim); border-radius:7px; padding:6px 10px;
+    font:inherit; font-size:10.5px; font-weight:650; cursor:pointer; transition:.15s ease; white-space:nowrap;
+  }
+  #view-dashboard .dash-lb-filter-btn:hover{ color:var(--accent); background:var(--surface-alt); }
+  #view-dashboard .dash-lb-filter-btn.active{ background:var(--accent); color:#fff; box-shadow:0 2px 6px rgba(37,99,235,.16); }
+  #view-dashboard .dash-lb-mobile-filter{ display:none; min-width:150px; }
   #view-dashboard .dash-table-card{ padding:0 !important; overflow-x:auto; }
   #view-dashboard .dash-table-card table.data{ min-width:720px; }
   #view-dashboard .dash-table-card table.data th{
@@ -1770,7 +1783,10 @@
     #view-dashboard .dash-rank-category{ display:none; }
     #view-dashboard .dash-rank-bar{ height:5px; }
     #view-dashboard .dash-rank-score{ font-size:8px; }
-    #view-dashboard .dash-leaderboard-head{ align-items:flex-start; flex-direction:column; gap:2px; }
+    #view-dashboard .dash-leaderboard-head{ align-items:flex-start; flex-direction:column; gap:7px; }
+    #view-dashboard .dash-leaderboard-filter-wrap{ width:100%; justify-content:flex-start; }
+    #view-dashboard .dash-lb-segment{ display:none; }
+    #view-dashboard .dash-lb-mobile-filter{ display:block; width:100%; max-width:210px; }
     #view-dashboard .dash-table-card table.data{ min-width:650px; }
   }
 
@@ -4326,8 +4342,22 @@
 
     <section class="block dash-leaderboard-section">
       <div class="dash-leaderboard-head">
-        <div class="dash-section-title">Engineer leaderboard</div>
-        <div class="dash-section-sub">Click any row to inspect that person individually</div>
+        <div class="dash-leaderboard-head-copy">
+          <div class="dash-section-title">Engineer leaderboard</div>
+          <div class="dash-section-sub">Click any row to inspect that person individually</div>
+        </div>
+        <div class="dash-leaderboard-filter-wrap" aria-label="Leaderboard section filter">
+          <div class="dash-lb-segment" role="group" aria-label="Filter leaderboard by discipline">
+            <button type="button" class="dash-lb-filter-btn active" data-lb-discipline="all" onclick="setDashboardLeaderboardFilter('all')">All</button>
+            <button type="button" class="dash-lb-filter-btn" data-lb-discipline="mechanical" onclick="setDashboardLeaderboardFilter('mechanical')">Mechanical</button>
+            <button type="button" class="dash-lb-filter-btn" data-lb-discipline="electrical" onclick="setDashboardLeaderboardFilter('electrical')">Electrical</button>
+          </div>
+          <select id="dashLeaderboardDisciplineMobile" class="fselect dash-lb-mobile-filter" onchange="setDashboardLeaderboardFilter(this.value)" aria-label="Filter leaderboard by discipline">
+            <option value="all">All scores</option>
+            <option value="mechanical">Mechanical scores</option>
+            <option value="electrical">Electrical scores</option>
+          </select>
+        </div>
       </div>
       <div class="panel no-shine dash-card dash-table-card">
         <table class="data">
@@ -4857,7 +4887,10 @@
     // page-load event anyway.
     if(name === 'mytasks' && typeof renderTaskForm === 'function') renderTaskForm();
     if(name === 'profile' && typeof loadProfile === 'function') loadProfile();
-    if(name === 'dashboard' && typeof loadDashboard === 'function') loadDashboard();
+    if(name === 'dashboard' && typeof loadDashboard === 'function'){
+      dashLeaderboardDisciplineFilter = 'all';
+      loadDashboard();
+    }
     if(name === 'search' && typeof bindSearchSuggestionInputs === 'function') bindSearchSuggestionInputs();
     if(name === 'gantt' && typeof loadDevDashboard === 'function') loadDevDashboard();
     if(name === 'chat' && typeof loadChatMessages === 'function') loadChatMessages();
@@ -14017,6 +14050,47 @@ for a competing inline style first.`;
   // tracks the breakpoint so the existing ring sizing can switch cleanly
   // without re-rendering on every resize pixel.
   let dashOverviewMode = null;
+  let dashLeaderboardDisciplineFilter = 'all';
+
+  function dashboardLeaderboardRankBadge(index){
+    return index === 0
+      ? `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#F5C34220;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B98900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l4 2 6-7 6 7 4-2-2 11H4z"/></svg></span>`
+      : `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; font-size:11px; color:var(--text-faint);">${index + 1}</span>`;
+  }
+
+  function setDashboardLeaderboardFilter(filter){
+    const allowed = new Set(['all','mechanical','electrical']);
+    dashLeaderboardDisciplineFilter = allowed.has(filter) ? filter : 'all';
+
+    document.querySelectorAll('#view-dashboard .dash-lb-filter-btn').forEach(btn => {
+      const active = btn.dataset.lbDiscipline === dashLeaderboardDisciplineFilter;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    const mobileSelect = document.getElementById('dashLeaderboardDisciplineMobile');
+    if(mobileSelect && mobileSelect.value !== dashLeaderboardDisciplineFilter) mobileSelect.value = dashLeaderboardDisciplineFilter;
+
+    const rows = Array.from(document.querySelectorAll('#dashLeaderboardBody tr[data-leaderboard-row="1"]'));
+    let visibleRank = 0;
+    rows.forEach(row => {
+      const visible = dashLeaderboardDisciplineFilter === 'all' || row.dataset.discipline === dashLeaderboardDisciplineFilter;
+      row.style.display = visible ? '' : 'none';
+      if(visible){
+        const slot = row.querySelector('.dash-lb-rank-slot');
+        if(slot) slot.innerHTML = dashboardLeaderboardRankBadge(visibleRank);
+        visibleRank++;
+      }
+    });
+
+    const emptyRow = document.getElementById('dashLeaderboardFilterEmpty');
+    if(emptyRow){
+      emptyRow.style.display = rows.length && visibleRank === 0 ? '' : 'none';
+      const cell = emptyRow.querySelector('td');
+      if(cell) cell.textContent = dashLeaderboardDisciplineFilter === 'all'
+        ? 'No activity in this range.'
+        : `No ${dashLeaderboardDisciplineFilter} engineers in this range.`;
+    }
+  }
   function renderDashOverviewIfNeeded(){
     const isMobile = window.innerWidth < 700;
     const mode = isMobile ? 'mobile' : 'desktop';
@@ -14506,9 +14580,6 @@ for a competing inline style first.`;
     setTrend('dashTrendTime','dashTrendTimeNote',currentComparisonMetrics?.time ?? null,previousMetrics?.time ?? null,comparisonNoteLabel);
 
     const lbBody = document.getElementById('dashLeaderboardBody');
-    const rankBadge = (i) => i === 0
-      ? `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#F5C34220;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B98900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l4 2 6-7 6 7 4-2-2 11H4z"/></svg></span>`
-      : `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; font-size:11px; color:var(--text-faint);">${i+1}</span>`;
     const initials = (name) => (name || '?').split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
     const avatarColors = ['#D14343','#378ADD','#1D9E75','#D4537E','#B98900','#8A63D2'];
 
@@ -14568,11 +14639,15 @@ for a competing inline style first.`;
         ? `<td>${e.errorCount ? `${e.errorCount} <span style="color:var(--red); font-size:11px;">(${e.errorImpact.toFixed(1)})</span>` : '—'}</td>`
         : '';
       const avColor = avatarColors[i % avatarColors.length];
-      return `<tr style="cursor:pointer;" onclick="document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">
-        <td><div class="rank-name" style="display:flex; align-items:center; gap:9px;">${rankBadge(i)}<span style="width:24px; height:24px; border-radius:50%; background:${avColor}22; color:${avColor}; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${initials(e.name)}</span>${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td title="${formatDurationLong(e.duration)}">${e.duration > 0 ? formatDurationShort(e.duration) : '—'}</td>${kpiCell}${errorCell}
+      return `<tr data-leaderboard-row="1" data-discipline="${escapeHtml(e.discipline || '')}" style="cursor:pointer;" onclick="document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">
+        <td><div class="rank-name" style="display:flex; align-items:center; gap:9px;"><span class="dash-lb-rank-slot">${dashboardLeaderboardRankBadge(i)}</span><span style="width:24px; height:24px; border-radius:50%; background:${avColor}22; color:${avColor}; font-size:10.5px; font-weight:700; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0;">${initials(e.name)}</span>${e.name}</div></td><td>${topCat ? (catMeta[topCat[0]]?.name || topCat[0]) : '—'}</td><td>${e.total}</td><td title="${formatDurationLong(e.duration)}">${e.duration > 0 ? formatDurationShort(e.duration) : '—'}</td>${kpiCell}${errorCell}
         <td><button class="btn inspect" style="padding:4px 12px; font-size:11.5px;" onclick="event.stopPropagation(); document.getElementById('dashEngineerSelect').value='${id}'; loadDashboard();">Inspect</button></td>
       </tr>`;
     }).join('') : `<tr><td colspan="${visibleColCount}" style="color:var(--text-faint); padding:14px;">No activity in this range.</td></tr>`;
+    if(leaderboard.length){
+      lbBody.insertAdjacentHTML('beforeend', `<tr id="dashLeaderboardFilterEmpty" style="display:none;"><td colspan="${visibleColCount}" style="color:var(--text-faint); padding:14px;">No engineers in this section.</td></tr>`);
+    }
+    setDashboardLeaderboardFilter(dashLeaderboardDisciplineFilter);
     animateBars();
 
     // Inspecting a specific engineer also surfaces their real individual
