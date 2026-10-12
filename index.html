@@ -2383,6 +2383,31 @@
     #view-gantt .project-overview-item:nth-last-child(-n+2){ border-bottom:0; }
     #view-gantt .project-timeline-card{ overflow-x:auto; }
     #view-gantt .project-timeline-card #projGanttChart{ min-width:0; }
+
+    /* Mobile Gantt ruler: the task bars wrap to a full-width second line.
+       Match the date ruler to that exact bar track instead of retaining the
+       desktop 170px task-name spacer. This keeps the first/last dates aligned
+       with the left/right ends of every task bar. */
+    #view-gantt .project-timeline-card .gantt-ticks-row{
+      gap:0 !important;
+      padding:0 6px !important;
+      box-sizing:border-box;
+      width:100%;
+    }
+    #view-gantt .project-timeline-card .gantt-ticks-name-spacer,
+    #view-gantt .project-timeline-card .gantt-ticks-btn-spacer{
+      width:0 !important;
+      min-width:0 !important;
+      flex:0 0 0 !important;
+    }
+    #view-gantt .project-timeline-card .gantt-ticks-row > div:nth-child(2){
+      min-width:0;
+      flex:1 1 100% !important;
+    }
+    #view-gantt .project-timeline-card .gantt-ticks-row span{
+      white-space:nowrap;
+      font-size:8.5px;
+    }
   }
 
 
@@ -8048,9 +8073,10 @@
     // useful to do there, so it's hidden for them entirely.
     const adminOnly = document.querySelectorAll('[data-view="admin"]');
     adminOnly.forEach(el => el.style.display = (role === 'superadmin') ? '' : 'none');
-    // Team Dashboard (KPI leaderboard) stays Admin/Superadmin only.
-    const dashboardOnly = document.querySelectorAll('[data-view="dashboard"]');
-    dashboardOnly.forEach(el => el.style.display = (role === 'admin' || role === 'superadmin') ? '' : 'none');
+    // Team Dashboard is available to every approved signed-in user.
+    // Privileged dashboard actions (such as team Score recalculation) keep
+    // their existing permission checks inside the dashboard itself.
+    document.querySelectorAll('[data-view="dashboard"]').forEach(el => el.style.display = '');
     // R&I Project Manager is open to every role — everyone can add and view
     // every project, not just their own or an admin's.
     document.querySelectorAll('[data-view="gantt"]').forEach(el => el.style.display = '');
