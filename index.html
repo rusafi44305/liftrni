@@ -5573,9 +5573,232 @@
         buildQuery: (term) => fetchFieldSpecificSuggestions(label, term),
         mapRows: mapFieldSpecificSuggestions,
         debounceMs: 90,
-        onPick: (it, inputEl) => { inputEl.value = it.value; }
+        onPick: (it, inputEl) => {
+          inputEl.value = it.value;
+          if(label === 'Lift ID') schedulePostSalesLiftAutofill(inputEl, 0);
+        }
       });
     });
+  }
+
+  // ------------------------------------------------------------
+  // Post-Sales Lift ID autofill
+  // Entering an existing Lift ID copies the latest same-discipline Post-Sales
+  // values into the current form. Everything stays editable. Remarks and any
+  // Duration field are deliberately excluded, and Perform Date stays as the
+  // date of this new entry rather than being copied from an old task.
+  // ------------------------------------------------------------
+  let postSalesAutofillTimer = null;
+  let postSalesAutofillRequestToken = 0;
+  let postSalesAutofillApplied = new Map();
+
+  function resetPostSalesAutofillState(){
+    clearTimeout(postSalesAutofillTimer);
+    postSalesAutofillTimer = null;
+    postSalesAutofillRequestToken++;
+    postSalesAutofillApplied = new Map();
+  }
+
+  function normalizedFormFieldLabel(fieldEl){
+    const labelEl = fieldEl?.querySelector('.field-label');
+    return labelEl ? labelEl.textContent.replace('*','').split('(')[0].trim() : '';
+  }
+
+  function findDynamicFormField(label){
+    return Array.from(document.querySelectorAll('#dynamicForm .form-field')).find(el => normalizedFormFieldLabel(el) === label) || null;
+  }
+
+  function getDynamicFormFieldValue(label){
+    const fieldEl = findDynamicFormField(label);
+    if(!fieldEl) return undefined;
+    const input = fieldEl.querySelector('input.ti');
+    if(input) return input.value;
+    const select = fieldEl.querySelector('select.ti');
+    if(select) return select.value;
+    const textarea = fieldEl.querySelector('textarea');
+    if(textarea) return textarea.value;
+    const chipGroup = fieldEl.querySelector('.chip-group');
+    if(chipGroup) return Array.from(chipGroup.querySelectorAll('.chip-opt.picked')).map(c => c.dataset.opt);
+    return undefined;
+  }
+
+  function serialFormValue(value){
+    return JSON.stringify(Array.isArray(value) ? value.map(v => String(v)) : String(value ?? ''));
+  }
+
+  function formValueIsEmpty(value){
+    if(Array.isArray(value)) return value.length === 0;
+    const text = String(value ?? '').trim();
+    return !text || text === '— None —';
+  }
+
+  function setDynamicFormFieldValue(label, value, force = false, trackAutofill = true){
+    const fieldEl = findDynamicFormField(label);
+    if(!fieldEl || value === null || value === undefined) return false;
+    const current = getDynamicFormFieldValue(label);
+    const wasAutofilled = postSalesAutofillApplied.has(label) && serialFormValue(current) === postSalesAutofillApplied.get(label);
+    if(!force && !formValueIsEmpty(current) && !wasAutofilled) return false; // preserve manual edits
+
+    const input = fieldEl.querySelector('input.ti');
+    if(input){
+      input.value = Array.isArray(value) ? value.join(', ') : String(value);
+      if(trackAutofill) postSalesAutofillApplied.set(label, serialFormValue(input.value));
+      return true;
+    }
+    const select = fieldEl.querySelector('select.ti');
+    if(select){
+      const target = Array.isArray(value) ? String(value[0] ?? '') : String(value);
+      const opt = Array.from(select.options).find(o => o.value === target || o.textContent.trim() === target);
+      if(!opt) return false;
+      select.value = opt.value;
+      if(trackAutofill) postSalesAutofillApplied.set(label, serialFormValue(select.value));
+      return true;
+    }
+    const textarea = fieldEl.querySelector('textarea');
+    if(textarea){
+      textarea.value = Array.isArray(value) ? value.join(', ') : String(value);
+      if(trackAutofill) postSalesAutofillApplied.set(label, serialFormValue(textarea.value));
+      return true;
+    }
+    const chipGroup = fieldEl.querySelector('.chip-group');
+    if(chipGroup){
+      const wanted = new Set((Array.isArray(value) ? value : [value]).map(v => String(v)));
+      let matched = false;
+      chipGroup.querySelectorAll('.chip-opt').forEach(chip => {
+        const pick = wanted.has(String(chip.dataset.opt));
+        chip.classList.toggle('picked', pick);
+        if(pick) matched = true;
+      });
+      if(!matched && wanted.size) return false;
+      const actual = Array.from(chipGroup.querySelectorAll('.chip-opt.picked')).map(c => c.dataset.opt);
+      if(trackAutofill) postSalesAutofillApplied.set(label, serialFormValue(actual));
+      return true;
+    }
+    return false;
+  }
+
+  function snapshotDynamicFormValues(){
+    const out = new Map();
+    document.querySelectorAll('#dynamicForm .form-field').forEach(el => {
+      const label = normalizedFormFieldLabel(el);
+      if(label) out.set(label, getDynamicFormFieldValue(label));
+    });
+    return out;
+  }
+
+  function ensurePostSalesAutofillStatus(){
+    const liftField = findDynamicFormField('Lift ID');
+    if(!liftField) return null;
+    let el = liftField.querySelector('.postsales-autofill-status');
+    if(!el){
+      el = document.createElement('div');
+      el.className = 'postsales-autofill-status';
+      el.style.cssText = 'font-size:11px;color:var(--text-faint);margin-top:5px;line-height:1.35;';
+      liftField.appendChild(el);
+    }
+    return el;
+  }
+
+  function postSalesAutofillExcluded(label){
+    const key = String(label || '').toLowerCase();
+    return label === 'Lift ID' || label === 'Discipline' || /remark/.test(key) || /duration/.test(key);
+  }
+
+  async function runPostSalesLiftAutofill(liftId){
+    const cat = document.getElementById('catSelect')?.value;
+    if(cat !== 'postsales') return;
+    liftId = String(liftId || '').trim();
+    const statusEl = ensurePostSalesAutofillStatus();
+    if(!liftId || liftId.length < 3){ if(statusEl) statusEl.textContent = ''; return; }
+
+    const token = ++postSalesAutofillRequestToken;
+    if(statusEl) statusEl.textContent = 'Looking up previous Post-Sales data…';
+    const { data, error } = await sb.from('tasks')
+      .select('id, lift_id, project_name, details, created_at')
+      .eq('category', 'postsales')
+      .eq('lift_id', liftId)
+      .order('created_at', { ascending: false })
+      .limit(50);
+    if(token !== postSalesAutofillRequestToken) return;
+    if(error){
+      if(statusEl) statusEl.textContent = 'Previous Lift data could not be loaded.';
+      console.warn('Post-Sales autofill lookup failed:', error);
+      return;
+    }
+
+    const discipline = currentProfile?.discipline === 'electrical' ? 'Electrical' : 'Mechanical';
+    const inferPostSalesDiscipline = (details) => {
+      const explicit = String(details?.['Discipline'] || '').trim();
+      if(explicit) return explicit;
+      const mechKeys = ['Lift Type','Capacity','Motor Origin','Model','F/S/O','Door Type','Door Opening Width','Other Door Opening Width (mm)'];
+      const elecKeys = ['Sales Wing','Problem Details','Solution Statement','Solution Status'];
+      if(mechKeys.some(k => details && details[k] !== undefined && String(details[k] ?? '').trim() !== '')) return 'Mechanical';
+      if(elecKeys.some(k => details && details[k] !== undefined && String(details[k] ?? '').trim() !== '')) return 'Electrical';
+      return '';
+    };
+    const source = (data || []).find(row => inferPostSalesDiscipline(row.details || {}).toLowerCase() === discipline.toLowerCase());
+    if(!source){
+      if(statusEl) statusEl.textContent = `No previous ${discipline} Post-Sales entry found for this Lift ID.`;
+      return;
+    }
+
+    const sourceDetails = (source.details && typeof source.details === 'object') ? source.details : {};
+    const desiredSubcategory = String(sourceDetails['Sub-category'] || '').trim();
+    const subSelect = document.getElementById('newSubcatSelect_postsales');
+    if(subSelect && desiredSubcategory && desiredSubcategory !== '— None —'){
+      const currentSub = subSelect.value;
+      const canReplaceSub = formValueIsEmpty(currentSub) || (postSalesAutofillApplied.has('Sub-category') && serialFormValue(currentSub) === postSalesAutofillApplied.get('Sub-category'));
+      const targetOption = Array.from(subSelect.options).find(o => o.value === desiredSubcategory || o.textContent.trim() === desiredSubcategory);
+      if(canReplaceSub && targetOption && subSelect.value !== targetOption.value){
+        const snapshot = snapshotDynamicFormValues();
+        subSelect.value = targetOption.value;
+        await renderTaskForm(true);
+        if(token !== postSalesAutofillRequestToken) return;
+        // Rebuilds are necessary to reveal that sub-category's custom fields.
+        // Restore anything the user had already typed, except the subtype we
+        // intentionally switched to; old autofilled values remain replaceable.
+        snapshot.forEach((value, label) => {
+          if(label !== 'Sub-category' && !formValueIsEmpty(value)) setDynamicFormFieldValue(label, value, true, false);
+        });
+        setDynamicFormFieldValue('Sub-category', desiredSubcategory, true);
+      }
+    }
+
+    const values = { ...sourceDetails };
+    if(source.project_name && String(source.project_name).trim().toLowerCase() !== '(untitled)') values['Project Name'] = source.project_name;
+
+    document.querySelectorAll('#dynamicForm .form-field').forEach(fieldEl => {
+      const label = normalizedFormFieldLabel(fieldEl);
+      if(!label || postSalesAutofillExcluded(label) || label === 'Sub-category') return;
+      if(Object.prototype.hasOwnProperty.call(values, label)) setDynamicFormFieldValue(label, values[label]);
+    });
+    updateConditionals();
+
+    const freshStatus = ensurePostSalesAutofillStatus();
+    if(freshStatus){
+      const dt = new Date(source.created_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+      freshStatus.textContent = `Autofilled from the latest ${discipline} Post-Sales entry (${dt}). All copied values are editable.`;
+      freshStatus.style.color = 'var(--green)';
+    }
+  }
+
+  function schedulePostSalesLiftAutofill(inputEl, delay = 500){
+    if(document.getElementById('catSelect')?.value !== 'postsales') return;
+    clearTimeout(postSalesAutofillTimer);
+    const value = inputEl?.value || '';
+    postSalesAutofillTimer = setTimeout(() => runPostSalesLiftAutofill(value), delay);
+  }
+
+  function bindPostSalesLiftAutofill(){
+    if(document.getElementById('catSelect')?.value !== 'postsales') return;
+    const liftField = findDynamicFormField('Lift ID');
+    const input = liftField?.querySelector('input.ti');
+    if(!input || input.dataset.postsalesAutofillBound === '1') return;
+    input.dataset.postsalesAutofillBound = '1';
+    ensurePostSalesAutofillStatus();
+    input.addEventListener('input', () => schedulePostSalesLiftAutofill(input, 500));
+    input.addEventListener('change', () => schedulePostSalesLiftAutofill(input, 0));
+    input.addEventListener('blur', () => schedulePostSalesLiftAutofill(input, 0));
   }
 
   // Wiring is intentionally idempotent. Besides the initial bind, Search
@@ -6048,6 +6271,7 @@
 
   async function renderTaskForm(preserveOnTypeChange){
     const cat = document.getElementById('catSelect').value;
+    if(cat !== 'postsales') resetPostSalesAutofillState();
     let fields = taskForms[cat] || [];
     const discipline = (currentProfile && currentProfile.discipline === 'electrical') ? 'electrical' : 'mechanical';
 
@@ -6142,7 +6366,14 @@
       const subSelect = document.getElementById('generalSupportType');
       const subType = subSelect ? subSelect.value : 'Production Support';
       if(subField) subField.currentValue = subType;
-      fields = fields.concat(generalSupportSubforms[subType] || []);
+      const builtInGeneralFields = generalSupportSubforms[subType];
+      // Superadmin-created General Support sub-categories used to start with
+      // only their custom fields, so they had no identity field at all and
+      // new entries were saved as "(untitled)". Give every custom subtype
+      // the same optional Task Name identity field as the four built-ins.
+      fields = fields.concat(builtInGeneralFields || [
+        {t:'text', l:'Task Name', ph:'Optional — a short name for this task', section:'identity'}
+      ]);
     }
 
     // Team Activity, Pre-Sales, and Post-Sales never had a sub-category
@@ -6358,6 +6589,7 @@
     // rebuilt whenever category/sub-type changes, so bind the freshly-rendered
     // text inputs and textareas each time.
     bindTaskFieldSuggestionInputs();
+    bindPostSalesLiftAutofill();
   }
  
   function toggleSearchResultDetails(btn){
@@ -8471,7 +8703,7 @@
       const subtypeKey = SUBTYPE_DETAILS_KEY[currentCatKey];
       const subtype = subtypeKey ? details[subtypeKey] : '';
       const discipline = details['Discipline'] || '';
-      const title = row.project_name || (row.lift_id ? `Lift ${row.lift_id}` : '(untitled)');
+      const title = taskDisplayTitle(row);
       const summary = summaryForRow(row);
       const status = statusForRow(details);
       const fieldsHtml = Object.entries(details)
@@ -8485,7 +8717,7 @@
             <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
               ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
                 <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${escapeHtml(h.by || 'someone')}</div>
-                <div>${escapeHtml(h.previous.project_name || '(untitled)')}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
+                <div>${escapeHtml(taskDisplayTitle({ project_name:h.previous.project_name, lift_id:h.previous.lift_id, details:h.previous.details, category:row.category }))}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
               </div>`).join('')}
             </div>
           </details>`
@@ -9115,7 +9347,7 @@
           <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
             ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
               <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')}</div>
-              <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+              <div>${escapeHtml(taskDisplayTitle({ project_name:h.previous.project_name, lift_id:h.previous.lift_id, details:h.previous.details, category:row.category }))}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
             </div>`).join('')}
           </div>
         </details>`
@@ -9233,6 +9465,38 @@
     return div.innerHTML;
   }
 
+  function taskDisplayTitle(row){
+    row = row || {};
+    const raw = String(row.project_name || '').trim();
+    if(raw && raw.toLowerCase() !== '(untitled)') return raw;
+
+    const details = (row.details && typeof row.details === 'object') ? row.details : {};
+    const preferredKeys = [
+      'Task Name','Project Name','Client / Project Name','Project / Subject',
+      'Short Description','Problem Details','Problem Statement','Error Category'
+    ];
+    for(const key of preferredKeys){
+      const value = details[key];
+      if(Array.isArray(value)){
+        const text = value.map(v => String(v || '').trim()).filter(Boolean).join(', ');
+        if(text) return text;
+      } else if(value !== null && value !== undefined && String(value).trim()){
+        return String(value).trim();
+      }
+    }
+
+    // Old custom-subcategory rows may genuinely have no identity field.
+    // Use the stored subtype as a meaningful label instead of showing
+    // "(untitled)". This is display-only; historical data is untouched.
+    const subtype = details['Sub-category'] || details['Support Type'] || details['Report Type'] || details['Activity Type'];
+    if(subtype && String(subtype).trim() && String(subtype).trim() !== '— None —') return String(subtype).trim();
+    const note = String(row.notes || '').trim();
+    if(note) return note.length > 90 ? note.slice(0, 87) + '…' : note;
+    if(catMeta[row.category]?.name) return catMeta[row.category].name;
+    if(row.lift_id) return `Lift ${row.lift_id}`;
+    return 'Activity';
+  }
+
   // Builds the small extra pills shown next to a task's category tag: which
   // discipline it was logged under, and its sub-category (Support Type /
   // Report Type) if that category actually has one. Shared across every
@@ -9241,7 +9505,7 @@
     details = details || {};
     const pills = [];
     if(details['Discipline']) pills.push(details['Discipline']);
-    const subType = details['Support Type'] || details['Report Type'];
+    const subType = details['Support Type'] || details['Report Type'] || details['Sub-category'];
     if(subType) pills.push(subType);
     if(!pills.length) return '';
     return pills.map(p => `<span style="display:inline-block; background:var(--surface-alt); color:var(--text-dim); font-size:10.5px; font-weight:600; padding:2px 9px; border-radius:999px; margin-left:5px;">${escapeHtml(p)}</span>`).join('');
@@ -9939,7 +10203,7 @@
     const who = displayName({ full_name: row.employee_full_name, nickname: row.employee_nickname });
     return `<div class="feed-item">
       <div style="display:flex; align-items:center; flex-wrap:wrap; flex-shrink:0;"><span class="tag c-${row.category}">${cat}</span>${subLabelsHtml(row.details)}</div>
-      <div class="feed-text"><b>${who}</b> logged <i>${row.project_name || '(untitled)'}</i>${row.lift_id ? ' — Lift <span class="mono">'+row.lift_id+'</span>' : ''}
+      <div class="feed-text"><b>${who}</b> logged <i>${escapeHtml(taskDisplayTitle(row))}</i>${row.lift_id ? ' — Lift <span class="mono">'+escapeHtml(row.lift_id)+'</span>' : ''}
         <div class="feed-meta">${timeAgo(row.created_at)}</div>
       </div>
     </div>`;
@@ -10133,7 +10397,9 @@
       details[label] = group.dataset.value || '0';
     });
  
-    return { category: cat, lift_id: liftId, project_name: projectName || '(untitled)', details };
+    const subtypeFallback = details['Sub-category'] || details['Support Type'] || details['Report Type'] || details['Activity Type'] || '';
+    const safeSubtypeFallback = String(subtypeFallback || '').trim() === '— None —' ? '' : String(subtypeFallback || '').trim();
+    return { category: cat, lift_id: liftId, project_name: projectName || safeSubtypeFallback || '(untitled)', details };
   }
  
   // Walks whatever is CURRENTLY rendered in the form (correctly handles
@@ -10173,6 +10439,7 @@
     const label = cat.options[cat.selectedIndex].text;
     queuedTasks.push({ label, preview: data.project_name, data });
     renderQueue();
+    resetPostSalesAutofillState();
     renderTaskForm();
   }
  
@@ -10283,6 +10550,7 @@
       showFormPopup(`Successfully submitted ${payload.length} task${payload.length>1?'s':''} — ready for your next entry.`, 'success');
       queuedTasks = [];
       renderQueue();
+      resetPostSalesAutofillState();
       renderTaskForm(); // no preserve flag — fields fully clear for the next entry
       loadMyTasks(); // refresh "Submitted by me" so the new entry appears immediately, not only after a manual page reload
       scheduleHomeOverviewRefresh(0); // update Home counts immediately, without a page refresh
@@ -10943,11 +11211,11 @@ KEY SYSTEM DESIGNS WORTH KNOWING ABOUT
   - Chip options: nearly every dropdown/chip list in the app is
     Superadmin-managed live from the Admin panel, backed by one shared
     "chip_options" table keyed by category + field name
-  - "Project name" / entry title: the feed and logs show whichever field
-    is marked section:"identity" first (excluding Lift ID and the
-    sub-type selector itself). If a category/sub-type has no such field,
-    entries show as "(untitled)" — this is expected, not a bug, unless
-    a genuine identity-type field exists and still isn't being picked up
+  - "Project name" / entry title: the feed and logs prefer the first
+    genuine section:"identity" field (excluding Lift ID and the subtype
+    selector itself). Custom General Support sub-categories now inherit an
+    optional Task Name; if it is left blank, the subtype name is used as a
+    safe fallback instead of exposing "(untitled)" in the UI
   - Home page "Recent activity" is updated directly at submission time
     using the just-submitted data, NOT via the realtime subscription
     also present in the code — that subscription listens on
@@ -13005,7 +13273,7 @@ for a competing inline style first.`;
       const status = statusForRow(details);
       const emp = row.profiles ? displayName(row.profiles) : '—';
       const date = new Date(row.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
-      const title = row.project_name || (row.lift_id ? `Lift ${row.lift_id}` : '(untitled)');
+      const title = taskDisplayTitle(row);
       const subtypeKey = SUBTYPE_DETAILS_KEY[row.category];
       const subtype = subtypeKey ? details[subtypeKey] : '';
       const context = row.lift_id ? `Lift ${row.lift_id}` : (subtype || row.notes || 'R&I activity');
@@ -13020,7 +13288,7 @@ for a competing inline style first.`;
             <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
               ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
                 <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${escapeHtml(h.by || 'someone')}</div>
-                <div>${escapeHtml(h.previous.project_name || '(untitled)')}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
+                <div>${escapeHtml(taskDisplayTitle({ project_name:h.previous.project_name, lift_id:h.previous.lift_id, details:h.previous.details, category:row.category }))}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
               </div>`).join('')}
             </div>
           </details>`
@@ -13751,7 +14019,7 @@ for a competing inline style first.`;
             <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
               ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
                 <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${h.by || 'someone'}</div>
-                <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+                <div>${escapeHtml(taskDisplayTitle({ project_name:h.previous.project_name, lift_id:h.previous.lift_id, details:h.previous.details, category:t.category }))}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
               </div>`).join('')}
             </div>
           </details>`
@@ -13759,7 +14027,7 @@ for a competing inline style first.`;
       return `
       <div class="mytask-item">
         <div class="mt-top"><div style="display:flex; align-items:center; flex-wrap:wrap;"><span class="tag c-${t.category}">${catMeta[t.category]?.name || t.category}</span>${subLabelsHtml(t.details)}</div><span class="t-date">${new Date(t.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</span></div>
-        <div class="mt-title">${t.project_name || '(untitled)'}${t.lift_id ? ' — Lift <span class="mono">'+t.lift_id+'</span>' : ''}</div>
+        <div class="mt-title">${escapeHtml(taskDisplayTitle(t))}${t.lift_id ? ' — Lift <span class="mono">'+escapeHtml(t.lift_id)+'</span>' : ''}</div>
         <div class="mt-desc">${t.notes || ''}</div>
         <div style="display:flex; gap:8px; margin-top:6px;">
           <button class="btn edit" style="padding:6px; font-size:11px;" onclick="openEditTask('${t.id}')" title="Edit" aria-label="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
@@ -14816,7 +15084,7 @@ for a competing inline style first.`;
               <div style="margin-top:8px; display:flex; flex-direction:column; gap:8px;">
                 ${hist.slice().reverse().map(h => `<div style="border:1px solid var(--border); border-radius:8px; padding:8px 10px; font-size:12px;">
                   <div class="mono" style="color:var(--text-faint); margin-bottom:4px;">${new Date(h.at).toLocaleString('en-GB')} — edited by ${h.by || 'someone'}</div>
-                  <div>${h.previous.project_name || '(untitled)'}${h.previous.lift_id ? ' — Lift '+h.previous.lift_id : ''}</div>
+                  <div>${escapeHtml(taskDisplayTitle({ project_name:h.previous.project_name, lift_id:h.previous.lift_id, details:h.previous.details, category:r.category }))}${h.previous.lift_id ? ' — Lift '+escapeHtml(h.previous.lift_id) : ''}</div>
                 </div>`).join('')}
               </div>
             </details>`
@@ -14825,7 +15093,7 @@ for a competing inline style first.`;
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
             <div class="cat-log-title-block">
               <span class="tag c-${r.category}">${catMeta[r.category]?.name || r.category}</span>${subLabelsHtml(r.details)}
-              <div style="font-weight:600; margin-top:6px;">${r.project_name || '(untitled)'}${r.lift_id ? ' — Lift <span class="mono">'+r.lift_id+'</span>' : ''}</div>
+              <div style="font-weight:600; margin-top:6px;">${escapeHtml(taskDisplayTitle(r))}${r.lift_id ? ' — Lift <span class="mono">'+escapeHtml(r.lift_id)+'</span>' : ''}</div>
             </div>
             <div class="cat-log-meta-block" style="text-align:right; font-size:12px; color:var(--text-faint); margin-left:auto;">
               <div class="mono">${new Date(r.created_at).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'})}${hist.length ? ' · edited' : ''}</div>
