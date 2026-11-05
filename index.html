@@ -4422,7 +4422,7 @@
           </div>
           <div class="form-row-2">
             <div class="form-field"><div class="field-label">Lead<span class="required-star">*</span></div><select id="devLead"><option value="">Loading…</option></select></div>
-            <div class="form-field"><div class="field-label">Impact Type</div><select id="devImpact"><option>Product Development</option><option>Process Improvement</option><option>Market Development</option><option>Business Development</option></select></div>
+            <div class="form-field"><div class="field-label">Impact Type <span class="chip-hint">select all that apply</span></div><div class="chip-group" id="devImpactChips"><div class="chip-opt" data-opt="Product Development" onclick="pickImpactChip(this)">Product Development</div><div class="chip-opt" data-opt="Process Improvement" onclick="pickImpactChip(this)">Process Improvement</div><div class="chip-opt" data-opt="Market Development" onclick="pickImpactChip(this)">Market Development</div><div class="chip-opt" data-opt="Business Development" onclick="pickImpactChip(this)">Business Development</div></div></div>
           </div>
         </div>
         <div class="form-card">
@@ -6618,6 +6618,15 @@
     updateConditionals();
   }
 
+  // Impact Type's own multi-select chip group lives outside #dynamicForm
+  // (it's in the Add/Edit Project form, a different form entirely), so it
+  // gets its own tiny toggle instead of reusing pickChip, which calls
+  // updateConditionals() — a function scoped to the dynamic task-logging
+  // form and meaningless here.
+  function pickImpactChip(el){
+    el.classList.toggle('picked');
+  }
+
   // Strips any non-digit character the moment it's typed or pasted into a
   // Lift ID field, and flashes a brief warning explaining why — rather than
   // silently discarding what was typed with no explanation, or letting a
@@ -7420,7 +7429,17 @@
  
     document.getElementById('devName').value = project.name || '';
     document.getElementById('devLead').value = project.lead_id || '';
-    document.getElementById('devImpact').value = project.impact_type || 'Product Development';
+    {
+      // impact_types (new, multi-select) is the source of truth; fall back
+      // to the old single impact_type column for projects saved before this
+      // change so their one existing value still shows as picked.
+      const impactVals = Array.isArray(project.impact_types) && project.impact_types.length
+        ? project.impact_types
+        : (project.impact_type ? [project.impact_type] : []);
+      document.querySelectorAll('#devImpactChips .chip-opt').forEach(c => {
+        c.classList.toggle('picked', impactVals.includes(c.dataset.opt));
+      });
+    }
     document.getElementById('devStart').value = project.start_date || '';
     document.getElementById('devTarget').value = project.target_date || '';
     document.getElementById('devNotes').value = project.notes || '';
@@ -7454,6 +7473,7 @@
     document.getElementById('devTarget').value = '';
     document.getElementById('devNotes').value = '';
     document.querySelectorAll('#devCollabChips .chip-opt').forEach(c => c.classList.remove('picked'));
+    document.querySelectorAll('#devImpactChips .chip-opt').forEach(c => c.classList.remove('picked'));
     document.getElementById('devTaskPanelTitle').textContent = 'Add a Project';
     document.getElementById('devSubmitBtn').textContent = 'Add project to Gantt';
     document.getElementById('devCancelEditBtn').style.display = 'none';
@@ -7543,6 +7563,8 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-05', summary:'Project Impact Type changed from a single dropdown to a multi-select chip picker (Project Identity card), so a project can be tagged with more than one impact type at once. Added a new dev_projects.impact_types array column; the old impact_type text column is kept in sync as the first selected value so anything still reading it (and projects saved before this change) keeps working unchanged. Filtering, the project card\'s impact chip/color, and the impact filter dropdown\'s option list all now work off the full set rather than one value. Lead stayed a single field as decided, and Collaborators is untouched.' },
+    { date:'2026-11-05', summary:'Fixed deadline-reminder notifications (morning/afternoon) still firing for tasks whose project is Cancelled or On Hold — check_deadline_notifications only ever checked the task\'s own status, never the parent project\'s, so a Cancelled project\'s still-open tasks kept generating "due soon" notifications. Added a project-status check (Cancelled or On Hold now both suppress reminders) to the Supabase function (SQL provided separately to run once), plus a one-time cleanup query to clear out notifications already sitting unread from projects that are already Cancelled or On Hold.' },
     { date:'2026-10-11', summary:'Team Chat redesigned with a responsive Team Status roster: approved users can see who is online via Supabase Realtime Presence and, after the one-time presence-status setup, when offline teammates were last active. Existing shared-chat messages, mentions, unread badges, edit/delete and notifications remain intact.' },
     { date:'2026-10-11', summary:'Admin Center visually modernized and made mobile-first without changing its existing Supabase behavior: added a responsive local Admin navigator, live overview counts from the same profile queries, management shortcut cards, refreshed role/section styling, and card-style approved-user rows on mobile. Existing approvals, role/discipline updates, Score settings, Task Fields, Category Links, Quick Links, Data Archive, lazy loading and permissions remain intact.' },
     { date:'2026-10-05', summary:'Projects tab redesigned as a professional colorful portfolio: compact KPI cards, collapsible filters/export, full-width project cards with icon actions and functional progress tracks, plus a two-column Overview/Briefing + Task Timeline detail view. Home Welcome Back typography restored to the same large size as the user name while retaining single-line auto-fit.' },
@@ -13406,7 +13428,7 @@ for a competing inline style first.`;
     );
     allProjectTasksCache = tasksRes.data || [];
  
-    const impacts = [...new Set(devProjectsCache.map(p => p.impact_type).filter(Boolean))];
+    const impacts = [...new Set(devProjectsCache.flatMap(p => projectImpactList(p)))];
     document.getElementById('devFilterImpact').innerHTML = '<option value="">All impact types</option>' + impacts.map(i => `<option>${i}</option>`).join('');
  
     const thisYear = new Date().getFullYear();
@@ -13451,6 +13473,23 @@ for a competing inline style first.`;
 
   function projectImpactColor(impact){ return DEV_IMPACT_COLOR[impact] || '#2F5FE0'; }
 
+  // Impact Type is now multi-select (impact_types, an array column) with
+  // impact_type (the old single text column) kept in sync as the first
+  // selected value, purely so anything that still reads the old column
+  // (or a project saved before this change) keeps working.
+  function projectImpactList(p){
+    if(Array.isArray(p.impact_types) && p.impact_types.length) return p.impact_types;
+    return p.impact_type ? [p.impact_type] : [];
+  }
+  function projectImpactLabel(p){
+    const list = projectImpactList(p);
+    return list.length ? list.join(', ') : 'Other';
+  }
+  function projectImpactPrimaryColor(p){
+    const list = projectImpactList(p);
+    return list.length ? projectImpactColor(list[0]) : projectImpactColor(null);
+  }
+
   // Project PPTX export: single, selected, or all currently visible projects.
   // Projects with many tasks are paginated into fixed-height continuation slides
   // instead of shrinking rows until labels/bars collide.
@@ -13462,7 +13501,7 @@ for a competing inline style first.`;
     return devProjectsCache.filter(p =>
       (!leadFilter || p.lead_id === leadFilter) &&
       (!collabFilter || (p.collaborators || []).includes(collabFilter)) &&
-      (!impactFilter || p.impact_type === impactFilter) &&
+      (!impactFilter || projectImpactList(p).includes(impactFilter)) &&
       (!statusFilter || p.status === statusFilter)
     );
   }
@@ -13680,7 +13719,7 @@ for a competing inline style first.`;
     let rows = devProjectsCache.filter(p =>
       (!leadFilter || p.lead_id === leadFilter) &&
       (!collabFilter || (p.collaborators || []).includes(collabFilter)) &&
-      (!impactFilter || p.impact_type === impactFilter) &&
+      (!impactFilter || projectImpactList(p).includes(impactFilter)) &&
       (!statusFilter || p.status === statusFilter)
     );
 
@@ -13712,7 +13751,7 @@ for a competing inline style first.`;
       const collaborators = (p.collaborators || []).map(id => devPeople.find(dp => dp.id === id)).filter(Boolean);
       const collabNames = collaborators.map(displayName).join(', ') || '—';
       const statusColor = DEV_STATUS_COLOR[p.status] || '#2F5FE0';
-      const impactColor = projectImpactColor(p.impact_type);
+      const impactColor = projectImpactPrimaryColor(p);
       const canManageProject = currentUser && (p.created_by === currentUser.id || p.lead_id === currentUser.id);
       const canEdit = canManageProject;
       const canDelete = canManageProject;
@@ -13722,7 +13761,7 @@ for a competing inline style first.`;
         ? `<span id="projProgressRow-${p.id}" class="project-inline-progress">${progress}%</span>`
         : `<span id="projProgressRow-${p.id}" class="project-inline-progress empty">No specific breakdown</span>`;
       const projectName = escapeHtml(p.name || 'Untitled project');
-      const impact = escapeHtml(p.impact_type || 'Other');
+      const impact = escapeHtml(projectImpactLabel(p));
       const visibilityText = p.published ? 'Visible to team' : 'Private to owner / lead';
 
       return `<div class="gantt-project-card" style="--project-accent:${impactColor}; --project-status-color:${statusColor};">
@@ -13730,7 +13769,7 @@ for a competing inline style first.`;
           <div class="proj-zone-fill" id="projFill-${p.id}" style="width:${progressWidth}%;"></div>
           <div class="project-summary-row">
             <div class="project-main">
-              <div class="project-title-line"><div class="project-name" title="${projectName}">${projectName}</div>${progressLabel}<span class="project-impact-chip" style="background:color-mix(in srgb,${impactColor} 12%,var(--surface)); color:${impactColor};">${impact}</span></div>
+              <div class="project-title-line"><div class="project-name" title="${projectName}">${projectName}</div>${progressLabel}<span class="project-impact-chip" style="background:color-mix(in srgb,${impactColor} 12%,var(--surface)); color:${impactColor};" title="${impact}">${impact}</span></div>
               <div class="project-visibility-note">${visibilityText}</div>
             </div>
             <div class="project-meta-cell project-lead-cell">
@@ -13768,7 +13807,7 @@ for a competing inline style first.`;
   async function submitDevProject(){
     const name = document.getElementById('devName').value.trim();
     const leadId = document.getElementById('devLead').value;
-    const impact = document.getElementById('devImpact').value;
+    const impactTypes = Array.from(document.querySelectorAll('#devImpactChips .chip-opt.picked')).map(c => c.dataset.opt);
     const start = document.getElementById('devStart').value;
     const target = document.getElementById('devTarget').value;
     const status = document.querySelector('#devStatusChips .picked-single')?.textContent || 'In Progress';
@@ -13783,7 +13822,8 @@ for a competing inline style first.`;
     }
  
     const payload = {
-      name, lead_id: leadId, impact_type: impact, start_date: start, target_date: target || null,
+      name, lead_id: leadId, impact_type: impactTypes[0] || null, impact_types: impactTypes,
+      start_date: start, target_date: target || null,
       status, financial_outcome: fin, documentation: doc, notes, collaborators
     };
  
