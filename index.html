@@ -3261,6 +3261,156 @@
 }
 </style>
 
+
+<style>
+  /* ============================================================
+     2026-11-15 - Opening announcements
+     Premium light popup + compact Superadmin management UI.
+  ============================================================ */
+  .announcement-overlay{
+    position:fixed; inset:0; z-index:1200; display:flex; align-items:center; justify-content:center;
+    padding:22px; background:rgba(11,18,32,.48); backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px);
+    animation:announcementFadeIn .18s ease both;
+  }
+  .announcement-popup{
+    position:relative; width:min(660px, calc(100vw - 34px)); min-height:360px; overflow:hidden;
+    border-radius:28px; border:1px solid rgba(118,109,255,.26); background:#fff; color:#10143f;
+    box-shadow:0 34px 80px rgba(31,38,99,.25), 0 0 0 1px rgba(255,255,255,.75) inset;
+    display:flex; align-items:center; justify-content:center; padding:54px 52px 92px;
+    animation:announcementPopIn .26s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .announcement-popup::before{
+    content:''; position:absolute; inset:0; pointer-events:none;
+    background:
+      radial-gradient(circle at 50% 13%, rgba(111,104,255,.11), transparent 29%),
+      linear-gradient(135deg, rgba(92,123,255,.055), transparent 36%, rgba(152,101,255,.035));
+  }
+  .announcement-close{
+    position:absolute; top:18px; right:18px; z-index:3; width:38px; height:38px; border:0; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; color:#334155;
+    background:#f1f2fb; transition:transform .16s ease, background .16s ease;
+  }
+  .announcement-close:hover{ transform:scale(1.06); background:#e8eafa; }
+  .announcement-close svg{ width:18px; height:18px; }
+  .announcement-content{ position:relative; z-index:2; width:100%; text-align:center; display:flex; flex-direction:column; align-items:center; }
+  .announcement-icon-halo{
+    width:120px; height:120px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:18px;
+    background:linear-gradient(145deg,#eef0ff,#f8f6ff); box-shadow:0 16px 34px rgba(98,90,225,.12);
+  }
+  .announcement-icon-tile{
+    width:78px; height:78px; border-radius:25px; position:relative; display:flex; align-items:center; justify-content:center;
+    color:white; background:linear-gradient(145deg,#4ab5ff 0%,#1d6ff0 48%,#5146e5 100%);
+    box-shadow:0 16px 28px rgba(45,96,224,.3), inset 0 1px 0 rgba(255,255,255,.55); transform:rotate(-3deg);
+  }
+  .announcement-icon-tile svg{ width:43px; height:43px; filter:drop-shadow(0 4px 4px rgba(26,48,133,.25)); }
+  .announcement-alert-rays{ position:absolute; right:-22px; top:-7px; width:36px; height:36px; color:#7c3aed; }
+  .announcement-title{
+    margin:0; max-width:100%; font-family:'Space Grotesk','Inter',sans-serif; font-size:clamp(28px,4vw,42px);
+    line-height:1.05; letter-spacing:-.035em; font-weight:700; color:#0d1248; overflow-wrap:anywhere;
+  }
+  .announcement-accent{ width:78px; height:5px; border-radius:999px; margin:16px 0 16px; background:linear-gradient(90deg,#b5a2ff,#7c3aed,#70a8ff); }
+  .announcement-description{ margin:0; max-width:540px; font-size:14.5px; line-height:1.55; color:#46516b; overflow-wrap:anywhere; }
+  .announcement-waves{ position:absolute; left:0; right:0; bottom:-1px; z-index:1; width:100%; height:98px; pointer-events:none; }
+  @keyframes announcementFadeIn{ from{opacity:0} to{opacity:1} }
+  @keyframes announcementPopIn{ from{opacity:0; transform:translateY(12px) scale(.975)} to{opacity:1; transform:none} }
+
+  #view-admin .admin-accordion-item[data-admin-key="announcements"] .admin-tool-icon{
+    color:#6d4be8; background:color-mix(in srgb, #7c5cff 13%, var(--surface));
+  }
+  #view-admin .admin-accordion-item[data-admin-key="announcements"] #announcementsBlock{
+    border:0; background:transparent; box-shadow:none; overflow:visible; margin:0;
+  }
+  .announcement-admin-shell{ display:flex; flex-direction:column; gap:12px; }
+  .announcement-admin-toolbar{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+  .announcement-admin-heading{ font-size:14px; font-weight:800; color:var(--text); }
+  .announcement-admin-sub{ font-size:10.5px; color:var(--text-faint); line-height:1.45; margin-top:2px; }
+  .announcement-new-btn{
+    flex:0 0 auto; border:1px solid var(--accent); background:var(--accent); color:white; border-radius:10px;
+    padding:8px 11px; font:700 11px 'Inter'; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+  }
+  .announcement-editor{
+    border:1px solid color-mix(in srgb,var(--accent) 32%,var(--border)); border-radius:14px; padding:14px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 4%,var(--surface)),var(--surface));
+  }
+  .announcement-editor-head{ display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:12px; }
+  .announcement-editor-title{ font-size:13.5px; font-weight:800; }
+  .announcement-form-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; }
+  .announcement-field{ min-width:0; }
+  .announcement-field.full{ grid-column:1 / -1; }
+  .announcement-field label{ display:block; font-size:10.5px; font-weight:700; color:var(--text-dim); margin-bottom:5px; }
+  .announcement-input, .announcement-select, .announcement-textarea{
+    width:100%; box-sizing:border-box; border:1px solid var(--border); border-radius:9px; background:var(--surface); color:var(--text);
+    font:500 12px 'Inter'; padding:9px 10px; outline:none;
+  }
+  .announcement-textarea{ min-height:74px; resize:vertical; line-height:1.45; }
+  .announcement-input:focus, .announcement-select:focus, .announcement-textarea:focus{ border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-dim); }
+  .announcement-split-card{ border:1px solid var(--border); border-radius:12px; padding:11px; background:color-mix(in srgb,var(--surface-alt) 45%,var(--surface)); }
+  .announcement-card-title{ font-size:11.5px; font-weight:800; margin-bottom:8px; }
+  .announcement-check-row{ display:flex; gap:8px 12px; flex-wrap:wrap; }
+  .announcement-check{ display:inline-flex; align-items:center; gap:6px; font-size:11px; color:var(--text-dim); cursor:pointer; }
+  .announcement-check input{ accent-color:var(--accent); }
+  .announcement-target-users{
+    max-height:190px; overflow:auto; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; padding:7px;
+    border:1px solid var(--border); border-radius:10px; background:var(--surface);
+  }
+  .announcement-target-user{
+    min-width:0; display:flex; align-items:center; gap:7px; padding:7px 8px; border-radius:8px; cursor:pointer;
+    background:var(--surface-alt); font-size:10.5px; color:var(--text-dim);
+  }
+  .announcement-target-user span{ min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .announcement-target-user input{ accent-color:var(--accent); flex:0 0 auto; }
+  .announcement-weekdays{ display:flex; flex-wrap:wrap; gap:5px; }
+  .announcement-weekday{ position:relative; }
+  .announcement-weekday input{ position:absolute; opacity:0; pointer-events:none; }
+  .announcement-weekday span{
+    min-width:34px; height:30px; padding:0 7px; display:inline-flex; align-items:center; justify-content:center;
+    border:1px solid var(--border); border-radius:8px; font-size:10px; font-weight:700; color:var(--text-faint); cursor:pointer; background:var(--surface);
+  }
+  .announcement-weekday input:checked + span{ background:var(--accent-dim); color:var(--accent); border-color:color-mix(in srgb,var(--accent) 48%,var(--border)); }
+  .announcement-editor-actions{ display:flex; justify-content:flex-end; gap:7px; margin-top:12px; flex-wrap:wrap; }
+  .announcement-admin-btn{ border:1px solid var(--border); background:var(--surface); color:var(--text-dim); border-radius:9px; padding:7px 10px; font:700 10.5px 'Inter'; cursor:pointer; }
+  .announcement-admin-btn.primary{ background:var(--accent); border-color:var(--accent); color:#fff; }
+  .announcement-list{ display:flex; flex-direction:column; gap:8px; }
+  .announcement-list-item{
+    border:1px solid var(--border); border-radius:12px; padding:11px 12px; background:var(--surface);
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:center;
+  }
+  .announcement-list-title{ font-size:12.5px; font-weight:800; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .announcement-list-desc{ font-size:10.5px; color:var(--text-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .announcement-list-meta{ margin-top:7px; display:flex; gap:6px; flex-wrap:wrap; }
+  .announcement-meta-chip{ display:inline-flex; align-items:center; gap:4px; padding:4px 7px; border-radius:999px; font-size:9.5px; font-weight:700; background:var(--surface-alt); color:var(--text-faint); }
+  .announcement-status{ padding:4px 7px; border-radius:999px; font-size:9.5px; font-weight:800; }
+  .announcement-status.active{ color:var(--green); background:color-mix(in srgb,var(--green) 13%,var(--surface)); }
+  .announcement-status.scheduled{ color:var(--accent); background:var(--accent-dim); }
+  .announcement-status.paused{ color:var(--text-faint); background:var(--surface-alt); }
+  .announcement-status.expired{ color:var(--red); background:color-mix(in srgb,var(--red) 11%,var(--surface)); }
+  .announcement-status.repeating{ color:#7c3aed; background:color-mix(in srgb,#7c3aed 11%,var(--surface)); }
+  .announcement-list-actions{ display:flex; gap:5px; align-items:center; }
+  .announcement-icon-action{ width:31px; height:31px; border:1px solid var(--border); border-radius:9px; background:var(--surface-alt); color:var(--text-dim); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .announcement-icon-action svg{ width:14px; height:14px; }
+  .announcement-icon-action.danger{ color:var(--red); background:color-mix(in srgb,var(--red) 9%,var(--surface)); }
+
+  @media (max-width:700px){
+    .announcement-overlay{ padding:14px; align-items:center; }
+    .announcement-popup{ width:calc(100vw - 28px); min-height:330px; border-radius:22px; padding:48px 24px 82px; }
+    .announcement-close{ top:13px; right:13px; width:34px; height:34px; }
+    .announcement-icon-halo{ width:102px; height:102px; margin-bottom:14px; }
+    .announcement-icon-tile{ width:68px; height:68px; border-radius:22px; }
+    .announcement-icon-tile svg{ width:38px; height:38px; }
+    .announcement-title{ font-size:30px; }
+    .announcement-accent{ margin:13px 0; width:66px; height:4px; }
+    .announcement-description{ font-size:12.5px; line-height:1.5; }
+    .announcement-waves{ height:78px; }
+    .announcement-admin-toolbar{ align-items:center; }
+    .announcement-form-grid{ grid-template-columns:1fr; gap:9px; }
+    .announcement-field.full{ grid-column:auto; }
+    .announcement-target-users{ grid-template-columns:1fr; max-height:210px; }
+    .announcement-list-item{ grid-template-columns:minmax(0,1fr); }
+    .announcement-list-actions{ justify-content:flex-end; }
+    .announcement-list-desc{ white-space:normal; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  }
+</style>
+
 </head>
 <body>
  
@@ -4422,7 +4572,7 @@
           </div>
           <div class="form-row-2">
             <div class="form-field"><div class="field-label">Lead<span class="required-star">*</span></div><select id="devLead"><option value="">Loading…</option></select></div>
-            <div class="form-field"><div class="field-label">Impact Type <span class="chip-hint">select all that apply</span></div><div class="chip-group" id="devImpactChips"><div class="chip-opt" data-opt="Product Development" onclick="pickImpactChip(this)">Product Development</div><div class="chip-opt" data-opt="Process Improvement" onclick="pickImpactChip(this)">Process Improvement</div><div class="chip-opt" data-opt="Market Development" onclick="pickImpactChip(this)">Market Development</div><div class="chip-opt" data-opt="Business Development" onclick="pickImpactChip(this)">Business Development</div></div></div>
+            <div class="form-field"><div class="field-label">Impact Type</div><select id="devImpact"><option>Product Development</option><option>Process Improvement</option><option>Market Development</option><option>Business Development</option></select></div>
           </div>
         </div>
         <div class="form-card">
@@ -4557,12 +4707,18 @@
 
         <div class="admin-tools-title">Management tools</div>
         <div class="admin-tool-grid">
+          <button class="admin-tool-card" onclick="adminJumpTo('announcementsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/><path d="M19 3l1-1M5 3 4 2M22 8h-2M4 8H2"/></svg></span><span><div class="admin-tool-name">Announcements</div><div class="admin-tool-desc">Opening notices, schedules and audiences</div></span><span class="admin-tool-arrow">&rsaquo;</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('pendingSigninsPanel')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span><span><div class="admin-tool-name">Users &amp; Permissions</div><div class="admin-tool-desc">Approve sign-ins, roles and disciplines</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('customFieldsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5M2 16l10 5 10-5"/></svg></span><span><div class="admin-tool-name">Task Fields</div><div class="admin-tool-desc">Manage built-in mirrors and custom fields</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('kpiWeightsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></svg></span><span><div class="admin-tool-name">Score Settings</div><div class="admin-tool-desc">Weights, targets and visibility controls</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('categoryLinksBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></span><span><div class="admin-tool-name">Category Links</div><div class="admin-tool-desc">Links shown inside task-entry categories</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('quickLinksBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></span><span><div class="admin-tool-name">Quick Links</div><div class="admin-tool-desc">Homepage/account shortcut links and ordering</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('dataArchiveBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></span><span><div class="admin-tool-name">Data Archive</div><div class="admin-tool-desc">Backup old periods and manage archives</div></span><span class="admin-tool-arrow">›</span></button>
+        </div>
+
+
+        <div class="admin-section-card" id="announcementsBlock" style="display:none;">
+          <div id="announcementAdminPanel"><div class="placeholder-note">Open Announcements to manage opening notices.</div></div>
         </div>
 
         <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
@@ -6618,15 +6774,6 @@
     updateConditionals();
   }
 
-  // Impact Type's own multi-select chip group lives outside #dynamicForm
-  // (it's in the Add/Edit Project form, a different form entirely), so it
-  // gets its own tiny toggle instead of reusing pickChip, which calls
-  // updateConditionals() — a function scoped to the dynamic task-logging
-  // form and meaningless here.
-  function pickImpactChip(el){
-    el.classList.toggle('picked');
-  }
-
   // Strips any non-digit character the moment it's typed or pasted into a
   // Lift ID field, and flashes a brief warning explaining why — rather than
   // silently discarding what was typed with no explanation, or letting a
@@ -7429,17 +7576,7 @@
  
     document.getElementById('devName').value = project.name || '';
     document.getElementById('devLead').value = project.lead_id || '';
-    {
-      // impact_types (new, multi-select) is the source of truth; fall back
-      // to the old single impact_type column for projects saved before this
-      // change so their one existing value still shows as picked.
-      const impactVals = Array.isArray(project.impact_types) && project.impact_types.length
-        ? project.impact_types
-        : (project.impact_type ? [project.impact_type] : []);
-      document.querySelectorAll('#devImpactChips .chip-opt').forEach(c => {
-        c.classList.toggle('picked', impactVals.includes(c.dataset.opt));
-      });
-    }
+    document.getElementById('devImpact').value = project.impact_type || 'Product Development';
     document.getElementById('devStart').value = project.start_date || '';
     document.getElementById('devTarget').value = project.target_date || '';
     document.getElementById('devNotes').value = project.notes || '';
@@ -7473,7 +7610,6 @@
     document.getElementById('devTarget').value = '';
     document.getElementById('devNotes').value = '';
     document.querySelectorAll('#devCollabChips .chip-opt').forEach(c => c.classList.remove('picked'));
-    document.querySelectorAll('#devImpactChips .chip-opt').forEach(c => c.classList.remove('picked'));
     document.getElementById('devTaskPanelTitle').textContent = 'Add a Project';
     document.getElementById('devSubmitBtn').textContent = 'Add project to Gantt';
     document.getElementById('devCancelEditBtn').style.display = 'none';
@@ -7563,8 +7699,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
-    { date:'2026-11-05', summary:'Project Impact Type changed from a single dropdown to a multi-select chip picker (Project Identity card), so a project can be tagged with more than one impact type at once. Added a new dev_projects.impact_types array column; the old impact_type text column is kept in sync as the first selected value so anything still reading it (and projects saved before this change) keeps working unchanged. Filtering, the project card\'s impact chip/color, and the impact filter dropdown\'s option list all now work off the full set rather than one value. Lead stayed a single field as decided, and Collaborators is untouched.' },
-    { date:'2026-11-05', summary:'Fixed deadline-reminder notifications (morning/afternoon) still firing for tasks whose project is Cancelled or On Hold — check_deadline_notifications only ever checked the task\'s own status, never the parent project\'s, so a Cancelled project\'s still-open tasks kept generating "due soon" notifications. Added a project-status check (Cancelled or On Hold now both suppress reminders) to the Supabase function (SQL provided separately to run once), plus a one-time cleanup query to clear out notifications already sitting unread from projects that are already Cancelled or On Hold.' },
+    { date:'2026-11-15', summary:'Added a Superadmin-managed opening Announcement system: premium centered popup banner with optional description, one-time or recurring schedules, targeted audiences (everyone, selected users, role, or discipline), Admin create/edit/pause/delete/preview controls, and responsive mobile/desktop presentation. Active targeted announcements are checked once per full website opening and can be dismissed with the close button.' },
     { date:'2026-10-11', summary:'Team Chat redesigned with a responsive Team Status roster: approved users can see who is online via Supabase Realtime Presence and, after the one-time presence-status setup, when offline teammates were last active. Existing shared-chat messages, mentions, unread badges, edit/delete and notifications remain intact.' },
     { date:'2026-10-11', summary:'Admin Center visually modernized and made mobile-first without changing its existing Supabase behavior: added a responsive local Admin navigator, live overview counts from the same profile queries, management shortcut cards, refreshed role/section styling, and card-style approved-user rows on mobile. Existing approvals, role/discipline updates, Score settings, Task Fields, Category Links, Quick Links, Data Archive, lazy loading and permissions remain intact.' },
     { date:'2026-10-05', summary:'Projects tab redesigned as a professional colorful portfolio: compact KPI cards, collapsible filters/export, full-width project cards with icon actions and functional progress tracks, plus a two-column Overview/Briefing + Task Timeline detail view. Home Welcome Back typography restored to the same large size as the user name while retaining single-line auto-fit.' },
@@ -8087,6 +8222,7 @@
     avatarEl.title = 'Account menu';
     document.getElementById('accountMenuName').textContent = `${profile.full_name} (${profile.nickname})`;
     showAuthScreen('app');
+    checkOpeningAnnouncementsOnce();
     startTeamPresence();
     updateHomeGreeting();
     loadHomeTodaySnapshot();
@@ -11052,7 +11188,7 @@
 
   const BACKUP_TABLES = ['profiles','tasks','activity_log','notifications','notebook_tasks','chat_messages',
     'chip_options','installation_wings','data_issue_types','kpi_weights','app_settings','dev_projects','dev_project_tasks',
-    'custom_fields','custom_subtypes','category_links'];
+    'custom_fields','custom_subtypes','category_links','announcements'];
 
   function downloadTextFile(filename, text){
     const blob = new Blob([text], { type: 'text/plain' });
@@ -11116,6 +11252,7 @@
       ['Project PPTX report export', typeof exportProjectReportPptx === 'function'],
       ['Category Links / Upload feature', typeof updateCategoryLinksButton === 'function'],
       ['Custom Fields (dynamic per-category fields)', typeof loadCustomFieldsPanel === 'function'],
+      ['Opening Announcement system', typeof checkOpeningAnnouncementsOnce === 'function' && typeof loadAnnouncementAdminPanel === 'function'],
       ['Backup / Restore system', typeof createBackup === 'function' && typeof confirmRestoreBackup === 'function'],
       ['Data Archive (Google Drive backup/verify)', typeof runDataArchive === 'function' && typeof verifyArchive === 'function'],
       ['Dashboard PPTX export', typeof exportDashboardToPptx === 'function'],
@@ -11452,6 +11589,413 @@ for a competing inline style first.`;
     openImportBackupModal();
   }
 
+
+  // ============ OPENING ANNOUNCEMENTS ============
+  let announcementCheckedUserId = null;
+  let announcementPopupQueue = [];
+  let announcementPopupIndex = -1;
+  let announcementPopupIsPreview = false;
+  let announcementBodyOverflowBefore = '';
+  let announcementAdminRows = [];
+  let announcementAdminUsers = [];
+  let announcementEditingId = null;
+
+  function announcementArray(value){
+    return Array.isArray(value) ? value : [];
+  }
+
+  function announcementTargetsCurrentUser(a){
+    if(!currentUser || !currentProfile) return false;
+    const mode = a.audience_type || 'all';
+    if(mode === 'all') return true;
+    if(mode === 'users') return announcementArray(a.target_user_ids).includes(currentUser.id);
+    if(mode === 'roles') return announcementArray(a.target_roles).includes(currentProfile.role);
+    if(mode === 'disciplines') return announcementArray(a.target_disciplines).includes(currentProfile.discipline);
+    return false;
+  }
+
+  function announcementStartOfDay(d){
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  }
+
+  function announcementStartOfWeek(d){
+    const x = announcementStartOfDay(d);
+    x.setDate(x.getDate() - x.getDay());
+    return x;
+  }
+
+  function announcementOccurrenceActive(a, now = new Date()){
+    if(!a || !a.is_enabled || !a.start_at) return false;
+    const start = new Date(a.start_at);
+    if(Number.isNaN(start.getTime()) || now < start) return false;
+    const repeat = a.repeat_type || 'none';
+    const end = a.end_at ? new Date(a.end_at) : null;
+    const validEnd = end && !Number.isNaN(end.getTime()) && end > start ? end : null;
+    if(repeat === 'none') return !validEnd || now <= validEnd;
+
+    const until = a.repeat_until ? new Date(a.repeat_until) : null;
+    const interval = Math.max(1, Number(a.repeat_interval) || 1);
+    const durationMs = validEnd ? Math.max(60000, validEnd.getTime() - start.getTime()) : 86400000;
+    let occurrenceStart = null;
+
+    if(repeat === 'daily'){
+      const dayDiff = Math.round((announcementStartOfDay(now) - announcementStartOfDay(start)) / 86400000);
+      if(dayDiff < 0 || dayDiff % interval !== 0) return false;
+      occurrenceStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), start.getHours(), start.getMinutes(), start.getSeconds(), 0);
+    } else if(repeat === 'weekly'){
+      const allowedDays = announcementArray(a.repeat_days).length ? announcementArray(a.repeat_days).map(Number) : [start.getDay()];
+      if(!allowedDays.includes(now.getDay())) return false;
+      const weekDiff = Math.round((announcementStartOfWeek(now) - announcementStartOfWeek(start)) / (7 * 86400000));
+      if(weekDiff < 0 || weekDiff % interval !== 0) return false;
+      occurrenceStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), start.getHours(), start.getMinutes(), start.getSeconds(), 0);
+    } else if(repeat === 'monthly'){
+      const monthDiff = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth());
+      if(monthDiff < 0 || monthDiff % interval !== 0 || now.getDate() !== start.getDate()) return false;
+      occurrenceStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), start.getHours(), start.getMinutes(), start.getSeconds(), 0);
+    } else {
+      return false;
+    }
+
+    if(!occurrenceStart || occurrenceStart < start) return false;
+    if(until && !Number.isNaN(until.getTime()) && occurrenceStart > until) return false;
+    return now >= occurrenceStart && now <= new Date(occurrenceStart.getTime() + durationMs);
+  }
+
+  async function checkOpeningAnnouncementsOnce(){
+    if(!currentUser || !currentProfile || currentProfile.status !== 'active') return;
+    if(announcementCheckedUserId === currentUser.id) return;
+    announcementCheckedUserId = currentUser.id;
+    try{
+      const { data, error } = await sb.from('announcements')
+        .select('*')
+        .eq('is_enabled', true)
+        .order('start_at', { ascending:false })
+        .limit(50);
+      if(error) throw error;
+      const now = new Date();
+      announcementPopupQueue = (data || []).filter(a => announcementTargetsCurrentUser(a) && announcementOccurrenceActive(a, now));
+      announcementPopupIndex = -1;
+      if(announcementPopupQueue.length){
+        setTimeout(() => showNextOpeningAnnouncement(), 120);
+      }
+    }catch(err){
+      console.warn('Opening announcements unavailable:', err?.message || err);
+    }
+  }
+
+  function announcementBellSvg(){
+    return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>`;
+  }
+
+  function showAnnouncementPopup(a, preview=false){
+    if(!a) return;
+    document.getElementById('announcementOverlay')?.remove();
+    announcementPopupIsPreview = !!preview;
+    announcementBodyOverflowBefore = document.body.style.overflow || '';
+    document.body.style.overflow = 'hidden';
+    const overlay = document.createElement('div');
+    overlay.id = 'announcementOverlay';
+    overlay.className = 'announcement-overlay';
+    overlay.setAttribute('role','dialog');
+    overlay.setAttribute('aria-modal','true');
+    overlay.setAttribute('aria-labelledby','announcementPopupTitle');
+    const desc = String(a.description || '').trim();
+    overlay.innerHTML = `
+      <div class="announcement-popup">
+        <button class="announcement-close" type="button" onclick="closeAnnouncementPopup()" title="Close announcement" aria-label="Close announcement"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+        <div class="announcement-content">
+          <div class="announcement-icon-halo"><div class="announcement-icon-tile">${announcementBellSvg()}<svg class="announcement-alert-rays" viewBox="0 0 36 36" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"><path d="M8 18H2M13 10 9 5M22 8l2-6"/></svg></div></div>
+          <h2 class="announcement-title" id="announcementPopupTitle">${escapeHtml(a.title || 'Announcement')}</h2>
+          <div class="announcement-accent"></div>
+          ${desc ? `<p class="announcement-description">${escapeHtml(desc)}</p>` : ''}
+        </div>
+        <svg class="announcement-waves" viewBox="0 0 660 100" preserveAspectRatio="none" aria-hidden="true"><path d="M0 38C90 22 146 79 238 74c103-6 131-56 229-42 78 11 115 48 193 27v41H0Z" fill="#ebe4ff"/><path d="M0 61c89-3 143 38 238 34 117-5 155-45 253-40 69 3 110 25 169 18v27H0Z" fill="#cfdcff" fill-opacity=".88"/><path d="M0 76c92 18 154 18 245 7 106-13 170-38 274-26 54 6 94 22 141 25v18H0Z" fill="#a9c9f4" fill-opacity=".68"/></svg>
+      </div>`;
+    overlay.addEventListener('click', e => { if(e.target === overlay) closeAnnouncementPopup(); });
+    document.body.appendChild(overlay);
+    overlay.querySelector('.announcement-close')?.focus({preventScroll:true});
+  }
+
+  function showNextOpeningAnnouncement(){
+    announcementPopupIndex += 1;
+    if(announcementPopupIndex >= announcementPopupQueue.length) return;
+    showAnnouncementPopup(announcementPopupQueue[announcementPopupIndex], false);
+  }
+
+  function closeAnnouncementPopup(){
+    document.getElementById('announcementOverlay')?.remove();
+    document.body.style.overflow = announcementBodyOverflowBefore;
+    const wasPreview = announcementPopupIsPreview;
+    announcementPopupIsPreview = false;
+    if(!wasPreview && announcementPopupIndex + 1 < announcementPopupQueue.length){
+      setTimeout(showNextOpeningAnnouncement, 120);
+    }
+  }
+
+  document.addEventListener('keydown', e => {
+    if(e.key === 'Escape' && document.getElementById('announcementOverlay')) closeAnnouncementPopup();
+  });
+
+  function announcementLocalInputValue(iso){
+    if(!iso) return '';
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return '';
+    const local = new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0,16);
+  }
+
+  function announcementFormatDate(iso){
+    if(!iso) return 'Open-ended';
+    const d = new Date(iso);
+    if(Number.isNaN(d.getTime())) return 'Invalid date';
+    return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+  }
+
+  function announcementAudienceSummary(a){
+    const mode = a.audience_type || 'all';
+    if(mode === 'all') return 'Everyone';
+    if(mode === 'users') return `${announcementArray(a.target_user_ids).length} selected user${announcementArray(a.target_user_ids).length===1?'':'s'}`;
+    if(mode === 'roles') return announcementArray(a.target_roles).map(r => r === 'engineer' ? 'Engineer' : r === 'admin' ? 'Admin' : 'Superadmin').join(', ') || 'No role selected';
+    if(mode === 'disciplines') return announcementArray(a.target_disciplines).map(x => x ? x[0].toUpperCase()+x.slice(1) : '').join(', ') || 'No discipline selected';
+    return 'Custom audience';
+  }
+
+  function announcementScheduleSummary(a){
+    const repeat = a.repeat_type || 'none';
+    const start = announcementFormatDate(a.start_at);
+    if(repeat === 'none') return `${start}${a.end_at ? ' - ' + announcementFormatDate(a.end_at) : ' onward'}`;
+    const every = Math.max(1, Number(a.repeat_interval) || 1);
+    if(repeat === 'daily') return `Every ${every===1?'day':every+' days'} from ${start}`;
+    if(repeat === 'weekly'){
+      const names = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const days = announcementArray(a.repeat_days).length ? announcementArray(a.repeat_days).map(Number).map(d => names[d]).filter(Boolean).join(', ') : new Date(a.start_at).toLocaleDateString('en-US',{weekday:'short'});
+      return `Every ${every===1?'week':every+' weeks'} (${days}) from ${start}`;
+    }
+    return `Every ${every===1?'month':every+' months'} from ${start}`;
+  }
+
+  function announcementAdminStatus(a){
+    const now = new Date();
+    if(!a.is_enabled) return {label:'Paused', cls:'paused'};
+    if(announcementOccurrenceActive(a, now)) return {label:'Active', cls:'active'};
+    const start = new Date(a.start_at);
+    if(start > now) return {label:'Scheduled', cls:'scheduled'};
+    if((a.repeat_type || 'none') === 'none'){
+      if(a.end_at && new Date(a.end_at) < now) return {label:'Expired', cls:'expired'};
+      return {label:'Active', cls:'active'};
+    }
+    if(a.repeat_until && new Date(a.repeat_until) < now) return {label:'Expired', cls:'expired'};
+    return {label:'Repeating', cls:'repeating'};
+  }
+
+  async function loadAnnouncementAdminPanel(){
+    if(currentProfile?.role !== 'superadmin') return;
+    const panel = document.getElementById('announcementAdminPanel');
+    if(!panel) return;
+    panel.innerHTML = '<div class="placeholder-note">Loading announcements...</div>';
+    const [annRes, usersRes] = await Promise.all([
+      sb.from('announcements').select('*').order('created_at',{ascending:false}),
+      sb.from('profiles').select('id,full_name,nickname,email,role,discipline,status').eq('status','active').order('full_name')
+    ]);
+    if(annRes.error){
+      panel.innerHTML = `<div class="placeholder-note">Announcements could not load. Run the announcement setup SQL first, then refresh Admin.<br><span class="mono">${escapeHtml(annRes.error.message)}</span></div>`;
+      return;
+    }
+    announcementAdminRows = annRes.data || [];
+    announcementAdminUsers = usersRes.data || [];
+    renderAnnouncementAdminShell();
+  }
+
+  function renderAnnouncementAdminShell(){
+    const panel = document.getElementById('announcementAdminPanel');
+    if(!panel) return;
+    panel.innerHTML = `
+      <div class="announcement-admin-shell">
+        <div class="announcement-admin-toolbar">
+          <div><div class="announcement-admin-heading">Opening announcements</div><div class="announcement-admin-sub">Create notices that appear when targeted users open the website. Scheduling and recurrence are evaluated automatically.</div></div>
+          <button class="announcement-new-btn" type="button" onclick="openAnnouncementEditor()"><span style="font-size:15px;line-height:1">+</span> New</button>
+        </div>
+        <div id="announcementEditorHost"></div>
+        <div class="announcement-list" id="announcementAdminList">${renderAnnouncementAdminList()}</div>
+      </div>`;
+  }
+
+  function renderAnnouncementAdminList(){
+    if(!announcementAdminRows.length) return '<div class="placeholder-note">No announcements yet. Create the first opening notice.</div>';
+    return announcementAdminRows.map(a => {
+      const status = announcementAdminStatus(a);
+      const desc = String(a.description || '').trim();
+      return `<div class="announcement-list-item">
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:7px;min-width:0;"><span class="announcement-status ${status.cls}">${status.label}</span><div class="announcement-list-title">${escapeHtml(a.title)}</div></div>
+          ${desc ? `<div class="announcement-list-desc">${escapeHtml(desc)}</div>` : ''}
+          <div class="announcement-list-meta"><span class="announcement-meta-chip">Audience: ${escapeHtml(announcementAudienceSummary(a))}</span><span class="announcement-meta-chip">${escapeHtml(announcementScheduleSummary(a))}</span></div>
+        </div>
+        <div class="announcement-list-actions">
+          <button class="announcement-icon-action" type="button" onclick="previewSavedAnnouncement('${a.id}')" title="Preview" aria-label="Preview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+          <button class="announcement-icon-action" type="button" onclick="toggleAnnouncementEnabled('${a.id}', ${!a.is_enabled})" title="${a.is_enabled?'Pause':'Enable'}" aria-label="${a.is_enabled?'Pause':'Enable'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${a.is_enabled?'<path d="M8 5v14M16 5v14"/>':'<path d="m7 4 13 8-13 8Z"/>'}</svg></button>
+          <button class="announcement-icon-action" type="button" onclick="openAnnouncementEditor('${a.id}')" title="Edit" aria-label="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>
+          <button class="announcement-icon-action danger" type="button" onclick="deleteAnnouncementAdmin('${a.id}')" title="Delete" aria-label="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function defaultAnnouncementStart(){
+    const d = new Date();
+    d.setSeconds(0,0);
+    const local = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+    return local.toISOString().slice(0,16);
+  }
+
+  function openAnnouncementEditor(id=''){
+    announcementEditingId = id || null;
+    const row = id ? announcementAdminRows.find(a => a.id === id) : null;
+    const host = document.getElementById('announcementEditorHost');
+    if(!host) return;
+    const selectedUsers = new Set(announcementArray(row?.target_user_ids));
+    const selectedRoles = new Set(announcementArray(row?.target_roles));
+    const selectedDisc = new Set(announcementArray(row?.target_disciplines));
+    const selectedDays = new Set(announcementArray(row?.repeat_days).map(Number));
+    const repeatType = row?.repeat_type || 'none';
+    const audienceType = row?.audience_type || 'all';
+    host.innerHTML = `
+      <div class="announcement-editor">
+        <div class="announcement-editor-head"><div><div class="announcement-editor-title">${row?'Edit announcement':'Create announcement'}</div><div class="announcement-admin-sub">The popup uses the approved centered premium banner design.</div></div><button class="announcement-icon-action" type="button" onclick="closeAnnouncementEditor()" title="Close editor" aria-label="Close editor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+        <div class="announcement-form-grid">
+          <div class="announcement-field full"><label>Bold title *</label><input class="announcement-input" id="announcementTitleInput" maxlength="90" value="${escapeHtml(row?.title || 'Announcement')}" placeholder="Announcement"></div>
+          <div class="announcement-field full"><label>Short description (optional)</label><textarea class="announcement-textarea" id="announcementDescriptionInput" maxlength="220" placeholder="One short line is ideal.">${escapeHtml(row?.description || '')}</textarea></div>
+          <div class="announcement-field"><label>Start date &amp; time *</label><input class="announcement-input" type="datetime-local" id="announcementStartInput" value="${announcementLocalInputValue(row?.start_at) || defaultAnnouncementStart()}"></div>
+          <div class="announcement-field"><label>End / first occurrence end</label><input class="announcement-input" type="datetime-local" id="announcementEndInput" value="${announcementLocalInputValue(row?.end_at)}"></div>
+          <div class="announcement-field"><label>Repeat</label><select class="announcement-select" id="announcementRepeatType" onchange="updateAnnouncementRepeatUI()"><option value="none" ${repeatType==='none'?'selected':''}>Do not repeat</option><option value="daily" ${repeatType==='daily'?'selected':''}>Daily</option><option value="weekly" ${repeatType==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${repeatType==='monthly'?'selected':''}>Monthly</option></select></div>
+          <div class="announcement-field" id="announcementRepeatEveryField"><label>Repeat every</label><div style="display:grid;grid-template-columns:90px minmax(0,1fr);gap:7px"><input class="announcement-input" type="number" id="announcementRepeatInterval" min="1" max="365" value="${Math.max(1,Number(row?.repeat_interval)||1)}"><div class="announcement-input" id="announcementRepeatUnit" style="display:flex;align-items:center;color:var(--text-faint);background:var(--surface-alt)">interval</div></div></div>
+          <div class="announcement-field full" id="announcementWeeklyDaysField"><label>Weekly days</label><div class="announcement-weekdays">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((n,i)=>`<label class="announcement-weekday"><input type="checkbox" name="announcementRepeatDay" value="${i}" ${selectedDays.has(i)?'checked':''}><span>${n}</span></label>`).join('')}</div></div>
+          <div class="announcement-field" id="announcementRepeatUntilField"><label>Repeat until (optional)</label><input class="announcement-input" type="datetime-local" id="announcementRepeatUntilInput" value="${announcementLocalInputValue(row?.repeat_until)}"></div>
+          <div class="announcement-field"><label>Audience</label><select class="announcement-select" id="announcementAudienceType" onchange="updateAnnouncementAudienceUI()"><option value="all" ${audienceType==='all'?'selected':''}>Everyone</option><option value="users" ${audienceType==='users'?'selected':''}>Specific users</option><option value="roles" ${audienceType==='roles'?'selected':''}>By role</option><option value="disciplines" ${audienceType==='disciplines'?'selected':''}>By discipline</option></select></div>
+          <div class="announcement-field full" id="announcementAudienceUsers"><div class="announcement-split-card"><div class="announcement-card-title">Specific users</div><input class="announcement-input" style="margin-bottom:7px" type="search" placeholder="Search name or employee ID..." oninput="filterAnnouncementUserTargets(this.value)"><div class="announcement-target-users" id="announcementTargetUsersList">${announcementAdminUsers.map(u=>`<label class="announcement-target-user" data-user-search="${escapeHtml(`${u.full_name||''} ${u.nickname||''} ${u.email||''}`.toLowerCase())}"><input type="checkbox" name="announcementTargetUser" value="${u.id}" ${selectedUsers.has(u.id)?'checked':''}><span>${escapeHtml(u.full_name || u.email || 'Unnamed')} ${u.nickname?`(${escapeHtml(u.nickname)})`:''}</span></label>`).join('')}</div></div></div>
+          <div class="announcement-field full" id="announcementAudienceRoles"><div class="announcement-split-card"><div class="announcement-card-title">Roles</div><div class="announcement-check-row">${[['engineer','Engineer'],['admin','Admin'],['superadmin','Superadmin']].map(([v,n])=>`<label class="announcement-check"><input type="checkbox" name="announcementTargetRole" value="${v}" ${selectedRoles.has(v)?'checked':''}> ${n}</label>`).join('')}</div></div></div>
+          <div class="announcement-field full" id="announcementAudienceDisciplines"><div class="announcement-split-card"><div class="announcement-card-title">Disciplines</div><div class="announcement-check-row">${[['mechanical','Mechanical'],['electrical','Electrical']].map(([v,n])=>`<label class="announcement-check"><input type="checkbox" name="announcementTargetDiscipline" value="${v}" ${selectedDisc.has(v)?'checked':''}> ${n}</label>`).join('')}</div></div></div>
+          <div class="announcement-field full"><div class="announcement-split-card"><label class="announcement-check"><input type="checkbox" id="announcementEnabledInput" ${row ? (row.is_enabled?'checked':'') : 'checked'}> Enabled - publish this notice when its schedule is active</label></div></div>
+        </div>
+        <div class="announcement-editor-actions"><button class="announcement-admin-btn" type="button" onclick="previewAnnouncementAdmin()">Preview</button><button class="announcement-admin-btn" type="button" onclick="closeAnnouncementEditor()">Cancel</button><button class="announcement-admin-btn primary" type="button" id="announcementSaveBtn" onclick="saveAnnouncementAdmin()">${row?'Save changes':'Create announcement'}</button></div>
+      </div>`;
+    updateAnnouncementRepeatUI();
+    updateAnnouncementAudienceUI();
+    setTimeout(() => document.getElementById('announcementTitleInput')?.focus(), 30);
+  }
+
+  function closeAnnouncementEditor(){
+    announcementEditingId = null;
+    const host = document.getElementById('announcementEditorHost');
+    if(host) host.innerHTML = '';
+  }
+
+  function updateAnnouncementRepeatUI(){
+    const type = document.getElementById('announcementRepeatType')?.value || 'none';
+    const every = document.getElementById('announcementRepeatEveryField');
+    const weekly = document.getElementById('announcementWeeklyDaysField');
+    const until = document.getElementById('announcementRepeatUntilField');
+    if(every) every.style.display = type === 'none' ? 'none' : '';
+    if(weekly) weekly.style.display = type === 'weekly' ? '' : 'none';
+    if(until) until.style.display = type === 'none' ? 'none' : '';
+    const unit = document.getElementById('announcementRepeatUnit');
+    if(unit) unit.textContent = type === 'daily' ? 'day(s)' : type === 'weekly' ? 'week(s)' : type === 'monthly' ? 'month(s)' : '';
+  }
+
+  function updateAnnouncementAudienceUI(){
+    const type = document.getElementById('announcementAudienceType')?.value || 'all';
+    const map = { users:'announcementAudienceUsers', roles:'announcementAudienceRoles', disciplines:'announcementAudienceDisciplines' };
+    ['announcementAudienceUsers','announcementAudienceRoles','announcementAudienceDisciplines'].forEach(id => { const el=document.getElementById(id); if(el) el.style.display='none'; });
+    if(map[type]){ const el=document.getElementById(map[type]); if(el) el.style.display=''; }
+  }
+
+  function filterAnnouncementUserTargets(value){
+    const q = String(value || '').trim().toLowerCase();
+    document.querySelectorAll('#announcementTargetUsersList .announcement-target-user').forEach(el => {
+      el.style.display = !q || String(el.dataset.userSearch || '').includes(q) ? 'flex' : 'none';
+    });
+  }
+
+  function readAnnouncementForm(){
+    const title = document.getElementById('announcementTitleInput')?.value.trim() || '';
+    const description = document.getElementById('announcementDescriptionInput')?.value.trim() || '';
+    const startRaw = document.getElementById('announcementStartInput')?.value || '';
+    const endRaw = document.getElementById('announcementEndInput')?.value || '';
+    const repeatType = document.getElementById('announcementRepeatType')?.value || 'none';
+    const repeatInterval = Math.max(1, Math.min(365, Number(document.getElementById('announcementRepeatInterval')?.value) || 1));
+    const repeatUntilRaw = document.getElementById('announcementRepeatUntilInput')?.value || '';
+    const audienceType = document.getElementById('announcementAudienceType')?.value || 'all';
+    const targetUserIds = [...document.querySelectorAll('input[name="announcementTargetUser"]:checked')].map(x=>x.value);
+    const targetRoles = [...document.querySelectorAll('input[name="announcementTargetRole"]:checked')].map(x=>x.value);
+    const targetDisciplines = [...document.querySelectorAll('input[name="announcementTargetDiscipline"]:checked')].map(x=>x.value);
+    const repeatDays = [...document.querySelectorAll('input[name="announcementRepeatDay"]:checked')].map(x=>Number(x.value));
+    if(!title){ alert('Add an announcement title.'); return null; }
+    if(!startRaw){ alert('Choose when the announcement should start.'); return null; }
+    const start = new Date(startRaw);
+    const end = endRaw ? new Date(endRaw) : null;
+    if(end && end <= start){ alert('The end time must be later than the start time.'); return null; }
+    if(repeatType !== 'none' && !end){ alert('For a repeated announcement, set the first occurrence end time. That duration will be reused for every repeat.'); return null; }
+    if(repeatType === 'weekly' && !repeatDays.length){ alert('Choose at least one weekday for the weekly repeat.'); return null; }
+    const repeatUntil = repeatUntilRaw ? new Date(repeatUntilRaw) : null;
+    if(repeatUntil && repeatUntil < start){ alert('Repeat-until must be after the start time.'); return null; }
+    if(audienceType === 'users' && !targetUserIds.length){ alert('Choose at least one user.'); return null; }
+    if(audienceType === 'roles' && !targetRoles.length){ alert('Choose at least one role.'); return null; }
+    if(audienceType === 'disciplines' && !targetDisciplines.length){ alert('Choose at least one discipline.'); return null; }
+    return {
+      title, description: description || null, is_enabled: !!document.getElementById('announcementEnabledInput')?.checked,
+      start_at:start.toISOString(), end_at:end?end.toISOString():null, repeat_type:repeatType, repeat_interval:repeatInterval,
+      repeat_days:repeatDays, repeat_until:repeatUntil?repeatUntil.toISOString():null, audience_type:audienceType,
+      target_user_ids:targetUserIds, target_roles:targetRoles, target_disciplines:targetDisciplines, updated_at:new Date().toISOString()
+    };
+  }
+
+  function previewAnnouncementAdmin(){
+    const data = readAnnouncementForm();
+    if(data) showAnnouncementPopup(data, true);
+  }
+
+  function previewSavedAnnouncement(id){
+    const row = announcementAdminRows.find(a => a.id === id);
+    if(row) showAnnouncementPopup(row, true);
+  }
+
+  async function saveAnnouncementAdmin(){
+    if(currentProfile?.role !== 'superadmin') return;
+    const payload = readAnnouncementForm();
+    if(!payload) return;
+    const btn = document.getElementById('announcementSaveBtn');
+    if(btn){ btn.disabled=true; btn.textContent='Saving...'; }
+    let result;
+    if(announcementEditingId){
+      result = await sb.from('announcements').update(payload).eq('id',announcementEditingId).select().maybeSingle();
+    }else{
+      result = await sb.from('announcements').insert({...payload,created_by:currentUser.id}).select().maybeSingle();
+    }
+    if(result.error || !result.data){
+      if(btn){ btn.disabled=false; btn.textContent=announcementEditingId?'Save changes':'Create announcement'; }
+      alert('Could not save announcement: ' + (result.error?.message || 'No row was returned. Check the announcement RLS policies.'));
+      return;
+    }
+    announcementEditingId = null;
+    await loadAnnouncementAdminPanel();
+  }
+
+  async function toggleAnnouncementEnabled(id, enabled){
+    if(currentProfile?.role !== 'superadmin') return;
+    const { data, error } = await sb.from('announcements').update({is_enabled:!!enabled,updated_at:new Date().toISOString()}).eq('id',id).select('id').maybeSingle();
+    if(error || !data){ alert('Could not update announcement: ' + (error?.message || 'Permission denied.')); return; }
+    await loadAnnouncementAdminPanel();
+  }
+
+  async function deleteAnnouncementAdmin(id){
+    if(currentProfile?.role !== 'superadmin') return;
+    const row = announcementAdminRows.find(a => a.id === id);
+    if(!confirm(`Delete the announcement "${row?.title || 'Announcement'}"?`)) return;
+    const { error } = await sb.from('announcements').delete().eq('id',id);
+    if(error){ alert('Could not delete announcement: ' + error.message); return; }
+    await loadAnnouncementAdminPanel();
+  }
+
   // ============ REAL ADMIN PANEL ============
   let adminAccordionInitialized = false;
 
@@ -11463,7 +12007,7 @@ for a competing inline style first.`;
 
     const cards = [...grid.querySelectorAll(':scope > .admin-tool-card')];
     const configs = [
-      { key:'users' }, { key:'fields' }, { key:'score' },
+      { key:'announcements' }, { key:'users' }, { key:'fields' }, { key:'score' },
       { key:'category' }, { key:'quick' }, { key:'archive' }
     ];
     if(cards.length < configs.length) return;
@@ -11527,6 +12071,7 @@ for a competing inline style first.`;
         if(node) body.appendChild(node);
       });
     };
+    moveInto('announcements', ['announcementsBlock']);
     moveInto('fields', ['customFieldsBlock', 'fieldGuideBlock']);
     moveInto('score', ['kpiWeightsBlock']);
     moveInto('category', ['categoryLinksBlock']);
@@ -11545,7 +12090,9 @@ for a competing inline style first.`;
   }
 
   function prepareAdminWorkspace(key){
-    if(key === 'users'){
+    if(key === 'announcements'){
+      loadAnnouncementAdminPanel();
+    } else if(key === 'users'){
       document.getElementById('approvedUsersPanel')?.classList.add('open');
     } else if(key === 'fields'){
       const panel = document.getElementById('customFieldsPanel');
@@ -11583,6 +12130,7 @@ for a competing inline style first.`;
   function adminJumpTo(targetId){
     initAdminCompactAccordion();
     const targetMap = {
+      announcementsBlock:['announcements'],
       pendingSigninsPanel:['users','pending'], approvedUsersPanel:['users','approved'],
       customFieldsBlock:['fields'], fieldGuideBlock:['fields'], kpiWeightsBlock:['score'],
       categoryLinksBlock:['category'], quickLinksBlock:['quick'], dataArchiveBlock:['archive']
@@ -11698,6 +12246,7 @@ for a competing inline style first.`;
     }
  
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
+    document.getElementById('announcementsBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
     const backupSection = document.getElementById('accountMenuBackupSection');
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
@@ -13428,7 +13977,7 @@ for a competing inline style first.`;
     );
     allProjectTasksCache = tasksRes.data || [];
  
-    const impacts = [...new Set(devProjectsCache.flatMap(p => projectImpactList(p)))];
+    const impacts = [...new Set(devProjectsCache.map(p => p.impact_type).filter(Boolean))];
     document.getElementById('devFilterImpact').innerHTML = '<option value="">All impact types</option>' + impacts.map(i => `<option>${i}</option>`).join('');
  
     const thisYear = new Date().getFullYear();
@@ -13473,23 +14022,6 @@ for a competing inline style first.`;
 
   function projectImpactColor(impact){ return DEV_IMPACT_COLOR[impact] || '#2F5FE0'; }
 
-  // Impact Type is now multi-select (impact_types, an array column) with
-  // impact_type (the old single text column) kept in sync as the first
-  // selected value, purely so anything that still reads the old column
-  // (or a project saved before this change) keeps working.
-  function projectImpactList(p){
-    if(Array.isArray(p.impact_types) && p.impact_types.length) return p.impact_types;
-    return p.impact_type ? [p.impact_type] : [];
-  }
-  function projectImpactLabel(p){
-    const list = projectImpactList(p);
-    return list.length ? list.join(', ') : 'Other';
-  }
-  function projectImpactPrimaryColor(p){
-    const list = projectImpactList(p);
-    return list.length ? projectImpactColor(list[0]) : projectImpactColor(null);
-  }
-
   // Project PPTX export: single, selected, or all currently visible projects.
   // Projects with many tasks are paginated into fixed-height continuation slides
   // instead of shrinking rows until labels/bars collide.
@@ -13501,7 +14033,7 @@ for a competing inline style first.`;
     return devProjectsCache.filter(p =>
       (!leadFilter || p.lead_id === leadFilter) &&
       (!collabFilter || (p.collaborators || []).includes(collabFilter)) &&
-      (!impactFilter || projectImpactList(p).includes(impactFilter)) &&
+      (!impactFilter || p.impact_type === impactFilter) &&
       (!statusFilter || p.status === statusFilter)
     );
   }
@@ -13719,7 +14251,7 @@ for a competing inline style first.`;
     let rows = devProjectsCache.filter(p =>
       (!leadFilter || p.lead_id === leadFilter) &&
       (!collabFilter || (p.collaborators || []).includes(collabFilter)) &&
-      (!impactFilter || projectImpactList(p).includes(impactFilter)) &&
+      (!impactFilter || p.impact_type === impactFilter) &&
       (!statusFilter || p.status === statusFilter)
     );
 
@@ -13751,7 +14283,7 @@ for a competing inline style first.`;
       const collaborators = (p.collaborators || []).map(id => devPeople.find(dp => dp.id === id)).filter(Boolean);
       const collabNames = collaborators.map(displayName).join(', ') || '—';
       const statusColor = DEV_STATUS_COLOR[p.status] || '#2F5FE0';
-      const impactColor = projectImpactPrimaryColor(p);
+      const impactColor = projectImpactColor(p.impact_type);
       const canManageProject = currentUser && (p.created_by === currentUser.id || p.lead_id === currentUser.id);
       const canEdit = canManageProject;
       const canDelete = canManageProject;
@@ -13761,7 +14293,7 @@ for a competing inline style first.`;
         ? `<span id="projProgressRow-${p.id}" class="project-inline-progress">${progress}%</span>`
         : `<span id="projProgressRow-${p.id}" class="project-inline-progress empty">No specific breakdown</span>`;
       const projectName = escapeHtml(p.name || 'Untitled project');
-      const impact = escapeHtml(projectImpactLabel(p));
+      const impact = escapeHtml(p.impact_type || 'Other');
       const visibilityText = p.published ? 'Visible to team' : 'Private to owner / lead';
 
       return `<div class="gantt-project-card" style="--project-accent:${impactColor}; --project-status-color:${statusColor};">
@@ -13769,7 +14301,7 @@ for a competing inline style first.`;
           <div class="proj-zone-fill" id="projFill-${p.id}" style="width:${progressWidth}%;"></div>
           <div class="project-summary-row">
             <div class="project-main">
-              <div class="project-title-line"><div class="project-name" title="${projectName}">${projectName}</div>${progressLabel}<span class="project-impact-chip" style="background:color-mix(in srgb,${impactColor} 12%,var(--surface)); color:${impactColor};" title="${impact}">${impact}</span></div>
+              <div class="project-title-line"><div class="project-name" title="${projectName}">${projectName}</div>${progressLabel}<span class="project-impact-chip" style="background:color-mix(in srgb,${impactColor} 12%,var(--surface)); color:${impactColor};">${impact}</span></div>
               <div class="project-visibility-note">${visibilityText}</div>
             </div>
             <div class="project-meta-cell project-lead-cell">
@@ -13807,7 +14339,7 @@ for a competing inline style first.`;
   async function submitDevProject(){
     const name = document.getElementById('devName').value.trim();
     const leadId = document.getElementById('devLead').value;
-    const impactTypes = Array.from(document.querySelectorAll('#devImpactChips .chip-opt.picked')).map(c => c.dataset.opt);
+    const impact = document.getElementById('devImpact').value;
     const start = document.getElementById('devStart').value;
     const target = document.getElementById('devTarget').value;
     const status = document.querySelector('#devStatusChips .picked-single')?.textContent || 'In Progress';
@@ -13822,8 +14354,7 @@ for a competing inline style first.`;
     }
  
     const payload = {
-      name, lead_id: leadId, impact_type: impactTypes[0] || null, impact_types: impactTypes,
-      start_date: start, target_date: target || null,
+      name, lead_id: leadId, impact_type: impact, start_date: start, target_date: target || null,
       status, financial_outcome: fin, documentation: doc, notes, collaborators
     };
  
