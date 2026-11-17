@@ -2793,6 +2793,34 @@
 
   .field-option-sort-row.is-dragging-option{opacity:.55; background:var(--surface-alt);}
   .field-option-sort-row.is-dragging-option .field-option-drag-handle{cursor:grabbing;}
+  /* 2026-11-17: Quick Links thematic groups and extended scheduling controls */
+  .quick-link-group{margin:0 0 18px;min-width:0}
+  .quick-link-group-heading{font-weight:700;font-size:13px;padding-left:10px;margin:4px 0 9px;border-left:4px solid var(--ql-color);color:var(--text)}
+  .quick-link-button-list{display:grid;gap:8px}
+  .quick-link-button{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 13px;border-radius:11px;border:1px solid color-mix(in srgb,var(--ql-color) 25%,var(--border));background:color-mix(in srgb,var(--ql-color) 10%,var(--surface));color:var(--text);font-size:13px;font-weight:600;text-decoration:none;min-width:0;overflow-wrap:anywhere;transition:background .15s,transform .15s}
+  .quick-link-button:hover,.quick-link-button:focus-visible{background:color-mix(in srgb,var(--ql-color) 19%,var(--surface));transform:translateY(-1px)}
+  .quick-link-button svg{flex-shrink:0;color:var(--ql-color)}
+  .quick-group-admin{padding:0 0 16px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+  .quick-admin-group-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;flex-wrap:wrap}
+  .quick-admin-group-row .btn{padding:5px 7px}
+  .quick-group-color-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
+  .quick-group-create{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:7px;margin-top:12px;align-items:center}
+  .quick-link-group-select{max-width:145px;min-width:85px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--surface);color:var(--text);font-size:11px}
+  .quick-group-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:550;display:flex;align-items:center;justify-content:center;padding:20px}
+  .quick-group-label{display:block;margin:13px 0 5px;font-size:12px;font-weight:600}
+  .announcement-calendar-picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .announcement-calendar-picker .announcement-input{flex:1;min-width:170px}
+  .announcement-selected-dates{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+  .announcement-date-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--accent);border-radius:999px;padding:5px 9px;background:var(--accent-dim);font-size:12px}
+  .announcement-date-chip button{background:none;border:0;color:var(--text);cursor:pointer;font-weight:700;font-size:15px}
+  .announcement-date-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+  .announcement-month-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:9px}
+  .announcement-date-grid label,.announcement-month-grid label{position:relative;display:block;cursor:pointer}
+  .announcement-date-grid input,.announcement-month-grid input{position:absolute;opacity:0;width:1px;height:1px}
+  .announcement-date-grid span,.announcement-month-grid span{display:block;text-align:center;padding:7px 3px;border-radius:7px;border:1px solid var(--border);font-size:12px;background:var(--surface-alt)}
+  .announcement-date-grid input:checked+span,.announcement-month-grid input:checked+span{background:var(--accent-dim);border-color:var(--accent);font-weight:700}
+  .announcement-date-grid input:focus-visible+span,.announcement-month-grid input:focus-visible+span{outline:2px solid var(--accent)}
+  @media(max-width:650px){.quick-group-create{grid-template-columns:1fr 1fr}.quick-group-create input{grid-column:span 2}.quick-link-group-select{max-width:110px}.quick-link-admin-row{flex-wrap:wrap}}
 </style>
 
 <style>
@@ -6267,13 +6295,71 @@
   // Category Links already works for Post-Sales/Reports, rather than
   // living inside the popup everyone opens. The popup itself is now
   // read-only for everyone, superadmin included.
+  let quickLinkGroupsCache = [];
+  const quickLinkColors={blue:'#3979DB',green:'#23865B',purple:'#AB6DD4',orange:'#D18A38',red:'#CE6060'};
+  function quickLinkColor(name){ return quickLinkColors[name]||quickLinkColors.blue; }
+  function quickLinkGroupOptions(selected){
+    return `<option value="" ${!selected?'selected':''}>General (ungrouped)</option>` + quickLinkGroupsCache.map(g=>`<option value="${g.id}" ${g.id===selected?'selected':''}>${escapeHtml(g.name)}</option>`).join('');
+  }
+  function quickLinkColorOptions(selected){
+    return Object.keys(quickLinkColors).map(c=>`<option value="${c}" ${c===selected?'selected':''}>${c[0].toUpperCase()+c.slice(1)}</option>`).join('');
+  }
+  async function addQuickLinkGroup(){
+    const name=document.getElementById('newQuickGroupName')?.value.trim();
+    const color=document.getElementById('newQuickGroupColor')?.value||'blue';
+    if(!name){alert('Enter a group name.');return;}
+    const order=(Math.max(0,...quickLinkGroupsCache.map(x=>Number(x.sort_order)||0))+10);
+    const r=await sb.from('quick_link_groups').insert({name,color,sort_order:order}).select('id');
+    if(r.error||!r.data?.length){alert('Could not create group: '+(r.error?.message||'Permission denied'));return;}
+    await loadQuickLinksAdminPanel();
+  }
+  function openEditQuickLinkGroup(id){
+    const g=quickLinkGroupsCache.find(x=>x.id===id);if(!g)return;
+    document.getElementById('quickGroupEditOverlay')?.remove();
+    const overlay=document.createElement('div');overlay.id='quickGroupEditOverlay';overlay.className='quick-group-overlay';
+    overlay.innerHTML=`<div class="panel" style="max-width:420px;width:100%;padding:18px"><div class="panel-title">Edit group</div><label class="quick-group-label">Group name</label><input id="quickGroupEditName" class="announcement-input" maxlength="80" value="${escapeHtml(g.name)}"><label class="quick-group-label">Theme color</label><select id="quickGroupEditColor" class="announcement-select">${quickLinkColorOptions(g.color)}</select><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:15px"><button class="btn" onclick="document.getElementById('quickGroupEditOverlay').remove()">Cancel</button><button class="queue-btn" onclick="saveQuickLinkGroup('${g.id}')">Save</button></div></div>`;
+    overlay.onclick=e=>{if(e.target===overlay)overlay.remove();};document.body.appendChild(overlay);
+  }
+  async function saveQuickLinkGroup(id){
+    const name=document.getElementById('quickGroupEditName')?.value.trim();
+    const color=document.getElementById('quickGroupEditColor')?.value;
+    if(!name)return alert('Enter a group name.');
+    const r=await sb.from('quick_link_groups').update({name,color}).eq('id',id).select('id');
+    if(r.error||!r.data?.length)return alert('Could not update group: '+(r.error?.message||'Permission denied'));
+    document.getElementById('quickGroupEditOverlay')?.remove();await loadQuickLinksAdminPanel();
+  }
+  async function moveQuickLinkGroup(id,direction){
+    const list=[...quickLinkGroupsCache];const i=list.findIndex(x=>x.id===id),j=i+direction;
+    if(i<0||j<0||j>=list.length)return;
+    [list[i],list[j]]=[list[j],list[i]];
+    const results=await Promise.all(list.map((g,k)=>sb.from('quick_link_groups').update({sort_order:(k+1)*10}).eq('id',g.id).select('id')));
+    if(results.some(r=>r.error||!r.data?.length))return alert('Could not reorder groups; please refresh.');
+    await loadQuickLinksAdminPanel();
+  }
+  async function deleteQuickLinkGroup(id){
+    if(!confirm('Delete this group? Its links will move to General and will NOT be deleted.'))return;
+    const r=await sb.from('quick_link_groups').delete().eq('id',id).select('id');
+    if(r.error||!r.data?.length)return alert('Could not delete group: '+(r.error?.message||'Permission denied'));
+    await loadQuickLinksAdminPanel();
+  }
+  async function changeQuickLinkGroup(id,groupId){
+    const r=await sb.from('quick_links').update({group_id:groupId||null}).eq('id',id).select('id');
+    if(r.error||!r.data?.length)return alert('Could not move link: '+(r.error?.message||'Permission denied'));
+    await loadQuickLinksAdminPanel();
+  }
   let quickLinksAdminCache = [];
   let draggedQuickLinkId = null;
 
   async function loadQuickLinksAdminPanel(){
     const panel = document.getElementById('quickLinksAdminPanel');
     if(!panel) return;
-    const { data, error } = await sb.from('quick_links').select('*').order('sort_order').order('created_at');
+    const [linksRes,groupsRes]=await Promise.all([
+      sb.from('quick_links').select('*').order('sort_order').order('created_at'),
+      sb.from('quick_link_groups').select('*').order('sort_order').order('created_at')
+    ]);
+    const {data,error}=linksRes;
+    if(groupsRes.error){panel.innerHTML=`<div class="placeholder-note">Quick Link groups unavailable. Run the approved SQL migration first: ${escapeHtml(groupsRes.error.message)}</div>`;return;}
+    quickLinkGroupsCache=groupsRes.data||[];
     if(error){
       panel.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}. Make sure the quick_links table has been created (see setup SQL).</div>`;
       return;
@@ -6287,13 +6373,16 @@
             <div style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(r.label)}</div>
             <div style="font-size:11px; color:var(--text-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(r.url)}</div>
           </div>
+          <select class="quick-link-group-select" aria-label="Move link to group" onchange="changeQuickLinkGroup('${r.id}',this.value)">${quickLinkGroupOptions(r.group_id)}</select>
           <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
             <button class="btn edit" style="padding:6px;" onclick="openEditQuickLinkModal('${r.id}')" title="Edit" aria-label="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
             <button class="btn remove" style="padding:6px;" onclick="deleteQuickLink('${r.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
           </div>
         </div>`).join('')
       : '<div class="placeholder-note">No links yet.</div>';
+    const groupHtml=quickLinkGroupsCache.map((g,i)=>`<div class="quick-admin-group-row"><span class="quick-group-color-dot" style="background:${quickLinkColor(g.color)}"></span><span style="flex:1;min-width:0;font-weight:600">${escapeHtml(g.name)}</span><button class="btn" title="Move up" onclick="moveQuickLinkGroup('${g.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn" title="Move down" onclick="moveQuickLinkGroup('${g.id}',1)" ${i===quickLinkGroupsCache.length-1?'disabled':''}>↓</button><button class="btn edit" title="Edit group" onclick="openEditQuickLinkGroup('${g.id}')">✎</button><button class="btn remove" title="Delete group (preserve links)" onclick="deleteQuickLinkGroup('${g.id}')">×</button></div>`).join('');
     panel.innerHTML = `<div class="panel">
+      <div class="quick-group-admin"><div class="panel-title">Link groups &amp; themes</div><div class="announcement-admin-sub">Organize existing links into colored groups. Removing a group moves its links to General.</div><div>${groupHtml || '<div class="placeholder-note">Create your first themed group.</div>'}</div><div class="quick-group-create"><input id="newQuickGroupName" class="announcement-input" maxlength="80" placeholder="New group name"><select id="newQuickGroupColor" class="announcement-select">${quickLinkColorOptions('blue')}</select><button class="queue-btn" onclick="addQuickLinkGroup()">+ Add group</button></div></div>
       <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
         <div class="panel-title" style="margin:0;">Quick Links</div>
         <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAddQuickLinkForm(this)">+ Add a link</button>
@@ -6302,6 +6391,7 @@
       <div id="addQuickLinkForm" style="display:none; flex-direction:column; gap:8px; margin-top:14px;">
         <input type="text" id="newQuickLinkLabel" placeholder="Link name, e.g. Warranty Policy PDF" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
         <input type="text" id="newQuickLinkUrl" placeholder="https://…" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
+        <select id="newQuickLinkGroup" class="announcement-select" aria-label="Group for new link">${quickLinkGroupOptions('')}</select>
         <button class="queue-btn" onclick="addQuickLinkFromAdmin()">+ Add link</button>
       </div>
     </div>`;
@@ -6373,6 +6463,7 @@
         <input type="text" id="editQuickLinkLabel" value="${escapeHtml(link.label)}" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
         <label style="font-size:12px; font-weight:600; color:var(--text-dim); margin-top:3px;">URL</label>
         <input type="text" id="editQuickLinkUrl" value="${escapeHtml(link.url)}" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
+        <label style="font-size:12px;font-weight:600;color:var(--text-dim)">Group</label><select id="editQuickLinkGroup" class="announcement-select">${quickLinkGroupOptions(link.group_id)}</select>
         <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
           <button class="btn" onclick="document.getElementById('editQuickLinkOverlay')?.remove()">Cancel</button>
           <button class="queue-btn" onclick="saveQuickLinkEdit('${link.id}')">Save changes</button>
@@ -6389,7 +6480,8 @@
     let url = document.getElementById('editQuickLinkUrl')?.value.trim() || '';
     if(!label || !url){ alert('Please enter both a name and a URL.'); return; }
     if(!/^https?:\/\//i.test(url)) url = 'https://' + url;
-    const { data, error } = await sb.from('quick_links').update({ label, url }).eq('id', id).select('id');
+    const group_id=document.getElementById('editQuickLinkGroup')?.value||null;
+    const { data, error } = await sb.from('quick_links').update({ label, url, group_id }).eq('id', id).select('id');
     if(error || !data?.length){
       alert('Could not update this Quick Link. Make sure the Quick Links UPDATE policy has been added in Supabase.' + (error ? '\n\n' + error.message : ''));
       return;
@@ -6417,7 +6509,8 @@
     const { data: lastRows, error: lastRowsError } = await sb.from('quick_links').select('sort_order').order('sort_order', { ascending:false }).limit(1);
     if(lastRowsError){ alert('Could not determine link order: ' + lastRowsError.message); return; }
     const nextSortOrder = ((lastRows && lastRows.length ? Number(lastRows[0].sort_order) : 0) || 0) + 10;
-    const { error } = await sb.from('quick_links').insert({ label, url, sort_order: nextSortOrder, created_by: currentUser.id });
+    const group_id=document.getElementById('newQuickLinkGroup')?.value||null;
+    const { error } = await sb.from('quick_links').insert({ label, url, group_id, sort_order: nextSortOrder, created_by: currentUser.id });
     if(error){ alert('Could not add: ' + error.message); return; }
     labelInput.value = '';
     urlInput.value = '';
@@ -7001,17 +7094,26 @@
   async function loadQuickLinksList(){
     const wrap = document.getElementById('quickLinksListWrap');
     if(!wrap) return;
-    const { data, error } = await sb.from('quick_links').select('*').order('sort_order');
+    const [linkRes,groupRes]=await Promise.all([
+      sb.from('quick_links').select('*').order('sort_order'),
+      sb.from('quick_link_groups').select('*').order('sort_order').order('created_at')
+    ]);
+    const {data,error}=linkRes;
     if(error){ wrap.innerHTML = `<div class="placeholder-note">Could not load: ${error.message}</div>`; return; }
+    if(groupRes.error){wrap.innerHTML=`<div class="placeholder-note">Quick Link groups could not load: ${escapeHtml(groupRes.error.message)}</div>`;return;}
     const links = data || [];
+    const groups=groupRes.data||[];
     // 2026-09-22: read-only here now, for everyone including
     // Superadmin — adding/removing links moved to Admin → Quick Links,
     // matching exactly how Category Links already works, rather than
     // living inside the popup everyone opens.
-    wrap.innerHTML = links.length ? links.map(l => `
-      <div style="padding:10px 0; border-bottom:1px solid var(--border);">
-        <a href="${escapeHtml(l.url)}" target="_blank" rel="noopener" style="color:var(--accent); font-size:13.5px; font-weight:600; text-decoration:none;">${escapeHtml(l.label)}</a>
-      </div>`).join('') : '<div class="placeholder-note">No links yet.</div>';
+    const ordered=[...groups.map(g=>({id:g.id,name:g.name,color:g.color})),{id:null,name:'General',color:'blue'}];
+    const card=l=>`<a class="quick-link-button" href="${escapeHtml(l.url)}" target="_blank" rel="noopener noreferrer"><span>${escapeHtml(l.label)}</span><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 3h7v7M21 3l-10 10M21 13v7H4V3h7"/></svg></a>`;
+    wrap.innerHTML=links.length?ordered.map(g=>{
+      const rows=links.filter(l=>(l.group_id||null)===g.id || (g.id===null && !groups.some(x=>x.id===l.group_id)));
+      if(!rows.length)return '';
+      return `<section class="quick-link-group" style="--ql-color:${quickLinkColor(g.color)}"><div class="quick-link-group-heading">${escapeHtml(g.name)}</div><div class="quick-link-button-list">${rows.map(card).join('')}</div></section>`;
+    }).join(''):'<div class="placeholder-note">No links yet.</div>';
   }
 
   async function deleteQuickLink(id){
@@ -7699,6 +7801,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-17', summary:'Approved scheduling and Quick Links upgrade: announcements now support selected month-days and months, exact calendar dates and per-user once-daily delivery tracked in Asia/Dhaka time; original schedules and opening behavior preserved. Quick Links now support Superadmin-managed ordered color groups, group assignment, grouped theme-aware button cards; database backup/restore includes groups, links and daily records.' },
     { date:'2026-11-15', summary:'Added a Superadmin-managed opening Announcement system: premium centered popup banner with optional description, one-time or recurring schedules, targeted audiences (everyone, selected users, role, or discipline), Admin create/edit/pause/delete/preview controls, and responsive mobile/desktop presentation. Active targeted announcements are checked once per full website opening and can be dismissed with the close button.' },
     { date:'2026-10-11', summary:'Team Chat redesigned with a responsive Team Status roster: approved users can see who is online via Supabase Realtime Presence and, after the one-time presence-status setup, when offline teammates were last active. Existing shared-chat messages, mentions, unread badges, edit/delete and notifications remain intact.' },
     { date:'2026-10-11', summary:'Admin Center visually modernized and made mobile-first without changing its existing Supabase behavior: added a responsive local Admin navigator, live overview counts from the same profile queries, management shortcut cards, refreshed role/section styling, and card-style approved-user rows on mobile. Existing approvals, role/discipline updates, Score settings, Task Fields, Category Links, Quick Links, Data Archive, lazy loading and permissions remain intact.' },
@@ -11188,7 +11291,7 @@
 
   const BACKUP_TABLES = ['profiles','tasks','activity_log','notifications','notebook_tasks','chat_messages',
     'chip_options','installation_wings','data_issue_types','kpi_weights','app_settings','dev_projects','dev_project_tasks',
-    'custom_fields','custom_subtypes','category_links','announcements'];
+    'custom_fields','custom_subtypes','category_links','announcements','quick_link_groups','quick_links','announcement_daily_views'];
 
   function downloadTextFile(filename, text){
     const blob = new Blob([text], { type: 'text/plain' });
@@ -11252,7 +11355,8 @@
       ['Project PPTX report export', typeof exportProjectReportPptx === 'function'],
       ['Category Links / Upload feature', typeof updateCategoryLinksButton === 'function'],
       ['Custom Fields (dynamic per-category fields)', typeof loadCustomFieldsPanel === 'function'],
-      ['Opening Announcement system', typeof checkOpeningAnnouncementsOnce === 'function' && typeof loadAnnouncementAdminPanel === 'function'],
+      ['Opening Announcement system (advanced scheduling)', typeof checkOpeningAnnouncementsOnce === 'function' && typeof loadAnnouncementAdminPanel === 'function' && typeof announcementCalendarIsActive === 'function'],
+      ['Quick Links themed groups', typeof addQuickLinkGroup === 'function' && typeof loadQuickLinksList === 'function'],
       ['Backup / Restore system', typeof createBackup === 'function' && typeof confirmRestoreBackup === 'function'],
       ['Data Archive (Google Drive backup/verify)', typeof runDataArchive === 'function' && typeof verifyArchive === 'function'],
       ['Dashboard PPTX export', typeof exportDashboardToPptx === 'function'],
@@ -11433,7 +11537,12 @@ for a competing inline style first.`;
     if(!confirm('Create a backup of the full database right now?')) return;
     const snapshot = {};
     for(const table of BACKUP_TABLES){
-      const { data, error } = await sb.from(table).select('*');
+      const { data, error } = await fetchAllRows(() => {
+        const q = sb.from(table).select('*');
+        if(table === 'kpi_weights') return q.order('category');
+        if(table === 'announcement_daily_views') return q.order('announcement_id').order('user_id').order('local_date');
+        return q.order('id');
+      });
       if(error){ alert(`Could not read ${table}: ${error.message}. Backup cancelled — nothing was saved.`); return; }
       snapshot[table] = data || [];
     }
@@ -11661,6 +11770,54 @@ for a competing inline style first.`;
     return now >= occurrenceStart && now <= new Date(occurrenceStart.getTime() + durationMs);
   }
 
+  // 2026-11-17: calendar patterns use the configured Dhaka timezone rather
+  // than the browser timezone; legacy daily/weekly/monthly remain unchanged.
+  const ANNOUNCEMENT_TIMEZONE = 'Asia/Dhaka';
+  function announcementDhakaParts(value){
+    const fmt = new Intl.DateTimeFormat('en-GB',{timeZone:ANNOUNCEMENT_TIMEZONE,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+    return Object.fromEntries(fmt.formatToParts(value).filter(x=>x.type!=='literal').map(x=>[x.type,Number(x.value)]));
+  }
+  function announcementDhakaDayKey(value){
+    const x=announcementDhakaParts(value);
+    return `${x.year}-${String(x.month).padStart(2,'0')}-${String(x.day).padStart(2,'0')}`;
+  }
+  function announcementCalendarIsActive(a,now){
+    if(!a?.is_enabled || !a.start_at || now<new Date(a.start_at)) return false;
+    const until=a.repeat_until?new Date(a.repeat_until):null;
+    if(until && now>until) return false;
+    const today=announcementDhakaDayKey(now), start=announcementDhakaDayKey(new Date(a.start_at));
+    const hours=announcementDhakaParts(new Date(a.start_at));
+    const current=announcementDhakaParts(now);
+    const firstEnd=a.end_at?new Date(a.end_at):null;
+    const duration=firstEnd?Math.max(60000,firstEnd-new Date(a.start_at)):86400000;
+    // Do not shift date-based occurrences into the next calendar day:
+    // time matching is anchored to the selected date and start-time.
+    const elapsed=((current.hour*60+current.minute)*60+current.second - (hours.hour*60+hours.minute)*60-hours.second)*1000;
+    if(elapsed<0 || elapsed>duration || today<start) return false;
+    if(a.repeat_type==='dates'){
+      const dates=announcementArray(a.repeat_month_days).map(Number);
+      const months=announcementArray(a.repeat_months).map(Number);
+      return dates.includes(current.day) && (!months.length || months.includes(current.month));
+    }
+    if(a.repeat_type==='calendar') return announcementArray(a.repeat_calendar_dates).includes(today);
+    return false;
+  }
+  function announcementActiveForOpening(a,now){
+    return ['dates','calendar'].includes(a.repeat_type)?announcementCalendarIsActive(a,now):announcementOccurrenceActive(a,now);
+  }
+  let announcementOpeningInFlight=false;
+  async function announcementClaimDaily(a){
+    if(a.display_frequency!=='daily') return true;
+    const day=announcementDhakaDayKey(new Date());
+    const result=await sb.from('announcement_daily_views').insert({announcement_id:a.id,user_id:currentUser.id,local_date:day}).select('announcement_id');
+    if(result.error){
+      if(result.error.code==='23505') return false;
+      console.warn('Could not record daily announcement display:',result.error.message);
+      return false; // never risk repeated delivery when daily tracking is unavailable
+    }
+    return !!result.data?.length;
+  }
+
   async function checkOpeningAnnouncementsOnce(){
     if(!currentUser || !currentProfile || currentProfile.status !== 'active') return;
     if(announcementCheckedUserId === currentUser.id) return;
@@ -11673,7 +11830,7 @@ for a competing inline style first.`;
         .limit(50);
       if(error) throw error;
       const now = new Date();
-      announcementPopupQueue = (data || []).filter(a => announcementTargetsCurrentUser(a) && announcementOccurrenceActive(a, now));
+      announcementPopupQueue = (data || []).filter(a => announcementTargetsCurrentUser(a) && announcementActiveForOpening(a, now));
       announcementPopupIndex = -1;
       if(announcementPopupQueue.length){
         setTimeout(() => showNextOpeningAnnouncement(), 120);
@@ -11716,10 +11873,18 @@ for a competing inline style first.`;
     overlay.querySelector('.announcement-close')?.focus({preventScroll:true});
   }
 
-  function showNextOpeningAnnouncement(){
-    announcementPopupIndex += 1;
-    if(announcementPopupIndex >= announcementPopupQueue.length) return;
-    showAnnouncementPopup(announcementPopupQueue[announcementPopupIndex], false);
+  async function showNextOpeningAnnouncement(){
+    if(announcementOpeningInFlight) return;
+    announcementOpeningInFlight=true;
+    try{
+      while(++announcementPopupIndex<announcementPopupQueue.length){
+        const item=announcementPopupQueue[announcementPopupIndex];
+        if(await announcementClaimDaily(item)){
+          showAnnouncementPopup(item,false);
+          return;
+        }
+      }
+    }finally{ announcementOpeningInFlight=false; }
   }
 
   function closeAnnouncementPopup(){
@@ -11771,13 +11936,19 @@ for a competing inline style first.`;
       const days = announcementArray(a.repeat_days).length ? announcementArray(a.repeat_days).map(Number).map(d => names[d]).filter(Boolean).join(', ') : new Date(a.start_at).toLocaleDateString('en-US',{weekday:'short'});
       return `Every ${every===1?'week':every+' weeks'} (${days}) from ${start}`;
     }
+    if(repeat==='dates'){
+      const dates=announcementArray(a.repeat_month_days).join(', ');
+      const months=announcementArray(a.repeat_months);
+      return `Dates ${dates || 'none'} / ${months.length?'months '+months.join(', '):'every month'} from ${start}`;
+    }
+    if(repeat==='calendar') return `${announcementArray(a.repeat_calendar_dates).length} selected calendar date(s) from ${start}`;
     return `Every ${every===1?'month':every+' months'} from ${start}`;
   }
 
   function announcementAdminStatus(a){
     const now = new Date();
     if(!a.is_enabled) return {label:'Paused', cls:'paused'};
-    if(announcementOccurrenceActive(a, now)) return {label:'Active', cls:'active'};
+    if(announcementActiveForOpening(a, now)) return {label:'Active', cls:'active'};
     const start = new Date(a.start_at);
     if(start > now) return {label:'Scheduled', cls:'scheduled'};
     if((a.repeat_type || 'none') === 'none'){
@@ -11867,9 +12038,12 @@ for a competing inline style first.`;
           <div class="announcement-field full"><label>Short description (optional)</label><textarea class="announcement-textarea" id="announcementDescriptionInput" maxlength="220" placeholder="One short line is ideal.">${escapeHtml(row?.description || '')}</textarea></div>
           <div class="announcement-field"><label>Start date &amp; time *</label><input class="announcement-input" type="datetime-local" id="announcementStartInput" value="${announcementLocalInputValue(row?.start_at) || defaultAnnouncementStart()}"></div>
           <div class="announcement-field"><label>End / first occurrence end</label><input class="announcement-input" type="datetime-local" id="announcementEndInput" value="${announcementLocalInputValue(row?.end_at)}"></div>
-          <div class="announcement-field"><label>Repeat</label><select class="announcement-select" id="announcementRepeatType" onchange="updateAnnouncementRepeatUI()"><option value="none" ${repeatType==='none'?'selected':''}>Do not repeat</option><option value="daily" ${repeatType==='daily'?'selected':''}>Daily</option><option value="weekly" ${repeatType==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${repeatType==='monthly'?'selected':''}>Monthly</option></select></div>
+          <div class="announcement-field"><label>Repeat</label><select class="announcement-select" id="announcementRepeatType" onchange="updateAnnouncementRepeatUI()"><option value="none" ${repeatType==='none'?'selected':''}>Do not repeat</option><option value="daily" ${repeatType==='daily'?'selected':''}>Daily</option><option value="weekly" ${repeatType==='weekly'?'selected':''}>Weekly</option><option value="monthly" ${repeatType==='monthly'?'selected':''}>Monthly</option><option value="dates" ${repeatType==='dates'?'selected':''}>Selected dates / months</option><option value="calendar" ${repeatType==='calendar'?'selected':''}>Specific calendar dates</option></select></div>
           <div class="announcement-field" id="announcementRepeatEveryField"><label>Repeat every</label><div style="display:grid;grid-template-columns:90px minmax(0,1fr);gap:7px"><input class="announcement-input" type="number" id="announcementRepeatInterval" min="1" max="365" value="${Math.max(1,Number(row?.repeat_interval)||1)}"><div class="announcement-input" id="announcementRepeatUnit" style="display:flex;align-items:center;color:var(--text-faint);background:var(--surface-alt)">interval</div></div></div>
           <div class="announcement-field full" id="announcementWeeklyDaysField"><label>Weekly days</label><div class="announcement-weekdays">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((n,i)=>`<label class="announcement-weekday"><input type="checkbox" name="announcementRepeatDay" value="${i}" ${selectedDays.has(i)?'checked':''}><span>${n}</span></label>`).join('')}</div></div>
+          <div class="announcement-field full" id="announcementMonthDatesField"><label>Dates each month</label><div class="announcement-date-grid">${Array.from({length:31},(_,i)=>i+1).map(n=>`<label><input type="checkbox" name="announcementMonthDay" value="${n}" ${announcementArray(row?.repeat_month_days).map(Number).includes(n)?'checked':''}><span>${n}</span></label>`).join('')}</div><label class="announcement-check" style="margin-top:10px"><input type="checkbox" id="announcementAllMonths" onchange="updateAnnouncementMonthMode()" ${!announcementArray(row?.repeat_months).length?'checked':''}> Repeat every month</label><div id="announcementMonthsPicker" class="announcement-month-grid">${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((n,i)=>`<label><input type="checkbox" name="announcementMonth" value="${i+1}" ${announcementArray(row?.repeat_months).map(Number).includes(i+1)?'checked':''}><span>${n}</span></label>`).join('')}</div></div>
+          <div class="announcement-field full" id="announcementCalendarDatesField"><label>Select exact calendar dates</label><div class="announcement-calendar-picker"><input class="announcement-input" type="date" id="announcementCalendarPicker"><button type="button" class="announcement-admin-btn" onclick="addAnnouncementCalendarDate()">+ Add date</button></div><div class="announcement-selected-dates" id="announcementSelectedDates"></div><textarea style="display:none" id="announcementCalendarDates">${escapeHtml(announcementArray(row?.repeat_calendar_dates).join('\n'))}</textarea><div class="announcement-admin-sub">Choose a date and click Add date. Each selection triggers at the configured start time on that day.</div></div>
+          <div class="announcement-field full"><label>Popup frequency</label><select class="announcement-select" id="announcementDisplayFrequency"><option value="opening" ${(row?.display_frequency||'opening')==='opening'?'selected':''}>Every website opening (existing)</option><option value="daily" ${row?.display_frequency==='daily'?'selected':''}>Only once per day per user (Bangladesh time)</option></select></div>
           <div class="announcement-field" id="announcementRepeatUntilField"><label>Repeat until (optional)</label><input class="announcement-input" type="datetime-local" id="announcementRepeatUntilInput" value="${announcementLocalInputValue(row?.repeat_until)}"></div>
           <div class="announcement-field"><label>Audience</label><select class="announcement-select" id="announcementAudienceType" onchange="updateAnnouncementAudienceUI()"><option value="all" ${audienceType==='all'?'selected':''}>Everyone</option><option value="users" ${audienceType==='users'?'selected':''}>Specific users</option><option value="roles" ${audienceType==='roles'?'selected':''}>By role</option><option value="disciplines" ${audienceType==='disciplines'?'selected':''}>By discipline</option></select></div>
           <div class="announcement-field full" id="announcementAudienceUsers"><div class="announcement-split-card"><div class="announcement-card-title">Specific users</div><input class="announcement-input" style="margin-bottom:7px" type="search" placeholder="Search name or employee ID..." oninput="filterAnnouncementUserTargets(this.value)"><div class="announcement-target-users" id="announcementTargetUsersList">${announcementAdminUsers.map(u=>`<label class="announcement-target-user" data-user-search="${escapeHtml(`${u.full_name||''} ${u.nickname||''} ${u.email||''}`.toLowerCase())}"><input type="checkbox" name="announcementTargetUser" value="${u.id}" ${selectedUsers.has(u.id)?'checked':''}><span>${escapeHtml(u.full_name || u.email || 'Unnamed')} ${u.nickname?`(${escapeHtml(u.nickname)})`:''}</span></label>`).join('')}</div></div></div>
@@ -11880,6 +12054,8 @@ for a competing inline style first.`;
         <div class="announcement-editor-actions"><button class="announcement-admin-btn" type="button" onclick="previewAnnouncementAdmin()">Preview</button><button class="announcement-admin-btn" type="button" onclick="closeAnnouncementEditor()">Cancel</button><button class="announcement-admin-btn primary" type="button" id="announcementSaveBtn" onclick="saveAnnouncementAdmin()">${row?'Save changes':'Create announcement'}</button></div>
       </div>`;
     updateAnnouncementRepeatUI();
+    updateAnnouncementMonthMode();
+    renderAnnouncementCalendarSelection();
     updateAnnouncementAudienceUI();
     setTimeout(() => document.getElementById('announcementTitleInput')?.focus(), 30);
   }
@@ -11895,11 +12071,40 @@ for a competing inline style first.`;
     const every = document.getElementById('announcementRepeatEveryField');
     const weekly = document.getElementById('announcementWeeklyDaysField');
     const until = document.getElementById('announcementRepeatUntilField');
-    if(every) every.style.display = type === 'none' ? 'none' : '';
+    if(every) every.style.display = ['daily','weekly','monthly'].includes(type) ? '' : 'none';
     if(weekly) weekly.style.display = type === 'weekly' ? '' : 'none';
     if(until) until.style.display = type === 'none' ? 'none' : '';
+    const monthDates=document.getElementById('announcementMonthDatesField');
+    const calendarDates=document.getElementById('announcementCalendarDatesField');
+    if(monthDates) monthDates.style.display=type==='dates'?'':'none';
+    if(calendarDates) calendarDates.style.display=type==='calendar'?'':'none';
     const unit = document.getElementById('announcementRepeatUnit');
     if(unit) unit.textContent = type === 'daily' ? 'day(s)' : type === 'weekly' ? 'week(s)' : type === 'monthly' ? 'month(s)' : '';
+  }
+
+  function renderAnnouncementCalendarSelection(){
+    const wrap=document.getElementById('announcementSelectedDates');
+    const input=document.getElementById('announcementCalendarDates');
+    if(!wrap||!input)return;
+    const dates=[...new Set(input.value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean))].sort();
+    wrap.innerHTML=dates.map(d=>`<span class="announcement-date-chip">${escapeHtml(d)} <button type="button" aria-label="Remove ${escapeHtml(d)}" onclick="removeAnnouncementCalendarDate('${escapeHtml(d)}')">×</button></span>`).join('')||'<span class="announcement-admin-sub">No dates selected yet.</span>';
+  }
+  function addAnnouncementCalendarDate(){
+    const picker=document.getElementById('announcementCalendarPicker');
+    const field=document.getElementById('announcementCalendarDates');
+    if(!picker?.value||!field)return alert('Choose a date first.');
+    field.value=[...new Set([...field.value.split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean),picker.value])].sort().join('\n');
+    picker.value='';renderAnnouncementCalendarSelection();
+  }
+  function removeAnnouncementCalendarDate(value){
+    const field=document.getElementById('announcementCalendarDates');if(!field)return;
+    field.value=field.value.split(/[\n,;]+/).map(x=>x.trim()).filter(x=>x&&x!==value).join('\n');
+    renderAnnouncementCalendarSelection();
+  }
+
+  function updateAnnouncementMonthMode(){
+    const picker=document.getElementById('announcementMonthsPicker');
+    if(picker) picker.style.display=document.getElementById('announcementAllMonths')?.checked?'none':'grid';
   }
 
   function updateAnnouncementAudienceUI(){
@@ -11929,6 +12134,11 @@ for a competing inline style first.`;
     const targetRoles = [...document.querySelectorAll('input[name="announcementTargetRole"]:checked')].map(x=>x.value);
     const targetDisciplines = [...document.querySelectorAll('input[name="announcementTargetDiscipline"]:checked')].map(x=>x.value);
     const repeatDays = [...document.querySelectorAll('input[name="announcementRepeatDay"]:checked')].map(x=>Number(x.value));
+    const monthDays=[...document.querySelectorAll('input[name="announcementMonthDay"]:checked')].map(x=>Number(x.value));
+    const months=document.getElementById('announcementAllMonths')?.checked?[]:[...document.querySelectorAll('input[name="announcementMonth"]:checked')].map(x=>Number(x.value));
+    const rawCalendar=(document.getElementById('announcementCalendarDates')?.value||'').split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean);
+    const calendarDates=[...new Set(rawCalendar)];
+    const validCalendar=x=>/^\d{4}-\d{2}-\d{2}$/.test(x) && !Number.isNaN(Date.parse(x+'T00:00:00Z')) && new Date(x+'T00:00:00Z').toISOString().slice(0,10)===x;
     if(!title){ alert('Add an announcement title.'); return null; }
     if(!startRaw){ alert('Choose when the announcement should start.'); return null; }
     const start = new Date(startRaw);
@@ -11936,6 +12146,8 @@ for a competing inline style first.`;
     if(end && end <= start){ alert('The end time must be later than the start time.'); return null; }
     if(repeatType !== 'none' && !end){ alert('For a repeated announcement, set the first occurrence end time. That duration will be reused for every repeat.'); return null; }
     if(repeatType === 'weekly' && !repeatDays.length){ alert('Choose at least one weekday for the weekly repeat.'); return null; }
+    if(repeatType === 'dates' && (!monthDays.length || (!document.getElementById('announcementAllMonths')?.checked && !months.length))){ alert('Select at least one date and either every month or at least one month.'); return null; }
+    if(repeatType === 'calendar' && (!calendarDates.length || calendarDates.some(x=>!validCalendar(x)))){ alert('Enter valid calendar dates, one per line, YYYY-MM-DD.'); return null; }
     const repeatUntil = repeatUntilRaw ? new Date(repeatUntilRaw) : null;
     if(repeatUntil && repeatUntil < start){ alert('Repeat-until must be after the start time.'); return null; }
     if(audienceType === 'users' && !targetUserIds.length){ alert('Choose at least one user.'); return null; }
@@ -11944,7 +12156,10 @@ for a competing inline style first.`;
     return {
       title, description: description || null, is_enabled: !!document.getElementById('announcementEnabledInput')?.checked,
       start_at:start.toISOString(), end_at:end?end.toISOString():null, repeat_type:repeatType, repeat_interval:repeatInterval,
-      repeat_days:repeatDays, repeat_until:repeatUntil?repeatUntil.toISOString():null, audience_type:audienceType,
+      repeat_days:repeatDays, repeat_month_days:repeatType==='dates'?monthDays:[], repeat_months:repeatType==='dates'?months:[],
+      repeat_calendar_dates:repeatType==='calendar'?calendarDates:[],
+      display_frequency:document.getElementById('announcementDisplayFrequency')?.value||'opening',
+      repeat_until:repeatUntil?repeatUntil.toISOString():null, audience_type:audienceType,
       target_user_ids:targetUserIds, target_roles:targetRoles, target_disciplines:targetDisciplines, updated_at:new Date().toISOString()
     };
   }
