@@ -2794,18 +2794,37 @@
   .field-option-sort-row.is-dragging-option{opacity:.55; background:var(--surface-alt);}
   .field-option-sort-row.is-dragging-option .field-option-drag-handle{cursor:grabbing;}
   /* 2026-11-17: Quick Links thematic groups and extended scheduling controls */
-  .quick-link-group{margin:0 0 18px;min-width:0}
-  .quick-link-group-heading{font-weight:700;font-size:13px;padding-left:10px;margin:4px 0 9px;border-left:4px solid var(--ql-color);color:var(--text)}
-  .quick-link-button-list{display:grid;gap:8px}
-  .quick-link-button{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 13px;border-radius:11px;border:1px solid color-mix(in srgb,var(--ql-color) 25%,var(--border));background:color-mix(in srgb,var(--ql-color) 10%,var(--surface));color:var(--text);font-size:13px;font-weight:600;text-decoration:none;min-width:0;overflow-wrap:anywhere;transition:background .15s,transform .15s}
-  .quick-link-button:hover,.quick-link-button:focus-visible{background:color-mix(in srgb,var(--ql-color) 19%,var(--surface));transform:translateY(-1px)}
+  .quick-link-group{margin:0 0 18px;min-width:0;border:1px solid color-mix(in srgb,var(--ql-color) 26%,var(--border));border-radius:16px;background:color-mix(in srgb,var(--ql-color) 7%,var(--surface));overflow:hidden;box-shadow:0 10px 22px rgba(15,23,42,.05)}
+  .quick-link-group-heading{display:flex;align-items:center;gap:10px;padding:12px 14px;background:color-mix(in srgb,var(--ql-color) 14%,var(--surface));border-bottom:1px solid color-mix(in srgb,var(--ql-color) 22%,var(--border));font-weight:800;font-size:14px;color:var(--text)}
+  .quick-link-group-heading-icon{width:10px;height:10px;border-radius:999px;background:var(--ql-color);flex-shrink:0;box-shadow:0 0 0 4px color-mix(in srgb,var(--ql-color) 18%,transparent)}
+  .quick-link-group-body{padding:12px}
+  .quick-link-button-list{display:grid;gap:10px}
+  .quick-link-button{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 14px;border-radius:13px;border:1px solid color-mix(in srgb,var(--ql-color) 24%,var(--border));background:color-mix(in srgb,var(--ql-color) 5.5%,var(--surface));color:var(--text);font-size:13px;font-weight:600;text-decoration:none;min-width:0;overflow-wrap:anywhere;transition:background .15s,transform .15s,box-shadow .15s}
+  .quick-link-button:hover,.quick-link-button:focus-visible{background:color-mix(in srgb,var(--ql-color) 10%,var(--surface));transform:translateY(-1px);box-shadow:0 8px 18px rgba(15,23,42,.06)}
   .quick-link-button svg{flex-shrink:0;color:var(--ql-color)}
-  .quick-group-admin{padding:0 0 16px;margin-bottom:16px;border-bottom:1px solid var(--border)}
+  .quick-group-admin{padding:0 0 16px;margin-bottom:18px;border-bottom:1px solid var(--border)}
   .quick-admin-group-row{display:flex;align-items:center;gap:6px;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;flex-wrap:wrap}
   .quick-admin-group-row .btn{padding:5px 7px}
   .quick-group-color-dot{width:13px;height:13px;border-radius:50%;flex-shrink:0}
   .quick-group-create{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:7px;margin-top:12px;align-items:center}
-  .quick-link-group-select{max-width:145px;min-width:85px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--surface);color:var(--text);font-size:11px}
+  .quick-links-admin-groups{display:grid;gap:14px;margin-top:14px}
+  .quick-links-admin-card{border:1px solid color-mix(in srgb,var(--ql-color) 26%,var(--border));border-radius:16px;background:color-mix(in srgb,var(--ql-color) 7%,var(--surface));overflow:hidden;box-shadow:0 10px 22px rgba(15,23,42,.05)}
+  .quick-links-admin-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;background:color-mix(in srgb,var(--ql-color) 14%,var(--surface));border-bottom:1px solid color-mix(in srgb,var(--ql-color) 22%,var(--border))}
+  .quick-links-admin-title{display:flex;align-items:center;gap:10px;min-width:0;font-weight:800}
+  .quick-links-admin-title span:last-child{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .quick-links-admin-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .quick-links-admin-body{padding:12px}
+  .quick-links-admin-list{display:grid;gap:10px}
+  .quick-link-admin-row{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid color-mix(in srgb,var(--ql-color) 22%,var(--border));border-radius:13px;background:color-mix(in srgb,var(--ql-color) 5.5%,var(--surface));cursor:grab}
+  .quick-link-admin-row.is-dragging-quick-link{opacity:.62;cursor:grabbing;box-shadow:0 10px 20px rgba(15,23,42,.08)}
+  .quick-link-admin-handle{color:var(--text-faint);flex-shrink:0;line-height:0;cursor:grab}
+  .quick-link-admin-main{min-width:0;flex:1}
+  .quick-link-admin-label{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .quick-link-admin-url{font-size:11px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+  .quick-link-admin-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .quick-link-group-select{max-width:155px;min-width:92px;border:1px solid var(--border);border-radius:8px;padding:6px;background:var(--surface);color:var(--text);font-size:11px}
+  .quick-links-admin-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding-top:14px;margin-top:16px;border-top:1px solid var(--border);flex-wrap:wrap}
+  .quick-links-admin-note{font-size:11.5px;color:var(--text-faint)}
   .quick-group-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:550;display:flex;align-items:center;justify-content:center;padding:20px}
   .quick-group-label{display:block;margin:13px 0 5px;font-size:12px;font-weight:600}
   .announcement-calendar-picker{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -2820,7 +2839,7 @@
   .announcement-date-grid span,.announcement-month-grid span{display:block;text-align:center;padding:7px 3px;border-radius:7px;border:1px solid var(--border);font-size:12px;background:var(--surface-alt)}
   .announcement-date-grid input:checked+span,.announcement-month-grid input:checked+span{background:var(--accent-dim);border-color:var(--accent);font-weight:700}
   .announcement-date-grid input:focus-visible+span,.announcement-month-grid input:focus-visible+span{outline:2px solid var(--accent)}
-  @media(max-width:650px){.quick-group-create{grid-template-columns:1fr 1fr}.quick-group-create input{grid-column:span 2}.quick-link-group-select{max-width:110px}.quick-link-admin-row{flex-wrap:wrap}}
+  @media(max-width:650px){.quick-group-create{grid-template-columns:1fr 1fr}.quick-group-create input{grid-column:span 2}.quick-link-group-select{max-width:110px}.quick-link-admin-row{flex-wrap:wrap}.quick-links-admin-head{align-items:flex-start}.quick-links-admin-tools{width:100%;justify-content:flex-start}.quick-links-admin-footer{align-items:flex-start}}
 </style>
 
 <style>
@@ -6296,7 +6315,7 @@
   // living inside the popup everyone opens. The popup itself is now
   // read-only for everyone, superadmin included.
   let quickLinkGroupsCache = [];
-  const quickLinkColors={blue:'#3979DB',green:'#23865B',purple:'#AB6DD4',orange:'#D18A38',red:'#CE6060'};
+  const quickLinkColors={blue:'#8CB7F4',green:'#89CDA6',purple:'#C59BEA',orange:'#EDB980',red:'#E5A2A2'};
   function quickLinkColor(name){ return quickLinkColors[name]||quickLinkColors.blue; }
   function quickLinkGroupOptions(selected){
     return `<option value="" ${!selected?'selected':''}>General (ungrouped)</option>` + quickLinkGroupsCache.map(g=>`<option value="${g.id}" ${g.id===selected?'selected':''}>${escapeHtml(g.name)}</option>`).join('');
@@ -6345,6 +6364,7 @@
   async function changeQuickLinkGroup(id,groupId){
     const r=await sb.from('quick_links').update({group_id:groupId||null}).eq('id',id).select('id');
     if(r.error||!r.data?.length)return alert('Could not move link: '+(r.error?.message||'Permission denied'));
+    showFormPopup('Link moved to a new group.', 'success');
     await loadQuickLinksAdminPanel();
   }
   let quickLinksAdminCache = [];
@@ -6366,34 +6386,50 @@
     }
     const rows = data || [];
     quickLinksAdminCache = rows;
-    const rowsHtml = rows.length
-      ? rows.map(r => `<div class="quick-link-admin-row" data-quick-link-id="${r.id}" draggable="true" ondragstart="handleQuickLinkDragStart(event, '${r.id}')" ondragend="handleQuickLinkDragEnd(event)" style="display:flex; align-items:center; gap:9px; padding:7px 0; border-bottom:1px solid var(--border); cursor:grab;">
-          <div title="Drag to reorder" aria-label="Drag to reorder" style="color:var(--text-faint); flex-shrink:0; line-height:0; cursor:grab;"><svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor" aria-hidden="true"><circle cx="4" cy="4" r="1.25"/><circle cx="10" cy="4" r="1.25"/><circle cx="4" cy="9" r="1.25"/><circle cx="10" cy="9" r="1.25"/><circle cx="4" cy="14" r="1.25"/><circle cx="10" cy="14" r="1.25"/></svg></div>
-          <div style="min-width:0; flex:1;">
-            <div style="font-size:13px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(r.label)}</div>
-            <div style="font-size:11px; color:var(--text-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${escapeHtml(r.url)}</div>
+    const groupHtml=quickLinkGroupsCache.map((g,i)=>`<div class="quick-admin-group-row"><span class="quick-group-color-dot" style="background:${quickLinkColor(g.color)}"></span><span style="flex:1;min-width:0;font-weight:600">${escapeHtml(g.name)}</span><button class="btn" title="Move up" onclick="moveQuickLinkGroup('${g.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn" title="Move down" onclick="moveQuickLinkGroup('${g.id}',1)" ${i===quickLinkGroupsCache.length-1?'disabled':''}>↓</button><button class="btn edit" title="Edit group" onclick="openEditQuickLinkGroup('${g.id}')">✎</button><button class="btn remove" title="Delete group (preserve links)" onclick="deleteQuickLinkGroup('${g.id}')">×</button></div>`).join('');
+    const orderedGroups=[...quickLinkGroupsCache.map(g=>({id:g.id,name:g.name,color:g.color})),{id:null,name:'General',color:'blue'}];
+    const renderAdminRow = (r, groupColor) => `<div class="quick-link-admin-row" style="--ql-color:${quickLinkColor(groupColor)}" data-quick-link-id="${r.id}" data-group-id="${r.group_id||''}" draggable="true" ondragstart="handleQuickLinkDragStart(event, '${r.id}')" ondragend="handleQuickLinkDragEnd(event)">
+          <div class="quick-link-admin-handle" title="Drag to reorder inside this group" aria-label="Drag to reorder inside this group"><svg width="14" height="18" viewBox="0 0 14 18" fill="currentColor" aria-hidden="true"><circle cx="4" cy="4" r="1.25"/><circle cx="10" cy="4" r="1.25"/><circle cx="4" cy="9" r="1.25"/><circle cx="10" cy="9" r="1.25"/><circle cx="4" cy="14" r="1.25"/><circle cx="10" cy="14" r="1.25"/></svg></div>
+          <div class="quick-link-admin-main">
+            <div class="quick-link-admin-label">${escapeHtml(r.label)}</div>
+            <div class="quick-link-admin-url">${escapeHtml(r.url)}</div>
           </div>
-          <select class="quick-link-group-select" aria-label="Move link to group" onchange="changeQuickLinkGroup('${r.id}',this.value)">${quickLinkGroupOptions(r.group_id)}</select>
-          <div style="display:flex; align-items:center; gap:6px; flex-shrink:0;">
+          <div class="quick-link-admin-actions">
+            <select class="quick-link-group-select" aria-label="Move link to group" onchange="changeQuickLinkGroup('${r.id}',this.value)">${quickLinkGroupOptions(r.group_id)}</select>
             <button class="btn edit" style="padding:6px;" onclick="openEditQuickLinkModal('${r.id}')" title="Edit" aria-label="Edit"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg></button>
             <button class="btn remove" style="padding:6px;" onclick="deleteQuickLink('${r.id}')" title="Remove" aria-label="Remove"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; flex-shrink:0;"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg></button>
           </div>
-        </div>`).join('')
-      : '<div class="placeholder-note">No links yet.</div>';
-    const groupHtml=quickLinkGroupsCache.map((g,i)=>`<div class="quick-admin-group-row"><span class="quick-group-color-dot" style="background:${quickLinkColor(g.color)}"></span><span style="flex:1;min-width:0;font-weight:600">${escapeHtml(g.name)}</span><button class="btn" title="Move up" onclick="moveQuickLinkGroup('${g.id}',-1)" ${i===0?'disabled':''}>↑</button><button class="btn" title="Move down" onclick="moveQuickLinkGroup('${g.id}',1)" ${i===quickLinkGroupsCache.length-1?'disabled':''}>↓</button><button class="btn edit" title="Edit group" onclick="openEditQuickLinkGroup('${g.id}')">✎</button><button class="btn remove" title="Delete group (preserve links)" onclick="deleteQuickLinkGroup('${g.id}')">×</button></div>`).join('');
+        </div>`;
+    const groupsUi = orderedGroups.map((g, idx) => {
+      const groupRows = rows.filter(l => (g.id === null ? !quickLinkGroupsCache.some(x => x.id === l.group_id) : (l.group_id||null) === g.id));
+      const groupKey = g.id || 'general';
+      return `<section class="quick-links-admin-card" style="--ql-color:${quickLinkColor(g.color)}" data-quick-group-key="${groupKey}">
+        <div class="quick-links-admin-head">
+          <div class="quick-links-admin-title"><span class="quick-link-group-heading-icon"></span><span>${escapeHtml(g.name)}</span></div>
+          <div class="quick-links-admin-tools">${g.id ? `<button class="btn" title="Move up" onclick="moveQuickLinkGroup('${g.id}',-1)" ${idx===0?'disabled':''}>↑</button><button class="btn" title="Move down" onclick="moveQuickLinkGroup('${g.id}',1)" ${idx===quickLinkGroupsCache.length-1?'disabled':''}>↓</button><button class="btn edit" title="Edit group" onclick="openEditQuickLinkGroup('${g.id}')">✎</button><button class="btn remove" title="Delete group (preserve links)" onclick="deleteQuickLinkGroup('${g.id}')">×</button>` : `<span class="quick-links-admin-note">Ungrouped links</span>`}</div>
+        </div>
+        <div class="quick-links-admin-body">
+          <div class="quick-links-admin-list" data-quick-group-list="${groupKey}" ondragover="handleQuickLinkGroupDragOver(event)" ondrop="handleQuickLinkGroupDrop(event, '${groupKey}')">${groupRows.length ? groupRows.map(r => renderAdminRow(r, g.color)).join('') : `<div class="placeholder-note">No links in this group yet.</div>`}</div>
+        </div>
+      </section>`;
+    }).join('');
     panel.innerHTML = `<div class="panel">
-      <div class="quick-group-admin"><div class="panel-title">Link groups &amp; themes</div><div class="announcement-admin-sub">Organize existing links into colored groups. Removing a group moves its links to General.</div><div>${groupHtml || '<div class="placeholder-note">Create your first themed group.</div>'}</div><div class="quick-group-create"><input id="newQuickGroupName" class="announcement-input" maxlength="80" placeholder="New group name"><select id="newQuickGroupColor" class="announcement-select">${quickLinkColorOptions('blue')}</select><button class="queue-btn" onclick="addQuickLinkGroup()">+ Add group</button></div></div>
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div class="panel-title" style="margin:0;">Quick Links</div>
+      <div class="quick-group-admin"><div class="panel-title">Link groups &amp; themes</div><div class="announcement-admin-sub">Organize existing links into themed umbrellas. Each group keeps its own soft border, header and drag-and-drop link order.</div><div>${groupHtml || '<div class="placeholder-note">Create your first themed group.</div>'}</div><div class="quick-group-create"><input id="newQuickGroupName" class="announcement-input" maxlength="80" placeholder="New group name"><select id="newQuickGroupColor" class="announcement-select">${quickLinkColorOptions('blue')}</select><button class="queue-btn" onclick="addQuickLinkGroup()">+ Add group</button></div></div>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+        <div>
+          <div class="panel-title" style="margin:0;">Quick Links</div>
+          <div class="announcement-admin-sub">Drag links inside their group to reorder them. Use the dropdown on each row to move a link into another group.</div>
+        </div>
         <button class="btn" style="padding:5px 12px; font-size:11.5px; flex-shrink:0;" onclick="toggleAddQuickLinkForm(this)">+ Add a link</button>
       </div>
-      <div id="quickLinksAdminRows" style="margin-top:14px;" ondragover="handleQuickLinkDragOver(event)" ondrop="handleQuickLinkDrop(event)">${rowsHtml}</div>
       <div id="addQuickLinkForm" style="display:none; flex-direction:column; gap:8px; margin-top:14px;">
         <input type="text" id="newQuickLinkLabel" placeholder="Link name, e.g. Warranty Policy PDF" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
         <input type="text" id="newQuickLinkUrl" placeholder="https://…" style="width:100%; padding:9px 12px; border-radius:9px; border:1.5px solid var(--border); background:var(--surface); color:var(--text); box-sizing:border-box;">
         <select id="newQuickLinkGroup" class="announcement-select" aria-label="Group for new link">${quickLinkGroupOptions('')}</select>
         <button class="queue-btn" onclick="addQuickLinkFromAdmin()">+ Add link</button>
       </div>
+      <div class="quick-links-admin-groups">${groupsUi || '<div class="placeholder-note">No links yet.</div>'}</div>
+      <div class="quick-links-admin-footer"><div class="quick-links-admin-note">All changes save instantly. Use Save changes for a quick confirmation — no page refresh needed.</div><div style="display:flex; gap:8px; flex-wrap:wrap;"><button class="btn" onclick="openQuickLinksModal()">Preview popup</button><button class="queue-btn" onclick="confirmQuickLinksAdminSaved()">Save changes</button></div></div>
     </div>`;
   }
 
@@ -6408,7 +6444,7 @@
     draggedQuickLinkId = null;
   }
 
-  function handleQuickLinkDragOver(e){
+  function handleQuickLinkGroupDragOver(e){
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
   }
@@ -6423,27 +6459,40 @@
     }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
   }
 
-  async function handleQuickLinkDrop(e){
-    e.preventDefault();
-    if(!draggedQuickLinkId) return;
-    const container = document.getElementById('quickLinksAdminRows');
-    const draggedEl = container?.querySelector(`[data-quick-link-id="${draggedQuickLinkId}"]`);
-    if(!container || !draggedEl) return;
+  function collectQuickLinkOrderFromAdmin(){
+    return Array.from(document.querySelectorAll('#quickLinksAdminPanel [data-quick-group-list] .quick-link-admin-row[data-quick-link-id]')).map(el => el.dataset.quickLinkId);
+  }
 
-    const afterElement = quickLinkDragAfterElement(container, e.clientY);
-    if(afterElement) container.insertBefore(draggedEl, afterElement);
-    else container.appendChild(draggedEl);
-
-    const orderedIds = Array.from(container.querySelectorAll('[data-quick-link-id]')).map(el => el.dataset.quickLinkId);
+  async function persistQuickLinkOrder(orderedIds){
+    if(!orderedIds.length) return true;
     const results = await Promise.all(orderedIds.map((id, idx) => sb.from('quick_links').update({ sort_order: (idx + 1) * 10 }).eq('id', id).select('id')));
     const failed = results.find(r => r.error || !r.data?.length);
     if(failed){
       alert('Could not save the new Quick Links order. Make sure the Quick Links UPDATE policy has been added in Supabase.');
       loadQuickLinksAdminPanel();
-      return;
+      return false;
     }
     quickLinksAdminCache = orderedIds.map(id => quickLinksAdminCache.find(r => r.id === id)).filter(Boolean);
-    showFormPopup('Quick Links order updated.', 'success');
+    return true;
+  }
+
+  async function handleQuickLinkGroupDrop(e, groupKey){
+    e.preventDefault();
+    if(!draggedQuickLinkId) return;
+    const container = document.querySelector(`#quickLinksAdminPanel [data-quick-group-list="${groupKey}"]`);
+    const draggedEl = document.querySelector(`#quickLinksAdminPanel [data-quick-link-id="${draggedQuickLinkId}"]`);
+    if(!container || !draggedEl) return;
+    const afterElement = quickLinkDragAfterElement(container, e.clientY);
+    const placeholder = container.querySelector('.placeholder-note');
+    if(placeholder) placeholder.remove();
+    if(afterElement) container.insertBefore(draggedEl, afterElement);
+    else container.appendChild(draggedEl);
+    const orderedIds = collectQuickLinkOrderFromAdmin();
+    if(await persistQuickLinkOrder(orderedIds)) showFormPopup('Quick Links order updated.', 'success');
+  }
+
+  function confirmQuickLinksAdminSaved(){
+    showFormPopup('Quick Links changes are saved.', 'success');
   }
 
   function openEditQuickLinkModal(id){
@@ -7112,7 +7161,7 @@
     wrap.innerHTML=links.length?ordered.map(g=>{
       const rows=links.filter(l=>(l.group_id||null)===g.id || (g.id===null && !groups.some(x=>x.id===l.group_id)));
       if(!rows.length)return '';
-      return `<section class="quick-link-group" style="--ql-color:${quickLinkColor(g.color)}"><div class="quick-link-group-heading">${escapeHtml(g.name)}</div><div class="quick-link-button-list">${rows.map(card).join('')}</div></section>`;
+      return `<section class="quick-link-group" style="--ql-color:${quickLinkColor(g.color)}"><div class="quick-link-group-heading"><span class="quick-link-group-heading-icon"></span><span>${escapeHtml(g.name)}</span></div><div class="quick-link-group-body"><div class="quick-link-button-list">${rows.map(card).join('')}</div></div></section>`;
     }).join(''):'<div class="placeholder-note">No links yet.</div>';
   }
 
@@ -7801,7 +7850,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
-    { date:'2026-11-17', summary:'Approved scheduling and Quick Links upgrade: announcements now support selected month-days and months, exact calendar dates and per-user once-daily delivery tracked in Asia/Dhaka time; original schedules and opening behavior preserved. Quick Links now support Superadmin-managed ordered color groups, group assignment, grouped theme-aware button cards; database backup/restore includes groups, links and daily records.' },
+    { date:'2026-11-17', summary:'Approved scheduling and Quick Links upgrade: announcements now support selected month-days and months, exact calendar dates and per-user once-daily delivery tracked in Asia/Dhaka time; original schedules and opening behavior preserved. Quick Links now support Superadmin-managed ordered color groups, group assignment, grouped theme-aware soft umbrella cards and in-group drag ordering; database backup/restore includes groups, links and daily records.' },
     { date:'2026-11-15', summary:'Added a Superadmin-managed opening Announcement system: premium centered popup banner with optional description, one-time or recurring schedules, targeted audiences (everyone, selected users, role, or discipline), Admin create/edit/pause/delete/preview controls, and responsive mobile/desktop presentation. Active targeted announcements are checked once per full website opening and can be dismissed with the close button.' },
     { date:'2026-10-11', summary:'Team Chat redesigned with a responsive Team Status roster: approved users can see who is online via Supabase Realtime Presence and, after the one-time presence-status setup, when offline teammates were last active. Existing shared-chat messages, mentions, unread badges, edit/delete and notifications remain intact.' },
     { date:'2026-10-11', summary:'Admin Center visually modernized and made mobile-first without changing its existing Supabase behavior: added a responsive local Admin navigator, live overview counts from the same profile queries, management shortcut cards, refreshed role/section styling, and card-style approved-user rows on mobile. Existing approvals, role/discipline updates, Score settings, Task Fields, Category Links, Quick Links, Data Archive, lazy loading and permissions remain intact.' },
@@ -12043,7 +12092,7 @@ for a competing inline style first.`;
           <div class="announcement-field full" id="announcementWeeklyDaysField"><label>Weekly days</label><div class="announcement-weekdays">${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((n,i)=>`<label class="announcement-weekday"><input type="checkbox" name="announcementRepeatDay" value="${i}" ${selectedDays.has(i)?'checked':''}><span>${n}</span></label>`).join('')}</div></div>
           <div class="announcement-field full" id="announcementMonthDatesField"><label>Dates each month</label><div class="announcement-date-grid">${Array.from({length:31},(_,i)=>i+1).map(n=>`<label><input type="checkbox" name="announcementMonthDay" value="${n}" ${announcementArray(row?.repeat_month_days).map(Number).includes(n)?'checked':''}><span>${n}</span></label>`).join('')}</div><label class="announcement-check" style="margin-top:10px"><input type="checkbox" id="announcementAllMonths" onchange="updateAnnouncementMonthMode()" ${!announcementArray(row?.repeat_months).length?'checked':''}> Repeat every month</label><div id="announcementMonthsPicker" class="announcement-month-grid">${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].map((n,i)=>`<label><input type="checkbox" name="announcementMonth" value="${i+1}" ${announcementArray(row?.repeat_months).map(Number).includes(i+1)?'checked':''}><span>${n}</span></label>`).join('')}</div></div>
           <div class="announcement-field full" id="announcementCalendarDatesField"><label>Select exact calendar dates</label><div class="announcement-calendar-picker"><input class="announcement-input" type="date" id="announcementCalendarPicker"><button type="button" class="announcement-admin-btn" onclick="addAnnouncementCalendarDate()">+ Add date</button></div><div class="announcement-selected-dates" id="announcementSelectedDates"></div><textarea style="display:none" id="announcementCalendarDates">${escapeHtml(announcementArray(row?.repeat_calendar_dates).join('\n'))}</textarea><div class="announcement-admin-sub">Choose a date and click Add date. Each selection triggers at the configured start time on that day.</div></div>
-          <div class="announcement-field full"><label>Popup frequency</label><select class="announcement-select" id="announcementDisplayFrequency"><option value="opening" ${(row?.display_frequency||'opening')==='opening'?'selected':''}>Every website opening (existing)</option><option value="daily" ${row?.display_frequency==='daily'?'selected':''}>Only once per day per user (Bangladesh time)</option></select></div>
+          <div class="announcement-field full"><label>Popup frequency</label><select class="announcement-select" id="announcementDisplayFrequency"><option value="opening" ${(row?.display_frequency||'opening')==='opening'?'selected':''}>Every opening</option><option value="daily" ${row?.display_frequency==='daily'?'selected':''}>Once per day</option></select></div>
           <div class="announcement-field" id="announcementRepeatUntilField"><label>Repeat until (optional)</label><input class="announcement-input" type="datetime-local" id="announcementRepeatUntilInput" value="${announcementLocalInputValue(row?.repeat_until)}"></div>
           <div class="announcement-field"><label>Audience</label><select class="announcement-select" id="announcementAudienceType" onchange="updateAnnouncementAudienceUI()"><option value="all" ${audienceType==='all'?'selected':''}>Everyone</option><option value="users" ${audienceType==='users'?'selected':''}>Specific users</option><option value="roles" ${audienceType==='roles'?'selected':''}>By role</option><option value="disciplines" ${audienceType==='disciplines'?'selected':''}>By discipline</option></select></div>
           <div class="announcement-field full" id="announcementAudienceUsers"><div class="announcement-split-card"><div class="announcement-card-title">Specific users</div><input class="announcement-input" style="margin-bottom:7px" type="search" placeholder="Search name or employee ID..." oninput="filterAnnouncementUserTargets(this.value)"><div class="announcement-target-users" id="announcementTargetUsersList">${announcementAdminUsers.map(u=>`<label class="announcement-target-user" data-user-search="${escapeHtml(`${u.full_name||''} ${u.nickname||''} ${u.email||''}`.toLowerCase())}"><input type="checkbox" name="announcementTargetUser" value="${u.id}" ${selectedUsers.has(u.id)?'checked':''}><span>${escapeHtml(u.full_name || u.email || 'Unnamed')} ${u.nickname?`(${escapeHtml(u.nickname)})`:''}</span></label>`).join('')}</div></div></div>
