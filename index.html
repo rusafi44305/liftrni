@@ -1650,6 +1650,12 @@
   }
   #view-dashboard .dash-chart-title{ font-size:14px; font-weight:700; color:var(--text); }
   #view-dashboard .dash-chart-note{ font-size:9.5px; color:var(--text-faint); text-align:right; }
+  /* 2026-11-17: Weekly trend period only; not the Dashboard totals or exports. */
+  #view-dashboard .dash-trend-head-actions{display:flex;align-items:center;gap:7px;justify-content:flex-end;flex-wrap:wrap;min-width:0}
+  #view-dashboard .dash-trend-period-select{min-width:124px;max-width:152px;height:30px;padding:4px 24px 4px 9px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);font:inherit;font-size:10.5px;font-weight:600;cursor:pointer}
+  #view-dashboard .dash-trend-period-select:disabled{opacity:.65;cursor:not-allowed}
+  #view-dashboard .dash-trend-period-meta{font-size:9.5px;color:var(--text-faint);margin-top:3px;line-height:1.35}
+  #view-dashboard .dash-trend-head-actions .dash-chart-note{white-space:nowrap}
   #view-dashboard #dashHeroTrendChart{ min-width:0; }
   #view-dashboard #dashHeroTrendChart svg{ max-height:220px; }
   #view-dashboard #dashCategoryBreakdown{
@@ -1767,6 +1773,8 @@
     #view-dashboard .dash-primary-grid{ grid-template-columns:1fr; gap:10px; margin-bottom:10px; }
     #view-dashboard .dash-primary-card{ padding:12px !important; }
     #view-dashboard #dashHeroTrendChart svg{ max-height:none; }
+    #view-dashboard .dash-chart-head:has(#dashTrendPeriodSelect){flex-wrap:wrap;align-items:flex-start}
+    #view-dashboard .dash-trend-head-actions{margin-left:auto}
     #view-dashboard #dashCategoryBreakdown{ display:block; }
     #view-dashboard .dash-category-bars{ min-height:112px; height:112px; gap:5px; }
 
@@ -3382,6 +3390,15 @@
   .announcement-editor-head{ display:flex; justify-content:space-between; gap:10px; align-items:center; margin-bottom:12px; }
   .announcement-editor-title{ font-size:13.5px; font-weight:800; }
   .announcement-form-grid{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; }
+  /* 2026-11-17: keep schedule and its dynamic options in the left column,
+     audience and its dynamic choices in the right column. Layout only. */
+  .announcement-settings-layout{ grid-column:1 / -1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px 12px; align-items:start; min-width:0; }
+  .announcement-settings-stack{ display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .announcement-settings-stack > .announcement-field.full{ grid-column:auto; }
+  .announcement-settings-stack .announcement-date-grid{ gap:4px; }
+  .announcement-settings-stack .announcement-date-grid span{ padding:6px 1px; }
+  .announcement-settings-stack .announcement-month-grid{ gap:5px; }
+  .announcement-settings-stack .announcement-target-users{ grid-template-columns:1fr; }
   .announcement-field{ min-width:0; }
   .announcement-field.full{ grid-column:1 / -1; }
   .announcement-field label{ display:block; font-size:10.5px; font-weight:700; color:var(--text-dim); margin-bottom:5px; }
@@ -3450,6 +3467,7 @@
     .announcement-waves{ height:78px; }
     .announcement-admin-toolbar{ align-items:center; }
     .announcement-form-grid{ grid-template-columns:1fr; gap:9px; }
+    .announcement-settings-layout{ grid-template-columns:1fr; gap:9px; }
     .announcement-field.full{ grid-column:auto; }
     .announcement-target-users{ grid-template-columns:1fr; max-height:210px; }
     .announcement-list-item{ grid-template-columns:minmax(0,1fr); }
@@ -7850,6 +7868,8 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-17', summary:'Opening Announcement editor layout fix: keeps Repeat plus selected dates/months/interval/expiration in the left schedule column and Audience plus immediately visible role/user/discipline choices and popup frequency in the right column. Mobile stacks the columns. Existing field IDs, validation, permissions, scheduling, stored data and Supabase schema are unchanged.' },
+    { date:'2026-11-17', summary:'Weekly Activity Trend now defaults to the last 3 rolling months rather than the entire history; a chart-only period selector offers 30 days, 3 months, 6 months or 12 months. Dashboard From/To filters override the chart selector. Empty calendar weeks appear as zero counts, and hover points show real weekly category counts and week ranges. Chart colors, curves, Dashboard KPI totals, 30-day comparisons, filters, scoring, exports, backup and Supabase schema remain unchanged.' },
     { date:'2026-11-17', summary:'Compact layout refinement: placed announcement Audience beside Repeat on desktop (mobile remains stacked); tightened grouped Quick Links spacing and used deeper theme-colored group headers while retaining soft link-button backgrounds. No database changes or behavior changes.' },
     { date:'2026-11-17', summary:'Approved scheduling and Quick Links upgrade: announcements now support selected month-days and months, exact calendar dates and per-user once-daily delivery tracked in Asia/Dhaka time; original schedules and opening behavior preserved. Quick Links now support Superadmin-managed ordered color groups, group assignment, grouped theme-aware soft umbrella cards and in-group drag ordering; database backup/restore includes groups, links and daily records.' },
     { date:'2026-11-15', summary:'Added a Superadmin-managed opening Announcement system: premium centered popup banner with optional description, one-time or recurring schedules, targeted audiences (everyone, selected users, role, or discipline), Admin create/edit/pause/delete/preview controls, and responsive mobile/desktop presentation. Active targeted announcements are checked once per full website opening and can be dismissed with the close button.' },
@@ -11518,6 +11538,17 @@ TASK FIELDS — DYNAMIC FIELD SYSTEM (Admin panel)
   hardcoded behavior — a NEW custom Reports sub-category has none of
   that; it starts as a blank slate with zero effect on Score either way.
 
+WEEKLY ACTIVITY TREND (Dashboard)
+  The trend chart displays the last three rolling months by default.
+  Its local selector offers 30 days, 3 months, 6 months, or 12 months.
+  The Dashboard From/To filters take priority; the selector is disabled
+  while either custom date field is set. Missing calendar weeks are
+  included as zero activity. Task Perform Date is used for week placement
+  where present, with created_at as fallback. Only the trend visualization
+  is limited by this period control: KPI totals, comparison badges,
+  category breakdown, leaderboard, scoring and exports are unaffected.
+  Hover points reveal actual counts and the corresponding week dates.
+
 KEY SYSTEM DESIGNS WORTH KNOWING ABOUT
   - Mechanical vs Electrical: many categories show different fields or
     dropdown lists depending on the logged-in engineer's discipline
@@ -12103,11 +12134,49 @@ for a competing inline style first.`;
         </div>
         <div class="announcement-editor-actions"><button class="announcement-admin-btn" type="button" onclick="previewAnnouncementAdmin()">Preview</button><button class="announcement-admin-btn" type="button" onclick="closeAnnouncementEditor()">Cancel</button><button class="announcement-admin-btn primary" type="button" id="announcementSaveBtn" onclick="saveAnnouncementAdmin()">${row?'Save changes':'Create announcement'}</button></div>
       </div>`;
+    arrangeAnnouncementEditorLayout(host);
     updateAnnouncementRepeatUI();
     updateAnnouncementMonthMode();
     renderAnnouncementCalendarSelection();
     updateAnnouncementAudienceUI();
     setTimeout(() => document.getElementById('announcementTitleInput')?.focus(), 30);
+  }
+
+  // Presentation-only regrouping: move existing input elements, preserving
+  // their IDs, names, values, event handlers, targeting and save logic.
+  function arrangeAnnouncementEditorLayout(host){
+    const grid = host.querySelector('.announcement-form-grid');
+    if(!grid) return;
+    const scheduleIds = [
+      'announcementRepeatType', 'announcementRepeatEveryField',
+      'announcementWeeklyDaysField', 'announcementMonthDatesField',
+      'announcementCalendarDatesField', 'announcementRepeatUntilField'
+    ];
+    const audienceIds = [
+      'announcementAudienceType', 'announcementAudienceUsers',
+      'announcementAudienceRoles', 'announcementAudienceDisciplines',
+      'announcementDisplayFrequency'
+    ];
+    const fieldFor = id => {
+      const el = host.querySelector('#' + id);
+      return el?.closest('.announcement-field') || null;
+    };
+    const schedule = scheduleIds.map(fieldFor);
+    const audience = audienceIds.map(fieldFor);
+    if([...schedule,...audience].some(el => !el)) return;
+
+    const layout = document.createElement('div');
+    layout.className = 'announcement-settings-layout';
+    const left = document.createElement('div');
+    left.className = 'announcement-settings-stack';
+    left.setAttribute('aria-label', 'Announcement schedule');
+    const right = document.createElement('div');
+    right.className = 'announcement-settings-stack';
+    right.setAttribute('aria-label', 'Announcement audience');
+    grid.insertBefore(layout, schedule[0]);
+    layout.append(left, right);
+    schedule.forEach(el => left.appendChild(el));
+    audience.forEach(el => right.appendChild(el));
   }
 
   function closeAnnouncementEditor(){
@@ -15270,6 +15339,151 @@ for a competing inline style first.`;
   let dashOverviewMode = null;
   let dashLeaderboardDisciplineFilter = 'all';
 
+  // Only the Weekly Activity Trend uses this preference. KPI totals, filters,
+  // previous-period badges and exports continue using their original rows.
+  const DASH_WEEKLY_TREND_PERIODS = ['30d','3m','6m','12m'];
+  let dashWeeklyTrendPeriod = '3m';
+
+  function setDashboardWeeklyTrendPeriod(period){
+    if(!DASH_WEEKLY_TREND_PERIODS.includes(period)) return;
+    dashWeeklyTrendPeriod = period;
+    // Redraw ONLY this chart from the existing in-memory filtered tasks.
+    // No extra Supabase request and no reset of other Dashboard cards.
+    renderDashboardWeeklyTrend(currentDashRows,
+      document.getElementById('dashFromMonth')?.value || '',
+      document.getElementById('dashToMonth')?.value || '');
+  }
+
+  function dashboardTrendLocalDate(input){
+    if(input instanceof Date){
+      if(!Number.isFinite(input.getTime())) return null;
+      return new Date(input.getFullYear(), input.getMonth(), input.getDate());
+    }
+    if(typeof input !== 'string') return null;
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(input.trim());
+    if(!m) return null;
+    const y=Number(m[1]), month=Number(m[2])-1, day=Number(m[3]);
+    const d = new Date(y,month,day);
+    return d.getFullYear()===y && d.getMonth()===month && d.getDate()===day ? d : null;
+  }
+
+  function dashboardTrendMonthsBefore(date, months){
+    const d = new Date(date.getFullYear(), date.getMonth() - months, 1);
+    const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(date.getDate(), lastDay));
+    return d;
+  }
+
+  function dashboardTrendWindow(fromVal, toVal){
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const custom = !!(fromVal || toVal);
+    const end = dashboardTrendLocalDate(toVal) || today;
+    let start;
+    if(fromVal){
+      start = dashboardTrendLocalDate(fromVal);
+    }else if(dashWeeklyTrendPeriod === '30d' && !custom){
+      start = new Date(today.getFullYear(),today.getMonth(),today.getDate()-29);
+    }else{
+      // An end-only Dashboard filter shows the preceding three months,
+      // rather than silently returning to an unlimited all-time chart.
+      const months = custom ? 3 : ({'3m':3,'6m':6,'12m':12}[dashWeeklyTrendPeriod] || 3);
+      start = dashboardTrendMonthsBefore(end, months);
+    }
+    return {start, end, custom};
+  }
+
+  function dashboardTrendMondayUtc(date){
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    return d;
+  }
+
+  function dashboardTrendTaskDate(row){
+    const performed = row.details && row.details['Perform Date'];
+    const parsed = performed ? dashboardTrendLocalDate(performed) : null;
+    if(parsed) return parsed;
+    const logged = row.created_at ? new Date(row.created_at) : null;
+    return logged && Number.isFinite(logged.getTime()) ? dashboardTrendLocalDate(logged) : null;
+  }
+
+  function renderDashboardWeeklyTrend(sourceRows, fromVal='', toVal=''){
+    const chart = document.getElementById('dashHeroTrendChart');
+    if(!chart) return;
+    const select = document.getElementById('dashTrendPeriodSelect');
+    const meta = document.getElementById('dashTrendPeriodMeta');
+    const custom = !!(fromVal || toVal);
+    if(select){
+      select.value = dashWeeklyTrendPeriod;
+      select.disabled = custom;
+      select.title = custom
+        ? 'Clear Dashboard From/To filters to choose a trend period here.'
+        : 'Choose the period for the weekly chart only.';
+    }
+    const {start,end} = dashboardTrendWindow(fromVal,toVal);
+    if(!start || !end || start > end){
+      chart.innerHTML='<div class="placeholder-note" style="padding:10px;">Choose a valid Dashboard date range (From must not be after To).</div>';
+      if(meta) meta.textContent='Invalid date range';
+      return;
+    }
+    const shortDate = d => d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+    if(meta) meta.textContent = `${custom ? 'Dashboard dates · ' : ''}${shortDate(start)} – ${shortDate(end)} · by Perform Date`;
+
+    const periodWeeks = [];
+    const monday = dashboardTrendMondayUtc(start);
+    const lastMonday = dashboardTrendMondayUtc(end);
+    for(const day = new Date(monday); day <= lastMonday; day.setUTCDate(day.getUTCDate()+7)){
+      periodWeeks.push(day.toISOString().slice(0,10));
+    }
+    // Every calendar week is represented, even when no task was recorded.
+    const countsByWeek = Object.fromEntries(periodWeeks.map(w => [w, {}]));
+    const trendCategoryTotals = {};
+    let matchingTasks=0;
+    (sourceRows || []).forEach(row => {
+      const d = dashboardTrendTaskDate(row);
+      if(!d || d < start || d > end || !row.category) return;
+      const key = dashboardTrendMondayUtc(d).toISOString().slice(0,10);
+      const counts = countsByWeek[key];
+      if(!counts) return;
+      counts[row.category]=(counts[row.category] || 0)+1;
+      trendCategoryTotals[row.category]=(trendCategoryTotals[row.category] || 0)+1;
+      matchingTasks++;
+    });
+
+    if(!matchingTasks){
+      chart.innerHTML='<div class="placeholder-note" style="padding:10px;">No activities recorded in this trend period.</div>';
+      return;
+    }
+    if(periodWeeks.length < 2){
+      chart.innerHTML='<div class="placeholder-note" style="padding:10px;">Select at least two calendar weeks to see a trend line.</div>';
+      return;
+    }
+    const top = Object.entries(trendCategoryTotals)
+      .sort((a,b)=>b[1]-a[1])
+      .slice(0,3).map(([category]) => category);
+    const series = top.map(category => ({
+      label: catMeta[category]?.name || category,
+      color: CATEGORY_COLOR_VAR[category] || 'var(--text-faint)',
+      values: periodWeeks.map(w => countsByWeek[w][category] || 0)
+    }));
+    const other = periodWeeks.map(w => Object.entries(countsByWeek[w])
+      .reduce((sum,[category,count]) => sum + (top.includes(category) ? 0 : count),0));
+    if(other.some(count=>count>0)) series.push({label:'Other',color:'var(--text-faint)',values:other});
+    const startUtcLimit = new Date(Date.UTC(start.getFullYear(),start.getMonth(),start.getDate()));
+    const endUtcLimit = new Date(Date.UTC(end.getFullYear(),end.getMonth(),end.getDate()));
+    const weekLabels = periodWeeks.map(key => {
+      const weekStart = new Date(key+'T00:00:00Z');
+      const weekEnd = new Date(weekStart);
+      weekEnd.setUTCDate(weekEnd.getUTCDate()+6);
+      const shownStart = new Date(Math.max(weekStart.getTime(),startUtcLimit.getTime()));
+      const shownEnd = new Date(Math.min(weekEnd.getTime(),endUtcLimit.getTime()));
+      const partial = shownStart > weekStart || shownEnd < weekEnd;
+      const fmt = d => d.toLocaleDateString('en-GB',{timeZone:'UTC',day:'2-digit',month:'short'});
+      return `${fmt(shownStart)} – ${fmt(shownEnd)} ${shownEnd.getUTCFullYear()}${partial?' (partial week)':''}`;
+    });
+    chart.innerHTML = mountainTrendSvg(series, weekLabels, 600, 190);
+  }
+
   function dashboardLeaderboardRankBadge(index){
     return index === 0
       ? `<span style="display:inline-flex; align-items:center; justify-content:center; width:20px; height:20px; border-radius:50%; background:#F5C34220;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#B98900" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l4 2 6-7 6 7 4-2-2 11H4z"/></svg></span>`
@@ -15369,8 +15583,17 @@ for a competing inline style first.`;
             <div>
               <div class="dash-chart-title">Weekly activity trend</div>
               <div class="dash-section-sub">Activity by category over the selected period</div>
+              <div id="dashTrendPeriodMeta" class="dash-trend-period-meta">Last 3 months</div>
             </div>
-            <div class="dash-chart-note">Top categories + Other</div>
+            <div class="dash-trend-head-actions">
+              <div class="dash-chart-note">Top categories + Other</div>
+              <select id="dashTrendPeriodSelect" class="dash-trend-period-select" aria-label="Weekly activity trend period" title="Choose the weekly chart period" onchange="setDashboardWeeklyTrendPeriod(this.value)">
+                <option value="30d" ${dashWeeklyTrendPeriod==='30d'?'selected':''}>Last 30 days</option>
+                <option value="3m" ${dashWeeklyTrendPeriod==='3m'?'selected':''}>Last 3 months</option>
+                <option value="6m" ${dashWeeklyTrendPeriod==='6m'?'selected':''}>Last 6 months</option>
+                <option value="12m" ${dashWeeklyTrendPeriod==='12m'?'selected':''}>Last 12 months</option>
+              </select>
+            </div>
           </div>
           <div id="dashHeroTrendChart"></div>
         </div>
@@ -15531,69 +15754,9 @@ for a competing inline style first.`;
     document.getElementById('dashStatEngineers').textContent = engineerSet.size;
     document.getElementById('dashStatCategories').textContent = Object.keys(catCounts).length;
 
-    // Weekly trend, computed from the same filtered rows — no extra
-    // query. Uses each task's Perform Date where available (same
-    // convention as the rest of the app), falling back to created_at for
-    // older entries logged before that field existed. Buckets by
-    // ISO week number within the row's year so activity groups sensibly
-    // regardless of how wide the selected date range is.
-    const weekOf = (d) => {
-      const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-      const dayNum = date.getUTCDay() || 7;
-      date.setUTCDate(date.getUTCDate() + 4 - dayNum);
-      const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
-      const weekNum = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
-      return `${date.getUTCFullYear()}-W${weekNum}`;
-    };
-    const weekCounts = {};
-    const weekLiftSets = {};
-    // Per-category, per-week — needed for the layered trend chart below.
-    // Kept separate from weekCounts (the plain total) rather than derived
-    // from it, since nothing else here needs a category breakdown by week.
-    const weekCatCounts = {};
-    rows.forEach(r => {
-      const performDate = r.details && r.details['Perform Date'];
-      const d = performDate ? new Date(performDate + 'T00:00:00') : new Date(r.created_at);
-      const wk = weekOf(d);
-      weekCounts[wk] = (weekCounts[wk] || 0) + 1;
-      if(r.lift_id){ (weekLiftSets[wk] || (weekLiftSets[wk] = new Set())).add(r.lift_id); }
-      if(!weekCatCounts[wk]) weekCatCounts[wk] = {};
-      weekCatCounts[wk][r.category] = (weekCatCounts[wk][r.category] || 0) + 1;
-    });
-    const weekKeysSorted = Object.keys(weekCounts).sort((a, b) => {
-      // Plain string sort breaks here: "2026-W36" sorts BEFORE
-      // "2026-W9" because '3' < '9' as characters, even though week 9
-      // (February) genuinely comes before week 36 (September) in the
-      // same year. Comparing the actual year and week numbers instead
-      // fixes it regardless of how many digits the week number has.
-      const [yearA, weekA] = a.split('-W').map(Number);
-      const [yearB, weekB] = b.split('-W').map(Number);
-      return yearA - yearB || weekA - weekB;
-    });
-    const activityTrendValues = weekKeysSorted.map(k => weekCounts[k]);
-    const liftTrendValues = weekKeysSorted.map(k => weekLiftSets[k] ? weekLiftSets[k].size : 0);
-
-    // Weekly trend chart: layered by category rather than one flat total —
-    // but only the top 3 (by total activity across the whole range), with
-    // everything else folded into one "Other" band. Showing all 6 layered
-    // independently made the smaller categories visually unreadable,
-    // squashed flat against the baseline underneath the bigger ones.
-    if(weekKeysSorted.length >= 2){
-      const topCatsForTrend = Object.entries(catCounts).sort((a,b) => b[1]-a[1]).slice(0,3).map(([c]) => c);
-      const trendSeries = topCatsForTrend.map(cat => ({
-        label: catMeta[cat]?.name || cat,
-        color: CATEGORY_COLOR_VAR[cat] || 'var(--text-faint)',
-        values: weekKeysSorted.map(wk => (weekCatCounts[wk] && weekCatCounts[wk][cat]) || 0)
-      }));
-      const otherValues = weekKeysSorted.map(wk => {
-        const catsThisWeek = weekCatCounts[wk] || {};
-        return Object.keys(catsThisWeek).reduce((sum, cat) => sum + (topCatsForTrend.includes(cat) ? 0 : catsThisWeek[cat]), 0);
-      });
-      if(otherValues.some(v => v > 0)) trendSeries.push({ label: 'Other', color: 'var(--text-faint)', values: otherValues });
-      document.getElementById('dashHeroTrendChart').innerHTML = mountainTrendSvg(trendSeries, weekKeysSorted, 600, 190);
-    } else {
-      document.getElementById('dashHeroTrendChart').innerHTML = '<div class="placeholder-note" style="padding:10px;">Not enough weeks of data in range for a trend line yet.</div>';
-    }
+    // Only the weekly graph is windowed (3 months by default); the other
+    // Dashboard KPIs, chart, comparisons and exports stay scoped to rows.
+    renderDashboardWeeklyTrend(rows, fromVal, toVal);
 
     const maxCat = Math.max(1, ...Object.values(catCounts));
     // 2026-09-25: fixed category order + fixed per-category color, both
