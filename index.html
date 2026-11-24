@@ -4023,6 +4023,273 @@ html[data-theme="dark"] #view-dashboard .dash-hero-icon{background:linear-gradie
   #view-dashboard .dash-kpi-card,#view-dashboard .dash-filter-actions .queue-btn,#view-dashboard .dash-rank-row{transition:none!important;transform:none!important}
 }
 </style>
+
+<style id="wlf-compact-pro-v1">
+/* 2026-11-24 Compact Pro: presentation-only overrides for Home and Dashboard.
+   Existing DOM bindings, charts, scoring, exports and all database logic unchanged. */
+main:has(> #view-home.active), main:has(> #view-dashboard.active){
+  padding:14px 17px 28px;max-width:1510px;
+}
+/* Keep background halos inside each view, rather than expanding page scroll width. */
+#view-home::before,#view-dashboard::before{left:0;right:0}
+#view-home,#view-dashboard{padding:0 1px 6px}
+/* Compact Pro keeps the glass material but makes it much quieter. */
+#view-home .home-command-copy,#view-home .home-trend-card,
+#view-home .home-stats>.home-kpi-card,#view-home .home-today-card,
+#view-home .home-category-section,#view-home .home-recent-section,
+#view-dashboard .dash-card,#view-dashboard .dash-page-head,#view-dashboard .dash-tools-shell{
+  border-radius:16px!important;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.11),0 5px 17px -13px rgba(27,64,114,.23)!important;
+}
+/* HOME -- shorter hero/trend row without changing the searches or buttons. */
+#view-home .home-command-grid{gap:12px;margin-bottom:12px;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)}
+#view-home .home-command-copy{
+  min-height:0;padding:15px 18px 13px!important;justify-content:flex-start;
+}
+#view-home .home-command-copy .eyebrow{
+  padding:4px 8px;margin-bottom:7px;font-size:8.5px;
+}
+#view-home .home-greeting{font-size:clamp(20px,2.1vw,27px);line-height:1.12;gap:5px}
+#view-home .home-command-sub{margin-top:6px;font-size:11px}
+#view-home .home-command-meta{margin-top:4px;font-size:9.3px;gap:6px}
+#view-home .home-command-actions{margin-top:12px;gap:7px}
+#view-home .home-action-btn.primary{min-height:36px;padding:6px 11px;font-size:10.8px;border-radius:10px}
+#view-home .home-trace-search{min-height:37px;border-radius:10px;padding-left:10px}
+#view-home .home-trace-search input{font-size:11px;padding:6px 2px}
+#view-home .home-trace-search button{min-height:29px;padding:5px 10px;border-radius:7px;font-size:10px}
+#view-home .home-command-copy>.search-hint{margin-top:5px;font-size:9px}
+#view-home .home-glass-launchpad{gap:6px;margin-top:12px}
+#view-home .home-glass-shortcut{
+  min-height:36px;padding:6px 5px;border-radius:10px;display:flex;flex-direction:row;
+  justify-content:center;align-items:center;gap:5px;font-size:10px;
+}
+#view-home .home-glass-shortcut-icon{width:22px;height:22px;border-radius:7px;flex:0 0 22px}
+#view-home .home-glass-shortcut-icon svg{width:14px;height:14px}
+#view-home .home-trend-card{padding:14px 15px 11px!important}
+#view-home .home-trend-title{font-size:14px}
+#view-home .home-trend-sub{font-size:9.6px;margin-top:2px}
+#view-home .home-trend-presets{border-radius:9px;padding:2px}
+#view-home .home-trend-preset{min-height:25px;min-width:31px;border-radius:7px;font-size:9.6px}
+#view-home .home-trend-card .trend-chart-wrap{margin-top:7px}
+#view-home .home-trend-card .trend-svg{height:110px}
+#view-home .home-trend-card .trend-legend-row{margin-top:6px;gap:5px 10px}
+#view-home .home-trend-card .trend-legend-item{font-size:9px}
+/* HOME -- four compact yet fully labelled KPI cards. */
+#view-home .home-stats{gap:11px!important;margin:0 0 12px!important}
+#view-home .home-stats>.stat-card.home-kpi-card{
+  padding:11px 12px!important;min-height:78px;grid-template-columns:35px minmax(0,1fr);gap:10px;
+  border-radius:14px!important;
+}
+#view-home .home-kpi-icon{width:35px;height:35px;border-radius:10px}
+#view-home .home-kpi-icon svg{width:18px;height:18px}
+#view-home .home-stats .n{font-size:24px}
+#view-home .home-stats .l{font-size:10.3px;margin-top:3px}
+#view-home .home-stats .delta{font-size:9.4px;margin-top:3px}
+/* HOME -- single-line Today ribbon (mobile continues to wrap safely). */
+#view-home .home-today-card{padding:9px 12px;margin-bottom:12px;gap:8px;border-radius:14px!important}
+#view-home .home-today-sun{width:27px;height:27px;min-width:27px;min-height:27px;font-size:15px;padding:4px}
+#view-home .home-today-title strong{font-size:11.5px}
+#view-home .home-today-title span{font-size:9.2px;margin-top:2px}
+#view-home .home-today-metric{padding:2px 8px}
+#view-home .home-today-metric strong{font-size:17px}
+#view-home .home-today-metric span{font-size:9.4px}
+#view-home .home-today-date{padding:5px 7px;font-size:9px}
+/* HOME -- task categories and live feed side by side on larger desktops. */
+#view-home .home-category-section,#view-home .home-recent-section{
+  padding:14px!important;margin-bottom:0;border-radius:16px!important;
+}
+#view-home .home-category-section .block-head,#view-home .home-recent-section .block-head{margin-bottom:10px}
+#view-home .home-category-section .block-title,#view-home .home-recent-section .block-title{font-size:14px}
+#view-home .home-category-section .block-sub,#view-home .home-recent-section .block-sub{font-size:10px;margin-top:2px}
+#view-home .home-category-section .link-more{padding:5px 8px;font-size:10px;border-radius:8px}
+#view-home .home-cat-grid{gap:8px}
+#view-home .home-cat-grid .cat-tile{
+  min-height:113px;padding:10px!important;border-radius:11px!important;
+}
+#view-home .home-cat-grid .cat-icon{height:25px;width:25px;font-size:9px;border-radius:8px;margin-bottom:6px}
+#view-home .home-cat-grid .cat-name{font-size:11px;line-height:1.2}
+#view-home .home-cat-grid .cat-desc{font-size:9.5px;line-height:1.34;margin-top:3px}
+#view-home .home-cat-grid .cat-count{font-size:9px;margin-top:4px}
+#view-home .home-cat-grid .cat-pct-badge{font-size:10px}
+#view-home .home-cat-grid .cat-search-btn{height:26px;width:26px;top:8px;right:8px;border-radius:8px}
+#view-home .home-cat-progress{height:3px;margin-top:6px}
+#view-home #homeFeed{gap:5px}
+#view-home .feed-item{padding:8px 10px!important;gap:7px;border-radius:10px!important}
+#view-home .feed-text{font-size:11px;line-height:1.35}
+#view-home .feed-meta{font-size:9.5px}
+@media(min-width:1060px){
+  #view-home.active{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);column-gap:12px;row-gap:0;align-items:start}
+  #view-home.active>.home-command-grid,#view-home.active>.home-stats,#view-home.active>.home-today-card{grid-column:1/-1}
+  #view-home.active>.home-category-section{grid-column:1;grid-row:4;align-self:stretch}
+  #view-home.active>.home-recent-section{grid-column:2;grid-row:4;align-self:stretch}
+}
+@media (min-width:1060px) and (max-width:1280px){
+  #view-home .home-cat-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* DASHBOARD -- slimmer header and filters; no changes to their IDs or behavior. */
+#view-dashboard .dash-page-head{min-height:65px;padding:10px 16px;margin-bottom:10px;border-radius:16px!important}
+#view-dashboard .dash-heading-main{gap:10px}
+#view-dashboard .dash-hero-icon{width:39px;height:39px;border-radius:11px}
+#view-dashboard .dash-hero-icon svg{width:19px;height:19px}
+#view-dashboard .dash-page-eyebrow{font-size:8px;margin-bottom:2px;letter-spacing:.1em}
+#view-dashboard .dash-page-title{font-size:22px}
+#view-dashboard .dash-page-sub{font-size:10px;margin-top:2px}
+#view-dashboard .dash-admin-chip{padding:6px 9px;font-size:9px}
+#view-dashboard .dash-tools-shell{margin-bottom:11px;border-radius:14px!important}
+#view-dashboard .dash-tools-toggle{min-height:38px;padding:7px 12px}
+#view-dashboard .dash-tools-toggle-left{gap:7px}
+#view-dashboard .dash-tools-toggle-left>svg{width:16px;height:16px}
+#view-dashboard .dash-tools-toggle strong{font-size:11px}
+#view-dashboard .dash-filter-count{font-size:9px;padding:3px 7px}
+#view-dashboard .dash-tools-chevron{width:23px;height:23px;padding:5px;border-radius:7px}
+#view-dashboard .dash-filter-toolbar{padding:10px 12px;gap:8px}
+#view-dashboard .dash-filter-grid{gap:7px}
+#view-dashboard .dash-filter-field label{font-size:8.5px;margin:0 0 4px 2px}
+#view-dashboard .dash-filter-field .fselect{height:34px;padding:5px 9px;border-radius:8px!important;font-size:10.6px}
+#view-dashboard .dash-filter-actions,#view-dashboard .dash-filter-secondary{gap:5px}
+#view-dashboard .dash-filter-actions .queue-btn{min-height:34px;padding:5px 9px;font-size:10px;border-radius:8px!important}
+#view-dashboard .dash-overview-head{margin:0 2px 7px}
+#view-dashboard .dash-section-title{font-size:14px}
+#view-dashboard .dash-section-sub{font-size:9.5px;margin-top:2px}
+#view-dashboard .dash-section-meta{font-size:9.5px}
+/* DASHBOARD -- keep the actual four ring charts and trend badges. */
+#view-dashboard .dash-kpi-grid{gap:11px;margin-bottom:12px}
+#view-dashboard .dash-kpi-card{
+  min-height:99px;padding:11px 12px!important;
+  grid-template-columns:67px minmax(0,1fr);gap:9px;border-radius:14px!important;
+}
+#view-dashboard .dash-kpi-ring svg{width:66px;height:66px;max-width:66px}
+#view-dashboard .dash-kpi-label{font-size:11px}
+#view-dashboard .dash-kpi-note{font-size:9.3px;margin-top:2px}
+#view-dashboard .dash-kpi-trend-line{margin-top:5px;gap:4px;flex-wrap:wrap}
+#view-dashboard .dash-trend-badge{font-size:9px;min-height:20px;padding:3px 6px}
+#view-dashboard .dash-trend-caption{font-size:8px;line-height:1.2}
+/* DASHBOARD -- full data still displayed; less surrounding whitespace. */
+#view-dashboard .dash-primary-grid{gap:12px;margin-bottom:12px}
+#view-dashboard .dash-primary-card{min-height:248px;padding:14px 15px 11px!important;border-radius:16px!important}
+#view-dashboard .dash-chart-head{margin-bottom:9px}
+#view-dashboard .dash-chart-title{font-size:14px}
+#view-dashboard .dash-chart-note{font-size:9.5px}
+#view-dashboard .dash-trend-head-actions{gap:5px}
+#view-dashboard .dash-trend-period-select{height:30px;min-width:119px;max-width:138px;font-size:10px;padding:5px 24px 5px 8px;border-radius:8px}
+#view-dashboard .dash-trend-period-meta{font-size:9px;margin-top:3px}
+#view-dashboard #dashHeroTrendChart{margin-top:2px}
+#view-dashboard #dashHeroTrendChart svg{max-height:188px;width:100%}
+#view-dashboard .dash-category-bars{height:155px;min-height:155px;margin:12px 0 9px;gap:6px}
+#view-dashboard .dash-category-legend{margin-top:3px}
+#view-dashboard .dash-discipline-grid{gap:12px;margin-bottom:12px}
+#view-dashboard .dash-discipline-card{padding:13px 14px!important;border-radius:16px!important}
+#view-dashboard .dash-discipline-head{margin-bottom:8px}
+#view-dashboard .dash-discipline-icon{width:29px;height:29px;border-radius:9px;font-size:14px}
+#view-dashboard .dash-rank-list{gap:3px}
+#view-dashboard .dash-rank-row{min-height:29px;padding:4px 6px;gap:7px;border-radius:8px}
+#view-dashboard .dash-rank-num{width:20px;height:20px;font-size:9px}
+#view-dashboard .dash-rank-name{font-size:10.5px}
+#view-dashboard .dash-rank-category{font-size:9px}
+#view-dashboard .dash-rank-bar{height:5px}
+#view-dashboard .dash-rank-score{font-size:9.5px}
+#view-dashboard .dash-leaderboard-section{margin-bottom:12px}
+#view-dashboard .dash-leaderboard-head{margin-bottom:8px}
+#view-dashboard .dash-lb-filter-btn{padding:5px 9px;font-size:10px}
+#view-dashboard .dash-table-card table.data th{padding:8px 10px;font-size:9px}
+#view-dashboard .dash-table-card table.data td{padding:7px 10px;font-size:10.5px}
+/* Tablet: retain readable charts/filters and 2x2 KPI layout. */
+@media(max-width:1059px){
+  #view-home .home-category-section,#view-home .home-recent-section{margin-bottom:12px}
+}
+@media(max-width:959px){
+  #view-home .home-command-grid{grid-template-columns:1fr;gap:10px}
+}
+@media(max-width:1010px){
+  main:has(> #view-home.active),main:has(> #view-dashboard.active){padding:13px 13px 26px}
+  #view-dashboard .dash-filter-toolbar{grid-template-columns:1fr;gap:9px}
+  #view-dashboard .dash-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  #view-dashboard .dash-kpi-card{min-height:97px;grid-template-columns:67px minmax(0,1fr);text-align:left;justify-items:stretch}
+  #view-dashboard .dash-kpi-copy{text-align:left}
+  #view-dashboard .dash-kpi-trend-line{justify-content:flex-start}
+  #view-dashboard .dash-primary-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:700px){
+  main:has(> #view-home.active),main:has(> #view-dashboard.active){padding:10px 10px 23px}
+  #view-home .home-command-copy{padding:13px!important}
+  #view-home .home-greeting{font-size:clamp(17px,5vw,22px)}
+  #view-home .home-command-actions{margin-top:10px;gap:6px;grid-template-columns:1fr}
+  #view-home .home-action-btn.primary{min-height:39px;width:100%;font-size:11px}
+  #view-home .home-trace-search{min-height:39px}
+  #view-home .home-trace-search button{min-height:30px}
+  #view-home .home-glass-launchpad{gap:5px;margin-top:9px}
+  #view-home .home-glass-shortcut{min-height:46px;flex-direction:column;gap:3px;font-size:9px;padding:4px 2px}
+  #view-home .home-glass-shortcut-icon{width:21px;height:21px}
+  #view-home .home-trend-card{padding:12px 11px 10px!important}
+  #view-home .home-trend-card .trend-svg{height:108px}
+  #view-home .home-trend-title{font-size:13px}
+  #view-home .home-trend-preset{min-width:29px;min-height:26px}
+  #view-home .home-stats{gap:8px!important;margin-bottom:10px!important}
+  #view-home .home-stats>.stat-card.home-kpi-card{min-height:76px;padding:10px!important;grid-template-columns:29px minmax(0,1fr);gap:7px}
+  #view-home .home-kpi-icon{width:29px;height:29px}
+  #view-home .home-kpi-icon svg{width:15px;height:15px}
+  #view-home .home-stats .n{font-size:21px}
+  #view-home .home-stats .l{font-size:10px}
+  #view-home .home-stats .delta{font-size:9px}
+  #view-home .home-today-card{padding:10px;margin-bottom:10px}
+  #view-home .home-today-metric{padding:7px 8px}
+  #view-home .home-today-metric strong{font-size:16px}
+  #view-home .home-category-section,#view-home .home-recent-section{padding:12px!important;margin-bottom:10px}
+  #view-home .home-cat-grid{gap:7px}
+  #view-home .home-cat-grid .cat-tile{min-height:111px;padding:9px!important}
+  #view-home .home-cat-grid .cat-icon{height:24px;width:24px;margin-bottom:5px}
+  #view-home .home-cat-grid .cat-desc{font-size:9.5px}
+  #view-home .feed-item{padding:8px!important}
+  #view-dashboard .dash-page-head{min-height:58px;padding:9px 11px;margin-bottom:9px}
+  #view-dashboard .dash-hero-icon{width:33px;height:33px;border-radius:10px}
+  #view-dashboard .dash-hero-icon svg{width:17px;height:17px}
+  #view-dashboard .dash-page-title{font-size:20px}
+  #view-dashboard .dash-page-sub{font-size:9px}
+  #view-dashboard .dash-tools-shell{margin-bottom:10px}
+  #view-dashboard .dash-tools-toggle{min-height:41px;padding:8px 10px}
+  #view-dashboard .dash-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  #view-dashboard .dash-filter-toolbar{padding:10px;gap:8px}
+  #view-dashboard .dash-filter-field .fselect{height:39px;font-size:10.5px}
+  #view-dashboard .dash-filter-actions .queue-btn{min-height:39px}
+  #view-dashboard .dash-overview-head{margin-bottom:6px}
+  #view-dashboard .dash-section-title{font-size:13px}
+  #view-dashboard .dash-section-sub{font-size:9px}
+  #view-dashboard .dash-kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px}
+  #view-dashboard .dash-kpi-card{min-height:111px;grid-template-columns:1fr;justify-items:center;text-align:center;gap:3px;padding:10px 6px!important}
+  #view-dashboard .dash-kpi-ring svg{width:52px;height:52px}
+  #view-dashboard .dash-kpi-copy{text-align:center}
+  #view-dashboard .dash-kpi-label{font-size:10.5px}
+  #view-dashboard .dash-kpi-note{font-size:8.8px;margin-top:2px}
+  #view-dashboard .dash-kpi-trend-line{margin-top:4px;justify-content:center;gap:3px}
+  #view-dashboard .dash-trend-badge{min-height:18px;font-size:8px;padding:3px 5px}
+  #view-dashboard .dash-trend-caption{font-size:7.5px}
+  #view-dashboard .dash-primary-grid{grid-template-columns:1fr;gap:10px;margin-bottom:10px}
+  #view-dashboard .dash-primary-card{padding:12px 11px 10px!important;min-height:0}
+  #view-dashboard .dash-chart-head{margin-bottom:7px}
+  #view-dashboard .dash-chart-title{font-size:13px}
+  #view-dashboard .dash-trend-period-select{min-width:105px;height:31px;font-size:9.5px}
+  #view-dashboard #dashHeroTrendChart svg{max-height:170px}
+  #view-dashboard .dash-category-bars{height:110px;min-height:110px;margin:10px 0 9px}
+  #view-dashboard .dash-discipline-grid{grid-template-columns:1fr;gap:9px}
+  #view-dashboard .dash-discipline-card{padding:11px!important}
+  #view-dashboard .dash-discipline-head{margin-bottom:7px}
+  #view-dashboard .dash-rank-list{gap:2px}
+  #view-dashboard .dash-rank-row{min-height:30px;padding:3px 5px}
+  #view-dashboard .dash-rank-category{display:none}
+  #view-dashboard .dash-table-card table.data{min-width:650px}
+}
+@media(max-width:360px){
+  #view-home .home-glass-shortcut{font-size:8px}
+  #view-home .home-stats>.stat-card.home-kpi-card{gap:4px;padding:8px!important}
+  #view-dashboard .dash-kpi-card{min-height:112px}
+  #view-dashboard .dash-trend-head-actions{flex-wrap:wrap;justify-content:flex-start}
+}
+@media(prefers-reduced-motion:reduce){
+  #view-home .home-command-copy,#view-home .home-trend-card,#view-home .cat-tile,
+  #view-dashboard .dash-card,#view-dashboard .dash-page-head{transition:none!important}
+}
+</style>
+
 </head>
 <body>
  
@@ -8433,6 +8700,8 @@ html[data-theme="dark"] #view-dashboard .dash-hero-icon{background:linear-gradie
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-24', summary:'Compact Pro refinement for the existing Home and Team Dashboard Liquid Glass UIs: shorter welcome/analytics headers, tighter search and shortcut actions, compact Home KPIs and Today summary, reduced category tile spacing, desktop category/recent-activity pairing, slimmer Dashboard filters, KPI rings, chart panels, rankings and leaderboard rows, and mobile 2x2 KPIs with touch-friendly controls. Existing data calculations, charts, filters, exports, scoring, category definitions, security, navigation and other page UI are unchanged. CSS-only; no SQL migration.' },
+
     { date:'2026-11-24', summary:'Team Dashboard Liquid Glass visual refresh, matching the approved Home macOS/iOS aesthetic: frosted analytic header and collapsible filter toolbar, subtle KPI rings/cards, refined weekly and category chart panels, Mechanical/Electrical summaries and leaderboard, responsive 2x2 mobile KPIs and dark theme. All KPI computations, 3-month default trend window, charts, data, role visibility, exports, scoring, existing navigation, Home page and Supabase schema remain unchanged.' },
     { date:'2026-11-24', summary:'Home-only Liquid Glass visual refresh: premium macOS/iOS-inspired translucent welcome and trend panels, four existing-destination launchpad shortcuts, polished KPI and Today cards, lighter category tiles and Recent Activity feed, plus responsive desktop/mobile and dark/light styling. Existing Home search, task logging, dynamic values, chart computation, category navigation, permissions, exports, all other page styles and Supabase schema are unchanged.' },
     { date:'2026-11-17', summary:'Opening Announcement editor layout fix: keeps Repeat plus selected dates/months/interval/expiration in the left schedule column and Audience plus immediately visible role/user/discipline choices and popup frequency in the right column. Mobile stacks the columns. Existing field IDs, validation, permissions, scheduling, stored data and Supabase schema are unchanged.' },
