@@ -3745,6 +3745,284 @@ html[data-theme="dark"] #view-home::before{
   #view-home .home-cat-grid .cat-tile{padding:10px!important}
 }
 </style>
+<style id="wlf-dashboard-liquid-glass-v1">
+/* 2026-11-24 — Team Dashboard presentation only.
+   All Supabase queries, filters, KPI/score math, tables, charts, exports,
+   role visibility, responsive re-rendering and navigation remain unchanged. */
+main:has(> #view-dashboard.active){max-width:1430px;padding:25px 27px 38px}
+#view-dashboard{
+  --dash-glass-panel:rgba(255,255,255,.85);
+  --dash-glass-strong:rgba(255,255,255,.94);
+  --dash-glass-stroke:rgba(107,136,185,.20);
+  --dash-glass-line:rgba(255,255,255,.94);
+  --dash-glass-ink:#142947;
+  --dash-glass-muted:#657590;
+  --dash-glass-shadow:0 19px 44px -28px rgba(22,63,121,.35),0 5px 15px -11px rgba(34,69,112,.18);
+  --dash-radius:22px;
+  --dash-gap:16px;
+  isolation:isolate;position:relative;padding:4px 2px 12px;
+}
+#view-dashboard::before{
+  content:"";position:absolute;z-index:-1;pointer-events:none;inset:-38px -27px auto;height:min(850px,98vh);
+  background:radial-gradient(ellipse at 12% 5%,rgba(99,153,243,.17),transparent 46%),
+             radial-gradient(ellipse at 86% 16%,rgba(169,132,244,.15),transparent 44%),
+             radial-gradient(ellipse at 43% 100%,rgba(83,197,222,.075),transparent 53%);
+}
+html[data-theme="dark"] #view-dashboard{
+  --dash-glass-panel:rgba(26,36,53,.86);
+  --dash-glass-strong:rgba(34,45,64,.95);
+  --dash-glass-stroke:rgba(154,178,216,.23);
+  --dash-glass-line:rgba(255,255,255,.10);
+  --dash-glass-ink:#F0F5FF;
+  --dash-glass-muted:#B5C3D7;
+  --dash-glass-shadow:0 20px 54px -27px rgba(0,0,0,.7),0 7px 20px -14px rgba(0,0,0,.55);
+}
+html[data-theme="dark"] #view-dashboard::before{
+  background:radial-gradient(ellipse at 15% 5%,rgba(56,101,187,.20),transparent 46%),
+             radial-gradient(ellipse at 89% 14%,rgba(131,83,199,.16),transparent 43%),
+             radial-gradient(ellipse at 43% 100%,rgba(37,146,167,.07),transparent 53%);
+}
+/* macOS-style frosted banner: context + current date, never a control. */
+#view-dashboard .dash-page-head{
+  position:relative;overflow:hidden;min-height:120px;display:flex;align-items:center;
+  padding:22px 25px;margin:0 0 16px;border-radius:25px;
+  border:1px solid var(--dash-glass-stroke);box-shadow:inset 0 1px 0 var(--dash-glass-line),var(--dash-glass-shadow);
+  background:radial-gradient(ellipse at 84% -55%,rgba(103,159,250,.29),transparent 57%),
+             radial-gradient(ellipse at 103% 108%,rgba(180,156,242,.19),transparent 50%),
+             var(--dash-glass-panel);
+  backdrop-filter:blur(18px) saturate(135%);-webkit-backdrop-filter:blur(18px) saturate(135%);
+}
+#view-dashboard .dash-page-head::after{
+  content:"";position:absolute;width:245px;height:245px;right:-87px;top:-170px;pointer-events:none;
+  border:1px solid rgba(118,170,239,.27);border-radius:50%;
+  box-shadow:0 0 0 33px rgba(135,178,245,.047),0 0 0 74px rgba(135,178,245,.032);
+}
+#view-dashboard .dash-heading-main{display:flex;align-items:center;gap:16px;min-width:0;position:relative;z-index:1}
+#view-dashboard .dash-heading-copy{min-width:0}
+#view-dashboard .dash-hero-icon{
+  display:grid;place-items:center;flex-shrink:0;width:61px;height:61px;border-radius:18px;
+  color:#286CE0;background:linear-gradient(148deg,rgba(249,252,255,.96),rgba(202,224,255,.85));
+  border:1px solid rgba(102,154,233,.26);box-shadow:0 12px 25px -17px rgba(25,88,196,.45),inset 0 1px 0 rgba(255,255,255,.9);
+}
+#view-dashboard .dash-hero-icon svg{width:29px;height:29px}
+html[data-theme="dark"] #view-dashboard .dash-hero-icon{background:linear-gradient(150deg,rgba(50,79,120,.9),rgba(31,51,85,.9));color:#9CC2FF;border-color:rgba(129,167,240,.27)}
+#view-dashboard .dash-page-eyebrow{color:var(--accent);font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;margin-bottom:5px}
+#view-dashboard .dash-page-title{font-family:'Space Grotesk','Inter',sans-serif;font-size:30px;font-weight:800;letter-spacing:-.035em;line-height:1.12;color:var(--dash-glass-ink)}
+#view-dashboard .dash-page-sub{margin-top:6px;font-size:12px;line-height:1.45;color:var(--dash-glass-muted)}
+#view-dashboard .dash-admin-chip{position:relative;z-index:1;display:inline-flex;align-items:center;gap:7px;
+  background:var(--dash-glass-strong);border:1px solid var(--dash-glass-stroke);border-radius:999px;
+  color:var(--dash-glass-muted);padding:9px 13px;font-size:11px;font-weight:700;box-shadow:inset 0 1px 0 var(--dash-glass-line)}
+#view-dashboard .dash-chip-dot{width:7px;height:7px;border-radius:50%;background:#30B681;box-shadow:0 0 0 3px rgba(48,182,129,.13)}
+/* Existing, collapsible filtering remains intact; only its appearance changes. */
+#view-dashboard .dash-tools-shell{border-radius:20px;border:1px solid var(--dash-glass-stroke);
+  background:var(--dash-glass-panel);box-shadow:inset 0 1px 0 var(--dash-glass-line),var(--dash-glass-shadow);
+  backdrop-filter:blur(12px) saturate(130%);-webkit-backdrop-filter:blur(12px) saturate(130%);
+  margin-bottom:20px;overflow:hidden}
+#view-dashboard .dash-tools-toggle{padding:12px 18px;min-height:51px;color:var(--dash-glass-ink)}
+#view-dashboard .dash-tools-toggle-left{gap:10px}
+#view-dashboard .dash-tools-toggle-left>svg{width:20px;height:20px;color:var(--accent)}
+#view-dashboard .dash-tools-toggle strong{font-size:12.5px;font-weight:800;letter-spacing:-.01em}
+#view-dashboard .dash-filter-count{font-size:10px;background:color-mix(in srgb,var(--accent) 8%,var(--dash-glass-strong));padding:4px 9px;border:1px solid color-mix(in srgb,var(--accent) 14%,var(--dash-glass-stroke))}
+#view-dashboard .dash-tools-chevron{width:28px;height:28px;padding:6px;border-radius:9px;background:var(--dash-glass-strong);border:1px solid var(--dash-glass-stroke)}
+#view-dashboard .dash-tools-body{border-color:var(--dash-glass-stroke)}
+#view-dashboard .dash-filter-toolbar{padding:16px 17px 17px;gap:13px;align-items:end}
+#view-dashboard .dash-filter-grid{gap:10px;grid-template-columns:.9fr .9fr 1.14fr 1fr}
+#view-dashboard .dash-filter-field label{font-size:9.5px;margin:0 0 7px 3px;letter-spacing:.07em;font-weight:800;color:var(--dash-glass-muted)}
+#view-dashboard .dash-filter-field .fselect{height:42px;padding:7px 12px;border-radius:11px!important;
+  font-size:11.5px;background:var(--dash-glass-strong)!important;color:var(--dash-glass-ink)!important;
+  border:1px solid var(--dash-glass-stroke)!important;box-shadow:inset 0 1px 0 var(--dash-glass-line)!important}
+#view-dashboard .dash-filter-field .fselect:focus-visible,#view-dashboard .dash-trend-period-select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#view-dashboard .dash-filter-actions{gap:8px;align-items:end}
+#view-dashboard .dash-filter-secondary{gap:7px}
+#view-dashboard .dash-filter-actions .queue-btn{min-height:42px;border-radius:11px!important;font-size:11px;font-weight:750;
+  padding:8px 12px;transition:background .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease;
+  box-shadow:inset 0 1px 0 var(--dash-glass-line)!important}
+#view-dashboard .dash-filter-actions .filter-btn-excel,#view-dashboard .dash-filter-actions .filter-btn-pptx,#view-dashboard .dash-filter-actions .dash-recalc-btn{background:var(--dash-glass-strong)!important;color:var(--dash-glass-ink)!important;border:1px solid var(--dash-glass-stroke)!important}
+#view-dashboard .dash-filter-actions .queue-btn:hover{border-color:color-mix(in srgb,var(--accent) 40%,var(--dash-glass-stroke))!important;transform:translateY(-1px)!important}
+#view-dashboard .dash-filter-actions .filter-btn-apply{background:linear-gradient(155deg,#3B90F6 0%,#2872E1 60%,#1D59C7 100%)!important;color:#fff!important;border:1px solid rgba(31,85,181,.65)!important;padding-left:15px;padding-right:15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 7px 15px -10px rgba(30,101,213,.7)!important}
+/* A unified card design without changing data IDs or numerical content. */
+#view-dashboard .dash-card{
+  border-radius:22px!important;border:1px solid var(--dash-glass-stroke)!important;
+  background:var(--dash-glass-panel)!important;
+  box-shadow:inset 0 1px 0 var(--dash-glass-line),var(--dash-glass-shadow)!important;
+  backdrop-filter:blur(12px) saturate(120%)!important;-webkit-backdrop-filter:blur(12px) saturate(120%)!important;
+}
+#view-dashboard .dash-overview-head{margin:0 4px 11px;align-items:center}
+#view-dashboard .dash-section-title{font-size:17px;line-height:1.25;font-weight:800;letter-spacing:-.025em;color:var(--dash-glass-ink)}
+#view-dashboard .dash-section-sub{font-size:11px;line-height:1.38;color:var(--dash-glass-muted);margin-top:4px}
+#view-dashboard .dash-section-meta{font-size:10.5px;font-weight:650;color:var(--dash-glass-muted)}
+#view-dashboard .dash-kpi-grid{gap:14px;margin-bottom:16px}
+#view-dashboard .dash-kpi-card{
+  --dash-kpi-color:#219C78;position:relative;isolation:isolate;overflow:hidden;
+  min-height:144px;grid-template-columns:96px minmax(0,1fr);gap:15px;
+  padding:16px 17px!important;
+  background:radial-gradient(ellipse at 100% -45%,color-mix(in srgb,var(--dash-kpi-color) 12%,transparent),transparent 66%),var(--dash-glass-panel)!important;
+  transition:transform .19s ease,box-shadow .19s ease,border-color .19s ease;
+}
+#view-dashboard .dash-kpi-card:nth-child(1){--dash-kpi-color:#1D9E75}
+#view-dashboard .dash-kpi-card:nth-child(2){--dash-kpi-color:#378ADD}
+#view-dashboard .dash-kpi-card:nth-child(3){--dash-kpi-color:#DE713B}
+#view-dashboard .dash-kpi-card:nth-child(4){--dash-kpi-color:#8A63D2}
+#view-dashboard .dash-kpi-card::before{content:"";position:absolute;inset:0 auto 0 0;width:3px;background:var(--dash-kpi-color);opacity:.7}
+#view-dashboard .dash-kpi-card::after{content:"";position:absolute;z-index:-1;pointer-events:none;width:155px;height:155px;border-radius:50%;right:-65px;top:-95px;background:color-mix(in srgb,var(--dash-kpi-color) 8%,transparent)}
+#view-dashboard .dash-kpi-card:hover{transform:translateY(-3px);border-color:color-mix(in srgb,var(--dash-kpi-color) 29%,var(--dash-glass-stroke))!important;box-shadow:0 20px 32px -22px rgba(32,76,142,.35),inset 0 1px 0 var(--dash-glass-line)!important}
+#view-dashboard .dash-kpi-ring{position:relative;min-width:0}
+#view-dashboard .dash-kpi-ring svg{max-width:100%;height:auto;filter:drop-shadow(0 5px 9px rgba(60,76,124,.075))}
+#view-dashboard .dash-kpi-label{color:var(--dash-glass-ink);font-size:12.3px;font-weight:800;letter-spacing:-.01em}
+#view-dashboard .dash-kpi-note{color:var(--dash-glass-muted);font-size:10px;margin-top:5px}
+#view-dashboard .dash-kpi-trend-line{margin-top:10px;gap:6px}
+#view-dashboard .dash-trend-badge{border-radius:999px;font-size:10px;font-weight:800;min-height:24px;padding:5px 8px}
+#view-dashboard .dash-trend-badge.up{background:color-mix(in srgb,#24AB7D 15%,var(--dash-glass-strong));color:var(--green)}
+#view-dashboard .dash-trend-badge.down{background:color-mix(in srgb,#D9555E 12%,var(--dash-glass-strong));color:var(--red)}
+#view-dashboard .dash-trend-caption{font-size:9px;color:var(--dash-glass-muted);white-space:normal;line-height:1.25}
+/* Charts retain their own real series, category colors and SVG renderers. */
+#view-dashboard .dash-primary-grid{gap:15px;margin-bottom:16px}
+#view-dashboard .dash-primary-card{padding:22px 21px 20px!important;min-width:0;min-height:315px}
+#view-dashboard .dash-chart-head{gap:10px;margin-bottom:17px;align-items:center}
+#view-dashboard .dash-chart-title{font-size:16px;font-weight:800;letter-spacing:-.025em;color:var(--dash-glass-ink)}
+#view-dashboard .dash-chart-note{font-size:10px;color:var(--dash-glass-muted)}
+#view-dashboard .dash-trend-head-actions{gap:9px}
+#view-dashboard .dash-trend-period-select{height:36px;min-width:138px;max-width:162px;padding:6px 28px 6px 11px;border-radius:11px;font-size:11px;
+  background:var(--dash-glass-strong);border:1px solid var(--dash-glass-stroke);color:var(--dash-glass-ink);font-weight:750}
+#view-dashboard .dash-trend-period-meta{margin-top:5px;font-size:10px;color:var(--dash-glass-muted)}
+#view-dashboard #dashHeroTrendChart{min-width:0;margin-top:5px}
+#view-dashboard #dashHeroTrendChart svg{max-height:234px;width:100%}
+#view-dashboard #dashCategoryBreakdown{min-width:0}
+#view-dashboard .dash-category-bars{min-height:163px;height:163px;gap:9px;margin:18px 0 13px;border-bottom:1px solid color-mix(in srgb,var(--dash-glass-stroke) 70%,transparent);padding-bottom:2px}
+#view-dashboard .dash-category-bars .anim-bar-fill-vertical{box-shadow:inset 0 1px 0 rgba(255,255,255,.32),0 8px 15px -11px rgba(25,61,103,.34)!important;border-radius:7px 7px 3px 3px!important}
+#view-dashboard .dash-category-legend{gap:2px 0;margin-top:4px;line-height:1.35}
+#view-dashboard .dash-category-legend span{color:var(--dash-glass-muted)}
+/* Team summaries and leaderboard keep original permission gates. */
+#view-dashboard .dash-discipline-grid{gap:15px;margin-bottom:16px}
+#view-dashboard .dash-discipline-card{padding:20px 21px!important;min-width:0}
+#view-dashboard .dash-discipline-head{margin-bottom:15px;align-items:center}
+#view-dashboard .dash-discipline-icon{width:38px;height:38px;border-radius:13px;
+  background:color-mix(in srgb,var(--accent) 10%,var(--dash-glass-strong));color:var(--accent);
+  font-size:18px;border:1px solid color-mix(in srgb,var(--accent) 10%,var(--dash-glass-stroke));box-shadow:inset 0 1px 0 var(--dash-glass-line)}
+#view-dashboard .dash-rank-list{gap:7px}
+#view-dashboard .dash-rank-row{padding:7px 9px;min-height:35px;border-radius:11px;gap:9px;
+  transition:background .16s ease,color .16s ease}
+#view-dashboard .dash-rank-row:hover{background:color-mix(in srgb,var(--accent) 5%,var(--dash-glass-strong))}
+#view-dashboard .dash-rank-num{width:24px;height:24px;font-size:10px;background:color-mix(in srgb,var(--accent) 8%,var(--dash-glass-strong));color:var(--dash-glass-muted)}
+#view-dashboard .dash-rank-row:first-child .dash-rank-num{background:color-mix(in srgb,#E9B654 25%,var(--dash-glass-strong));color:#A36F13}
+#view-dashboard .dash-rank-name{color:var(--dash-glass-ink);font-size:11.5px;font-weight:750}
+#view-dashboard .dash-rank-category{color:var(--dash-glass-muted);font-size:10px}
+#view-dashboard .dash-rank-bar{height:7px;border-radius:999px;background:color-mix(in srgb,var(--accent) 6%,var(--dash-glass-strong))}
+#view-dashboard .dash-rank-score{font-size:10.5px;color:var(--dash-glass-muted)}
+#view-dashboard .dash-leaderboard-section{margin-bottom:16px}
+#view-dashboard .dash-leaderboard-head{margin:0 4px 11px}
+#view-dashboard .dash-lb-segment{border-radius:13px;border-color:var(--dash-glass-stroke);background:var(--dash-glass-panel);padding:4px}
+#view-dashboard .dash-lb-filter-btn{border-radius:9px;padding:8px 12px;font-weight:750;font-size:11px}
+#view-dashboard .dash-lb-filter-btn.active{background:linear-gradient(160deg,#3A90F5,#2967D6);color:#fff;box-shadow:0 5px 10px -6px rgba(38,100,209,.55)}
+#view-dashboard .dash-table-card{overflow-x:auto}
+#view-dashboard .dash-table-card table.data{border-collapse:separate;border-spacing:0}
+#view-dashboard .dash-table-card table.data th{font-size:9px;padding:14px 14px;background:color-mix(in srgb,var(--accent) 5%,var(--dash-glass-panel));color:var(--dash-glass-muted);border-bottom:1px solid var(--dash-glass-stroke)}
+#view-dashboard .dash-table-card table.data td{padding:12px 14px;font-size:11.5px;border-bottom:1px solid color-mix(in srgb,var(--dash-glass-stroke) 55%,transparent)}
+#view-dashboard .dash-table-card table.data tbody tr:hover{background:color-mix(in srgb,var(--accent) 5%,var(--dash-glass-strong))}
+#view-dashboard .dash-inspect-section{margin-top:10px}
+/* Tablet and phones: 2x2 KPIs, stacked charts and large touch areas. */
+@media(max-width:1190px){
+  #view-dashboard .dash-kpi-card{grid-template-columns:78px minmax(0,1fr);gap:9px;padding:13px 12px!important}
+  #view-dashboard .dash-filter-toolbar{grid-template-columns:1fr;gap:12px}
+  #view-dashboard .dash-filter-actions{justify-content:space-between}
+}
+@media (min-width:701px) and (max-width:1100px){
+  #view-dashboard::before{left:0;right:0}
+}
+@media(max-width:980px){
+  main:has(> #view-dashboard.active){padding:19px 17px 29px}
+  #view-dashboard .dash-page-head{padding:20px 21px;min-height:109px}
+  #view-dashboard .dash-page-title{font-size:26px}
+  #view-dashboard .dash-kpi-card{grid-template-columns:1fr;gap:7px;text-align:center;justify-items:center;min-height:154px}
+  #view-dashboard .dash-kpi-copy{text-align:center}
+  #view-dashboard .dash-kpi-trend-line{justify-content:center;margin-top:6px}
+  #view-dashboard .dash-primary-grid{grid-template-columns:1fr 1fr}
+  #view-dashboard .dash-primary-card{padding:17px!important;min-height:290px}
+  #view-dashboard .dash-discipline-card{padding:16px!important}
+}
+@media(max-width:700px){
+  main:has(> #view-dashboard.active){padding:13px 12px 25px}
+  #view-dashboard{padding:2px 0 10px}
+  #view-dashboard::before{inset:-20px -12px auto;height:700px}
+  #view-dashboard .dash-page-head{min-height:91px;align-items:center;border-radius:20px;padding:16px 15px;margin-bottom:11px;gap:8px}
+  #view-dashboard .dash-heading-main{gap:10px}
+  #view-dashboard .dash-hero-icon{width:41px;height:41px;border-radius:13px}
+  #view-dashboard .dash-hero-icon svg{width:20px;height:20px}
+  #view-dashboard .dash-page-eyebrow{font-size:8px;letter-spacing:.1em;margin-bottom:4px}
+  #view-dashboard .dash-page-title{font-size:clamp(19px,5.3vw,25px)}
+  #view-dashboard .dash-page-sub{font-size:10px;margin-top:4px}
+  #view-dashboard .dash-admin-chip{display:none}
+  #view-dashboard .dash-tools-shell{margin-bottom:13px;border-radius:17px}
+  #view-dashboard .dash-tools-toggle{min-height:48px;padding:10px 13px}
+  #view-dashboard .dash-filter-toolbar{padding:12px;gap:12px}
+  #view-dashboard .dash-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+  #view-dashboard .dash-filter-field label{font-size:9px}
+  #view-dashboard .dash-filter-field .fselect{height:42px;font-size:11px}
+  #view-dashboard .dash-filter-actions{display:grid;grid-template-columns:1fr;gap:8px}
+  #view-dashboard .dash-filter-secondary{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+  #view-dashboard .dash-filter-secondary .queue-btn{width:100%;min-height:40px}
+  #view-dashboard .dash-kpi-trigger-wrap{grid-column:1 / -1}
+  #view-dashboard .dash-kpi-trigger-wrap .queue-btn{width:100%}
+  #view-dashboard .dash-filter-actions .filter-btn-apply{min-height:43px;width:100%;order:-1}
+  #view-dashboard .dash-overview-head{margin:0 2px 9px}
+  #view-dashboard .dash-section-title{font-size:15px}
+  #view-dashboard .dash-section-sub{font-size:9.5px}
+  #view-dashboard .dash-section-meta{font-size:9px;text-align:right}
+  #view-dashboard .dash-kpi-grid{grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+  #view-dashboard .dash-kpi-card{min-height:153px;padding:12px 8px!important;grid-template-columns:1fr;gap:5px;justify-items:center;text-align:center;border-radius:18px!important}
+  #view-dashboard .dash-kpi-ring svg{width:65px;height:65px}
+  #view-dashboard .dash-kpi-copy{text-align:center}
+  #view-dashboard .dash-kpi-label{font-size:11px}
+  #view-dashboard .dash-kpi-note{font-size:9px;margin-top:3px}
+  #view-dashboard .dash-kpi-trend-line{justify-content:center;gap:4px;min-height:20px;margin-top:6px}
+  #view-dashboard .dash-trend-badge{font-size:9px;min-height:20px;padding:4px 6px}
+  #view-dashboard .dash-trend-caption{font-size:8px}
+  #view-dashboard .dash-primary-grid{grid-template-columns:1fr;gap:12px;margin-bottom:13px}
+  #view-dashboard .dash-primary-card{padding:14px!important;min-height:0;border-radius:19px!important}
+  #view-dashboard .dash-chart-head{margin-bottom:13px;gap:7px}
+  #view-dashboard .dash-chart-title{font-size:14px}
+  #view-dashboard .dash-trend-period-select{font-size:10px;min-width:112px;max-width:139px;height:33px;padding:4px 22px 4px 8px}
+  #view-dashboard .dash-chart-note{font-size:9px}
+  #view-dashboard #dashHeroTrendChart svg{max-height:none;width:100%}
+  #view-dashboard .dash-category-bars{height:122px;min-height:122px;margin:12px 0 11px;gap:5px}
+  #view-dashboard .dash-discipline-grid{grid-template-columns:1fr 1fr;gap:9px;margin-bottom:13px}
+  #view-dashboard .dash-discipline-card{padding:12px!important;border-radius:18px!important}
+  #view-dashboard .dash-discipline-icon{display:none}
+  #view-dashboard .dash-discipline-head{margin-bottom:9px}
+  #view-dashboard .dash-discipline-card .dash-section-title{font-size:11.5px}
+  #view-dashboard .dash-discipline-card .dash-section-sub{font-size:9px}
+  #view-dashboard .dash-rank-list{gap:3px}
+  #view-dashboard .dash-rank-row{grid-template-columns:17px minmax(0,1fr) minmax(42px,.65fr) 27px;gap:4px;min-height:27px;padding:3px 0}
+  #view-dashboard .dash-rank-num{width:17px;height:17px;font-size:8.5px}
+  #view-dashboard .dash-rank-name{font-size:9px}
+  #view-dashboard .dash-rank-category{display:none}
+  #view-dashboard .dash-rank-bar{height:5px}
+  #view-dashboard .dash-rank-score{font-size:8.5px}
+  #view-dashboard .dash-leaderboard-head{margin-bottom:9px}
+  #view-dashboard .dash-lb-segment{display:none}
+  #view-dashboard .dash-lb-mobile-filter{display:block;max-width:220px;width:100%}
+  #view-dashboard .dash-table-card table.data{min-width:650px}
+}
+@media(max-width:420px){
+  #view-dashboard .dash-discipline-grid{grid-template-columns:1fr}
+  #view-dashboard .dash-discipline-card{padding:15px!important}
+  #view-dashboard .dash-discipline-head{margin-bottom:11px}
+  #view-dashboard .dash-discipline-card .dash-section-title{font-size:13px}
+  #view-dashboard .dash-rank-row{grid-template-columns:20px minmax(0,1fr) minmax(62px,.8fr) 33px;min-height:32px;padding:5px 6px}
+  #view-dashboard .dash-rank-num{width:20px;height:20px;font-size:9px}
+  #view-dashboard .dash-rank-name{font-size:10.5px}
+  #view-dashboard .dash-rank-score{font-size:9.5px}
+}
+@media(max-width:360px){
+  #view-dashboard .dash-trend-head-actions{flex-wrap:wrap;justify-content:flex-start}
+  #view-dashboard .dash-chart-head:has(#dashTrendPeriodSelect){display:block}
+  #view-dashboard .dash-trend-head-actions{margin:9px 0 0}
+  #view-dashboard .dash-trend-caption{font-size:7.6px}
+}
+@media(prefers-reduced-motion:reduce){
+  #view-dashboard .dash-kpi-card,#view-dashboard .dash-filter-actions .queue-btn,#view-dashboard .dash-rank-row{transition:none!important;transform:none!important}
+}
+</style>
 </head>
 <body>
  
@@ -4785,11 +5063,15 @@ html[data-theme="dark"] #view-home::before{
   <!-- ============ DASHBOARD ============ -->
   <div class="view" id="view-dashboard">
     <div class="dash-page-head">
-      <div>
-        <div class="dash-page-title">Team Dashboard</div>
-        <div class="dash-page-sub">Org-wide activity · <span id="dashAsOf" class="mono">as of —</span></div>
+      <div class="dash-heading-main">
+        <div class="dash-hero-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 26V16h5v10M13.5 26V8h5v18M22 26V12h5v14"/><path d="M4 27.5h24"/></svg></div>
+        <div class="dash-heading-copy">
+          <div class="dash-page-eyebrow">R&amp;I Analytics</div>
+          <div class="dash-page-title">Team Dashboard</div>
+          <div class="dash-page-sub">Org-wide activity · <span id="dashAsOf" class="mono">as of —</span></div>
+        </div>
       </div>
-      <div class="dash-admin-chip">Analytics overview</div>
+      <div class="dash-admin-chip"><span class="dash-chip-dot" aria-hidden="true"></span>Analytics overview</div>
     </div>
 
     <div class="dash-tools-shell" id="dashToolsShell">
@@ -8151,6 +8433,7 @@ html[data-theme="dark"] #view-home::before{
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-24', summary:'Team Dashboard Liquid Glass visual refresh, matching the approved Home macOS/iOS aesthetic: frosted analytic header and collapsible filter toolbar, subtle KPI rings/cards, refined weekly and category chart panels, Mechanical/Electrical summaries and leaderboard, responsive 2x2 mobile KPIs and dark theme. All KPI computations, 3-month default trend window, charts, data, role visibility, exports, scoring, existing navigation, Home page and Supabase schema remain unchanged.' },
     { date:'2026-11-24', summary:'Home-only Liquid Glass visual refresh: premium macOS/iOS-inspired translucent welcome and trend panels, four existing-destination launchpad shortcuts, polished KPI and Today cards, lighter category tiles and Recent Activity feed, plus responsive desktop/mobile and dark/light styling. Existing Home search, task logging, dynamic values, chart computation, category navigation, permissions, exports, all other page styles and Supabase schema are unchanged.' },
     { date:'2026-11-17', summary:'Opening Announcement editor layout fix: keeps Repeat plus selected dates/months/interval/expiration in the left schedule column and Audience plus immediately visible role/user/discipline choices and popup frequency in the right column. Mobile stacks the columns. Existing field IDs, validation, permissions, scheduling, stored data and Supabase schema are unchanged.' },
     { date:'2026-11-17', summary:'Weekly Activity Trend now defaults to the last 3 rolling months rather than the entire history; a chart-only period selector offers 30 days, 3 months, 6 months or 12 months. Dashboard From/To filters override the chart selector. Empty calendar weeks appear as zero counts, and hover points show real weekly category counts and week ranges. Chart colors, curves, Dashboard KPI totals, 30-day comparisons, filters, scoring, exports, backup and Supabase schema remain unchanged.' },
