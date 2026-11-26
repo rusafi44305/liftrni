@@ -2899,6 +2899,10 @@
   #wlfPushDeviceArea .wlf-push-device-title{font-size:11px;font-weight:800;margin-bottom:6px}
   #wlfPushDeviceArea .wlf-push-device-actions{display:flex;flex-wrap:wrap;gap:6px}
   #wlfPushDeviceStatus{font-size:10px;line-height:1.45;color:var(--text-faint);margin-top:5px}
+  /* Disabled device push should not leave the large permission panel open. */
+  #notifPanel .wlf-push-settings-toggle{display:inline-flex;align-items:center;justify-content:center;width:28px;min-width:28px;height:28px;padding:5px;border-radius:8px;color:var(--text-dim)}
+  #notifPanel .wlf-push-settings-toggle svg{display:block;width:15px;height:15px}
+  #notifPanel .wlf-push-settings-toggle[aria-expanded="true"]{color:var(--accent);background:var(--surface-alt)}
   /* 2026-11-26: per-user notification cleanup — bell panel only. */
   #notifPanel .wlf-notif-header-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}
   #notifPanel .wlf-notif-header-action{font:600 10.5px Inter,sans-serif;padding:5px 7px;border:1px solid transparent;background:transparent;color:var(--accent);border-radius:7px;cursor:pointer;white-space:nowrap}
@@ -3931,6 +3935,7 @@
           <div class="wlf-notif-header-actions">
             <button type="button" class="wlf-notif-header-action" onclick="markAllNotificationsRead()" title="Mark all notifications as read">Mark all read</button>
             <button type="button" class="wlf-notif-header-action wlf-notif-clear" onclick="clearAllUserNotifications()" title="Hide your saved notifications on all your devices">Clear all</button>
+            <button type="button" id="wlfPushDeviceToggle" class="wlf-notif-header-action wlf-push-settings-toggle" onclick="toggleWlfPushDeviceSettings()" aria-label="Device push settings" aria-expanded="true" title="Device push settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.5V21h-4v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1-2.8-2.8.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3v-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1L7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.5 1h.1v4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
           </div>
         </div>
         <div id="wlfPushDeviceArea"><div class="wlf-push-device-title">Device notifications (optional)</div><div class="wlf-push-device-actions"><button type="button" class="wlf-push-button primary" onclick="enableWlfDevicePush()">Enable on this device</button><button type="button" class="wlf-push-button" onclick="disableWlfDevicePush()">Disable</button></div><div id="wlfPushDeviceStatus">Available after Superadmin completes push setup. iPhone: add this website to Home Screen first.</div></div>
@@ -7942,6 +7947,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-26', summary:'Device push opt-out now takes effect locally before waiting for Edge Function cleanup, retains the disabled preference and collapsed notification settings, and guards against automatic registration races. Desktop/mobile notification bell, existing SW, announcements and all other website pages are unchanged. No additional SQL.' },
     { date:'2026-11-26', summary:'Users can now hide individual regular and push notifications from their own bell and Clear all; dismissals persist across desktop/mobile via two additive per-user RLS tables. Existing campaign history, actual notifications, delivery audit, approvals, announcements, form flows, permissions, scoring, exports and service worker remain unchanged. New SQL required.' },
     { date:'2026-11-26', summary:'Push service worker compatibility: integrated Web Push handlers with the existing no-cache sw.js; registered one shared worker to preserve website installability and avoid same-scope registration conflicts. Device notification icon added. No SQL, announcement, Home, Dashboard, task, scoring, export or permission changes.' },
 
@@ -8276,6 +8282,29 @@
     else alert(message);
   }
   function wlfPushUiStatus(message){const el=document.getElementById('wlfPushDeviceStatus');if(el)el.textContent=message;}
+  // Per-device, persistent opt-out; no Supabase schema or other user's preferences changed.
+  const WLF_PUSH_DEVICE_OFF_KEY='wlf_push_device_off_v1';
+  let wlfPushSettingsVisibleOverride=null;
+  function wlfPushDeviceIsOff(){try{return localStorage.getItem(WLF_PUSH_DEVICE_OFF_KEY)==='1';}catch{return false;}}
+  function wlfPushStoreDeviceOff(off){try{if(off)localStorage.setItem(WLF_PUSH_DEVICE_OFF_KEY,'1');else localStorage.removeItem(WLF_PUSH_DEVICE_OFF_KEY);}catch(_){/* Local preferences can be blocked. */}}
+  function wlfPushSyncDeviceSettings(){
+    const area=document.getElementById('wlfPushDeviceArea');
+    const toggle=document.getElementById('wlfPushDeviceToggle');
+    if(!area)return;
+    const visible=wlfPushSettingsVisibleOverride===null?!wlfPushDeviceIsOff():wlfPushSettingsVisibleOverride;
+    area.style.display=visible?'':'none';
+    if(toggle){
+      toggle.setAttribute('aria-expanded',String(visible));
+      toggle.title=wlfPushDeviceIsOff()?'Device push off — open settings to enable':'Manage device notifications';
+    }
+  }
+  function toggleWlfPushDeviceSettings(){
+    const area=document.getElementById('wlfPushDeviceArea');
+    if(!area)return;
+    wlfPushSettingsVisibleOverride=area.style.display==='none';
+    wlfPushSyncDeviceSettings();
+    if(wlfPushDeviceIsOff()&&wlfPushSettingsVisibleOverride)wlfPushUiStatus('Device notifications are off on this browser. You can enable them again here.');
+  }
   function wlfPushBase64ToUint8Array(value){
     const pad='='.repeat((4-value.length%4)%4);const raw=atob((value+pad).replace(/-/g,'+').replace(/_/g,'/'));
     return Uint8Array.from(raw,c=>c.charCodeAt(0));
@@ -8305,6 +8334,7 @@
     return wlfPushRegistration;
   }
   async function initWlfPushForUser(){
+    wlfPushSyncDeviceSettings();
     if(!currentUser||currentProfile?.status!=='active')return;
     if(!wlfPushPollStarted){
       wlfPushPollStarted=true;
@@ -8316,11 +8346,18 @@
         }
       });
     }
+    if(wlfPushDeviceIsOff()){
+      wlfPushUiStatus('Device notifications are off on this browser. Use the settings icon to enable them again.');
+      return; // Never re-subscribe a device after the user has explicitly opted out.
+    }
     try{
       const cfg=await wlfPushFunction('config');
       if(!cfg?.ready)throw new Error('Server push keys have not yet been configured.');
+      // Disable may have been clicked while the server config request was in flight.
+      if(wlfPushDeviceIsOff())return;
       wlfPushPublicKey=cfg.public_key;
       const reg=await wlfPushGetRegistration();
+      if(wlfPushDeviceIsOff())return;
       const old=await reg.pushManager.getSubscription();
       if(old && Notification.permission==='granted'){
         await wlfPushFunction('subscribe',{subscription:old.toJSON()});
@@ -8342,20 +8379,43 @@
       let sub=await reg.pushManager.getSubscription();
       if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wlfPushBase64ToUint8Array(wlfPushPublicKey)});
       await wlfPushFunction('subscribe',{subscription:sub.toJSON()});
+      wlfPushStoreDeviceOff(false);
+      wlfPushSettingsVisibleOverride=true;
+      wlfPushSyncDeviceSettings();
       wlfPushUiStatus('Device push enabled on this browser.');
       wlfPushToast('Device notifications enabled.');
     }catch(e){wlfPushUiStatus(e.message);wlfPushToast(e.message,false);}
   }
   async function disableWlfDevicePush(silent=false){
     try{
-      if(!('serviceWorker' in navigator))return;
-      const reg=await navigator.serviceWorker.getRegistration('./');
-      const sub=reg?await reg.pushManager.getSubscription():null;
-      if(sub){
-        try{await wlfPushFunction('unsubscribe',{endpoint:sub.endpoint});}catch(e){if(!silent)throw e;}
-        await sub.unsubscribe();
+      let serverCleanupFailed=false;
+      let oldEndpoint='';
+      if('serviceWorker' in navigator){
+        const reg=await navigator.serviceWorker.getRegistration('./');
+        const sub=reg?.pushManager?await reg.pushManager.getSubscription():null;
+        if(sub){
+          // Stop delivery locally FIRST. A slow/offline Supabase request must not
+          // keep device push active or prevent the settings card from closing.
+          const removed=await sub.unsubscribe();
+          if(!removed)throw new Error('This browser could not turn off push. Please retry or block notifications in browser settings.');
+          oldEndpoint=sub.endpoint;
+        }
       }
-      if(!silent){wlfPushUiStatus('Device notifications disabled on this browser.');wlfPushToast('Device push disabled.');}
+      if(!silent){
+        wlfPushStoreDeviceOff(true);
+        wlfPushSettingsVisibleOverride=false;
+        wlfPushSyncDeviceSettings();
+        wlfPushUiStatus('Device notifications disabled on this browser.');
+        wlfPushToast('Device notifications disabled on this device.');
+      }
+      if(oldEndpoint){
+        // Cleanup is important, but the OS/browser subscription is already off.
+        try{await wlfPushFunction('unsubscribe',{endpoint:oldEndpoint});}
+        catch(_){serverCleanupFailed=true;}
+      }
+      if(serverCleanupFailed&&!silent){
+        wlfPushUiStatus('Device push is off here. Supabase could not remove the old endpoint; verify server connectivity later.');
+      }
     }catch(e){if(!silent)wlfPushToast(e.message,false);}
   }
   function wlfPushNavigate(view){
@@ -8566,6 +8626,7 @@
 
   // ============ NOTIFICATIONS ============
   function toggleNotifPanel(){
+    wlfPushSyncDeviceSettings();
     const panel = document.getElementById('notifPanel');
     const opening = panel.style.display === 'none';
     panel.style.display = opening ? 'block' : 'none';
