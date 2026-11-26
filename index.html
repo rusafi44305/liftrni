@@ -2911,14 +2911,17 @@
   .wlf-push-toast-close{border:0;color:var(--text-dim);background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:5px}
   .wlf-push-toast-close:hover{background:var(--surface-alt)}
   @media(max-width:600px){.wlf-push-toast{left:14px;right:14px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:none}.wlf-push-campaign-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.wlf-push-campaign-actions .wlf-push-button{display:flex;align-items:center;justify-content:center;min-height:38px;padding:8px 6px}}
-  #wlfPushDeviceArea{margin-bottom:7px;padding:9px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
-  #wlfPushDeviceArea .wlf-push-device-title{font-size:11px;font-weight:800;margin-bottom:6px}
-  #wlfPushDeviceArea .wlf-push-device-actions{display:flex;flex-wrap:wrap;gap:6px}
-  #wlfPushDeviceStatus{font-size:10px;line-height:1.45;color:var(--text-faint);margin-top:5px}
-  /* Disabled device push should not leave the large permission panel open. */
-  #notifPanel .wlf-push-settings-toggle{display:inline-flex;align-items:center;justify-content:center;width:28px;min-width:28px;height:28px;padding:5px;border-radius:8px;color:var(--text-dim)}
-  #notifPanel .wlf-push-settings-toggle svg{display:block;width:15px;height:15px}
-  #notifPanel .wlf-push-settings-toggle[aria-expanded="true"]{color:var(--accent);background:var(--surface-alt)}
+  /* 2026-11-26: single accessible, iOS-style device-push toggle (bell panel only). */
+  #wlfPushDeviceArea{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin-bottom:8px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
+  #wlfPushDeviceArea .wlf-push-device-title{min-width:0;font:750 11.5px/1.35 Inter,sans-serif;color:var(--text);letter-spacing:-.01em}
+  #wlfPushDeviceSwitch{position:relative;display:inline-flex;align-items:center;flex:0 0 46px;width:46px;height:28px;padding:3px;border:1px solid var(--border);border-radius:999px;background:color-mix(in srgb,var(--text-faint) 29%,var(--surface-alt));cursor:pointer;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease}
+  #wlfPushDeviceSwitch .wlf-push-switch-knob{display:block;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.22);transform:translateX(0);transition:transform .2s ease}
+  #wlfPushDeviceSwitch[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
+  #wlfPushDeviceSwitch[aria-checked="true"] .wlf-push-switch-knob{transform:translateX(18px)}
+  #wlfPushDeviceSwitch:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 40%,transparent);outline-offset:2px}
+  #wlfPushDeviceSwitch:disabled{cursor:progress;opacity:.65}
+  #wlfPushDeviceStatus{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+  @media(prefers-reduced-motion:reduce){#wlfPushDeviceSwitch,#wlfPushDeviceSwitch .wlf-push-switch-knob{transition:none}}
   /* 2026-11-26: per-user notification cleanup — bell panel only. */
   #notifPanel .wlf-notif-header-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}
   #notifPanel .wlf-notif-header-action{font:600 10.5px Inter,sans-serif;padding:5px 7px;border:1px solid transparent;background:transparent;color:var(--accent);border-radius:7px;cursor:pointer;white-space:nowrap}
@@ -4052,10 +4055,13 @@
           <div class="wlf-notif-header-actions">
             <button type="button" class="wlf-notif-header-action" onclick="markAllNotificationsRead()" title="Mark all notifications as read">Mark all read</button>
             <button type="button" class="wlf-notif-header-action wlf-notif-clear" onclick="clearAllUserNotifications()" title="Hide your saved notifications on all your devices">Clear all</button>
-            <button type="button" id="wlfPushDeviceToggle" class="wlf-notif-header-action wlf-push-settings-toggle" onclick="toggleWlfPushDeviceSettings()" aria-label="Device push settings" aria-expanded="true" title="Device push settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.5V21h-4v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1-2.8-2.8.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.5-1H3v-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1L7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.5V3h4v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.5 1h.1v4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
           </div>
         </div>
-        <div id="wlfPushDeviceArea"><div class="wlf-push-device-title">Device notifications (optional)</div><div class="wlf-push-device-actions"><button type="button" class="wlf-push-button primary" onclick="enableWlfDevicePush()">Enable on this device</button><button type="button" class="wlf-push-button" onclick="disableWlfDevicePush()">Disable</button></div><div id="wlfPushDeviceStatus">Available after Superadmin completes push setup. iPhone: add this website to Home Screen first.</div></div>
+        <div id="wlfPushDeviceArea">
+          <span class="wlf-push-device-title" id="wlfPushDeviceLabel">Device notifications</span>
+          <button type="button" id="wlfPushDeviceSwitch" role="switch" aria-checked="false" aria-labelledby="wlfPushDeviceLabel" aria-label="Enable device notifications" onclick="toggleWlfDevicePushSwitch()" title="Enable device notifications"><span class="wlf-push-switch-knob" aria-hidden="true"></span></button>
+          <span id="wlfPushDeviceStatus" role="status" aria-live="polite"></span>
+        </div>
         <div id="notifList"><div class="placeholder-note" style="font-size:12px;">Loading…</div></div>
       </div>
     </div>
@@ -8064,6 +8070,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-26', summary:'Simplified device push controls in the notification bell to a single accessible iOS-style on/off switch. Removed the redundant enabled-on-this-browser caption, separate Enable/Disable buttons and extra settings gear. Switch reflects successful subscription registration and preserves per-device opt-out; existing push authorization, Supabase tables, scheduling, service worker, notifications and all other application sections remain unchanged. HTML-only.' },
     { date:'2026-11-26', summary:'Superadmin Push Notification campaigns now have a visible Delete action for every schedule, including recurring schedules that have already sent. Delete is an auditable soft archive that atomically disables future occurrences and retains past recipient deliveries; uses new additive SQL. Campaign editing and Pause/Resume now update the list in place without full form/profile reloads, with optimistic feedback and rollback on failure. Routine push notices use a non-blocking toast; no change to opening announcements, task data, scoring, exports, service worker or Edge Function.' },
     { date:'2026-11-26', summary:'Visual-only Admin refinement: replaced Push Notification first-delivery and repeat-until native calendar popups with a polished responsive Bangladesh-time date/time dialog, explicit Cancel, Clear (optional end date) and Apply buttons, plus premium vector expand/collapse chevrons and refined icon treatment. Original datetime-local IDs and submitted values, campaign schedules, announcements, Supabase schema, RLS, data, exports, scoring and service worker remain unchanged. No SQL required.' },
     { date:'2026-11-26', summary:'Device push opt-out now takes effect locally before waiting for Edge Function cleanup, retains the disabled preference and collapsed notification settings, and guards against automatic registration races. Desktop/mobile notification bell, existing SW, announcements and all other website pages are unchanged. No additional SQL.' },
@@ -8419,26 +8426,34 @@
   function wlfPushUiStatus(message){const el=document.getElementById('wlfPushDeviceStatus');if(el)el.textContent=message;}
   // Per-device, persistent opt-out; no Supabase schema or other user's preferences changed.
   const WLF_PUSH_DEVICE_OFF_KEY='wlf_push_device_off_v1';
-  let wlfPushSettingsVisibleOverride=null;
+  // A switch must represent an active browser subscription registered with the push service,
+  // not merely the absence of the user's persistent opt-out preference.
+  let wlfPushDeviceConfirmed=false;
+  let wlfPushDeviceBusy=false;
   function wlfPushDeviceIsOff(){try{return localStorage.getItem(WLF_PUSH_DEVICE_OFF_KEY)==='1';}catch{return false;}}
   function wlfPushStoreDeviceOff(off){try{if(off)localStorage.setItem(WLF_PUSH_DEVICE_OFF_KEY,'1');else localStorage.removeItem(WLF_PUSH_DEVICE_OFF_KEY);}catch(_){/* Local preferences can be blocked. */}}
   function wlfPushSyncDeviceSettings(){
-    const area=document.getElementById('wlfPushDeviceArea');
-    const toggle=document.getElementById('wlfPushDeviceToggle');
-    if(!area)return;
-    const visible=wlfPushSettingsVisibleOverride===null?!wlfPushDeviceIsOff():wlfPushSettingsVisibleOverride;
-    area.style.display=visible?'':'none';
-    if(toggle){
-      toggle.setAttribute('aria-expanded',String(visible));
-      toggle.title=wlfPushDeviceIsOff()?'Device push off — open settings to enable':'Manage device notifications';
-    }
+    const control=document.getElementById('wlfPushDeviceSwitch');
+    if(!control)return;
+    const enabled=wlfPushDeviceConfirmed&&!wlfPushDeviceIsOff()&&('Notification' in window)&&Notification.permission==='granted';
+    control.setAttribute('aria-checked',String(enabled));
+    control.setAttribute('aria-label',enabled?'Disable device notifications':'Enable device notifications');
+    control.title=enabled?'Disable device notifications':'Enable device notifications';
+    control.disabled=wlfPushDeviceBusy;
+    control.setAttribute('aria-busy',String(wlfPushDeviceBusy));
   }
-  function toggleWlfPushDeviceSettings(){
-    const area=document.getElementById('wlfPushDeviceArea');
-    if(!area)return;
-    wlfPushSettingsVisibleOverride=area.style.display==='none';
+  async function toggleWlfDevicePushSwitch(){
+    if(wlfPushDeviceBusy)return;
+    const turnOff=wlfPushDeviceConfirmed&&!wlfPushDeviceIsOff();
+    wlfPushDeviceBusy=true;
     wlfPushSyncDeviceSettings();
-    if(wlfPushDeviceIsOff()&&wlfPushSettingsVisibleOverride)wlfPushUiStatus('Device notifications are off on this browser. You can enable them again here.');
+    try{
+      if(turnOff)await disableWlfDevicePush();
+      else await enableWlfDevicePush();
+    }finally{
+      wlfPushDeviceBusy=false;
+      wlfPushSyncDeviceSettings();
+    }
   }
   function wlfPushBase64ToUint8Array(value){
     const pad='='.repeat((4-value.length%4)%4);const raw=atob((value+pad).replace(/-/g,'+').replace(/_/g,'/'));
@@ -8469,6 +8484,7 @@
     return wlfPushRegistration;
   }
   async function initWlfPushForUser(){
+    wlfPushDeviceConfirmed=false;
     wlfPushSyncDeviceSettings();
     if(!currentUser||currentProfile?.status!=='active')return;
     if(!wlfPushPollStarted){
@@ -8496,10 +8512,14 @@
       const old=await reg.pushManager.getSubscription();
       if(old && Notification.permission==='granted'){
         await wlfPushFunction('subscribe',{subscription:old.toJSON()});
-        wlfPushUiStatus('Device notifications enabled on this browser.');
-      } else wlfPushUiStatus(Notification.permission==='denied'?'Blocked in browser settings.':'Device notifications are optional.');
+        wlfPushDeviceConfirmed=true;
+        wlfPushSyncDeviceSettings();
+      } else {
+        wlfPushDeviceConfirmed=false;
+        wlfPushSyncDeviceSettings();
+      }
       wlfPushSetupError='';
-    }catch(e){wlfPushSetupError=e.message;wlfPushUiStatus('Device push unavailable: '+e.message);}
+    }catch(e){wlfPushSetupError=e.message;wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();wlfPushUiStatus('Device push unavailable: '+e.message);}
   }
   async function enableWlfDevicePush(){
     // Permission prompt is initiated DIRECTLY by this user-click handler (iOS requirement).
@@ -8515,11 +8535,12 @@
       if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wlfPushBase64ToUint8Array(wlfPushPublicKey)});
       await wlfPushFunction('subscribe',{subscription:sub.toJSON()});
       wlfPushStoreDeviceOff(false);
-      wlfPushSettingsVisibleOverride=true;
+      wlfPushDeviceConfirmed=true;
       wlfPushSyncDeviceSettings();
-      wlfPushUiStatus('Device push enabled on this browser.');
+      wlfPushUiStatus('Device notifications enabled.');
       wlfPushToast('Device notifications enabled.');
-    }catch(e){wlfPushUiStatus(e.message);wlfPushToast(e.message,false);}
+      return true;
+    }catch(e){wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();wlfPushUiStatus(e.message);wlfPushToast(e.message,false);return false;}
   }
   async function disableWlfDevicePush(silent=false){
     try{
@@ -8536,13 +8557,13 @@
           oldEndpoint=sub.endpoint;
         }
       }
+      wlfPushDeviceConfirmed=false;
       if(!silent){
         wlfPushStoreDeviceOff(true);
-        wlfPushSettingsVisibleOverride=false;
-        wlfPushSyncDeviceSettings();
-        wlfPushUiStatus('Device notifications disabled on this browser.');
+        wlfPushUiStatus('Device notifications disabled.');
         wlfPushToast('Device notifications disabled on this device.');
       }
+      wlfPushSyncDeviceSettings();
       if(oldEndpoint){
         // Cleanup is important, but the OS/browser subscription is already off.
         try{await wlfPushFunction('unsubscribe',{endpoint:oldEndpoint});}
@@ -8551,7 +8572,8 @@
       if(serverCleanupFailed&&!silent){
         wlfPushUiStatus('Device push is off here. Supabase could not remove the old endpoint; verify server connectivity later.');
       }
-    }catch(e){if(!silent)wlfPushToast(e.message,false);}
+      return true;
+    }catch(e){wlfPushSyncDeviceSettings();if(!silent)wlfPushToast(e.message,false);return false;}
   }
   function wlfPushNavigate(view){
     const v=WLF_PUSH_VIEWS.has(view)?view:'home';
