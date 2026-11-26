@@ -3545,6 +3545,107 @@
   }
 </style>
 
+
+<style id="wlf-premium-notification-controls">
+/* 2026-11-26 – Visual-only: polished admin management controls and confirmed
+   Push Notification Bangladesh date/time picker. No scheduling/backend changes. */
+#view-admin .admin-accordion-item > .admin-tool-card{gap:12px;min-height:64px}
+#view-admin .admin-accordion-item .admin-tool-arrow{
+  display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;
+  border-radius:12px;border:1px solid color-mix(in srgb,var(--border) 88%,var(--accent));
+  background:linear-gradient(160deg,color-mix(in srgb,var(--surface) 93%,#fff),var(--surface-alt));
+  box-shadow:0 2px 5px rgba(15,23,42,.055),inset 0 1px 0 rgba(255,255,255,.28);
+  color:var(--text-dim);font-size:0;transform:none;
+  transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,color .18s ease;
+}
+#view-admin .admin-accordion-item .admin-tool-arrow svg{
+  width:19px;height:19px;display:block;stroke:currentColor;
+  transition:transform .22s cubic-bezier(.2,.7,.2,1);
+}
+#view-admin .admin-accordion-item.open .admin-tool-arrow{
+  transform:none;color:var(--accent);background:var(--accent-dim);
+  border-color:color-mix(in srgb,var(--accent) 40%,var(--border));
+  box-shadow:0 2px 8px color-mix(in srgb,var(--accent) 12%,transparent),inset 0 1px 0 rgba(255,255,255,.2)
+}
+#view-admin .admin-accordion-item.open .admin-tool-arrow svg{transform:rotate(180deg)}
+#view-admin .admin-accordion-item > .admin-tool-card:hover .admin-tool-arrow,
+#view-admin .admin-accordion-item > .admin-tool-card:focus-visible .admin-tool-arrow{
+  color:var(--accent);border-color:color-mix(in srgb,var(--accent) 54%,var(--border));
+  box-shadow:0 3px 11px color-mix(in srgb,var(--accent) 13%,transparent)
+}
+#view-admin .admin-accordion-item .admin-tool-icon{border-radius:13px;box-shadow:inset 0 1px 0 rgba(255,255,255,.34)}
+#view-admin .admin-accordion-item .admin-tool-icon svg{width:19px;height:19px;stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+#view-admin .admin-accordion-item .admin-tool-name{font-size:13px;letter-spacing:-.012em}
+#view-admin .admin-accordion-item .admin-tool-desc{line-height:1.4}
+/* Hide the underlying compatible datetime-local values, not the data or IDs. */
+.wlf-push-dt-field{position:relative}
+.wlf-push-dt-field > input.wlf-push-dt-source{position:absolute!important;width:1px!important;height:1px!important;overflow:hidden!important;clip-path:inset(50%)!important;opacity:0!important;pointer-events:none!important;padding:0!important;border:0!important}
+.wlf-push-dt-trigger{
+  width:100%;min-height:43px;display:flex;align-items:center;gap:10px;text-align:left;
+  border:1px solid var(--border);border-radius:11px;
+  background:linear-gradient(160deg,var(--surface),color-mix(in srgb,var(--surface-alt) 44%,var(--surface)));
+  color:var(--text);padding:9px 11px;cursor:pointer;font:600 12px Inter,system-ui,sans-serif;
+  box-shadow:0 2px 7px rgba(15,23,42,.035),inset 0 1px 0 rgba(255,255,255,.15);
+  transition:border-color .16s,box-shadow .16s,background .16s;
+}
+.wlf-push-dt-trigger:hover{border-color:color-mix(in srgb,var(--accent) 48%,var(--border));box-shadow:0 3px 12px rgba(15,23,42,.07)}
+.wlf-push-dt-trigger:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wlf-push-dt-trigger .wlf-push-dt-ico{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;border-radius:8px;color:var(--accent);background:var(--accent-dim)}
+.wlf-push-dt-trigger svg{width:16px;height:16px;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.wlf-push-dt-trigger .wlf-push-dt-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wlf-push-dt-trigger .wlf-push-dt-caret{color:var(--text-faint);flex:0 0 auto}
+.wlf-push-dt-trigger.is-empty .wlf-push-dt-text{color:var(--text-faint);font-weight:500}
+/* Picker is portaled to the document body, avoiding clipping by Admin accordions. */
+.wlf-dtp-backdrop{position:fixed;inset:0;z-index:39000;display:flex;align-items:center;justify-content:center;
+  padding:20px;background:rgba(13,20,38,.46);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.wlf-dtp-backdrop[hidden]{display:none!important}
+.wlf-dtp-dialog{width:min(610px,100%);max-height:calc(100dvh - 36px);overflow:auto;
+  background:var(--surface);color:var(--text);border:1px solid color-mix(in srgb,var(--border) 80%,transparent);
+  border-radius:20px;box-shadow:0 28px 78px rgba(5,14,36,.25),0 5px 18px rgba(5,14,36,.1)}
+.wlf-dtp-dialog *{box-sizing:border-box}
+.wlf-dtp-head{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:19px 22px 15px;border-bottom:1px solid var(--border)}
+.wlf-dtp-eyebrow{font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.wlf-dtp-title{font:700 20px 'Space Grotesk',Inter,system-ui,sans-serif;letter-spacing:-.035em;color:var(--text);margin:4px 0 2px}
+.wlf-dtp-sub{font:500 11px Inter,system-ui,sans-serif;color:var(--text-faint);line-height:1.5}
+.wlf-dtp-close,.wlf-dtp-iconbtn{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;border:1px solid var(--border);border-radius:11px;background:var(--surface-alt);color:var(--text-dim);cursor:pointer}
+.wlf-dtp-close:hover,.wlf-dtp-iconbtn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+.wlf-dtp-close svg,.wlf-dtp-iconbtn svg{width:17px;height:17px;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.wlf-dtp-main{display:grid;grid-template-columns:minmax(0,1fr) 200px;gap:0}
+.wlf-dtp-cal{padding:17px 19px 22px;min-width:0}
+.wlf-dtp-monthbar{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:13px}
+.wlf-dtp-monthname{font:750 14px Inter,system-ui,sans-serif;color:var(--text);letter-spacing:-.01em}
+.wlf-dtp-monthactions{display:flex;gap:5px}
+.wlf-dtp-weekhead,.wlf-dtp-daygrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.wlf-dtp-weekhead{font:700 10px Inter,system-ui,sans-serif;color:var(--text-faint);margin-bottom:7px}
+.wlf-dtp-weekhead span{padding:5px 0}
+.wlf-dtp-daygrid button,.wlf-dtp-daygrid .wlf-dtp-blank{display:grid;place-items:center;min-width:0;min-height:34px;border-radius:9px;font:650 12px Inter,system-ui,sans-serif}
+.wlf-dtp-daygrid button{border:1px solid transparent;color:var(--text-dim);background:transparent;cursor:pointer}
+.wlf-dtp-daygrid button:hover{background:var(--surface-alt);border-color:var(--border)}
+.wlf-dtp-daygrid button.is-today:not(.selected){border-color:color-mix(in srgb,var(--accent) 30%,var(--border));color:var(--accent)}
+.wlf-dtp-daygrid button.selected{color:#fff;background:var(--accent);border-color:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 23%,transparent)}
+.wlf-dtp-today{border:0;background:none;color:var(--accent);font:700 11px Inter,system-ui,sans-serif;cursor:pointer;padding:8px 3px 0}
+.wlf-dtp-time{padding:19px 16px;border-left:1px solid var(--border);background:color-mix(in srgb,var(--surface-alt) 40%,var(--surface))}
+.wlf-dtp-timeheading{font:800 10px Inter,system-ui,sans-serif;color:var(--text-faint);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px}
+.wlf-dtp-clock{display:flex;align-items:center;gap:7px;margin-bottom:12px}
+.wlf-dtp-clock label{flex:1;min-width:0;display:block}
+.wlf-dtp-clock label span{display:block;margin-bottom:5px;font:650 10px Inter,system-ui,sans-serif;color:var(--text-faint)}
+.wlf-dtp-clock select{width:100%;height:40px;min-width:0;padding:0 4px;border:1px solid var(--border);border-radius:10px;background:var(--surface);color:var(--text);text-align:center;font:700 13px Inter,system-ui,sans-serif;cursor:pointer}
+.wlf-dtp-separator{margin-top:19px;font-weight:800;color:var(--text-faint)}
+.wlf-dtp-meridiem{display:flex;gap:4px;background:var(--surface);padding:4px;border:1px solid var(--border);border-radius:11px}
+.wlf-dtp-meridiem button{flex:1;border:0;border-radius:8px;background:transparent;color:var(--text-faint);padding:9px 2px;font:800 11px Inter,system-ui,sans-serif;cursor:pointer}
+.wlf-dtp-meridiem button.active{color:var(--accent);background:var(--accent-dim)}
+.wlf-dtp-preview{margin-top:17px;padding:11px;border:1px solid var(--border);border-radius:11px;background:var(--surface);font:650 11px Inter,system-ui,sans-serif;line-height:1.5}
+.wlf-dtp-preview small{display:block;font-size:10px;font-weight:550;color:var(--text-faint);margin-bottom:3px}
+.wlf-dtp-foot{border-top:1px solid var(--border);padding:13px 20px;display:flex;align-items:center;gap:8px;justify-content:flex-end}
+.wlf-dtp-action{border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:10px;min-height:37px;padding:8px 14px;font:700 12px Inter,system-ui,sans-serif;cursor:pointer}
+.wlf-dtp-action:hover{background:var(--surface-alt)}
+.wlf-dtp-action.primary{border-color:var(--accent);background:var(--accent);color:white;box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 16%,transparent)}
+.wlf-dtp-action.clear{margin-right:auto;color:var(--text-faint);background:transparent;border-color:transparent}
+.wlf-dtp-error{font:650 11px Inter,system-ui,sans-serif;color:var(--red);padding:0 20px 12px;min-height:0;line-height:1.5}
+@media(max-width:620px){.wlf-dtp-backdrop{align-items:center;padding:10px}.wlf-dtp-dialog{max-height:calc(100dvh - 20px);border-radius:18px}.wlf-dtp-head{padding:15px 16px 13px}.wlf-dtp-main{grid-template-columns:1fr}.wlf-dtp-cal{padding:12px 16px 14px}.wlf-dtp-time{border-left:0;border-top:1px solid var(--border);padding:12px 16px}.wlf-dtp-clock{max-width:250px;margin-bottom:10px}.wlf-dtp-timeheading{margin-bottom:6px}.wlf-dtp-preview{margin-top:10px;padding:9px}.wlf-dtp-foot{padding:11px 15px}.wlf-dtp-daygrid button,.wlf-dtp-daygrid .wlf-dtp-blank{min-height:32px}.wlf-dtp-title{font-size:18px}}
+@media(max-width:350px){.wlf-dtp-daygrid,.wlf-dtp-weekhead{gap:2px}.wlf-dtp-cal{padding:10px}.wlf-dtp-foot{gap:5px}.wlf-dtp-action{padding:8px 11px}}
+@media(prefers-reduced-motion:reduce){#view-admin .admin-accordion-item .admin-tool-arrow svg,.wlf-push-dt-trigger{transition:none}}
+</style>
 </head>
 <body>
  
@@ -7947,6 +8048,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-26', summary:'Visual-only Admin refinement: replaced Push Notification first-delivery and repeat-until native calendar popups with a polished responsive Bangladesh-time date/time dialog, explicit Cancel, Clear (optional end date) and Apply buttons, plus premium vector expand/collapse chevrons and refined icon treatment. Original datetime-local IDs and submitted values, campaign schedules, announcements, Supabase schema, RLS, data, exports, scoring and service worker remain unchanged. No SQL required.' },
     { date:'2026-11-26', summary:'Device push opt-out now takes effect locally before waiting for Edge Function cleanup, retains the disabled preference and collapsed notification settings, and guards against automatic registration races. Desktop/mobile notification bell, existing SW, announcements and all other website pages are unchanged. No additional SQL.' },
     { date:'2026-11-26', summary:'Users can now hide individual regular and push notifications from their own bell and Clear all; dismissals persist across desktop/mobile via two additive per-user RLS tables. Existing campaign history, actual notifications, delivery audit, approvals, announcements, form flows, permissions, scoring, exports and service worker remain unchanged. New SQL required.' },
     { date:'2026-11-26', summary:'Push service worker compatibility: integrated Web Push handlers with the existing no-cache sw.js; registered one shared worker to preserve website installability and avoid same-scope registration conflicts. Device notification icon added. No SQL, announcement, Home, Dashboard, task, scoring, export or permission changes.' },
@@ -8442,6 +8544,149 @@
     if(Number.isNaN(valueDate.getTime()))throw new Error('Invalid date/time.');
     return valueDate.toISOString();
   }
+
+  // 2026-11-26: Premium, explicitly confirmed Push Notification date/time picker.
+  // The two existing datetime-local values are the single source of truth, so
+  // saved UTC conversions, existing campaign edits and SQL are unchanged.
+  let wlfPushDtDraft=null;
+  let wlfPushDtLastTrigger=null;
+  const WLF_PUSH_DT_MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const WLF_PUSH_DT_CHEVRON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>';
+  function wlfPushParseLocalTime(value){
+    const m=/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/.exec(String(value||''));
+    if(!m)return null;
+    const y=+m[1],month=+m[2],day=+m[3],hour=+m[4],minute=+m[5];
+    if(y<1900||y>2100||month<1||month>12||day<1||day>new Date(Date.UTC(y,month,0)).getUTCDate()||hour>23||minute>59)return null;
+    return {y,month:month-1,day,hour,minute};
+  }
+  function wlfPushLocalTimeDisplay(value){
+    const d=wlfPushParseLocalTime(value);if(!d)return '';
+    const h=d.hour%12||12;
+    return `${String(d.day).padStart(2,'0')} ${WLF_PUSH_DT_MONTHS[d.month].slice(0,3)} ${d.y} · ${String(h).padStart(2,'0')}:${String(d.minute).padStart(2,'0')} ${d.hour<12?'AM':'PM'}`;
+  }
+  function wlfPushSyncDateTimeFields(){
+    [['wlfPushStartsAt','Select date and time'],['wlfPushEndsAt','No end date — optional']].forEach(([id,placeholder])=>{
+      const input=document.getElementById(id),display=document.getElementById(id+'Text'),trigger=document.getElementById(id+'Trigger');
+      if(!input||!display||!trigger)return;
+      const value=wlfPushLocalTimeDisplay(input.value);
+      display.textContent=value||placeholder;
+      trigger.classList.toggle('is-empty',!value);
+    });
+  }
+  function wlfPushDtLocalNow(){return wlfPushParseLocalTime(wlfPushDhakaLocal(new Date()))}
+  function wlfPushDtCurrentValue(){
+    const d=wlfPushDtDraft;
+    if(!d)return '';
+    const hr=d.hour12%12+(d.period==='PM'?12:0);
+    return `${d.y}-${String(d.month+1).padStart(2,'0')}-${String(d.day).padStart(2,'0')}T${String(hr).padStart(2,'0')}:${String(d.minute).padStart(2,'0')}`;
+  }
+  function wlfPushDtEnsureOverlay(){
+    let el=document.getElementById('wlfPushDtOverlay');if(el)return el;
+    el=document.createElement('div');
+    el.id='wlfPushDtOverlay';el.className='wlf-dtp-backdrop';
+    el.addEventListener('click',e=>{if(e.target===el)wlfPushCloseDateTime()});
+    el.innerHTML=`<div class="wlf-dtp-dialog" role="dialog" aria-modal="true" aria-labelledby="wlfPushDtHeading" tabindex="-1">
+      <header class="wlf-dtp-head"><div><div class="wlf-dtp-eyebrow">Walton Lift R&I · Scheduling</div><h3 class="wlf-dtp-title" id="wlfPushDtHeading">Choose delivery time</h3><p class="wlf-dtp-sub">Bangladesh Standard Time · UTC +06:00</p></div><button type="button" class="wlf-dtp-close" aria-label="Close date and time picker" onclick="wlfPushCloseDateTime()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 6 6 18M6 6l12 12"/></svg></button></header>
+      <div class="wlf-dtp-main"><section class="wlf-dtp-cal" aria-label="Calendar"><div class="wlf-dtp-monthbar"><div class="wlf-dtp-monthname" id="wlfPushDtMonthLabel"></div><div class="wlf-dtp-monthactions"><button type="button" class="wlf-dtp-iconbtn" onclick="wlfPushDtChangeMonth(-1)" aria-label="Previous month">${WLF_PUSH_DT_CHEVRON}</button><button type="button" class="wlf-dtp-iconbtn" onclick="wlfPushDtChangeMonth(1)" aria-label="Next month"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 6 6 6-6 6"/></svg></button></div></div><div class="wlf-dtp-weekhead" aria-hidden="true">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(day=>`<span>${day}</span>`).join('')}</div><div class="wlf-dtp-daygrid" id="wlfPushDtDays"></div><button type="button" class="wlf-dtp-today" onclick="wlfPushDtToday()">Today</button></section>
+      <section class="wlf-dtp-time" aria-label="Time"><div class="wlf-dtp-timeheading">Delivery time</div><div class="wlf-dtp-clock"><label><span>Hour</span><select id="wlfPushDtHour" onchange="wlfPushDtSetTime()" aria-label="Hour">${Array.from({length:12},(_,i)=>`<option value="${i+1}">${String(i+1).padStart(2,'0')}</option>`).join('')}</select></label><strong class="wlf-dtp-separator">:</strong><label><span>Minute</span><select id="wlfPushDtMinute" onchange="wlfPushDtSetTime()" aria-label="Minute">${Array.from({length:60},(_,i)=>`<option value="${i}">${String(i).padStart(2,'0')}</option>`).join('')}</select></label></div><div class="wlf-dtp-meridiem" role="group" aria-label="AM or PM"><button id="wlfPushDtAM" type="button" onclick="wlfPushDtSetPeriod('AM')">AM</button><button id="wlfPushDtPM" type="button" onclick="wlfPushDtSetPeriod('PM')">PM</button></div><div class="wlf-dtp-preview"><small>Selected</small><span id="wlfPushDtPreview"></span></div></section></div>
+      <div class="wlf-dtp-error" id="wlfPushDtError" role="alert" hidden></div>
+      <footer class="wlf-dtp-foot"><button type="button" class="wlf-dtp-action clear" id="wlfPushDtClear" onclick="wlfPushDtClear()">Clear</button><button type="button" class="wlf-dtp-action" onclick="wlfPushCloseDateTime()">Cancel</button><button type="button" class="wlf-dtp-action primary" id="wlfPushDtApply" onclick="wlfPushDtApply()">Apply date & time</button></footer></div>`;
+    document.body.appendChild(el);return el;
+  }
+  function wlfPushOpenDateTime(inputId){
+    if(!['wlfPushStartsAt','wlfPushEndsAt'].includes(inputId))return;
+    const input=document.getElementById(inputId);if(!input)return;
+    const current=wlfPushParseLocalTime(input.value);
+    // For an unset optional end date, begin from the selected start date.
+    const initial=current||wlfPushParseLocalTime(document.getElementById('wlfPushStartsAt')?.value)||wlfPushDtLocalNow();
+    wlfPushDtDraft={id:inputId,y:initial.y,month:initial.month,day:initial.day,hour12:initial.hour%12||12,minute:initial.minute,period:initial.hour<12?'AM':'PM'};
+    wlfPushDtLastTrigger=document.activeElement;
+    const overlay=wlfPushDtEnsureOverlay();
+    overlay.hidden=false;
+    overlay.querySelector('#wlfPushDtHeading').textContent=inputId==='wlfPushStartsAt'?'First delivery':'Repeat until';
+    overlay.querySelector('#wlfPushDtClear').hidden=inputId==='wlfPushStartsAt';
+    overlay.querySelector('#wlfPushDtHour').value=String(wlfPushDtDraft.hour12);
+    overlay.querySelector('#wlfPushDtMinute').value=String(wlfPushDtDraft.minute);
+    overlay.querySelector('#wlfPushDtError').hidden=true;
+    wlfPushDtRender();
+    overlay.querySelector('.wlf-dtp-dialog').focus();
+  }
+  function wlfPushDtRender(){
+    const d=wlfPushDtDraft;if(!d)return;
+    const overlay=document.getElementById('wlfPushDtOverlay');if(!overlay)return;
+    overlay.querySelector('#wlfPushDtMonthLabel').textContent=`${WLF_PUSH_DT_MONTHS[d.month]} ${d.y}`;
+    const firstDay=(new Date(Date.UTC(d.y,d.month,1)).getUTCDay()+6)%7;
+    const count=new Date(Date.UTC(d.y,d.month+1,0)).getUTCDate();
+    const today=wlfPushDtLocalNow();
+    let html=Array.from({length:firstDay},()=>'<span class="wlf-dtp-blank" aria-hidden="true"></span>').join('');
+    for(let day=1;day<=count;day++){
+      const selected=day===d.day;
+      const isToday=today&&today.y===d.y&&today.month===d.month&&today.day===day;
+      html+=`<button type="button" class="${selected?'selected ':''}${isToday?'is-today':''}" aria-label="${day} ${WLF_PUSH_DT_MONTHS[d.month]} ${d.y}" aria-pressed="${selected}" onclick="wlfPushDtPickDay(${day})">${day}</button>`;
+    }
+    overlay.querySelector('#wlfPushDtDays').innerHTML=html;
+    overlay.querySelector('#wlfPushDtAM').classList.toggle('active',d.period==='AM');
+    overlay.querySelector('#wlfPushDtPM').classList.toggle('active',d.period==='PM');
+    overlay.querySelector('#wlfPushDtAM').setAttribute('aria-pressed',String(d.period==='AM'));
+    overlay.querySelector('#wlfPushDtPM').setAttribute('aria-pressed',String(d.period==='PM'));
+    overlay.querySelector('#wlfPushDtPreview').textContent=wlfPushLocalTimeDisplay(wlfPushDtCurrentValue());
+  }
+  function wlfPushDtPickDay(day){if(!wlfPushDtDraft)return;wlfPushDtDraft.day=day;wlfPushDtRender()}
+  function wlfPushDtChangeMonth(delta){
+    const d=wlfPushDtDraft;if(!d)return;
+    const date=new Date(Date.UTC(d.y,d.month+delta,1));
+    if(date.getUTCFullYear()<1900||date.getUTCFullYear()>2100)return;
+    d.y=date.getUTCFullYear();d.month=date.getUTCMonth();
+    d.day=Math.min(d.day,new Date(Date.UTC(d.y,d.month+1,0)).getUTCDate());
+    wlfPushDtRender();
+  }
+  function wlfPushDtToday(){
+    const d=wlfPushDtDraft,now=wlfPushDtLocalNow();if(!d||!now)return;
+    d.y=now.y;d.month=now.month;d.day=now.day;wlfPushDtRender();
+  }
+  function wlfPushDtSetTime(){
+    const d=wlfPushDtDraft;if(!d)return;
+    d.hour12=Number(document.getElementById('wlfPushDtHour')?.value)||12;
+    d.minute=Number(document.getElementById('wlfPushDtMinute')?.value)||0;
+    wlfPushDtRender();
+  }
+  function wlfPushDtSetPeriod(period){if(!wlfPushDtDraft||!['AM','PM'].includes(period))return;wlfPushDtDraft.period=period;wlfPushDtRender()}
+  function wlfPushCloseDateTime(){
+    const overlay=document.getElementById('wlfPushDtOverlay');if(overlay)overlay.hidden=true;
+    wlfPushDtDraft=null;
+    if(wlfPushDtLastTrigger?.isConnected)wlfPushDtLastTrigger.focus();
+    wlfPushDtLastTrigger=null;
+  }
+  function wlfPushDtClear(){
+    const d=wlfPushDtDraft;if(!d||d.id!=='wlfPushEndsAt')return;
+    const input=document.getElementById(d.id);if(input){input.value='';input.dispatchEvent(new Event('change',{bubbles:true}));}
+    wlfPushSyncDateTimeFields();wlfPushCloseDateTime();
+  }
+  function wlfPushDtApply(){
+    const d=wlfPushDtDraft;if(!d)return;
+    const value=wlfPushDtCurrentValue(),parsed=wlfPushParseLocalTime(value);
+    const warning=document.getElementById('wlfPushDtError');
+    if(!parsed){if(warning){warning.hidden=false;warning.textContent='Choose a valid date and time.'}return;}
+    // Keep existing end > start validation, but explain it before applying.
+    if(d.id==='wlfPushEndsAt'){
+      const first=document.getElementById('wlfPushStartsAt')?.value;
+      if(first&&value<first){if(warning){warning.hidden=false;warning.textContent='Repeat until must be after the first delivery.'}return;}
+    }
+    const input=document.getElementById(d.id);
+    if(input){input.value=value;input.dispatchEvent(new Event('change',{bubbles:true}));}
+    wlfPushSyncDateTimeFields();wlfPushCloseDateTime();
+  }
+  document.addEventListener('keydown',e=>{
+    if(!wlfPushDtDraft)return;
+    if(e.key==='Escape'){e.preventDefault();wlfPushCloseDateTime();return;}
+    if(e.key!=='Tab')return;
+    const modal=document.querySelector('#wlfPushDtOverlay .wlf-dtp-dialog');if(!modal)return;
+    const focusables=[...modal.querySelectorAll('button:not([hidden]):not([disabled]),select:not([hidden])')].filter(el=>el.offsetParent!==null);
+    if(!focusables.length)return;
+    if(e.shiftKey&&document.activeElement===focusables[0]){e.preventDefault();focusables[focusables.length-1].focus()}
+    else if(!e.shiftKey&&document.activeElement===focusables[focusables.length-1]){e.preventDefault();focusables[0].focus()}
+  },true);
+
   function wlfPushSafeId(s){return /^[0-9a-f-]{36}$/i.test(String(s||''))?s:'';}
   function wlfPushDisplayDate(d){return d?new Date(d).toLocaleString('en-GB',{timeZone:'Asia/Dhaka',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';}
   function wlfPushOption(value,text,selected){return `<option value="${value}" ${value===selected?'selected':''}>${text}</option>`;}
@@ -8462,10 +8707,10 @@
         <label class="wlf-push-field"><span>Audience</span><select id="wlfPushAudience" onchange="wlfPushAudienceVisibility()"><option value="all">Everyone</option><option value="users">Specific users</option><option value="roles">By role</option><option value="disciplines">By discipline</option></select></label>
         <label class="wlf-push-field"><span>Open on click</span><select id="wlfPushTargetView">${[['home','Home'],['dashboard','Team Dashboard'],['mytasks','My Tasks'],['search','Lift Trace'],['gantt','R&I Projects'],['chat','Team Chat'],['notebook','Notebook']].map(([a,b])=>wlfPushOption(a,b,'home')).join('')}</select></label>
         <div class="wlf-push-full" id="wlfPushAudienceOptions"></div>
-        <label class="wlf-push-field"><span>First delivery (Bangladesh time) *</span><input id="wlfPushStartsAt" type="datetime-local" value="${now}" required></label>
+        <div class="wlf-push-field wlf-push-dt-field"><span>First delivery (Bangladesh time) *</span><input id="wlfPushStartsAt" class="wlf-push-dt-source" type="datetime-local" value="${now}" required tabindex="-1" aria-hidden="true"><button type="button" class="wlf-push-dt-trigger" id="wlfPushStartsAtTrigger" onclick="wlfPushOpenDateTime('wlfPushStartsAt')" aria-label="Choose first delivery date and time"><span class="wlf-push-dt-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 18h3"/></svg></span><span id="wlfPushStartsAtText" class="wlf-push-dt-text">Select date and time</span><svg class="wlf-push-dt-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg></button></div>
         <label class="wlf-push-field"><span>Repeat</span><select id="wlfPushRepeat" onchange="wlfPushRepeatVisibility()"><option value="none">Do not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="dates">Selected days / months</option><option value="calendar">Specific calendar dates</option></select></label>
         <div class="wlf-push-full" id="wlfPushRepeatOptions"></div>
-        <label class="wlf-push-field"><span>Repeat until (optional)</span><input id="wlfPushEndsAt" type="datetime-local"></label>
+        <div class="wlf-push-field wlf-push-dt-field"><span>Repeat until (optional)</span><input id="wlfPushEndsAt" class="wlf-push-dt-source" type="datetime-local" tabindex="-1" aria-hidden="true"><button type="button" class="wlf-push-dt-trigger is-empty" id="wlfPushEndsAtTrigger" onclick="wlfPushOpenDateTime('wlfPushEndsAt')" aria-label="Choose repeat end date and time"><span class="wlf-push-dt-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 18h3"/></svg></span><span id="wlfPushEndsAtText" class="wlf-push-dt-text">No end date — optional</span><svg class="wlf-push-dt-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg></button></div>
         <label class="wlf-push-field wlf-push-checkbox"><input type="checkbox" id="wlfPushEnabled" checked> Enabled — send when scheduled</label>
       </div>
       <div class="wlf-push-actions"><button type="button" class="wlf-push-button" onclick="wlfPushPreview()">Preview</button><button type="button" class="wlf-push-button" onclick="wlfPushClearEditor()">Cancel</button><button type="submit" class="wlf-push-button primary" id="wlfPushSaveBtn">Save campaign</button><button type="button" class="wlf-push-button primary" id="wlfPushSendNowBtn" onclick="saveWlfPushCampaign(true)">Send now</button></div>
@@ -8514,6 +8759,7 @@
     wlfPushAudienceVisibility();wlfPushRepeatVisibility();
     document.getElementById('wlfPushSaveBtn').textContent='Save campaign';
     document.getElementById('wlfPushEditorStatus').textContent='';
+    wlfPushSyncDateTimeFields();
   }
   function wlfPushOpenEditor(id){
     const c=wlfPushAdminRows.find(x=>x.id===id);if(!c)return;
@@ -8526,6 +8772,7 @@
     document.getElementById('wlfPushEnabled').checked=c.is_enabled;
     wlfPushAudienceVisibility(c);wlfPushRepeatVisibility(c);
     document.getElementById('wlfPushSaveBtn').textContent='Save changes';
+    wlfPushSyncDateTimeFields();
     document.getElementById('wlfPushEditorForm').scrollIntoView({block:'center',behavior:'smooth'});
   }
   function wlfPushPreview(){
@@ -8622,6 +8869,7 @@
       <div class="wlf-push-history-head"><div><div class="wlf-push-card-title">Campaign history</div><div class="wlf-push-muted">Only unsent drafts can be deleted; sent history remains available.</div></div><button type="button" class="wlf-push-button" onclick="loadWlfPushAdminPanel()">Refresh</button></div>
       <div class="wlf-push-campaign-list">${list||'<div class="placeholder-note">No push campaigns yet.</div>'}</div></div>`;
     wlfPushAudienceVisibility();wlfPushRepeatVisibility();
+    wlfPushSyncDateTimeFields();
   }
 
   // ============ NOTIFICATIONS ============
@@ -12868,6 +13116,9 @@ for a competing inline style first.`;
       body.className = 'admin-accordion-body';
       body.id = `adminAccordionBody-${cfg.key}`;
       card.type = 'button';
+      // Consistent premium vector chevron – visual only, the same accordion behavior.
+      const arrow=card.querySelector('.admin-tool-arrow');
+      if(arrow)arrow.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
       card.removeAttribute('onclick');
       card.setAttribute('aria-expanded','false');
       card.setAttribute('aria-controls', body.id);
