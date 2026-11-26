@@ -8070,6 +8070,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-26', summary:'Push reliability: added reconnect on network restoration and return to site, periodic subscription reconciliation, VAPID key mismatch renewal, request timeouts, race-safe ON/OFF handling and support for immediate bell refresh from the service worker. Supabase dispatch now retries transient provider errors; server code and service worker must be deployed alongside this HTML; no SQL schema change.' },
     { date:'2026-11-26', summary:'Simplified device push controls in the notification bell to a single accessible iOS-style on/off switch. Removed the redundant enabled-on-this-browser caption, separate Enable/Disable buttons and extra settings gear. Switch reflects successful subscription registration and preserves per-device opt-out; existing push authorization, Supabase tables, scheduling, service worker, notifications and all other application sections remain unchanged. HTML-only.' },
     { date:'2026-11-26', summary:'Superadmin Push Notification campaigns now have a visible Delete action for every schedule, including recurring schedules that have already sent. Delete is an auditable soft archive that atomically disables future occurrences and retains past recipient deliveries; uses new additive SQL. Campaign editing and Pause/Resume now update the list in place without full form/profile reloads, with optimistic feedback and rollback on failure. Routine push notices use a non-blocking toast; no change to opening announcements, task data, scoring, exports, service worker or Edge Function.' },
     { date:'2026-11-26', summary:'Visual-only Admin refinement: replaced Push Notification first-delivery and repeat-until native calendar popups with a polished responsive Bangladesh-time date/time dialog, explicit Cancel, Clear (optional end date) and Apply buttons, plus premium vector expand/collapse chevrons and refined icon treatment. Original datetime-local IDs and submitted values, campaign schedules, announcements, Supabase schema, RLS, data, exports, scoring and service worker remain unchanged. No SQL required.' },
@@ -8423,157 +8424,238 @@
     box.hidden=false;
     wlfPushToastTimeout=setTimeout(()=>{box.hidden=true;},ok?3300:9500);
   }
-  function wlfPushUiStatus(message){const el=document.getElementById('wlfPushDeviceStatus');if(el)el.textContent=message;}
-  // Per-device, persistent opt-out; no Supabase schema or other user's preferences changed.
+  function wlfPushUiStatus(message){const el=document.getElementById('wlfPushDeviceStatus');if(el)el.textContent=String(message||'');}
+  // Reliable per-device push control. This is deliberately independent of the
+  // website bell (which must still work when device push is off).
   const WLF_PUSH_DEVICE_OFF_KEY='wlf_push_device_off_v1';
-  // A switch must represent an active browser subscription registered with the push service,
-  // not merely the absence of the user's persistent opt-out preference.
-  let wlfPushDeviceConfirmed=false;
-  let wlfPushDeviceBusy=false;
+  let wlfPushDeviceConfirmed=false, wlfPushDeviceBusy=false;
+  let wlfPushOperationId=0, wlfPushBackgroundPromise=null;
+  let wlfPushRetryTimer=null, wlfPushRetryCount=0, wlfPushListenersReady=false;
   function wlfPushDeviceIsOff(){try{return localStorage.getItem(WLF_PUSH_DEVICE_OFF_KEY)==='1';}catch{return false;}}
-  function wlfPushStoreDeviceOff(off){try{if(off)localStorage.setItem(WLF_PUSH_DEVICE_OFF_KEY,'1');else localStorage.removeItem(WLF_PUSH_DEVICE_OFF_KEY);}catch(_){/* Local preferences can be blocked. */}}
+  function wlfPushStoreDeviceOff(off){try{if(off)localStorage.setItem(WLF_PUSH_DEVICE_OFF_KEY,'1');else localStorage.removeItem(WLF_PUSH_DEVICE_OFF_KEY);}catch(_){}}
+  function wlfPushSupported(){return !!(window.isSecureContext&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window);}
   function wlfPushSyncDeviceSettings(){
-    const control=document.getElementById('wlfPushDeviceSwitch');
-    if(!control)return;
-    const enabled=wlfPushDeviceConfirmed&&!wlfPushDeviceIsOff()&&('Notification' in window)&&Notification.permission==='granted';
+    const control=document.getElementById('wlfPushDeviceSwitch');if(!control)return;
+    const enabled=!!(wlfPushDeviceConfirmed&&!wlfPushDeviceIsOff()&&wlfPushSupported()&&Notification.permission==='granted');
     control.setAttribute('aria-checked',String(enabled));
     control.setAttribute('aria-label',enabled?'Disable device notifications':'Enable device notifications');
     control.title=enabled?'Disable device notifications':'Enable device notifications';
-    control.disabled=wlfPushDeviceBusy;
-    control.setAttribute('aria-busy',String(wlfPushDeviceBusy));
+    control.disabled=!!wlfPushDeviceBusy;
+    control.setAttribute('aria-busy',String(!!wlfPushDeviceBusy));
   }
-  async function toggleWlfDevicePushSwitch(){
-    if(wlfPushDeviceBusy)return;
-    const turnOff=wlfPushDeviceConfirmed&&!wlfPushDeviceIsOff();
-    wlfPushDeviceBusy=true;
-    wlfPushSyncDeviceSettings();
-    try{
-      if(turnOff)await disableWlfDevicePush();
-      else await enableWlfDevicePush();
-    }finally{
-      wlfPushDeviceBusy=false;
-      wlfPushSyncDeviceSettings();
-    }
+  function wlfPushCancelRetry(){if(wlfPushRetryTimer){clearTimeout(wlfPushRetryTimer);wlfPushRetryTimer=null;}}
+  function wlfPushScheduleRetry(){
+    if(wlfPushRetryTimer||wlfPushDeviceIsOff()||!currentUser||currentProfile?.status!=='active')return;
+    // One retry timer only; no tight loop during network failures. Never prompt
+    // permission or create a new subscription in a background retry.
+    const step=Math.min(wlfPushRetryCount++,6);
+    const delay=Math.min(300000,5000*Math.pow(2,step));
+    wlfPushRetryTimer=setTimeout(()=>{
+      wlfPushRetryTimer=null;
+      if(navigator.onLine!==false&&document.visibilityState==='visible')
+        initWlfPushForUser().catch(()=>{});
+      else wlfPushScheduleRetry();
+    },delay);
+  }
+  function wlfPushEnsureListeners(){
+    if(wlfPushListenersReady)return;wlfPushListenersReady=true;
+    const check=()=>{
+      if(!wlfPushDeviceBusy&&currentUser&&!wlfPushDeviceIsOff()){
+        wlfPushCancelRetry();initWlfPushForUser().catch(()=>{});
+      }
+    };
+    window.addEventListener('online',check);
+    document.addEventListener('visibilitychange',()=>{
+      if(document.visibilityState==='visible')check();
+    });
+    // A periodic health check is intentionally much slower than inbox polling.
+    setInterval(()=>{
+      if(document.visibilityState==='visible'&&navigator.onLine!==false)check();
+    },15*60*1000);
+    navigator.serviceWorker?.addEventListener('message',e=>{
+      if(e.data?.type==='wlf-push-delivered')loadNotifications();
+      if(e.data?.type==='wlf-push-subscription-changed')check();
+      if(e.data?.type==='wlf-push-open-view'&&WLF_PUSH_VIEWS.has(e.data.view)){
+        showView(e.data.view);onViewShown(e.data.view);
+      }
+    });
   }
   function wlfPushBase64ToUint8Array(value){
-    const pad='='.repeat((4-value.length%4)%4);const raw=atob((value+pad).replace(/-/g,'+').replace(/_/g,'/'));
+    const pad='='.repeat((4-value.length%4)%4);
+    const raw=atob((value+pad).replace(/-/g,'+').replace(/_/g,'/'));
     return Uint8Array.from(raw,c=>c.charCodeAt(0));
   }
+  function wlfPushSameApplicationKey(sub,key){
+    const existing=sub?.options?.applicationServerKey;
+    if(!existing)return true; // Older browsers do not expose the old key.
+    const actual=new Uint8Array(existing),expected=wlfPushBase64ToUint8Array(key);
+    if(actual.length!==expected.length)return false;
+    return actual.every((v,i)=>v===expected[i]);
+  }
   async function wlfPushFunction(action,payload={}){
-    // 2026-11-26 connection diagnostics: a FetchError can represent 404, CORS,
-    // failed deployment, connectivity, or Edge Function startup failure.
-    const {data,error}=await sb.functions.invoke('wlf-push',{body:{action,...payload}});
+    // Abort a stalled request instead of leaving the UI waiting indefinitely.
+    // Dispatch can legitimately take longer than an ordinary subscription RPC.
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),action==='dispatch'?65000:14000);
+    let response;
+    try{response=await sb.functions.invoke('wlf-push',{body:{action,...payload},signal:controller.signal});}
+    catch(e){if(controller.signal.aborted)throw new Error('Push service timed out. Check your connection and try again.');throw e;}
+    finally{clearTimeout(timeout);}
+    const {data,error}=response||{};
     if(error){
       let detail=error.message||'';
       try{const j=await error.context?.clone?.().json();detail=j?.error||j?.message||detail;}catch(_){}
-      if(error.name==='FunctionsFetchError' || /failed to send a request to the edge function/i.test(detail)){
-        throw new Error('Push service unreachable. Superadmin: check the wlf-push Edge Function is deployed in the website’s Supabase project, WLF_ALLOWED_ORIGINS matches this site, and Verify JWT is off. The in-app bell still works.');
-      }
-      throw new Error(detail || ('Push function returned '+(error.context?.status||'an error')));
+      if(controller.signal.aborted)throw new Error('Push service timed out. Check your connection and try again.');
+      if(error.name==='FunctionsFetchError'||/failed to send a request to the edge function/i.test(detail))
+        throw new Error('Push service is temporarily unreachable. Please retry when online; the website bell still works.');
+      throw new Error(detail||('Push function returned '+(error.context?.status||'an error')));
     }
     if(data?.error)throw new Error(data.error);
     return data;
   }
   async function wlfPushGetRegistration(){
-    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))throw new Error('Device push is not supported in this browser. In-app notifications still work.');
-    if(!window.isSecureContext)throw new Error('Device push requires HTTPS.');
+    if(!wlfPushSupported())throw new Error('Device push is unavailable here. On iPhone, add this website to your Home Screen and open it from there.');
     if(!wlfPushRegistration){
       wlfPushRegistration=await navigator.serviceWorker.register(new URL('./sw.js',location.href),{scope:'./'});
       await navigator.serviceWorker.ready;
     }
     return wlfPushRegistration;
   }
+  function wlfPushStillCurrent(operation,userId){
+    return operation===wlfPushOperationId && currentUser?.id===userId &&
+      currentProfile?.status==='active'&&!wlfPushDeviceIsOff()&&!wlfPushDeviceBusy;
+  }
   async function initWlfPushForUser(){
-    wlfPushDeviceConfirmed=false;
-    wlfPushSyncDeviceSettings();
-    if(!currentUser||currentProfile?.status!=='active')return;
+    if(!currentUser||currentProfile?.status!=='active'){
+      wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();return;
+    }
+    wlfPushEnsureListeners();
     if(!wlfPushPollStarted){
       wlfPushPollStarted=true;
       setInterval(()=>{if(currentUser&&document.visibilityState==='visible')loadNotifications();},30000);
-      navigator.serviceWorker?.addEventListener('message',e=>{
-        if(e.data?.type==='wlf-push-delivered')loadNotifications();
-        if(e.data?.type==='wlf-push-open-view'&&WLF_PUSH_VIEWS.has(e.data.view)){
-          showView(e.data.view);onViewShown(e.data.view);
-        }
-      });
     }
+    if(wlfPushDeviceBusy)return;
     if(wlfPushDeviceIsOff()){
-      wlfPushUiStatus('Device notifications are off on this browser. Use the settings icon to enable them again.');
-      return; // Never re-subscribe a device after the user has explicitly opted out.
+      wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();return;
     }
-    try{
-      const cfg=await wlfPushFunction('config');
-      if(!cfg?.ready)throw new Error('Server push keys have not yet been configured.');
-      // Disable may have been clicked while the server config request was in flight.
-      if(wlfPushDeviceIsOff())return;
-      wlfPushPublicKey=cfg.public_key;
-      const reg=await wlfPushGetRegistration();
-      if(wlfPushDeviceIsOff())return;
-      const old=await reg.pushManager.getSubscription();
-      if(old && Notification.permission==='granted'){
-        await wlfPushFunction('subscribe',{subscription:old.toJSON()});
-        wlfPushDeviceConfirmed=true;
-        wlfPushSyncDeviceSettings();
-      } else {
-        wlfPushDeviceConfirmed=false;
-        wlfPushSyncDeviceSettings();
+    if(!wlfPushSupported()||Notification.permission!=='granted'){
+      wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();return;
+    }
+    if(wlfPushBackgroundPromise)return wlfPushBackgroundPromise;
+    const operation=wlfPushOperationId,userId=currentUser.id;
+    wlfPushBackgroundPromise=(async()=>{
+      try{
+        const cfg=await wlfPushFunction('config');
+        if(!cfg?.ready||!cfg?.public_key)throw new Error('Push server keys are not configured.');
+        if(!wlfPushStillCurrent(operation,userId))return;
+        wlfPushPublicKey=cfg.public_key;
+        const reg=await wlfPushGetRegistration();
+        if(!wlfPushStillCurrent(operation,userId))return;
+        const sub=await reg.pushManager.getSubscription();
+        if(!wlfPushStillCurrent(operation,userId))return;
+        if(!sub){wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();return;}
+        if(sub.expirationTime!=null && sub.expirationTime<Date.now()+60000){
+          wlfPushDeviceConfirmed=false;wlfPushUiStatus('Subscription expired. Switch on to renew this device.');
+          wlfPushSyncDeviceSettings();return;
+        }
+        if(!wlfPushSameApplicationKey(sub,wlfPushPublicKey)){
+          // Changing server VAPID keys requires a user-initiated renewal.
+          wlfPushDeviceConfirmed=false;wlfPushUiStatus('Push keys changed. Switch on to reconnect this device.');
+          wlfPushSyncDeviceSettings();return;
+        }
+        await wlfPushFunction('subscribe',{subscription:sub.toJSON()});
+        if(!wlfPushStillCurrent(operation,userId))return;
+        wlfPushRetryCount=0;wlfPushCancelRetry();wlfPushSetupError='';
+        wlfPushDeviceConfirmed=true;wlfPushSyncDeviceSettings();
+      }catch(e){
+        if(!wlfPushStillCurrent(operation,userId))return;
+        wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();
+        wlfPushSetupError=e.message||String(e);
+        wlfPushUiStatus('Device push connection needs retry: '+wlfPushSetupError);
+        wlfPushScheduleRetry();
       }
-      wlfPushSetupError='';
-    }catch(e){wlfPushSetupError=e.message;wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();wlfPushUiStatus('Device push unavailable: '+e.message);}
+    })();
+    try{await wlfPushBackgroundPromise;}finally{wlfPushBackgroundPromise=null;}
+  }
+  async function toggleWlfDevicePushSwitch(){
+    if(wlfPushDeviceBusy)return;
+    const turnOff=wlfPushDeviceConfirmed&&!wlfPushDeviceIsOff();
+    ++wlfPushOperationId; // Invalidate older background checks immediately.
+    wlfPushCancelRetry();wlfPushDeviceBusy=true;wlfPushSyncDeviceSettings();
+    try{if(turnOff)await disableWlfDevicePush();else await enableWlfDevicePush();}
+    finally{wlfPushDeviceBusy=false;wlfPushSyncDeviceSettings();}
   }
   async function enableWlfDevicePush(){
-    // Permission prompt is initiated DIRECTLY by this user-click handler (iOS requirement).
-    if(!('Notification' in window)){wlfPushToast('This browser does not support device notifications.',false);return;}
-    const permissionPromise=Notification.permission==='default' ? Notification.requestPermission():Promise.resolve(Notification.permission);
+    // Permission request begins directly in the button-click path on iOS.
+    if(!wlfPushSupported()){
+      wlfPushToast('Device notifications are not supported here. On iPhone, install the website to your Home Screen.',false);return false;
+    }
+    const permissionPromise=Notification.permission==='default'?Notification.requestPermission():Promise.resolve(Notification.permission);
     try{
       const permission=await permissionPromise;
-      if(permission!=='granted')throw new Error('Notification permission was not granted. Enable it in browser settings if desired.');
-      if(!wlfPushPublicKey){const cfg=await wlfPushFunction('config');wlfPushPublicKey=cfg.public_key||'';}
-      if(!wlfPushPublicKey)throw new Error('VAPID public key is missing. Contact your Superadmin.');
+      if(permission!=='granted')throw new Error('Permission not granted. Check device/browser notification settings.');
+      // The user explicitly requested ON. Remember that intent even if the
+      // first server attempt fails; online/visibility retry will reconnect.
+      wlfPushStoreDeviceOff(false);
+      const cfg=await wlfPushFunction('config');
+      if(!cfg?.ready||!cfg.public_key)throw new Error('Push server keys are not configured.');
+      wlfPushPublicKey=cfg.public_key;
       const reg=await wlfPushGetRegistration();
       let sub=await reg.pushManager.getSubscription();
+      let oldEndpoint='';
+      if(sub&&((sub.expirationTime!=null&&sub.expirationTime<Date.now()+60000)||!wlfPushSameApplicationKey(sub,wlfPushPublicKey))){
+        oldEndpoint=sub.endpoint;
+        const removed=await sub.unsubscribe();
+        if(!removed)throw new Error('Old push subscription could not be renewed. Please retry.');
+        sub=null;
+      }
       if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wlfPushBase64ToUint8Array(wlfPushPublicKey)});
-      await wlfPushFunction('subscribe',{subscription:sub.toJSON()});
+      const response=await wlfPushFunction('subscribe',{subscription:sub.toJSON()});
+      if(!response?.ok)throw new Error('The push server did not confirm this device.');
+      // Old VAPID endpoint removal is best-effort and never blocks enabling.
+      if(oldEndpoint)wlfPushFunction('unsubscribe',{endpoint:oldEndpoint}).catch(()=>{});
       wlfPushStoreDeviceOff(false);
-      wlfPushDeviceConfirmed=true;
-      wlfPushSyncDeviceSettings();
-      wlfPushUiStatus('Device notifications enabled.');
-      wlfPushToast('Device notifications enabled.');
-      return true;
-    }catch(e){wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();wlfPushUiStatus(e.message);wlfPushToast(e.message,false);return false;}
+      wlfPushRetryCount=0;wlfPushCancelRetry();wlfPushDeviceConfirmed=true;
+      wlfPushSetupError='';wlfPushUiStatus('Device notifications enabled.');
+      wlfPushSyncDeviceSettings();wlfPushToast('Device notifications enabled.');return true;
+    }catch(e){
+      wlfPushDeviceConfirmed=false;wlfPushSyncDeviceSettings();
+      wlfPushUiStatus(e.message);wlfPushToast(e.message,false);
+      // A subscription may have been created locally even if the server was
+      // briefly unreachable. A later online/visibility check repairs it.
+      if(!wlfPushDeviceIsOff()&&Notification.permission==='granted')wlfPushScheduleRetry();
+      return false;
+    }
   }
   async function disableWlfDevicePush(silent=false){
+    // Also invalidate any in-flight sign-in reconciliation during logout.
+    ++wlfPushOperationId;wlfPushCancelRetry();
     try{
-      let serverCleanupFailed=false;
       let oldEndpoint='';
       if('serviceWorker' in navigator){
         const reg=await navigator.serviceWorker.getRegistration('./');
         const sub=reg?.pushManager?await reg.pushManager.getSubscription():null;
         if(sub){
-          // Stop delivery locally FIRST. A slow/offline Supabase request must not
-          // keep device push active or prevent the settings card from closing.
           const removed=await sub.unsubscribe();
-          if(!removed)throw new Error('This browser could not turn off push. Please retry or block notifications in browser settings.');
+          if(!removed)throw new Error('Could not disable this device. Retry or block permission in browser settings.');
           oldEndpoint=sub.endpoint;
         }
       }
       wlfPushDeviceConfirmed=false;
-      if(!silent){
-        wlfPushStoreDeviceOff(true);
-        wlfPushUiStatus('Device notifications disabled.');
-        wlfPushToast('Device notifications disabled on this device.');
-      }
+      if(!silent){wlfPushStoreDeviceOff(true);wlfPushUiStatus('Device notifications disabled.');wlfPushToast('Device notifications disabled.');}
       wlfPushSyncDeviceSettings();
       if(oldEndpoint){
-        // Cleanup is important, but the OS/browser subscription is already off.
-        try{await wlfPushFunction('unsubscribe',{endpoint:oldEndpoint});}
-        catch(_){serverCleanupFailed=true;}
-      }
-      if(serverCleanupFailed&&!silent){
-        wlfPushUiStatus('Device push is off here. Supabase could not remove the old endpoint; verify server connectivity later.');
+        // The browser is already unsubscribed, so do not freeze the switch
+        // for a slow network cleanup request. An expired endpoint will also
+        // be deactivated server-side if cleanup temporarily fails.
+        wlfPushFunction('unsubscribe',{endpoint:oldEndpoint}).catch(()=>{
+          if(!silent)wlfPushUiStatus('Disabled here; server cleanup will complete when connectivity returns or the endpoint expires.');
+        });
       }
       return true;
-    }catch(e){wlfPushSyncDeviceSettings();if(!silent)wlfPushToast(e.message,false);return false;}
+    }catch(e){
+      wlfPushSyncDeviceSettings();if(!silent)wlfPushToast(e.message,false);return false;
+    }
   }
   function wlfPushNavigate(view){
     const v=WLF_PUSH_VIEWS.has(view)?view:'home';
