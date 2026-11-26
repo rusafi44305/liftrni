@@ -33,7 +33,20 @@ self.addEventListener('push', event => {
   const opts={body:urgency+body,tag:String(data.id || Date.now()),renotify:false,
     icon:new URL('./wlf-notification-icon.png',self.registration.scope).href,
     data:{view},requireInteraction:data.priority==='urgent'};
-  event.waitUntil(self.registration.showNotification(title, opts));
+  event.waitUntil((async()=>{
+    await self.registration.showNotification(title,opts);
+    // Refresh an open website's bell immediately; otherwise it would wait
+    // for the next 30-second poll and seem like the push never arrived.
+    try{
+      const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+      const scope=new URL(self.registration.scope);
+      for(const page of windows){
+        const u=new URL(page.url);
+        if(u.origin===scope.origin&&u.pathname.startsWith(scope.pathname))
+          page.postMessage({type:'wlf-push-delivered'});
+      }
+    }catch(_){/* Notification already displayed; never fail push for this. */}
+  })());
 });
 self.addEventListener('notificationclick', event => {
   event.notification.close();
@@ -51,6 +64,10 @@ self.addEventListener('notificationclick', event => {
   })());
 });
 self.addEventListener('pushsubscriptionchange', event => {
-  // Resubscription needs a valid user session. The webpage refreshes the subscription on next sign-in.
-  event.waitUntil(Promise.resolve());
+  // Never send credentials from a worker. An active, authenticated webpage
+  // can reconcile the browser subscription when it next becomes visible.
+  event.waitUntil((async()=>{
+    const windows=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    for(const page of windows)page.postMessage({type:'wlf-push-subscription-changed'});
+  })());
 });
