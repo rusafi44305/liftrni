@@ -2848,6 +2848,60 @@
   .announcement-date-grid input:checked+span,.announcement-month-grid input:checked+span{background:var(--accent-dim);border-color:var(--accent);font-weight:700}
   .announcement-date-grid input:focus-visible+span,.announcement-month-grid input:focus-visible+span{outline:2px solid var(--accent)}
   @media(max-width:650px){.quick-group-create{grid-template-columns:1fr 1fr}.quick-group-create input{grid-column:span 2}.quick-link-group-select{max-width:110px}.quick-link-admin-row{flex-wrap:wrap}.quick-links-admin-head{align-items:flex-start}.quick-links-admin-tools{width:100%;justify-content:flex-start}.quick-links-admin-footer{align-items:flex-start}}
+\n  /* WLF Web Push 2026-11-26: Admin composer and user permission controls ONLY. */
+  #view-admin .admin-accordion-item[data-admin-key="push"] .admin-tool-icon{color:#3b82f6;background:color-mix(in srgb,#3b82f6 12%,var(--surface));}
+  #view-admin .admin-accordion-item[data-admin-key="push"] #pushNotificationsBlock{display:block!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;}
+  .wlf-push-admin{display:flex;flex-direction:column;gap:14px;padding:12px}
+  .wlf-push-admin-intro{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .wlf-push-admin-intro strong{font-size:14px;color:var(--text)}
+  .wlf-push-admin-intro p,.wlf-push-muted{font-size:11px;color:var(--text-faint);line-height:1.5;margin-top:3px}
+  .wlf-push-admin-chip{font-size:10px;font-weight:700;border-radius:999px;padding:5px 9px;white-space:nowrap;background:var(--accent-dim);color:var(--accent)}
+  .wlf-push-edit-card{padding:14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--surface) 86%,transparent)}
+  .wlf-push-card-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px}
+  .wlf-push-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .wlf-push-full{grid-column:1/-1;min-width:0}
+  .wlf-push-field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:11px;font-weight:700;color:var(--text-dim)}
+  .wlf-push-field input:not([type=checkbox]),.wlf-push-field select,.wlf-push-field textarea{width:100%;min-width:0;font:500 12px Inter,sans-serif;line-height:1.45;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px!important;padding:9px 10px;box-shadow:none}
+  .wlf-push-field textarea{resize:vertical;min-height:62px}
+  .wlf-push-field.wlf-push-checkbox{display:flex;flex-direction:row;align-items:center;gap:8px;padding-top:20px}
+  .wlf-push-checkbox input{accent-color:var(--accent)}
+  .wlf-push-choice-box{border:1px solid var(--border);background:var(--surface-alt);padding:10px;border-radius:10px;color:var(--text-dim)}
+  .wlf-push-choice-box>b{display:block;margin-bottom:7px;font-size:11px}
+  .wlf-push-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:7px;max-height:170px;overflow:auto}
+  .wlf-push-choice-grid label{display:flex;gap:6px;align-items:center;min-width:0;font-size:11px;cursor:pointer}
+  .wlf-push-choice-grid input{accent-color:var(--accent)}
+  .wlf-push-date-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin-bottom:8px}
+  .wlf-push-date-grid label{position:relative;cursor:pointer}
+  .wlf-push-date-grid input{position:absolute;opacity:0}
+  .wlf-push-date-grid span{display:block;border:1px solid var(--border);border-radius:7px;text-align:center;padding:7px 1px;font-size:11px}
+  .wlf-push-date-grid input:checked+span{border-color:var(--accent);background:var(--accent-dim);font-weight:800}
+  .wlf-push-small-heading{margin-top:6px}
+  .wlf-push-calendar-chooser{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  .wlf-push-calendar-chooser input{flex:1;min-width:160px;padding:7px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
+  .wlf-push-day-chip{display:inline-flex;align-items:center;gap:5px;background:var(--accent-dim);color:var(--accent);padding:4px 7px;border-radius:999px;margin:4px;font-size:11px}
+  .wlf-push-day-chip button{color:inherit;border:0;background:transparent;cursor:pointer;font-weight:800}
+  .wlf-push-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .wlf-push-button{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font:700 11px Inter,sans-serif;color:var(--text-dim);background:var(--surface);cursor:pointer;white-space:nowrap}
+  .wlf-push-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .wlf-push-button.danger{color:var(--red)}
+  .wlf-push-button:disabled{opacity:.5;cursor:wait}
+  .wlf-push-inline-status{font-size:11px;color:var(--text-faint);margin-top:9px;line-height:1.45}
+  .wlf-push-history-head{display:flex;align-items:center;justify-content:space-between;gap:9px}
+  .wlf-push-history-head .wlf-push-card-title{margin-bottom:3px}
+  .wlf-push-campaign-list{display:grid;gap:8px}
+  .wlf-push-campaign-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+  .wlf-push-campaign-main{min-width:0;flex:1}
+  .wlf-push-campaign-title{font-size:12px;font-weight:800;color:var(--text);overflow-wrap:anywhere}
+  .wlf-push-campaign-message{font-size:11px;color:var(--text-dim);margin-top:3px;overflow-wrap:anywhere}
+  .wlf-push-campaign-meta{font-size:10px;color:var(--text-faint);margin-top:7px;line-height:1.45}
+  .wlf-push-campaign-actions{display:flex;flex-wrap:wrap;gap:6px}
+  #wlfPushDeviceArea{margin-bottom:7px;padding:9px;border:1px solid var(--border);border-radius:10px;background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+  #wlfPushDeviceArea .wlf-push-device-title{font-size:11px;font-weight:800;margin-bottom:6px}
+  #wlfPushDeviceArea .wlf-push-device-actions{display:flex;flex-wrap:wrap;gap:6px}
+  #wlfPushDeviceStatus{font-size:10px;line-height:1.45;color:var(--text-faint);margin-top:5px}
+  @media(max-width:420px){#notifPanel{width:min(320px,calc(100vw - 28px))!important;max-height:calc(100dvh - 114px)!important}}
+  @media(max-width:700px){.wlf-push-form-grid{grid-template-columns:1fr}.wlf-push-full{grid-column:auto}.wlf-push-campaign-row{flex-direction:column;align-items:stretch}.wlf-push-campaign-actions{justify-content:flex-start}.wlf-push-actions .wlf-push-button{flex:1 1 auto}}
+
 </style>
 
 <style>
@@ -3865,6 +3919,7 @@
           <div style="font-size:12.5px; font-weight:600;">Notifications</div>
           <span style="font-size:11.5px; color:var(--accent); cursor:pointer;" onclick="markAllNotificationsRead()">Mark all read</span>
         </div>
+        <div id="wlfPushDeviceArea"><div class="wlf-push-device-title">Device notifications (optional)</div><div class="wlf-push-device-actions"><button type="button" class="wlf-push-button primary" onclick="enableWlfDevicePush()">Enable on this device</button><button type="button" class="wlf-push-button" onclick="disableWlfDevicePush()">Disable</button></div><div id="wlfPushDeviceStatus">Available after Superadmin completes push setup. iPhone: add this website to Home Screen first.</div></div>
         <div id="notifList"><div class="placeholder-note" style="font-size:12px;">Loading…</div></div>
       </div>
     </div>
@@ -4773,6 +4828,7 @@
         <div class="admin-tools-title">Management tools</div>
         <div class="admin-tool-grid">
           <button class="admin-tool-card" onclick="adminJumpTo('announcementsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/><path d="M19 3l1-1M5 3 4 2M22 8h-2M4 8H2"/></svg></span><span><div class="admin-tool-name">Announcements</div><div class="admin-tool-desc">Opening notices, schedules and audiences</div></span><span class="admin-tool-arrow">&rsaquo;</span></button>
+          <button class="admin-tool-card" onclick="adminJumpTo('pushNotificationsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4M3 4l2 2M21 4l-2 2"/></svg></span><span><div class="admin-tool-name">Push Notifications</div><div class="admin-tool-desc">Send or schedule targeted web/device notifications</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('pendingSigninsPanel')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></span><span><div class="admin-tool-name">Users &amp; Permissions</div><div class="admin-tool-desc">Approve sign-ins, roles and disciplines</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('customFieldsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3 2 8l10 5 10-5-10-5Z"/><path d="m2 12 10 5 10-5M2 16l10 5 10-5"/></svg></span><span><div class="admin-tool-name">Task Fields</div><div class="admin-tool-desc">Manage built-in mirrors and custom fields</div></span><span class="admin-tool-arrow">›</span></button>
           <button class="admin-tool-card" onclick="adminJumpTo('kpiWeightsBlock')"><span class="admin-tool-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="m7 16 4-5 4 3 5-7"/></svg></span><span><div class="admin-tool-name">Score Settings</div><div class="admin-tool-desc">Weights, targets and visibility controls</div></span><span class="admin-tool-arrow">›</span></button>
@@ -4784,6 +4840,10 @@
 
         <div class="admin-section-card" id="announcementsBlock" style="display:none;">
           <div id="announcementAdminPanel"><div class="placeholder-note">Open Announcements to manage opening notices.</div></div>
+        </div>
+
+        <div class="admin-section-card" id="pushNotificationsBlock" style="display:none;">
+          <div id="wlfPushAdminPanel"><div class="placeholder-note">Open Push Notifications to manage campaigns.</div></div>
         </div>
 
         <div class="block-head"><div><div class="block-title">Access levels</div><div class="block-sub">Walton Lift R&amp;I has three roles</div></div></div>
@@ -7868,6 +7928,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-26', summary:'Added standalone Superadmin Push Notifications under Admin, without modifying opening announcements: targeted campaigns, priority, delivery mode, send now, recurring/selected-date scheduling, role/discipline/user audiences, in-app inbox via the existing bell, optional Web Push consent, secure Edge Function, service worker and independent SQL tables. Existing task/scoring/export/navigation logic is untouched. Device push requires deploying sw.js, Edge Function and VAPID secrets, and configuring pg_cron for unattended scheduling.' },
     { date:'2026-11-17', summary:'Opening Announcement editor layout fix: keeps Repeat plus selected dates/months/interval/expiration in the left schedule column and Audience plus immediately visible role/user/discipline choices and popup frequency in the right column. Mobile stacks the columns. Existing field IDs, validation, permissions, scheduling, stored data and Supabase schema are unchanged.' },
     { date:'2026-11-17', summary:'Weekly Activity Trend now defaults to the last 3 rolling months rather than the entire history; a chart-only period selector offers 30 days, 3 months, 6 months or 12 months. Dashboard From/To filters override the chart selector. Empty calendar weeks appear as zero counts, and hover points show real weekly category counts and week ranges. Chart colors, curves, Dashboard KPI totals, 30-day comparisons, filters, scoring, exports, backup and Supabase schema remain unchanged.' },
     { date:'2026-11-17', summary:'Compact layout refinement: placed announcement Audience beside Repeat on desktop (mobile remains stacked); tightened grouped Quick Links spacing and used deeper theme-colored group headers while retaining soft link-button backgrounds. No database changes or behavior changes.' },
@@ -8182,6 +8243,300 @@
     }
   });
 
+  // ============================================================
+  // 2026-11-26 WLF Push Notifications (separate from opening announcements)
+  // ============================================================
+  const WLF_PUSH_VIEWS = new Set(['home','dashboard','mytasks','search','gantt','chat','notebook']);
+  const wlfPushRequestedView = (() => {
+    try{const v=new URL(location.href).searchParams.get('wlf_push_view');return WLF_PUSH_VIEWS.has(v)?v:null;}catch{return null;}
+  })();
+  let wlfPushRegistration=null, wlfPushPublicKey='', wlfPushPollStarted=false;
+  let wlfPushAdminRows=[], wlfPushAdminUsers=[], wlfPushEditingId=null, wlfPushCalendarDates=[];
+  let wlfPushSetupError='';
+  function wlfPushToast(message,ok=true){
+    if(typeof showFormPopup==='function')showFormPopup(message,ok?'success':'error');
+    else alert(message);
+  }
+  function wlfPushUiStatus(message){const el=document.getElementById('wlfPushDeviceStatus');if(el)el.textContent=message;}
+  function wlfPushBase64ToUint8Array(value){
+    const pad='='.repeat((4-value.length%4)%4);const raw=atob((value+pad).replace(/-/g,'+').replace(/_/g,'/'));
+    return Uint8Array.from(raw,c=>c.charCodeAt(0));
+  }
+  async function wlfPushFunction(action,payload={}){
+    const {data,error}=await sb.functions.invoke('wlf-push',{body:{action,...payload}});
+    if(error){let detail=error.message;try{const j=await error.context?.json();detail=j?.error||detail;}catch(_){}throw new Error(detail||'Push service is unavailable');}
+    if(data?.error)throw new Error(data.error);
+    return data;
+  }
+  async function wlfPushGetRegistration(){
+    if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))throw new Error('Device push is not supported in this browser. In-app notifications still work.');
+    if(!window.isSecureContext)throw new Error('Device push requires HTTPS.');
+    if(!wlfPushRegistration){
+      wlfPushRegistration=await navigator.serviceWorker.register(new URL('./wlf-push-sw.js',location.href),{scope:'./'});
+      await navigator.serviceWorker.ready;
+    }
+    return wlfPushRegistration;
+  }
+  async function initWlfPushForUser(){
+    if(!currentUser||currentProfile?.status!=='active')return;
+    if(!wlfPushPollStarted){
+      wlfPushPollStarted=true;
+      setInterval(()=>{if(currentUser&&document.visibilityState==='visible')loadNotifications();},30000);
+      navigator.serviceWorker?.addEventListener('message',e=>{
+        if(e.data?.type==='wlf-push-delivered')loadNotifications();
+        if(e.data?.type==='wlf-push-open-view'&&WLF_PUSH_VIEWS.has(e.data.view)){
+          showView(e.data.view);onViewShown(e.data.view);
+        }
+      });
+    }
+    try{
+      const cfg=await wlfPushFunction('config');
+      if(!cfg?.ready)throw new Error('Server push keys have not yet been configured.');
+      wlfPushPublicKey=cfg.public_key;
+      const reg=await wlfPushGetRegistration();
+      const old=await reg.pushManager.getSubscription();
+      if(old && Notification.permission==='granted'){
+        await wlfPushFunction('subscribe',{subscription:old.toJSON()});
+        wlfPushUiStatus('Device notifications enabled on this browser.');
+      } else wlfPushUiStatus(Notification.permission==='denied'?'Blocked in browser settings.':'Device notifications are optional.');
+      wlfPushSetupError='';
+    }catch(e){wlfPushSetupError=e.message;wlfPushUiStatus('Device push not configured yet. In-app notifications still work.');}
+  }
+  async function enableWlfDevicePush(){
+    // Permission prompt is initiated DIRECTLY by this user-click handler (iOS requirement).
+    if(!('Notification' in window)){wlfPushToast('This browser does not support device notifications.',false);return;}
+    const permissionPromise=Notification.permission==='default' ? Notification.requestPermission():Promise.resolve(Notification.permission);
+    try{
+      const permission=await permissionPromise;
+      if(permission!=='granted')throw new Error('Notification permission was not granted. Enable it in browser settings if desired.');
+      if(!wlfPushPublicKey){const cfg=await wlfPushFunction('config');wlfPushPublicKey=cfg.public_key||'';}
+      if(!wlfPushPublicKey)throw new Error('VAPID public key is missing. Contact your Superadmin.');
+      const reg=await wlfPushGetRegistration();
+      let sub=await reg.pushManager.getSubscription();
+      if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:wlfPushBase64ToUint8Array(wlfPushPublicKey)});
+      await wlfPushFunction('subscribe',{subscription:sub.toJSON()});
+      wlfPushUiStatus('Device push enabled on this browser.');
+      wlfPushToast('Device notifications enabled.');
+    }catch(e){wlfPushUiStatus(e.message);wlfPushToast(e.message,false);}
+  }
+  async function disableWlfDevicePush(silent=false){
+    try{
+      if(!('serviceWorker' in navigator))return;
+      const reg=await navigator.serviceWorker.getRegistration('./');
+      const sub=reg?await reg.pushManager.getSubscription():null;
+      if(sub){
+        try{await wlfPushFunction('unsubscribe',{endpoint:sub.endpoint});}catch(e){if(!silent)throw e;}
+        await sub.unsubscribe();
+      }
+      if(!silent){wlfPushUiStatus('Device notifications disabled on this browser.');wlfPushToast('Device push disabled.');}
+    }catch(e){if(!silent)wlfPushToast(e.message,false);}
+  }
+  function wlfPushNavigate(view){
+    const v=WLF_PUSH_VIEWS.has(view)?view:'home';
+    document.getElementById('notifPanel').style.display='none';
+    showView(v);onViewShown(v);
+  }
+  async function markWlfPushDeliveryRead(id,view){
+    const {error}=await sb.from('wlf_push_deliveries').update({read_at:new Date().toISOString()}).eq('id',id).eq('user_id',currentUser.id);
+    if(error)wlfPushToast('Cannot mark push notification read: '+error.message,false);
+    await loadNotifications();
+    wlfPushNavigate(view);
+  }
+  function wlfPushDhakaLocal(date){
+    const p=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Dhaka',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(date);
+    const x={};p.forEach(t=>x[t.type]=t.value);
+    return `${x.year}-${x.month}-${x.day}T${x.hour}:${x.minute}`;
+  }
+  function wlfPushDhakaUtc(value){
+    const m=String(value).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/);
+    if(!m)throw new Error('Please select a valid Bangladesh date and time.');
+    const [,y,month,d,h,min]=m.map(Number);
+    const valueDate=new Date(Date.UTC(y,month-1,d,h-6,min));
+    if(Number.isNaN(valueDate.getTime()))throw new Error('Invalid date/time.');
+    return valueDate.toISOString();
+  }
+  function wlfPushSafeId(s){return /^[0-9a-f-]{36}$/i.test(String(s||''))?s:'';}
+  function wlfPushDisplayDate(d){return d?new Date(d).toLocaleString('en-GB',{timeZone:'Asia/Dhaka',day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';}
+  function wlfPushOption(value,text,selected){return `<option value="${value}" ${value===selected?'selected':''}>${text}</option>`;}
+  function wlfPushTagsForAudience(a){
+    if(a.audience==='users')return `${(a.target_user_ids||[]).length} selected user(s)`;
+    if(a.audience==='roles')return (a.target_roles||[]).join(', ')||'No roles';
+    if(a.audience==='disciplines')return (a.target_disciplines||[]).join(', ')||'No disciplines';
+    return 'Everyone';
+  }
+  function wlfPushFormTemplate(){
+    const now=wlfPushDhakaLocal(new Date(Date.now()+300000));
+    return `<form id="wlfPushEditorForm" onsubmit="event.preventDefault();saveWlfPushCampaign(false)">
+      <div class="wlf-push-form-grid">
+        <label class="wlf-push-field wlf-push-full"><span>Notification title *</span><input id="wlfPushTitle" maxlength="100" placeholder="e.g. Updated production timeline" required></label>
+        <label class="wlf-push-field wlf-push-full"><span>Message *</span><textarea id="wlfPushBody" maxlength="500" rows="2" placeholder="Short, useful message for the team" required></textarea></label>
+        <label class="wlf-push-field"><span>Priority</span><select id="wlfPushPriority"><option value="normal">Normal</option><option value="important">Important</option><option value="urgent">Urgent</option></select></label>
+        <label class="wlf-push-field"><span>Delivery</span><select id="wlfPushChannel"><option value="both">Website bell + device push (recommended)</option><option value="inapp">Website bell only</option><option value="push">Device push only</option></select></label>
+        <label class="wlf-push-field"><span>Audience</span><select id="wlfPushAudience" onchange="wlfPushAudienceVisibility()"><option value="all">Everyone</option><option value="users">Specific users</option><option value="roles">By role</option><option value="disciplines">By discipline</option></select></label>
+        <label class="wlf-push-field"><span>Open on click</span><select id="wlfPushTargetView">${[['home','Home'],['dashboard','Team Dashboard'],['mytasks','My Tasks'],['search','Lift Trace'],['gantt','R&I Projects'],['chat','Team Chat'],['notebook','Notebook']].map(([a,b])=>wlfPushOption(a,b,'home')).join('')}</select></label>
+        <div class="wlf-push-full" id="wlfPushAudienceOptions"></div>
+        <label class="wlf-push-field"><span>First delivery (Bangladesh time) *</span><input id="wlfPushStartsAt" type="datetime-local" value="${now}" required></label>
+        <label class="wlf-push-field"><span>Repeat</span><select id="wlfPushRepeat" onchange="wlfPushRepeatVisibility()"><option value="none">Do not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="dates">Selected days / months</option><option value="calendar">Specific calendar dates</option></select></label>
+        <div class="wlf-push-full" id="wlfPushRepeatOptions"></div>
+        <label class="wlf-push-field"><span>Repeat until (optional)</span><input id="wlfPushEndsAt" type="datetime-local"></label>
+        <label class="wlf-push-field wlf-push-checkbox"><input type="checkbox" id="wlfPushEnabled" checked> Enabled — send when scheduled</label>
+      </div>
+      <div class="wlf-push-actions"><button type="button" class="wlf-push-button" onclick="wlfPushPreview()">Preview</button><button type="button" class="wlf-push-button" onclick="wlfPushClearEditor()">Cancel</button><button type="submit" class="wlf-push-button primary" id="wlfPushSaveBtn">Save campaign</button><button type="button" class="wlf-push-button primary" id="wlfPushSendNowBtn" onclick="saveWlfPushCampaign(true)">Send now</button></div>
+      <div id="wlfPushEditorStatus" class="wlf-push-inline-status" role="status"></div>
+    </form>`;
+  }
+  function wlfPushInputChecked(name){return [...document.querySelectorAll(`[name="${name}"]:checked`)].map(e=>e.value);}
+  function wlfPushAudienceVisibility(preselected={}){
+    const mode=document.getElementById('wlfPushAudience')?.value;
+    const el=document.getElementById('wlfPushAudienceOptions');if(!el)return;
+    if(mode==='all'){el.innerHTML='';return;}
+    let opts=[];
+    if(mode==='roles')opts=[['engineer','Engineer'],['admin','Admin'],['superadmin','Superadmin']].map(([id,name])=>({id,name}));
+    if(mode==='disciplines')opts=[['mechanical','Mechanical'],['electrical','Electrical']].map(([id,name])=>({id,name}));
+    if(mode==='users')opts=wlfPushAdminUsers.map(u=>({id:u.id,name:`${u.full_name||u.nickname||'Engineer'}${u.nickname?' ('+u.nickname+')':''}`}));
+    const key={roles:'target_roles',disciplines:'target_disciplines',users:'target_user_ids'}[mode];
+    el.innerHTML=`<div class="wlf-push-choice-box"><b>${mode==='users'?'Select users':mode==='roles'?'Select roles':'Select disciplines'}</b><div class="wlf-push-choice-grid">${opts.map(o=>`<label><input type="checkbox" name="wlfPushTarget" value="${escapeHtml(o.id)}" ${(preselected[key]||[]).includes(o.id)?'checked':''}> ${escapeHtml(o.name)}</label>`).join('')}</div></div>`;
+  }
+  function wlfPushRepeatVisibility(preselected={}){
+    const repeat=document.getElementById('wlfPushRepeat')?.value;
+    const el=document.getElementById('wlfPushRepeatOptions');if(!el)return;
+    if(repeat==='weekly'){
+      const weekdays=[['0','Sun'],['1','Mon'],['2','Tue'],['3','Wed'],['4','Thu'],['5','Fri'],['6','Sat']];
+      el.innerHTML=`<div class="wlf-push-choice-box"><b>Days of the week</b><div class="wlf-push-choice-grid">${weekdays.map(([v,label])=>`<label><input type="checkbox" name="wlfPushWeekdays" value="${v}" ${(preselected.repeat_weekdays||[]).includes(+v)?'checked':''}> ${label}</label>`).join('')}</div></div>`;
+    }else if(repeat==='dates'||repeat==='monthly'){
+      const days=Array.from({length:31},(_,i)=>i+1);
+      const months=[['1','Jan'],['2','Feb'],['3','Mar'],['4','Apr'],['5','May'],['6','Jun'],['7','Jul'],['8','Aug'],['9','Sep'],['10','Oct'],['11','Nov'],['12','Dec']];
+      el.innerHTML=`<div class="wlf-push-choice-box"><b>${repeat==='monthly'?'Days of each month (optional)':'Selected dates each month'}</b><div class="wlf-push-date-grid">${days.map(d=>`<label><input type="checkbox" name="wlfPushMonthdays" value="${d}" ${(preselected.repeat_month_days||[]).includes(d)?'checked':''}><span>${d}</span></label>`).join('')}</div><b class="wlf-push-small-heading">Months (leave empty to repeat every month)</b><div class="wlf-push-choice-grid">${months.map(([m,n])=>`<label><input type="checkbox" name="wlfPushMonths" value="${m}" ${(preselected.repeat_months||[]).includes(+m)?'checked':''}> ${n}</label>`).join('')}</div></div>`;
+    }else if(repeat==='calendar'){
+      wlfPushCalendarDates=(preselected.repeat_calendar_dates||[]).slice();
+      el.innerHTML=`<div class="wlf-push-choice-box"><b>Specific calendar dates</b><div class="wlf-push-calendar-chooser"><input type="date" id="wlfPushCalendarPicker"><button type="button" class="wlf-push-button" onclick="wlfPushAddCalendarDate()">Add date</button></div><div id="wlfPushCalendarChips"></div></div>`;
+      wlfPushRenderCalendarChips();
+    }else{el.innerHTML='';}
+  }
+  function wlfPushAddCalendarDate(){
+    const v=document.getElementById('wlfPushCalendarPicker')?.value;
+    if(v&&!wlfPushCalendarDates.includes(v)){wlfPushCalendarDates.push(v);wlfPushCalendarDates.sort();}
+    wlfPushRenderCalendarChips();
+  }
+  function wlfPushRemoveCalendarDate(v){wlfPushCalendarDates=wlfPushCalendarDates.filter(x=>x!==v);wlfPushRenderCalendarChips();}
+  function wlfPushRenderCalendarChips(){const el=document.getElementById('wlfPushCalendarChips');if(el)el.innerHTML=wlfPushCalendarDates.map(v=>`<span class="wlf-push-day-chip">${escapeHtml(v)} <button type="button" onclick="wlfPushRemoveCalendarDate('${v}')" aria-label="Remove date">×</button></span>`).join('');}
+  function wlfPushClearEditor(){
+    wlfPushEditingId=null;
+    const form=document.getElementById('wlfPushEditorForm');if(!form)return;
+    form.reset();document.getElementById('wlfPushStartsAt').value=wlfPushDhakaLocal(new Date(Date.now()+300000));
+    wlfPushAudienceVisibility();wlfPushRepeatVisibility();
+    document.getElementById('wlfPushSaveBtn').textContent='Save campaign';
+    document.getElementById('wlfPushEditorStatus').textContent='';
+  }
+  function wlfPushOpenEditor(id){
+    const c=wlfPushAdminRows.find(x=>x.id===id);if(!c)return;
+    wlfPushEditingId=id;
+    const set=(name,value)=>{const e=document.getElementById(name);if(e)e.value=value||'';};
+    set('wlfPushTitle',c.title);set('wlfPushBody',c.body);set('wlfPushPriority',c.priority);
+    set('wlfPushChannel',c.channel);set('wlfPushAudience',c.audience);set('wlfPushTargetView',c.target_view);
+    set('wlfPushStartsAt',wlfPushDhakaLocal(new Date(c.starts_at)));
+    set('wlfPushRepeat',c.repeat_type);set('wlfPushEndsAt',c.ends_at?wlfPushDhakaLocal(new Date(c.ends_at)):'');
+    document.getElementById('wlfPushEnabled').checked=c.is_enabled;
+    wlfPushAudienceVisibility(c);wlfPushRepeatVisibility(c);
+    document.getElementById('wlfPushSaveBtn').textContent='Save changes';
+    document.getElementById('wlfPushEditorForm').scrollIntoView({block:'center',behavior:'smooth'});
+  }
+  function wlfPushPreview(){
+    const title=document.getElementById('wlfPushTitle').value.trim()||'Sample notification';
+    const body=document.getElementById('wlfPushBody').value.trim()||'Your short message goes here.';
+    alert('Walton Lift R&I — Notification preview\n\n'+title+'\n'+body+'\n\nThe message will appear in the website bell and/or as a device notification based on delivery mode.');
+  }
+  function wlfPushPayload(sendNow){
+    const $=id=>document.getElementById(id);
+    const audience=$('wlfPushAudience').value;
+    const selected=wlfPushInputChecked('wlfPushTarget');
+    const repeat=$('wlfPushRepeat').value;
+    const title=$('wlfPushTitle').value.trim(),body=$('wlfPushBody').value.trim();
+    if(!title||!body)throw new Error('Title and message are required.');
+    if(audience!=='all'&&!selected.length)throw new Error('Choose at least one target for this audience.');
+    let startsAt=sendNow ? new Date().toISOString() : wlfPushDhakaUtc($('wlfPushStartsAt').value);
+    let endsAt=$('wlfPushEndsAt').value?wlfPushDhakaUtc($('wlfPushEndsAt').value):null;
+    // Preserve the exact original timestamps on a content-only edit. Rounding to a
+    // minute in datetime-local would otherwise reset the worker's next_run_at lease.
+    const original=wlfPushEditingId?wlfPushAdminRows.find(c=>c.id===wlfPushEditingId):null;
+    if(original&&!sendNow){
+      if(wlfPushDhakaLocal(new Date(original.starts_at))===$('wlfPushStartsAt').value)startsAt=original.starts_at;
+      if(original.ends_at&&wlfPushDhakaLocal(new Date(original.ends_at))===$('wlfPushEndsAt').value)endsAt=original.ends_at;
+    }
+    if(endsAt&&new Date(endsAt)<new Date(startsAt))throw new Error('Repeat until must be after first delivery.');
+    const days=wlfPushInputChecked('wlfPushMonthdays').map(Number);
+    const calendar=repeat==='calendar'?wlfPushCalendarDates.slice():[];
+    if(repeat==='dates'&&!days.length)throw new Error('Select at least one date of the month.');
+    if(repeat==='calendar'&&!calendar.length)throw new Error('Select at least one calendar date.');
+    return {
+      title,body,priority:$('wlfPushPriority').value,channel:$('wlfPushChannel').value,
+      audience, target_user_ids:audience==='users'?selected:[],target_roles:audience==='roles'?selected:[],
+      target_disciplines:audience==='disciplines'?selected:[],target_view:$('wlfPushTargetView').value,
+      starts_at:startsAt,ends_at:endsAt,repeat_type:repeat,
+      repeat_weekdays:repeat==='weekly'?wlfPushInputChecked('wlfPushWeekdays').map(Number):[],
+      repeat_month_days:repeat==='dates'||repeat==='monthly'?days:[],
+      repeat_months:repeat==='dates'||repeat==='monthly'?wlfPushInputChecked('wlfPushMonths').map(Number):[],
+      repeat_calendar_dates:calendar,is_enabled:$('wlfPushEnabled').checked
+    };
+  }
+  async function saveWlfPushCampaign(sendNow=false){
+    if(currentProfile?.role!=='superadmin')return;
+    const status=document.getElementById('wlfPushEditorStatus'),save=document.getElementById('wlfPushSaveBtn');
+    try{
+      const data=wlfPushPayload(sendNow);
+      if(sendNow&&!data.is_enabled)throw new Error('Enable the notification before sending.');
+      if(sendNow&&wlfPushEditingId&&!confirm('Send this updated campaign now? This resets the first delivery time.'))return;
+      save.disabled=true;status.textContent=sendNow?'Saving and dispatching…':'Saving…';
+      let q=wlfPushEditingId?sb.from('wlf_push_campaigns').update(data).eq('id',wlfPushEditingId).select('id').maybeSingle():sb.from('wlf_push_campaigns').insert(data).select('id').maybeSingle();
+      const {data:row,error}=await q;
+      if(error)throw error;
+      if(!row)throw new Error('The campaign could not be saved. Check Superadmin permissions.');
+      let sentNote='';
+      if(sendNow){
+        try{const r=await wlfPushFunction('dispatch');sentNote=` Server processed ${r.campaigns||0} due campaign(s).`;}
+        catch(e){sentNote=` Campaign saved, but immediate dispatch failed: ${e.message}. Check the Edge Function and cron setup.`;}
+      }
+      status.textContent='Campaign saved.'+sentNote;
+      wlfPushToast('Push campaign saved.'+sentNote);
+      wlfPushEditingId=null;await loadWlfPushAdminPanel();
+    }catch(e){status.textContent=e.message;wlfPushToast(e.message,false);}
+    finally{save.disabled=false;}
+  }
+  async function wlfPushPauseCampaign(id){
+    const c=wlfPushAdminRows.find(x=>x.id===id);if(!c)return;
+    if(!c.is_enabled&&!c.next_run_at){wlfPushToast('This campaign has completed; create a new campaign to resend.',false);return;}
+    const {error}=await sb.from('wlf_push_campaigns').update({is_enabled:!c.is_enabled}).eq('id',id);
+    if(error){wlfPushToast(error.message,false);return;}
+    await loadWlfPushAdminPanel();
+  }
+  async function wlfPushDeleteDraft(id){
+    const c=wlfPushAdminRows.find(x=>x.id===id);
+    if(!c||c.last_run_at){wlfPushToast('Sent campaigns are retained for audit history. Pause them instead.',false);return;}
+    if(!confirm('Delete this unsent campaign permanently?'))return;
+    const {error}=await sb.from('wlf_push_campaigns').delete().eq('id',id);
+    if(error)wlfPushToast(error.message,false);else await loadWlfPushAdminPanel();
+  }
+  async function loadWlfPushAdminPanel(){
+    if(currentProfile?.role!=='superadmin')return;
+    const panel=document.getElementById('wlfPushAdminPanel');if(!panel)return;
+    panel.innerHTML='<div class="placeholder-note">Loading push campaigns…</div>';
+    const [campaigns,users]=await Promise.all([
+      sb.from('wlf_push_campaigns').select('*').order('created_at',{ascending:false}).limit(100),
+      sb.from('profiles').select('id,full_name,nickname,role,discipline').eq('status','active').order('full_name')
+    ]);
+    if(campaigns.error){panel.innerHTML=`<div class="placeholder-note">Push campaigns not available: ${escapeHtml(campaigns.error.message)}. Run the approved SQL migration first.</div>`;return;}
+    wlfPushAdminRows=campaigns.data||[];wlfPushAdminUsers=users.data||[];wlfPushEditingId=null;
+    const list=wlfPushAdminRows.map(c=>{
+      const status=!c.is_enabled?(c.last_run_at?'Completed / paused':'Paused') : c.next_run_at?'Scheduled / active':'Completed';
+      return `<article class="wlf-push-campaign-row"><div class="wlf-push-campaign-main"><div class="wlf-push-campaign-title">${escapeHtml(c.title)}</div><div class="wlf-push-campaign-message">${escapeHtml(c.body)}</div><div class="wlf-push-campaign-meta">${escapeHtml(status)} · ${escapeHtml(c.channel)} · ${escapeHtml(wlfPushTagsForAudience(c))} · ${escapeHtml(c.repeat_type)} · Next: ${escapeHtml(wlfPushDisplayDate(c.next_run_at))}</div></div><div class="wlf-push-campaign-actions"><button type="button" class="wlf-push-button" onclick="wlfPushOpenEditor('${c.id}')">Edit</button><button type="button" class="wlf-push-button" onclick="wlfPushPauseCampaign('${c.id}')">${c.is_enabled?'Pause':'Resume'}</button>${!c.last_run_at?`<button type="button" class="wlf-push-button danger" onclick="wlfPushDeleteDraft('${c.id}')">Delete draft</button>`:''}</div></article>`;
+    }).join('');
+    panel.innerHTML=`<div class="wlf-push-admin"><div class="wlf-push-admin-intro"><div><strong>Push Notifications</strong><p>Superadmin-controlled messages. In-app bell and optional device push; separate from opening announcements.</p></div><span class="wlf-push-admin-chip">Superadmin only</span></div>
+      <div class="wlf-push-edit-card"><div class="wlf-push-card-title">Compose notification</div>${wlfPushFormTemplate()}</div>
+      <div class="wlf-push-history-head"><div><div class="wlf-push-card-title">Campaign history</div><div class="wlf-push-muted">Only unsent drafts can be deleted; sent history remains available.</div></div><button type="button" class="wlf-push-button" onclick="loadWlfPushAdminPanel()">Refresh</button></div>
+      <div class="wlf-push-campaign-list">${list||'<div class="placeholder-note">No push campaigns yet.</div>'}</div></div>`;
+    wlfPushAudienceVisibility();wlfPushRepeatVisibility();
+  }
+
   // ============ NOTIFICATIONS ============
   function toggleNotifPanel(){
     const panel = document.getElementById('notifPanel');
@@ -8207,7 +8562,13 @@
       return;
     }
     const rows = data || [];
-    const unread = rows.filter(n => !n.read).length;
+    // New push inbox is stored separately; existing notifications table and announcements stay untouched.
+    let wlfPushRows=[];
+    try{
+      const out=await sb.from('wlf_push_deliveries').select('id,title,body,priority,read_at,created_at,target_view,channel').eq('user_id',currentUser.id).in('channel',['inapp','both']).order('created_at',{ascending:false}).limit(40);
+      if(!out.error)wlfPushRows=out.data||[];
+    }catch(_){ /* migration not yet installed: keep existing bell operational */ }
+    const unread = rows.filter(n => !n.read).length + wlfPushRows.filter(n=>!n.read_at).length;
 
     // Approving a pending sign-in is Superadmin-only — Admins can see the
     // Admin panel but can't act on this, so this only ever shows for the
@@ -8231,13 +8592,18 @@
     badge.style.display = totalBadgeCount > 0 ? 'flex' : 'none';
     badge.textContent = totalBadgeCount > 9 ? '9+' : String(totalBadgeCount);
 
-    if(!rows.length && !pendingCount){
+    if(!rows.length && !wlfPushRows.length && !pendingCount){
       list.innerHTML = '<div class="placeholder-note" style="font-size:12px;">No notifications yet.</div>';
       return;
     }
-    list.innerHTML = pendingListHtml + rows.map(n => `
+    const wlfPushInboxHtml=wlfPushRows.map(n=>`<div onclick="markWlfPushDeliveryRead('${n.id}','${WLF_PUSH_VIEWS.has(n.target_view)?n.target_view:'home'}')" style="padding:10px 9px;border-radius:9px;margin-bottom:3px;cursor:pointer;background:${n.read_at?'transparent':'var(--accent-dim)'};">
+      <div style="font-size:12px;font-weight:800;color:var(--text)">${n.priority==='urgent'?'⚠ ':''}${escapeHtml(n.title)}</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;overflow-wrap:anywhere">${escapeHtml(n.body)}</div>
+      <div style="font-size:10px;color:var(--text-faint);margin-top:4px">${escapeHtml(timeAgo(n.created_at))} · Push campaign</div>
+    </div>`).join('');
+    list.innerHTML = pendingListHtml + wlfPushInboxHtml + rows.map(n => `
       <div onclick="markNotificationRead('${n.id}')" style="padding:9px 8px; border-radius:8px; cursor:pointer; margin-bottom:2px; background:${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'};" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'}'">
-        <div style="font-size:12.5px; line-height:1.4; ${n.read ? 'color:var(--text-dim);' : 'font-weight:600;'}">${n.message}</div>
+        <div style="font-size:12.5px; line-height:1.4; ${n.read ? 'color:var(--text-dim);' : 'font-weight:600;'}">${escapeHtml(n.message)}</div>
         <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">${timeAgo(n.created_at)}</div>
       </div>`).join('');
   }
@@ -8250,6 +8616,7 @@
   async function markAllNotificationsRead(){
     if(!currentUser) return;
     await sb.from('notifications').update({ read: true }).eq('user_id', currentUser.id).eq('read', false);
+    try{await sb.from('wlf_push_deliveries').update({read_at:new Date().toISOString()}).eq('user_id',currentUser.id).is('read_at',null);}catch(_){}
     loadNotifications();
   }
 
@@ -8273,6 +8640,8 @@
     if(confirm('Log out of Walton Lift R&I?')) signOutUser();
   }
   async function signOutUser(){
+    // Remove this browser's device subscription on sign-out to avoid cross-account delivery.
+    try{await Promise.race([disableWlfDevicePush(true),new Promise(resolve=>setTimeout(resolve,1800))]);}catch(_){}
     try{ await recordLastActive(true); }catch(e){}
     try{ await stopTeamPresence(); }catch(e){}
     await sb.auth.signOut();
@@ -8395,6 +8764,11 @@
     avatarEl.title = 'Account menu';
     document.getElementById('accountMenuName').textContent = `${profile.full_name} (${profile.nickname})`;
     showAuthScreen('app');
+    // Push is optional and asynchronous; never block an approved user's sign-in.
+    initWlfPushForUser().catch(()=>{});
+    if(wlfPushRequestedView && (wlfPushRequestedView!=='admin' || currentProfile?.role==='superadmin')){
+      showView(wlfPushRequestedView); onViewShown(wlfPushRequestedView);
+    }
     checkOpeningAnnouncementsOnce();
     startTeamPresence();
     updateHomeGreeting();
@@ -11425,6 +11799,7 @@
       ['Project PPTX report export', typeof exportProjectReportPptx === 'function'],
       ['Category Links / Upload feature', typeof updateCategoryLinksButton === 'function'],
       ['Custom Fields (dynamic per-category fields)', typeof loadCustomFieldsPanel === 'function'],
+      ['Superadmin Push Notifications + optional device push', typeof loadWlfPushAdminPanel === 'function' && typeof enableWlfDevicePush === 'function'],
       ['Opening Announcement system (advanced scheduling)', typeof checkOpeningAnnouncementsOnce === 'function' && typeof loadAnnouncementAdminPanel === 'function' && typeof announcementCalendarIsActive === 'function'],
       ['Quick Links themed groups', typeof addQuickLinkGroup === 'function' && typeof loadQuickLinksList === 'function'],
       ['Backup / Restore system', typeof createBackup === 'function' && typeof confirmRestoreBackup === 'function'],
@@ -11481,6 +11856,7 @@ find its way around before it can work in it safely.
 INFRASTRUCTURE
   Frontend: single index.html file, hosted on GitHub Pages
   Backend: Supabase (Postgres + Auth + Realtime), Tokyo region
+  Push notifications: optional WLF Web Push service worker + Supabase Edge Function; requires server-side VAPID keys and scheduled cron. Additive push tables are NOT part of the legacy in-app JSON Backup/Restore; use a full database backup for them.
   Backend plan: Free tier — this has NO automatic backups of any kind,
   which is exactly why the manual Backup/Restore system below exists
 
@@ -12341,7 +12717,7 @@ for a competing inline style first.`;
 
     const cards = [...grid.querySelectorAll(':scope > .admin-tool-card')];
     const configs = [
-      { key:'announcements' }, { key:'users' }, { key:'fields' }, { key:'score' },
+      { key:'announcements' }, { key:'push' }, { key:'users' }, { key:'fields' }, { key:'score' },
       { key:'category' }, { key:'quick' }, { key:'archive' }
     ];
     if(cards.length < configs.length) return;
@@ -12406,6 +12782,7 @@ for a competing inline style first.`;
       });
     };
     moveInto('announcements', ['announcementsBlock']);
+    moveInto('push', ['pushNotificationsBlock']);
     moveInto('fields', ['customFieldsBlock', 'fieldGuideBlock']);
     moveInto('score', ['kpiWeightsBlock']);
     moveInto('category', ['categoryLinksBlock']);
@@ -12426,6 +12803,8 @@ for a competing inline style first.`;
   function prepareAdminWorkspace(key){
     if(key === 'announcements'){
       loadAnnouncementAdminPanel();
+    } else if(key === 'push'){
+      loadWlfPushAdminPanel();
     } else if(key === 'users'){
       document.getElementById('approvedUsersPanel')?.classList.add('open');
     } else if(key === 'fields'){
@@ -12464,7 +12843,7 @@ for a competing inline style first.`;
   function adminJumpTo(targetId){
     initAdminCompactAccordion();
     const targetMap = {
-      announcementsBlock:['announcements'],
+      announcementsBlock:['announcements'],pushNotificationsBlock:['push'],
       pendingSigninsPanel:['users','pending'], approvedUsersPanel:['users','approved'],
       customFieldsBlock:['fields'], fieldGuideBlock:['fields'], kpiWeightsBlock:['score'],
       categoryLinksBlock:['category'], quickLinksBlock:['quick'], dataArchiveBlock:['archive']
@@ -12581,6 +12960,7 @@ for a competing inline style first.`;
  
     const isSuperadmin = currentProfile && currentProfile.role === 'superadmin';
     document.getElementById('announcementsBlock').style.display = isSuperadmin ? 'block' : 'none';
+    document.getElementById('pushNotificationsBlock').style.display = isSuperadmin ? 'block' : 'none';
     document.getElementById('kpiWeightsBlock').style.display = isSuperadmin ? 'block' : 'none';
     const backupSection = document.getElementById('accountMenuBackupSection');
     if(backupSection) backupSection.style.display = isSuperadmin ? 'block' : 'none';
@@ -16183,5 +16563,3 @@ for a competing inline style first.`;
  
 </body>
 </html>
-
-             
