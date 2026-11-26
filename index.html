@@ -7928,6 +7928,9 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-26', summary:'Push service worker compatibility: integrated Web Push handlers with the existing no-cache sw.js; registered one shared worker to preserve website installability and avoid same-scope registration conflicts. Device notification icon added. No SQL, announcement, Home, Dashboard, task, scoring, export or permission changes.' },
+
+    { date:'2026-11-26', summary:'Push connectivity hardening: clearer Edge Function failure messages for desktop/mobile, improved initial device-status diagnostics and matching Supabase Edge Function CORS/origin handling (redeploy required). No announcement, scoring, task or SQL changes.' },
     { date:'2026-11-26', summary:'Added standalone Superadmin Push Notifications under Admin, without modifying opening announcements: targeted campaigns, priority, delivery mode, send now, recurring/selected-date scheduling, role/discipline/user audiences, in-app inbox via the existing bell, optional Web Push consent, secure Edge Function, service worker and independent SQL tables. Existing task/scoring/export/navigation logic is untouched. Device push requires deploying sw.js, Edge Function and VAPID secrets, and configuring pg_cron for unattended scheduling.' },
     { date:'2026-11-17', summary:'Opening Announcement editor layout fix: keeps Repeat plus selected dates/months/interval/expiration in the left schedule column and Audience plus immediately visible role/user/discipline choices and popup frequency in the right column. Mobile stacks the columns. Existing field IDs, validation, permissions, scheduling, stored data and Supabase schema are unchanged.' },
     { date:'2026-11-17', summary:'Weekly Activity Trend now defaults to the last 3 rolling months rather than the entire history; a chart-only period selector offers 30 days, 3 months, 6 months or 12 months. Dashboard From/To filters override the chart selector. Empty calendar weeks appear as zero counts, and hover points show real weekly category counts and week ranges. Chart colors, curves, Dashboard KPI totals, 30-day comparisons, filters, scoring, exports, backup and Supabase schema remain unchanged.' },
@@ -8263,8 +8266,17 @@
     return Uint8Array.from(raw,c=>c.charCodeAt(0));
   }
   async function wlfPushFunction(action,payload={}){
+    // 2026-11-26 connection diagnostics: a FetchError can represent 404, CORS,
+    // failed deployment, connectivity, or Edge Function startup failure.
     const {data,error}=await sb.functions.invoke('wlf-push',{body:{action,...payload}});
-    if(error){let detail=error.message;try{const j=await error.context?.json();detail=j?.error||detail;}catch(_){}throw new Error(detail||'Push service is unavailable');}
+    if(error){
+      let detail=error.message||'';
+      try{const j=await error.context?.clone?.().json();detail=j?.error||j?.message||detail;}catch(_){}
+      if(error.name==='FunctionsFetchError' || /failed to send a request to the edge function/i.test(detail)){
+        throw new Error('Push service unreachable. Superadmin: check the wlf-push Edge Function is deployed in the website’s Supabase project, WLF_ALLOWED_ORIGINS matches this site, and Verify JWT is off. The in-app bell still works.');
+      }
+      throw new Error(detail || ('Push function returned '+(error.context?.status||'an error')));
+    }
     if(data?.error)throw new Error(data.error);
     return data;
   }
@@ -8272,7 +8284,7 @@
     if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window))throw new Error('Device push is not supported in this browser. In-app notifications still work.');
     if(!window.isSecureContext)throw new Error('Device push requires HTTPS.');
     if(!wlfPushRegistration){
-      wlfPushRegistration=await navigator.serviceWorker.register(new URL('./wlf-push-sw.js',location.href),{scope:'./'});
+      wlfPushRegistration=await navigator.serviceWorker.register(new URL('./sw.js',location.href),{scope:'./'});
       await navigator.serviceWorker.ready;
     }
     return wlfPushRegistration;
@@ -8300,7 +8312,7 @@
         wlfPushUiStatus('Device notifications enabled on this browser.');
       } else wlfPushUiStatus(Notification.permission==='denied'?'Blocked in browser settings.':'Device notifications are optional.');
       wlfPushSetupError='';
-    }catch(e){wlfPushSetupError=e.message;wlfPushUiStatus('Device push not configured yet. In-app notifications still work.');}
+    }catch(e){wlfPushSetupError=e.message;wlfPushUiStatus('Device push unavailable: '+e.message);}
   }
   async function enableWlfDevicePush(){
     // Permission prompt is initiated DIRECTLY by this user-click handler (iOS requirement).
