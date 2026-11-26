@@ -2899,6 +2899,17 @@
   #wlfPushDeviceArea .wlf-push-device-title{font-size:11px;font-weight:800;margin-bottom:6px}
   #wlfPushDeviceArea .wlf-push-device-actions{display:flex;flex-wrap:wrap;gap:6px}
   #wlfPushDeviceStatus{font-size:10px;line-height:1.45;color:var(--text-faint);margin-top:5px}
+  /* 2026-11-26: per-user notification cleanup — bell panel only. */
+  #notifPanel .wlf-notif-header-actions{display:flex;align-items:center;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+  #notifPanel .wlf-notif-header-action{font:600 10.5px Inter,sans-serif;padding:5px 7px;border:1px solid transparent;background:transparent;color:var(--accent);border-radius:7px;cursor:pointer;white-space:nowrap}
+  #notifPanel .wlf-notif-header-action:hover,#notifPanel .wlf-notif-header-action:focus-visible{background:var(--surface-alt);border-color:var(--border)}
+  #notifPanel .wlf-notif-header-action.wlf-notif-clear{color:var(--red)}
+  #notifPanel .wlf-notif-row{display:flex;align-items:flex-start;gap:2px;border-radius:9px;margin-bottom:3px}
+  #notifPanel .wlf-notif-content{min-width:0;flex:1;padding:9px 7px;cursor:pointer;border-radius:8px;overflow-wrap:anywhere}
+  #notifPanel .wlf-notif-delete{display:flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;height:32px;margin:4px 3px 0 0;border:0;border-radius:8px;background:transparent;color:var(--text-faint);cursor:pointer}
+  #notifPanel .wlf-notif-delete:hover,#notifPanel .wlf-notif-delete:focus-visible{background:color-mix(in srgb,var(--red) 10%,var(--surface));color:var(--red)}
+  #notifPanel .wlf-notif-delete svg{width:15px;height:15px;display:block}
+  @media(max-width:420px){#notifPanel .wlf-notif-header-actions{gap:2px}#notifPanel .wlf-notif-header-action{font-size:10px;padding:5px}}
   @media(max-width:420px){#notifPanel{width:min(320px,calc(100vw - 28px))!important;max-height:calc(100dvh - 114px)!important}}
   @media(max-width:700px){.wlf-push-form-grid{grid-template-columns:1fr}.wlf-push-full{grid-column:auto}.wlf-push-campaign-row{flex-direction:column;align-items:stretch}.wlf-push-campaign-actions{justify-content:flex-start}.wlf-push-actions .wlf-push-button{flex:1 1 auto}}
 
@@ -3915,9 +3926,12 @@
         <span id="notifBadge" style="display:none; position:absolute; top:-3px; right:-3px; min-width:17px; height:17px; padding:0 4px; border-radius:999px; background:var(--red); color:#fff; font-size:10px; font-weight:700; align-items:center; justify-content:center;">0</span>
       </button>
       <div id="notifPanel" style="display:none; position:absolute; right:0; top:calc(100% + 8px); width:320px; max-height:420px; overflow-y:auto; background:var(--surface); border:1.5px solid var(--border); border-radius:12px; padding:8px; z-index:200; box-shadow:0 12px 30px rgba(0,0,0,0.35);">
-        <div style="display:flex; align-items:center; justify-content:space-between; padding:6px 8px 8px; border-bottom:1px solid var(--border); margin-bottom:6px;">
-          <div style="font-size:12.5px; font-weight:600;">Notifications</div>
-          <span style="font-size:11.5px; color:var(--accent); cursor:pointer;" onclick="markAllNotificationsRead()">Mark all read</span>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:5px; padding:6px 4px 8px; border-bottom:1px solid var(--border); margin-bottom:6px;">
+          <div style="font-size:12.5px; font-weight:700;">Notifications</div>
+          <div class="wlf-notif-header-actions">
+            <button type="button" class="wlf-notif-header-action" onclick="markAllNotificationsRead()" title="Mark all notifications as read">Mark all read</button>
+            <button type="button" class="wlf-notif-header-action wlf-notif-clear" onclick="clearAllUserNotifications()" title="Hide your saved notifications on all your devices">Clear all</button>
+          </div>
         </div>
         <div id="wlfPushDeviceArea"><div class="wlf-push-device-title">Device notifications (optional)</div><div class="wlf-push-device-actions"><button type="button" class="wlf-push-button primary" onclick="enableWlfDevicePush()">Enable on this device</button><button type="button" class="wlf-push-button" onclick="disableWlfDevicePush()">Disable</button></div><div id="wlfPushDeviceStatus">Available after Superadmin completes push setup. iPhone: add this website to Home Screen first.</div></div>
         <div id="notifList"><div class="placeholder-note" style="font-size:12px;">Loading…</div></div>
@@ -7928,6 +7942,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-26', summary:'Users can now hide individual regular and push notifications from their own bell and Clear all; dismissals persist across desktop/mobile via two additive per-user RLS tables. Existing campaign history, actual notifications, delivery audit, approvals, announcements, form flows, permissions, scoring, exports and service worker remain unchanged. New SQL required.' },
     { date:'2026-11-26', summary:'Push service worker compatibility: integrated Web Push handlers with the existing no-cache sw.js; registered one shared worker to preserve website installability and avoid same-scope registration conflicts. Device notification icon added. No SQL, announcement, Home, Dashboard, task, scoring, export or permission changes.' },
 
     { date:'2026-11-26', summary:'Push connectivity hardening: clearer Edge Function failure messages for desktop/mobile, improved initial device-status diagnostics and matching Supabase Edge Function CORS/origin handling (redeploy required). No announcement, scoring, task or SQL changes.' },
@@ -8566,20 +8581,40 @@
 
   async function loadNotifications(){
     if(!currentUser) return;
-    const { data, error } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(30);
+    const { data, error } = await sb.from('notifications').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false }).limit(100);
     const badge = document.getElementById('notifBadge');
     const list = document.getElementById('notifList');
     if(error){
       if(list) list.innerHTML = `<div class="placeholder-note" style="font-size:12px;">Could not load: ${error.message}. Make sure the notifications table has been created (see setup SQL).</div>`;
       return;
     }
-    const rows = data || [];
-    // New push inbox is stored separately; existing notifications table and announcements stay untouched.
+    const originalRows = data || [];
+    // New push inbox remains separate from existing notifications and announcements.
     let wlfPushRows=[];
     try{
-      const out=await sb.from('wlf_push_deliveries').select('id,title,body,priority,read_at,created_at,target_view,channel').eq('user_id',currentUser.id).in('channel',['inapp','both']).order('created_at',{ascending:false}).limit(40);
+      const out=await sb.from('wlf_push_deliveries').select('id,title,body,priority,read_at,created_at,target_view,channel').eq('user_id',currentUser.id).in('channel',['inapp','both']).order('created_at',{ascending:false}).limit(100);
       if(!out.error)wlfPushRows=out.data||[];
     }catch(_){ /* migration not yet installed: keep existing bell operational */ }
+
+    // Dismissed messages are hidden ONLY for this signed-in user, on every device.
+    // Two additive tables preserve the original messages and delivery/audit records.
+    const visibleIds=[...new Set([...originalRows,...wlfPushRows].map(n=>String(n.id||'')).filter(id=>/^[0-9a-f-]{36}$/i.test(id)))];
+    let hiddenItems=new Set(), clearCutoff=0;
+    try{
+      const [hiddenResult,clearResult]=await Promise.all([
+        visibleIds.length ? sb.from('wlf_notification_hides').select('notification_type,notification_id').eq('user_id',currentUser.id).in('notification_id',visibleIds) : Promise.resolve({data:[],error:null}),
+        sb.from('wlf_notification_clears').select('cleared_at').eq('user_id',currentUser.id).maybeSingle()
+      ]);
+      if(!hiddenResult.error && !clearResult.error){
+        hiddenItems=new Set((hiddenResult.data||[]).map(h=>`${h.notification_type}:${h.notification_id}`));
+        clearCutoff=clearResult.data?.cleared_at ? Date.parse(clearResult.data.cleared_at) : 0;
+      }
+    }catch(_){ /* If migration has not been installed, older bell behavior remains available. */ }
+    const isVisibleNotification=(n,kind)=>
+      !hiddenItems.has(`${kind}:${n.id}`) &&
+      !(clearCutoff && Number.isFinite(Date.parse(n.created_at)) && Date.parse(n.created_at)<=clearCutoff);
+    const rows=originalRows.filter(n=>isVisibleNotification(n,'inapp')).slice(0,30);
+    wlfPushRows=wlfPushRows.filter(n=>isVisibleNotification(n,'push')).slice(0,40);
     const unread = rows.filter(n => !n.read).length + wlfPushRows.filter(n=>!n.read_at).length;
 
     // Approving a pending sign-in is Superadmin-only — Admins can see the
@@ -8608,16 +8643,44 @@
       list.innerHTML = '<div class="placeholder-note" style="font-size:12px;">No notifications yet.</div>';
       return;
     }
-    const wlfPushInboxHtml=wlfPushRows.map(n=>`<div onclick="markWlfPushDeliveryRead('${n.id}','${WLF_PUSH_VIEWS.has(n.target_view)?n.target_view:'home'}')" style="padding:10px 9px;border-radius:9px;margin-bottom:3px;cursor:pointer;background:${n.read_at?'transparent':'var(--accent-dim)'};">
-      <div style="font-size:12px;font-weight:800;color:var(--text)">${n.priority==='urgent'?'⚠ ':''}${escapeHtml(n.title)}</div>
-      <div style="font-size:11px;color:var(--text-dim);margin-top:2px;overflow-wrap:anywhere">${escapeHtml(n.body)}</div>
-      <div style="font-size:10px;color:var(--text-faint);margin-top:4px">${escapeHtml(timeAgo(n.created_at))} · Push campaign</div>
+    const trashIcon=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2m3 0-1 14H6L5 6M10 10v7M14 10v7"/></svg>`;
+    const wlfPushInboxHtml=wlfPushRows.map(n=>`<div class="wlf-notif-row" style="background:${n.read_at?'transparent':'var(--accent-dim)'};">
+      <div class="wlf-notif-content" role="button" tabindex="0" onclick="markWlfPushDeliveryRead('${n.id}','${WLF_PUSH_VIEWS.has(n.target_view)?n.target_view:'home'}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}">
+        <div style="font-size:12px;font-weight:800;color:var(--text)">${n.priority==='urgent'?'⚠ ':''}${escapeHtml(n.title)}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:2px;overflow-wrap:anywhere">${escapeHtml(n.body)}</div>
+        <div style="font-size:10px;color:var(--text-faint);margin-top:4px">${escapeHtml(timeAgo(n.created_at))} · Push campaign</div>
+      </div>
+      <button type="button" class="wlf-notif-delete" aria-label="Delete this notification from my inbox" title="Delete for me" onclick="event.stopPropagation();hideUserNotification('push','${n.id}')">${trashIcon}</button>
     </div>`).join('');
     list.innerHTML = pendingListHtml + wlfPushInboxHtml + rows.map(n => `
-      <div onclick="markNotificationRead('${n.id}')" style="padding:9px 8px; border-radius:8px; cursor:pointer; margin-bottom:2px; background:${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'};" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'}'">
-        <div style="font-size:12.5px; line-height:1.4; ${n.read ? 'color:var(--text-dim);' : 'font-weight:600;'}">${escapeHtml(n.message)}</div>
-        <div style="font-size:10.5px; color:var(--text-faint); margin-top:3px;">${timeAgo(n.created_at)}</div>
+      <div class="wlf-notif-row" style="background:${n.read ? 'transparent' : 'color-mix(in srgb, var(--accent) 10%, transparent)'};">
+        <div class="wlf-notif-content" role="button" tabindex="0" onclick="markNotificationRead('${n.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.click();}" style="${n.read ? 'color:var(--text-dim);' : ''}">
+          <div style="font-size:12.5px;line-height:1.4;${n.read ? 'color:var(--text-dim);' : 'font-weight:600;'}">${escapeHtml(n.message)}</div>
+          <div style="font-size:10.5px;color:var(--text-faint);margin-top:3px">${escapeHtml(timeAgo(n.created_at))}</div>
+        </div>
+        <button type="button" class="wlf-notif-delete" aria-label="Delete this notification from my inbox" title="Delete for me" onclick="event.stopPropagation();hideUserNotification('inapp','${n.id}')">${trashIcon}</button>
       </div>`).join('');
+  }
+
+  async function hideUserNotification(kind,id){
+    if(!currentUser || !['inapp','push'].includes(kind) || !/^[0-9a-f-]{36}$/i.test(String(id)))return;
+    try{
+      const {error}=await sb.from('wlf_notification_hides').insert({
+        user_id:currentUser.id,notification_type:kind,notification_id:id
+      });
+      if(error && error.code!=='23505')throw error; // already hidden is harmless
+      await loadNotifications();
+    }catch(e){wlfPushToast('Could not delete this notification. Run the new notification-delete SQL first. '+(e.message||''),false);}
+  }
+
+  async function clearAllUserNotifications(){
+    if(!currentUser)return;
+    if(!confirm('Clear all saved notifications from your own inbox? This does not delete the messages for other users, and future notifications will still arrive.'))return;
+    try{
+      const {error}=await sb.rpc('wlf_clear_own_notifications');
+      if(error)throw error;
+      await loadNotifications();
+    }catch(e){wlfPushToast('Could not clear your notifications. Run the new notification-delete SQL first. '+(e.message||''),false);}
   }
 
   async function markNotificationRead(id){
