@@ -2851,18 +2851,18 @@
 \n  /* WLF Web Push 2026-11-26: Admin composer and user permission controls ONLY. */
   #view-admin .admin-accordion-item[data-admin-key="push"] .admin-tool-icon{color:#3b82f6;background:color-mix(in srgb,#3b82f6 12%,var(--surface));}
   #view-admin .admin-accordion-item[data-admin-key="push"] #pushNotificationsBlock{display:block!important;padding:0!important;margin:0!important;border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;}
-  .wlf-push-admin{display:flex;flex-direction:column;gap:14px;padding:12px}
+  .wlf-push-admin{display:flex;flex-direction:column;gap:10px;padding:10px}
   .wlf-push-admin-intro{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .wlf-push-admin-intro strong{font-size:14px;color:var(--text)}
   .wlf-push-admin-intro p,.wlf-push-muted{font-size:11px;color:var(--text-faint);line-height:1.5;margin-top:3px}
   .wlf-push-admin-chip{font-size:10px;font-weight:700;border-radius:999px;padding:5px 9px;white-space:nowrap;background:var(--accent-dim);color:var(--accent)}
-  .wlf-push-edit-card{padding:14px;border:1px solid var(--border);border-radius:14px;background:color-mix(in srgb,var(--surface) 86%,transparent)}
+  .wlf-push-edit-card{padding:12px;border:1px solid var(--border);border-radius:13px;background:color-mix(in srgb,var(--surface) 86%,transparent)}
   .wlf-push-card-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:10px}
-  .wlf-push-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .wlf-push-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 10px}
   .wlf-push-full{grid-column:1/-1;min-width:0}
   .wlf-push-field{display:flex;flex-direction:column;gap:5px;min-width:0;font-size:11px;font-weight:700;color:var(--text-dim)}
   .wlf-push-field input:not([type=checkbox]),.wlf-push-field select,.wlf-push-field textarea{width:100%;min-width:0;font:500 12px Inter,sans-serif;line-height:1.45;color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px!important;padding:9px 10px;box-shadow:none}
-  .wlf-push-field textarea{resize:vertical;min-height:62px}
+  .wlf-push-field textarea{resize:vertical;min-height:56px}
   .wlf-push-field.wlf-push-checkbox{display:flex;flex-direction:row;align-items:center;gap:8px;padding-top:20px}
   .wlf-push-checkbox input{accent-color:var(--accent)}
   .wlf-push-choice-box{border:1px solid var(--border);background:var(--surface-alt);padding:10px;border-radius:10px;color:var(--text-dim)}
@@ -2880,7 +2880,18 @@
   .wlf-push-calendar-chooser input{flex:1;min-width:160px;padding:7px;border:1px solid var(--border);background:var(--surface);color:var(--text)}
   .wlf-push-day-chip{display:inline-flex;align-items:center;gap:5px;background:var(--accent-dim);color:var(--accent);padding:4px 7px;border-radius:999px;margin:4px;font-size:11px}
   .wlf-push-day-chip button{color:inherit;border:0;background:transparent;cursor:pointer;font-weight:800}
-  .wlf-push-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .wlf-push-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;align-items:center;gap:7px;margin-top:10px}
+  /* Optional scheduling: hidden until chosen; immediate send is the default. */
+  #wlfPushAudienceOptions:empty,#wlfPushRepeatOptions:empty{display:none}
+  #wlfPushScheduleToggleRow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:var(--surface-alt);color:var(--text);font:600 12px Inter,sans-serif;cursor:pointer}
+  #wlfPushScheduleToggleRow span{display:inline-flex;align-items:center;gap:9px}
+  #wlfPushScheduleToggleRow input{width:16px;height:16px;accent-color:var(--accent);cursor:pointer}
+  #wlfPushScheduleToggleRow:has(input:disabled){opacity:.75;cursor:default}
+  #wlfPushScheduleFields{padding:10px;border:1px solid var(--border);background:color-mix(in srgb,var(--accent) 3%,var(--surface));border-radius:11px}
+  #wlfPushScheduleFields[hidden]{display:none!important}
+  #wlfPushCancelEditBtn[hidden]{display:none!important}
+  #wlfPushPrimaryBtn{min-width:116px;min-height:36px;padding:9px 16px;font-size:12px}
+  @media(max-width:600px){#wlfPushPrimaryBtn{flex:1 1 auto}}
   .wlf-push-button{border:1px solid var(--border);border-radius:8px;padding:8px 11px;font:700 11px Inter,sans-serif;color:var(--text-dim);background:var(--surface);cursor:pointer;white-space:nowrap}
   .wlf-push-button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
   .wlf-push-button.danger{color:var(--red)}
@@ -2911,9 +2922,12 @@
   .wlf-push-toast-close{border:0;color:var(--text-dim);background:transparent;cursor:pointer;font-size:18px;line-height:1;padding:2px 4px;border-radius:5px}
   .wlf-push-toast-close:hover{background:var(--surface-alt)}
   @media(max-width:600px){.wlf-push-toast{left:14px;right:14px;bottom:calc(76px + env(safe-area-inset-bottom,0px));max-width:none}.wlf-push-campaign-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.wlf-push-campaign-actions .wlf-push-button{display:flex;align-items:center;justify-content:center;min-height:38px;padding:8px 6px}}
-  /* 2026-11-26: single accessible, iOS-style device-push toggle (bell panel only). */
-  #wlfPushDeviceArea{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:52px;margin-bottom:8px;padding:10px 12px;border:1px solid var(--border);border-radius:12px;background:color-mix(in srgb,var(--accent) 4%,var(--surface))}
-  #wlfPushDeviceArea .wlf-push-device-title{min-width:0;font:750 11.5px/1.35 Inter,sans-serif;color:var(--text);letter-spacing:-.01em}
+  /* 2026-11-28: device push setting moves into the profile menu below Theme. */
+  #accountMenu{min-width:270px!important;max-width:calc(100vw - 24px);max-height:min(78dvh,690px);overflow-y:auto;overscroll-behavior:contain}
+  #accountMenu #wlfPushDeviceArea{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:42px;margin:0;padding:7px 12px;border:0;border-radius:10px;background:transparent}
+  #accountMenu #wlfPushDeviceArea:hover{background:var(--surface-alt)}
+  #accountMenu #wlfPushDeviceArea .wlf-push-device-title{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;min-width:0;font:500 12.5px/1.35 Inter,sans-serif;color:var(--text)}
+  #accountMenu #wlfPushDeviceArea .wlf-push-device-title svg{flex:0 0 15px;opacity:.65}
   #wlfPushDeviceSwitch{position:relative;display:inline-flex;align-items:center;flex:0 0 46px;width:46px;height:28px;padding:3px;border:1px solid var(--border);border-radius:999px;background:color-mix(in srgb,var(--text-faint) 29%,var(--surface-alt));cursor:pointer;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease}
   #wlfPushDeviceSwitch .wlf-push-switch-knob{display:block;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.22);transform:translateX(0);transition:transform .2s ease}
   #wlfPushDeviceSwitch[aria-checked="true"]{background:var(--accent);border-color:var(--accent)}
@@ -4057,11 +4071,6 @@
             <button type="button" class="wlf-notif-header-action wlf-notif-clear" onclick="clearAllUserNotifications()" title="Hide your saved notifications on all your devices">Clear all</button>
           </div>
         </div>
-        <div id="wlfPushDeviceArea">
-          <span class="wlf-push-device-title" id="wlfPushDeviceLabel">Device notifications</span>
-          <button type="button" id="wlfPushDeviceSwitch" role="switch" aria-checked="false" aria-labelledby="wlfPushDeviceLabel" aria-label="Enable device notifications" onclick="toggleWlfDevicePushSwitch()" title="Enable device notifications"><span class="wlf-push-switch-knob" aria-hidden="true"></span></button>
-          <span id="wlfPushDeviceStatus" role="status" aria-live="polite"></span>
-        </div>
         <div id="notifList"><div class="placeholder-note" style="font-size:12px;">Loading…</div></div>
       </div>
     </div>
@@ -4085,6 +4094,15 @@
             <button class="theme-dot" data-theme-name="white" style="background:linear-gradient(135deg, #DDDFE5, #FAFAFC);" onclick="setTheme('white', this)" title="Light"></button>
             <button class="theme-dot" data-theme-name="dark" style="background:linear-gradient(135deg, #0D1218, #282828);" onclick="setTheme('dark', this)" title="Dark"></button>
           </div>
+        </div>
+        <!-- Device push setting lives beside Theme in the account menu. The bell is for messages only. -->
+        <div id="wlfPushDeviceArea">
+          <span class="wlf-push-device-title" id="wlfPushDeviceLabel">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M10 21h4"/></svg>
+            Device notifications
+          </span>
+          <button type="button" id="wlfPushDeviceSwitch" role="switch" aria-checked="false" aria-labelledby="wlfPushDeviceLabel" aria-label="Enable device notifications" onclick="toggleWlfDevicePushSwitch()" title="Enable device notifications"><span class="wlf-push-switch-knob" aria-hidden="true"></span></button>
+          <span id="wlfPushDeviceStatus" role="status" aria-live="polite"></span>
         </div>
         <div style="padding:8px 12px; border-radius:10px; cursor:pointer; font-size:13px; display:flex; align-items:center; gap:10px; transition:background .12s ease;" onmouseover="this.style.background='var(--surface-alt)'" onmouseout="this.style.background='transparent'" onclick="toggleAccountMenu(); openScoringInfoModal();">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.65; flex-shrink:0;"><circle cx="12" cy="12" r="9"/><path d="M12 17v-5"/><circle cx="12" cy="8.3" r="0.7" fill="currentColor" stroke="none"/></svg>
@@ -8070,6 +8088,7 @@
   // why or how.
   // ============================================================
   const CHANGELOG = [
+    { date:'2026-11-28', summary:'Simplified Superadmin Push Notifications compose form: a single primary Send now action by default; explicit Schedule for later/repeat reveals the existing date, repeat, and recurrence controls with a Schedule action; editing uses Save changes without re-sending. Removed redundant preview/cancel/new-campaign save buttons and duplicate section intro, tightened form spacing. Moved the existing per-device push ON/OFF switch from the notification bell into the profile avatar menu beside Theme. Preserved device subscription permission checks, bell inbox, scheduled campaigns, delivery backend, Supabase tables/RLS, existing pages and exports. HTML-only; no SQL or Edge Function changes.' },
     { date:'2026-11-26', summary:'Push reliability: added reconnect on network restoration and return to site, periodic subscription reconciliation, VAPID key mismatch renewal, request timeouts, race-safe ON/OFF handling and support for immediate bell refresh from the service worker. Supabase dispatch now retries transient provider errors; server code and service worker must be deployed alongside this HTML; no SQL schema change.' },
     { date:'2026-11-26', summary:'Simplified device push controls in the notification bell to a single accessible iOS-style on/off switch. Removed the redundant enabled-on-this-browser caption, separate Enable/Disable buttons and extra settings gear. Switch reflects successful subscription registration and preserves per-device opt-out; existing push authorization, Supabase tables, scheduling, service worker, notifications and all other application sections remain unchanged. HTML-only.' },
     { date:'2026-11-26', summary:'Superadmin Push Notification campaigns now have a visible Delete action for every schedule, including recurring schedules that have already sent. Delete is an auditable soft archive that atomically disables future occurrences and retains past recipient deliveries; uses new additive SQL. Campaign editing and Pause/Resume now update the list in place without full form/profile reloads, with optimistic feedback and rollback on failure. Routine push notices use a non-blocking toast; no change to opening announcements, task data, scoring, exports, service worker or Edge Function.' },
@@ -8378,6 +8397,7 @@
       closeAccountMenu();
     } else {
       menu.style.display = 'block';
+      wlfPushSyncDeviceSettings();
       // Force a reflow so the browser registers the "closed" state above
       // before flipping to "open" — otherwise both changes get batched
       // into one frame and the transition never actually plays.
@@ -8835,7 +8855,7 @@
   }
   function wlfPushFormTemplate(){
     const now=wlfPushDhakaLocal(new Date(Date.now()+300000));
-    return `<form id="wlfPushEditorForm" onsubmit="event.preventDefault();saveWlfPushCampaign(false)">
+    return `<form id="wlfPushEditorForm" onsubmit="event.preventDefault();wlfPushSubmitSingle()">
       <div class="wlf-push-form-grid">
         <label class="wlf-push-field wlf-push-full"><span>Notification title *</span><input id="wlfPushTitle" maxlength="100" placeholder="e.g. Updated production timeline" required></label>
         <label class="wlf-push-field wlf-push-full"><span>Message *</span><textarea id="wlfPushBody" maxlength="500" rows="2" placeholder="Short, useful message for the team" required></textarea></label>
@@ -8844,15 +8864,37 @@
         <label class="wlf-push-field"><span>Audience</span><select id="wlfPushAudience" onchange="wlfPushAudienceVisibility()"><option value="all">Everyone</option><option value="users">Specific users</option><option value="roles">By role</option><option value="disciplines">By discipline</option></select></label>
         <label class="wlf-push-field"><span>Open on click</span><select id="wlfPushTargetView">${[['home','Home'],['dashboard','Team Dashboard'],['mytasks','My Tasks'],['search','Lift Trace'],['gantt','R&I Projects'],['chat','Team Chat'],['notebook','Notebook']].map(([a,b])=>wlfPushOption(a,b,'home')).join('')}</select></label>
         <div class="wlf-push-full" id="wlfPushAudienceOptions"></div>
+        <label class="wlf-push-full" id="wlfPushScheduleToggleRow"><span><input id="wlfPushScheduleToggle" type="checkbox" onchange="wlfPushScheduleVisibility()"> Schedule for later or repeat</span><span style="font-size:10px;color:var(--text-faint);font-weight:500">Optional</span></label>
+        <div id="wlfPushScheduleFields" class="wlf-push-schedule-fields wlf-push-full" hidden><div class="wlf-push-form-grid">
         <div class="wlf-push-field wlf-push-dt-field"><span>First delivery (Bangladesh time) *</span><input id="wlfPushStartsAt" class="wlf-push-dt-source" type="datetime-local" value="${now}" required tabindex="-1" aria-hidden="true"><button type="button" class="wlf-push-dt-trigger" id="wlfPushStartsAtTrigger" onclick="wlfPushOpenDateTime('wlfPushStartsAt')" aria-label="Choose first delivery date and time"><span class="wlf-push-dt-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 18h3"/></svg></span><span id="wlfPushStartsAtText" class="wlf-push-dt-text">Select date and time</span><svg class="wlf-push-dt-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg></button></div>
         <label class="wlf-push-field"><span>Repeat</span><select id="wlfPushRepeat" onchange="wlfPushRepeatVisibility()"><option value="none">Do not repeat</option><option value="daily">Daily</option><option value="weekly">Weekly</option><option value="monthly">Monthly</option><option value="dates">Selected days / months</option><option value="calendar">Specific calendar dates</option></select></label>
         <div class="wlf-push-full" id="wlfPushRepeatOptions"></div>
         <div class="wlf-push-field wlf-push-dt-field"><span>Repeat until (optional)</span><input id="wlfPushEndsAt" class="wlf-push-dt-source" type="datetime-local" tabindex="-1" aria-hidden="true"><button type="button" class="wlf-push-dt-trigger is-empty" id="wlfPushEndsAtTrigger" onclick="wlfPushOpenDateTime('wlfPushEndsAt')" aria-label="Choose repeat end date and time"><span class="wlf-push-dt-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4M17 3v4M3 10h18M8 14h3M8 18h3"/></svg></span><span id="wlfPushEndsAtText" class="wlf-push-dt-text">No end date — optional</span><svg class="wlf-push-dt-caret" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg></button></div>
-        <label class="wlf-push-field wlf-push-checkbox"><input type="checkbox" id="wlfPushEnabled" checked> Enabled — send when scheduled</label>
+        </div></div>
+        <input type="checkbox" id="wlfPushEnabled" checked hidden aria-hidden="true">
       </div>
-      <div class="wlf-push-actions"><button type="button" class="wlf-push-button" onclick="wlfPushPreview()">Preview</button><button type="button" class="wlf-push-button" onclick="wlfPushClearEditor()">Cancel</button><button type="submit" class="wlf-push-button primary" id="wlfPushSaveBtn">Save campaign</button><button type="button" class="wlf-push-button primary" id="wlfPushSendNowBtn" onclick="saveWlfPushCampaign(true)">Send now</button></div>
+      <div class="wlf-push-actions"><button type="button" class="wlf-push-button" id="wlfPushCancelEditBtn" onclick="wlfPushClearEditor()" hidden>Cancel editing</button><button type="submit" class="wlf-push-button primary" id="wlfPushPrimaryBtn">Send now</button></div>
       <div id="wlfPushEditorStatus" class="wlf-push-inline-status" role="status"></div>
     </form>`;
+  }
+  function wlfPushScheduleVisibility(){
+    const toggle=document.getElementById('wlfPushScheduleToggle');
+    const panel=document.getElementById('wlfPushScheduleFields');
+    if(!toggle||!panel)return;
+    // Edits are always saves, never implicit re-sends of old campaigns.
+    if(wlfPushEditingId)toggle.checked=true;
+    toggle.disabled=!!wlfPushEditingId;
+    panel.hidden=!toggle.checked;
+    const main=document.getElementById('wlfPushPrimaryBtn');
+    if(main)main.textContent=wlfPushEditingId?'Save changes':toggle.checked?'Schedule':'Send now';
+    const cancel=document.getElementById('wlfPushCancelEditBtn');
+    if(cancel)cancel.hidden=!wlfPushEditingId;
+  }
+  function wlfPushSubmitSingle(){
+    if(wlfPushAdminSaving)return;
+    // Send immediately by default; a future/repeating campaign is explicitly scheduled.
+    // Existing campaigns are modified without starting an extra delivery.
+    return saveWlfPushCampaign(!wlfPushEditingId&&!document.getElementById('wlfPushScheduleToggle')?.checked);
   }
   function wlfPushInputChecked(name){return [...document.querySelectorAll(`[name="${name}"]:checked`)].map(e=>e.value);}
   function wlfPushAudienceVisibility(preselected={}){
@@ -8894,7 +8936,8 @@
     const form=document.getElementById('wlfPushEditorForm');if(!form)return;
     form.reset();document.getElementById('wlfPushStartsAt').value=wlfPushDhakaLocal(new Date(Date.now()+300000));
     wlfPushAudienceVisibility();wlfPushRepeatVisibility();
-    document.getElementById('wlfPushSaveBtn').textContent='Save campaign';
+    document.getElementById('wlfPushScheduleToggle').checked=false;
+    wlfPushScheduleVisibility();
     document.getElementById('wlfPushEditorStatus').textContent='';
     wlfPushSyncDateTimeFields();
   }
@@ -8908,7 +8951,8 @@
     set('wlfPushRepeat',c.repeat_type);set('wlfPushEndsAt',c.ends_at?wlfPushDhakaLocal(new Date(c.ends_at)):'');
     document.getElementById('wlfPushEnabled').checked=c.is_enabled;
     wlfPushAudienceVisibility(c);wlfPushRepeatVisibility(c);
-    document.getElementById('wlfPushSaveBtn').textContent='Save changes';
+    document.getElementById('wlfPushScheduleToggle').checked=true;
+    wlfPushScheduleVisibility();
     wlfPushSyncDateTimeFields();
     document.getElementById('wlfPushEditorForm').scrollIntoView({block:'nearest',behavior:'auto'});
   }
@@ -8921,12 +8965,12 @@
     const $=id=>document.getElementById(id);
     const audience=$('wlfPushAudience').value;
     const selected=wlfPushInputChecked('wlfPushTarget');
-    const repeat=$('wlfPushRepeat').value;
+    const repeat=sendNow?'none':$('wlfPushRepeat').value;
     const title=$('wlfPushTitle').value.trim(),body=$('wlfPushBody').value.trim();
     if(!title||!body)throw new Error('Title and message are required.');
     if(audience!=='all'&&!selected.length)throw new Error('Choose at least one target for this audience.');
     let startsAt=sendNow ? new Date().toISOString() : wlfPushDhakaUtc($('wlfPushStartsAt').value);
-    let endsAt=$('wlfPushEndsAt').value?wlfPushDhakaUtc($('wlfPushEndsAt').value):null;
+    let endsAt=!sendNow&&$('wlfPushEndsAt').value?wlfPushDhakaUtc($('wlfPushEndsAt').value):null;
     // Preserve the exact original timestamps on a content-only edit. Rounding to a
     // minute in datetime-local would otherwise reset the worker's next_run_at lease.
     const original=wlfPushEditingId?wlfPushAdminRows.find(c=>c.id===wlfPushEditingId):null;
@@ -9009,7 +9053,7 @@
   async function saveWlfPushCampaign(sendNow=false){
     if(currentProfile?.role!=='superadmin'||wlfPushAdminSaving)return;
     const status=document.getElementById('wlfPushEditorStatus');
-    const save=document.getElementById('wlfPushSaveBtn'),sendBtn=document.getElementById('wlfPushSendNowBtn');
+    const save=document.getElementById('wlfPushPrimaryBtn');
     let editId=null,previous=null;
     try{
       const data=wlfPushPayload(sendNow);
@@ -9019,7 +9063,6 @@
       if(editId&&wlfPushAdminBusy.has(editId))return;
       wlfPushAdminSaving=true;
       if(save)save.disabled=true;
-      if(sendBtn)sendBtn.disabled=true;
       if(status)status.textContent=sendNow?'Saving, then sending…':'Saving changes…';
       // Optimistic update for existing campaigns; no full-panel reload.
       if(editId){
@@ -9070,7 +9113,6 @@
       wlfPushRenderCampaignList();
       wlfPushAdminSaving=false;
       if(save)save.disabled=false;
-      if(sendBtn)sendBtn.disabled=false;
     }
   }
 
@@ -9136,11 +9178,11 @@
       if(campaigns.error)throw campaigns.error;
       wlfPushAdminRows=campaigns.data||[];
       wlfPushAdminUsers=users.error?[]:(users.data||[]);
-      panel.innerHTML=`<div class="wlf-push-admin"><div class="wlf-push-admin-intro"><div><strong>Push Notifications</strong><p>Superadmin-controlled messages. In-app bell and optional device push; separate from opening announcements.</p></div><span class="wlf-push-admin-chip">Superadmin only</span></div>
+      panel.innerHTML=`<div class="wlf-push-admin">
         <div class="wlf-push-edit-card"><div class="wlf-push-card-title">Compose notification</div>${wlfPushFormTemplate()}</div>
         <div class="wlf-push-history-head"><div><div class="wlf-push-card-title">Manage scheduled notifications</div><div class="wlf-push-muted">Edit, pause or delete any schedule. Deleting stops future sends and retains past delivery records.</div></div><button type="button" id="wlfPushRefreshBtn" class="wlf-push-button" onclick="wlfPushRefreshCampaignList()">Refresh</button></div>
         <div class="wlf-push-campaign-list"></div></div>`;
-      wlfPushAudienceVisibility();wlfPushRepeatVisibility();wlfPushSyncDateTimeFields();
+      wlfPushAudienceVisibility();wlfPushRepeatVisibility();wlfPushScheduleVisibility();wlfPushSyncDateTimeFields();
       wlfPushRenderCampaignList();
       if(users.error)wlfPushToast('Campaigns loaded, but user selection could not be refreshed: '+users.error.message,false);
     }catch(e){
